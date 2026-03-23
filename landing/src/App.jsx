@@ -439,6 +439,8 @@ function WelcomeScreen({ onDone }) {
 
 /* ── TICKER ──────────────────────────────────────────────── */
 function Ticker() {
+  const m = useIsMobile();
+  if (m) return null;
   const items = [
     "RBI FREE-AI · 26 Mandatory Recommendations",
     "EU AI Act · Full Enforcement August 2026",
@@ -672,7 +674,8 @@ function TerminalLine({ line, onComplete }) {
   return (
     <div style={{ 
       color: lc[line.type] || C.txtS, 
-      whiteSpace: "pre", 
+      whiteSpace: "pre-wrap", 
+      wordBreak: "break-all",
       fontWeight: line.type === "pass" ? 700 : 400,
       marginBottom: line.type === "blank" ? "12px" : "0"
     }}>
@@ -712,7 +715,7 @@ function Terminal() {
         <span style={{ fontFamily: C.mono, fontSize: "8px", letterSpacing: ".12em", color: C.gold, border: `1px solid rgba(201,168,76,.3)`, padding: "2px 8px", fontWeight: 700 }}>SEALED</span>
       </div>
 
-      <div style={{ padding: "24px", minHeight: "340px", fontFamily: C.mono, fontSize: "11px", lineHeight: "1.8", position: "relative", zIndex: 11 }}>
+      <div style={{ padding: "24px", minHeight: "280px", fontFamily: C.mono, fontSize: "11px", lineHeight: "1.8", position: "relative", zIndex: 11, overflowX: "auto" }}>
         {started && LINES.slice(0, idx + 1).map((l, i) => (
           <TerminalLine 
             key={i} 
@@ -781,8 +784,8 @@ function Hero() {
             Anchor audits AI-adjacent code against a cryptographically sealed constitutional rule set. Every violation mapped to the exact statute it breaches.
           </p>
 
-          <div style={{ display: "flex", alignItems: "stretch", height: "44px", border: `1px solid rgba(201,168,76,.4)`, overflow: "hidden", width: "fit-content", marginBottom: "20px", background: C.goldD, boxShadow: "0 0 30px rgba(201,168,76,.08)" }}>
-            <code style={{ padding: "0 18px", fontFamily: C.mono, fontSize: "13px", color: C.txt, display: "flex", alignItems: "center", whiteSpace: "nowrap" }}>pip install anchor-audit</code>
+          <div style={{ display: "flex", alignItems: "stretch", height: "44px", border: `1px solid rgba(201,168,76,.4)`, overflow: "hidden", maxWidth: "100%", marginBottom: "20px", background: C.goldD, boxShadow: "0 0 30px rgba(201,168,76,.08)" }}>
+            <code style={{ padding: "0 18px", fontFamily: C.mono, fontSize: "13px", color: C.txt, display: "flex", alignItems: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>pip install anchor-audit</code>
             <CopyBtn text="pip install anchor-audit" />
           </div>
 
@@ -950,10 +953,11 @@ function EngineSection() {
 
 /* ── VIOLATIONS ──────────────────────────────────────────── */
 function ViolationsSection() {
+  const m = useIsMobile();
   const sevColor = { BLOCKER: C.red, ERROR: C.amber };
   const sevBg = { BLOCKER: C.redD, ERROR: C.ambD };
   return (
-    <section style={{ padding: "88px 40px", borderBottom: `1px solid ${C.border}` }} id="audits">
+    <section style={{ padding: m ? "60px 20px" : "88px 40px", borderBottom: `1px solid ${C.border}` }}>
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <Reveal>
           <SH rev="02A" title="Enforcement Output" />
@@ -968,7 +972,7 @@ function ViolationsSection() {
             { id: "AGT-003", name: "MCP Supply Chain Compromise", sev: "BLOCKER", file: "src/tools/mcp_client.py", line: 23, fix: "Verify MCP server manifests cryptographically before tool calls.", statute: "FINOS-020 · SEC-004" },
           ].map((v, i) => (
             <Reveal key={i} delay={i * 80}>
-              <div style={{ background: C.bg1, border: `1px solid ${C.border}`, borderLeft: `3px solid ${sevColor[v.sev]}`, padding: "18px 22px", display: "grid", gridTemplateColumns: "120px 1fr 190px", gap: "20px", alignItems: "start", transition: "background .2s, transform .2s", cursor: "default" }}
+              <div style={{ background: C.bg1, border: `1px solid ${C.border}`, borderLeft: `3px solid ${sevColor[v.sev]}`, padding: "18px 22px", display: "grid", gridTemplateColumns: m ? "1fr" : "120px 1fr 190px", gap: "12px", alignItems: "start", transition: "background .2s, transform .2s", cursor: "default" }}
                 onMouseEnter={e => { e.currentTarget.style.background = C.bg2; e.currentTarget.style.transform = "translateX(4px)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = C.bg1; e.currentTarget.style.transform = "none"; }}
               >
@@ -996,11 +1000,12 @@ function ViolationsSection() {
 
 /* ── STATS ───────────────────────────────────────────────── */
 function StatsSection() {
+  const m = useIsMobile();
   return (
-    <section style={{ padding: "88px 40px", borderBottom: `1px solid ${C.border}`, background: C.bg1 }}>
+    <section style={{ padding: m ? "60px 20px" : "88px 40px", borderBottom: `1px solid ${C.border}`, background: C.bg1 }}>
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <Reveal><SH rev="02B" title="System Metrics" /></Reveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1px", background: C.border, border: `1px solid ${C.border}`, marginTop: "24px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: m ? "1fr 1fr" : "repeat(4,1fr)", gap: "1px", background: C.border, border: `1px solid ${C.border}`, marginTop: "24px" }}>
           {[
             { target: 43, label: "Domain rules", data: [28, 31, 35, 40, 43], color: C.gold },
             { target: 170, label: "Total Mapped Regulations", data: [65, 90, 120, 150, 170], color: C.chart4 },
@@ -1093,8 +1098,9 @@ function CoverageSection() {
 
 /* ── CASES ───────────────────────────────────────────────── */
 function CasesSection() {
+  const m = useIsMobile();
   return (
-    <section style={{ padding: "88px 40px", borderBottom: `1px solid ${C.border}`, background: C.bg1 }}>
+    <section style={{ padding: m ? "60px 20px" : "88px 40px", borderBottom: `1px solid ${C.border}`, background: C.bg1 }} id="audits">
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <Reveal>
           <SH rev="04" title="Audit Log — Precedent" />
