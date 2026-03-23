@@ -128,6 +128,27 @@ const GLOBAL_CSS = `
   }
   .hover-lift { transition:transform .25s ease, box-shadow .25s ease; }
   .hover-lift:hover { transform:translateY(-3px); box-shadow:0 12px 40px rgba(201,168,76,.1); }
+
+  @media (max-width: 768px) {
+    .nav-links { display: none !important; }
+    .nav-cta   { display: none !important; }
+    .nav-clock { display: none !important; }
+    .nav-inner { padding: 0 20px !important; }
+    .hero-grid { grid-template-columns: 1fr !important; }
+    .hero-divider { display: none !important; }
+    .hero-left  { padding: 56px 0 32px !important; }
+    .hero-right { padding: 0 0 56px !important; }
+    .problem-grid { grid-template-columns: 1fr !important; }
+    .engine-grid  { grid-template-columns: 1fr !important; }
+    .coverage-grid{ grid-template-columns: 1fr !important; }
+    .stats-grid   { grid-template-columns: 1fr 1fr !important; }
+    .audit-label  { display: none !important; }
+    .section-pad  { padding: 60px 20px !important; }
+    .databar      { display: none !important; }
+    .contact-btn  { padding: 18px 32px !important; font-size: 14px !important; }
+    .footer-inner { flex-direction: column !important; gap: 24px !important; }
+    .footer-links { flex-wrap: wrap !important; gap: 16px !important; }
+  }
 `;
 
 function GlobalStyles() {
@@ -461,7 +482,7 @@ function Nav({ loaded }) {
       opacity: loaded ? 1 : 0,
       transform: loaded ? "none" : "translateY(-10px)",
     }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 40px", height: "66px", display: "flex", alignItems: "center", gap: "28px" }}>
+      <div className="nav-inner" style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 40px", height: "66px", display: "flex", alignItems: "center", gap: "28px" }}>
         {/* Nav mark */}
         <a href="#" style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0, textDecoration: "none" }}>
           <DigitalMark size={40} glow={false} />
@@ -472,9 +493,9 @@ function Nav({ loaded }) {
           <span style={{ fontFamily: C.mono, fontSize: "10px", letterSpacing: ".1em", color: "rgba(201,168,76,.65)", border: `1px solid rgba(201,168,76,.25)`, padding: "2px 8px" }}>V4.3.5</span>
         </a>
 
-        <LiveClock />
+        <div className="nav-clock"><LiveClock /></div>
 
-        <div style={{ display: "flex", gap: "28px", marginLeft: "auto" }}>
+        <div className="nav-links" style={{ display: "flex", gap: "28px", marginLeft: "auto" }}>
           {[["§ Problem", "#problem"], ["§ Engine", "#engine"], ["§ Coverage", "#coverage"], ["§ Audits", "#audits"], ["§ Contact", "#contact"], ["GitHub ↗", "https://github.com/Tanishq1030/Anchor"]].map(([label, href]) => (
             <a key={label} href={href}
               target={href.startsWith("http") ? "_blank" : undefined} rel="noreferrer"
@@ -489,8 +510,8 @@ function Nav({ loaded }) {
           ))}
         </div>
 
-        <a href="https://github.com/Tanishq1030/Anchor" target="_blank" rel="noreferrer"
-          style={{ fontFamily: C.mono, fontSize: "11px", letterSpacing: ".12em", fontWeight: 600, color: "#08080D", background: `linear-gradient(135deg,${C.gold},${C.goldB})`, padding: "9px 20px", textDecoration: "none", flexShrink: 0, transition: "opacity .2s", boxShadow: "0 4px 24px rgba(201,168,76,.3)" }}
+        <a className="nav-cta" href="https://github.com/Tanishq1030/Anchor" target="_blank" rel="noreferrer"
+          style={{ marginLeft: "auto", fontFamily: C.mono, fontSize: "11px", letterSpacing: ".12em", fontWeight: 600, color: "#08080D", background: `linear-gradient(135deg,${C.gold},${C.goldB})`, padding: "9px 20px", textDecoration: "none", flexShrink: 0, transition: "opacity .2s", boxShadow: "0 4px 24px rgba(201,168,76,.3)" }}
           onMouseEnter={e => e.currentTarget.style.opacity = ".85"}
           onMouseLeave={e => e.currentTarget.style.opacity = "1"}
         >GET STARTED</a>
@@ -504,7 +525,7 @@ function Nav({ loaded }) {
 /* ── DATA BAR ────────────────────────────────────────────── */
 function DataBar({ loaded }) {
   return (
-    <div style={{
+    <div className="databar" style={{
       background: C.bg1, borderBottom: `1px solid ${C.borderB}`,
       padding: "11px 0", marginTop: "58px",
       opacity: loaded ? 1 : 0, transition: "opacity .6s .3s ease",
@@ -728,12 +749,12 @@ function AmbientParticles() {
 
 function Hero() {
   return (
-    <section style={{ borderBottom: `1px solid ${C.border}`, padding: "0 40px", position:"relative", overflow:"hidden" }}>
+    <section style={{ borderBottom: `1px solid ${C.border}`, padding: "0 20px", position:"relative", overflow:"hidden" }}>
       <AmbientParticles />
-      <div style={{ maxWidth: "1200px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1px 1fr", alignItems: "center", gap: 0 }}>
+      <div className="hero-grid" style={{ maxWidth: "1200px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1px 1fr", alignItems: "center", gap: 0 }}>
 
         {/* Left */}
-        <div style={{ padding: "72px 64px 72px 0", animation: "fadeUp .8s .1s ease both" }}>
+        <div className="hero-left" style={{ padding: "72px 64px 72px 0", animation: "fadeUp .8s .1s ease both" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "28px" }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.gold, animation: "pulse 2s infinite" }} />
             <span style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".18em", color: "rgba(201,168,76,.75)", textTransform: "uppercase" }}>V4.3.5 — Governance Fleet · AnimusLab</span>
@@ -765,10 +786,10 @@ function Hero() {
         </div>
 
         {/* Divider */}
-        <div style={{ background: C.border, margin: "40px 0" }} />
+        <div className="hero-divider" style={{ background: C.border, margin: "40px 0" }} />
 
         {/* Right — seal + terminal */}
-        <div style={{ padding: "72px 0 72px 64px", animation: "fadeUp .8s .25s ease both" }}>
+        <div className="hero-right" style={{ padding: "72px 0 72px 64px", animation: "fadeUp .8s .25s ease both" }}>
           {/* Authority badge — floating above terminal */}
           <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "28px" }}>
             <DigitalMark size={72} glow animate="float 5s ease-in-out infinite" />
@@ -793,7 +814,7 @@ function Hero() {
 /* ── PROBLEM ─────────────────────────────────────────────── */
 function ProblemSection() {
   return (
-    <section style={{ padding: "88px 40px", borderBottom: `1px solid ${C.border}` }} id="problem">
+    <section className="section-pad" style={{ padding: "88px 40px", borderBottom: `1px solid ${C.border}` }} id="problem">
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <Reveal>
           <SH rev="01" title="Problem Statement" />
@@ -802,7 +823,7 @@ function ProblemSection() {
           </h2>
         </Reveal>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1px", background: C.border, border: `1px solid ${C.border}` }}>
+        <div className="problem-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1px", background: C.border, border: `1px solid ${C.border}` }}>
           {[
             { amount: "$45M", label: "CFPB ENFORCEMENT — OCTOBER 2024", desc: "Goldman Sachs. Not because their AI model was wrong. Because they couldn't explain what it decided.", primary: true },
             { amount: "Aug 2026", label: "EU AI ACT 2024/1689", desc: "Full enforcement begins. Credit scoring, AML monitoring, and fraud detection are legally high-risk AI." },
@@ -850,7 +871,7 @@ function EngineSection() {
   ));
 
   return (
-    <section style={{ padding: "88px 40px", borderBottom: `1px solid ${C.border}`, background: C.bg1 }} id="engine">
+    <section className="section-pad" style={{ padding: "88px 40px", borderBottom: `1px solid ${C.border}`, background: C.bg1 }} id="engine">
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <Reveal>
           <SH rev="02" title="Engine Architecture" />
@@ -859,7 +880,7 @@ function EngineSection() {
           </h2>
         </Reveal>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 56px 1fr", gap: 0, marginBottom: "56px", alignItems: "start" }}>
+        <div className="engine-grid" style={{ display: "grid", gridTemplateColumns: "1fr 56px 1fr", gap: 0, marginBottom: "56px", alignItems: "start" }}>
           <Reveal>
             <div style={{ background: C.bg, border: `1px solid ${C.borderB}`, borderTop: `2px solid ${C.green}`, padding: "32px", position: "relative", overflow: "hidden" }}
               onMouseEnter={e => e.currentTarget.style.boxShadow = `0 0 40px rgba(46,204,138,.06)`}
@@ -1007,7 +1028,7 @@ function CoverageSection() {
   const dotC = { domain: C.green, framework: C.cyan, regulator: C.gold };
   const topB = { domain: C.green, framework: C.cyan, regulator: C.gold };
   return (
-    <section style={{ padding: "88px 40px", borderBottom: `1px solid ${C.border}` }} id="coverage">
+    <section className="section-pad" style={{ padding: "88px 40px", borderBottom: `1px solid ${C.border}` }} id="coverage">
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <Reveal>
           <SH rev="03" title="Jurisdiction Map" />
@@ -1015,7 +1036,7 @@ function CoverageSection() {
             One engine.<br />Every jurisdiction.
           </h2>
         </Reveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "1px", background: C.border, border: `1px solid ${C.border}`, alignItems: "stretch" }}>
+        <div className="coverage-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "1px", background: C.border, border: `1px solid ${C.border}`, alignItems: "stretch" }}>
           {[
             {
               icon: "◈", label: "Domain Rules", sub: "Always loaded · Constitutional floor", type: "domain",
@@ -1202,7 +1223,7 @@ function GetStartedSection() {
 /* ── CONTACT ─────────────────────────────────────────────── */
 function ContactSection() {
   return (
-    <section style={{ padding: "120px 40px", borderBottom: `1px solid ${C.border}`, background: C.bg }} id="contact">
+    <section className="section-pad" style={{ padding: "120px 40px", borderBottom: `1px solid ${C.border}`, background: C.bg }} id="contact">
       <div style={{ maxWidth: "1200px", margin: "0 auto", textAlign: "center" }}>
         <Reveal><SH rev="06" title="Communications" /></Reveal>
         <Reveal delay={100}>
@@ -1217,7 +1238,7 @@ function ContactSection() {
         </Reveal>
         <Reveal delay={300}>
           <div style={{ display: "inline-flex", flexDirection: "column", gap: "12px", alignItems: "center" }}>
-            <a href="mailto:tan@anchorgovernance.tech" style={{
+             <a className="contact-btn" href="mailto:tan@anchorgovernance.tech" style={{
               fontFamily: C.mono, fontSize: "20px", color: C.bg, background: `linear-gradient(135deg, ${C.gold}, ${C.goldB})`, textDecoration: "none", padding: "24px 64px", transition: "transform .2s, box-shadow .2s", fontWeight: 700, boxShadow: "0 10px 40px rgba(201,168,76,.15)"
             }}
               onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 15px 50px rgba(201,168,76,.25)"; }}
@@ -1238,7 +1259,7 @@ function Footer() {
   return (
     <footer style={{ borderTop: `2px solid ${C.gold}`, background: C.bg1, padding: "52px 40px 36px" }}>
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "40px", marginBottom: "36px", paddingBottom: "28px", borderBottom: `1px solid ${C.border}`, flexWrap: "wrap" }}>
+        <div className="footer-inner" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "40px", marginBottom: "36px", paddingBottom: "28px", borderBottom: `1px solid ${C.border}`, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
             <DigitalMark size={52} glow={false} />
             <div>
@@ -1252,7 +1273,7 @@ function Footer() {
               >tan@anchorgovernance.tech</a>
             </div>
           </div>
-          <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+          <div className="footer-links" style={{ display: "flex", gap: "24px", alignItems: "center" }}>
             {[["GitHub", "https://github.com/Tanishq1030/Anchor"], ["PyPI", "https://pypi.org/project/anchor-audit/"], ["Changelog", "https://github.com/Tanishq1030/Anchor/blob/main/CHANGELOG.md"]].map(([l, h]) => (
               <a key={l} href={h} target="_blank" rel="noreferrer"
                 style={{ fontFamily: C.mono, fontSize: "10px", letterSpacing: ".08em", textTransform: "uppercase", color: C.txtS, textDecoration: "none", transition: "color .2s" }}
