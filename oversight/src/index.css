@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-void:    #06060A;
+  --bg-panel:   #0C0C12;
+  --bg-surface: #111118;
+  --border:     #1E1E2E;
+  --border-lit: #2A2A3E;
+  --amber:      #C9A84C;
+  --amber-glow: #F59E0B;
+  --amber-dim:  #92702A;
+  --red:        #EF4444;
+  --green:      #10B981;
+  --slate:      #94A3B8;
+  --slate-dim:  #4A5568;
+  --white:      #E2E8F0;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg-void);
+  color: var(--white);
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scanline overlay — subtle CRT texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Amber glow pulse for key elements */
+@keyframes amberPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0); }
+  50%       { box-shadow: 0 0 12px 2px rgba(201, 168, 76, 0.15); }
+}
+
+/* Login card shake on error */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-8px); }
+  40%       { transform: translateX(8px); }
+  60%       { transform: translateX(-6px); }
+  80%       { transform: translateX(6px); }
+}
+
+/* Blink cursor */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* Fade in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Status bar shimmer */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-shake       { animation: shake 0.4s ease; }
+.animate-fade-in     { animation: fadeIn 0.3s ease forwards; }
+.animate-amber-pulse { animation: amberPulse 2.5s ease-in-out infinite; }
+.animate-blink       { animation: blink 1s step-end infinite; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-panel); }
+::-webkit-scrollbar-thumb { background: var(--border-lit); border-radius: 2px; }

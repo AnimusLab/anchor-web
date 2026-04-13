@@ -1,0 +1,44 @@
+# Anchor Spoke Node — Docker Compose
+# Enterprise installation in one command:
+#   docker compose up -d
+#
+# Configure by editing spoke.env before running.
+
+services:
+  anchor-spoke:
+    image: anchorgrid/spoke:5.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile.spoke
+    container_name: anchor-spoke
+    restart: unless-stopped
+
+    # All configuration via environment file — no secrets in docker-compose.yml
+    env_file:
+      - spoke.env
+
+    ports:
+      # Expose the local Spoke API (optional — only if enterprise SDK runs external)
+      - "8001:8001"
+
+    volumes:
+      # Persistent local SQLite storage — survives container restarts and upgrades
+      - anchor_spoke_data:/data
+
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import httpx; httpx.get('http://localhost:8001/api/spoke/health').raise_for_status()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  anchor_spoke_data:
+    driver: local

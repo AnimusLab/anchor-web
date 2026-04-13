@@ -1,0 +1,559 @@
+import os
+import re
+import secrets
+import hashlib
+import bcrypt
+import jwt
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, Form, Query, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session
+
+import uuid
+from models import User, Fleet, Organization, OrgInvite
+from security import encrypt_secret
+from mail import send_enterprise_credentials, send_auditor_verification, send_approval_notification
+
+# =============================================================================
+# Router & Security Setup
+# =============================================================================
+
+auth_router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+security = HTTPBearer(auto_error=False)
+
+ANCHOR_MASTER_KEY = os.getenv("ANCHOR_MASTER_KEY")
+if not ANCHOR_MASTER_KEY:
+    raise RuntimeError("CRITICAL: ANCHOR_MASTER_KEY missing from environment.")
+
+# Jurisdiction → entity_prefix mapping
+JURISDICTION_PREFIX = {
+    "SEC": "sec",
+    "EU_AI_ACT": "euai",
+    "RBI": "rbi",
+    "SEBI": "sebi",
+    "FCA": "fca",
+}
+
+# =============================================================================
+# JWT Middleware & Dependencies
+# =============================================================================
+
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Extracts and validates JWT from the Authorization header."""
+    if not credentials:
+        raise HTTPException(status_code=401, detail="AUTHENTICATION REQUIRED")
+    try:
+        payload = jwt.decode(credentials.credentials, ANCHOR_MASTER_KEY, algorithms=["HS256"])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="SESSION EXPIRED")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="INVALID TOKEN")
+
+def get_current_org_admin(user: dict = Depends(get_current_user)):
+    """Ensures the current user is an owner or admin of their organisation."""
+    if user.get("role") not in ["owner", "admin"]:
+        raise HTTPException(status_code=403, detail="ADMINISTRATIVE CLEARANCE REQUIRED")
+    return user
+
+def get_current_admin_user(user: dict = Depends(get_current_user)):
+    """Root-level admin guard. Requires role='root' (Anchor Master Node access)."""
+    if user.get("role") != "root":
+        raise HTTPException(status_code=403, detail="ROOT CLEARANCE REQUIRED")
+    return user
+
+# =============================================================================
+# Utility Helpers
+# =============================================================================
+
+def _generate_key():
+    """Generates a cryptographically secure 256-bit secret key."""
+    return secrets.token_urlsafe(32)
+
+def _validate_slug(slug: str, type_name: str = "ID"):
+    """Validates an entity_prefix or project_name."""
+    if not slug or len(slug) < 2 or len(slug) > 32:
+        raise HTTPException(status_code=400, detail=f"{type_name} must be 2-32 characters.")
+    if not re.match(r'^[a-z][a-z0-9-]*$', slug):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{type_name} must start with a letter and contain only lowercase letters, numbers, and hyphens."
+        )
+
+# =============================================================================
+# Authentication Routes
+# =============================================================================
+
+@auth_router.post("/login")
+def login(email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+    """Authenticates a user by email and returns a scoped JWT."""
+    user = db.query(User).filter(User.email == email.strip().lower()).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="IDENTITY NOT FOUND")
+
+    if user.status == "revoked":
+        raise HTTPException(status_code=403, detail="ACCESS PERMANENTLY REVOKED")
+    if not user.email_verified:
+        raise HTTPException(status_code=403, detail="EMAIL NOT VERIFIED")
+
+    # Verify password
+    if not bcrypt.checkpw(password.encode("utf-8"), user.hashed_pass.encode("utf-8")):
+        raise HTTPException(status_code=401, detail="INVALID SIGNATURE")
+
+    # Scoped Token Generation
+    exp = datetime.utcnow() + timedelta(days=7) # Standard dev session
+    
+    org = db.query(Organization).filter(Organization.id == user.org_id).first()
+    
+    return {
+        "access_token": token,
+        "token_type":   "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "display_name": user.display_name,
+            "role": user.role,
+            "org_id": user.org_id
+        }
+    }
+
+
+@auth_router.get("/check-domain/{domain}")
+def check_domain_status(domain: str, db: Session = Depends(get_db)):
+    """Checks if a corporate domain is already registered for an organisation."""
+    clean_domain = domain.strip().lower()
+    org = db.query(Organization).filter(Organization.domain == clean_domain).first()
+    
+    return {
+        "domain": clean_domain,
+        "registered": org is not None,
+        "org_name": org.display_name if org else None
+    }
+
+
+@auth_router.post("/register/org")
+def register_organization(
+    entity_prefix: str = Form(...),
+    display_name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    server_region: str = Form("IN"),
+    db: Session = Depends(get_db)
+):
+    """
+    Onboards a new Organisation and its primary Manager (Owner).
+    This is the top-level 'GitHub Org' creation.
+    """
+    # 1. Validate Inputs
+    prefix_clean = entity_prefix.strip().lower()
+    _validate_slug(prefix_clean, "Organization Prefix")
+    domain = email.split("@")[-1].lower()
+    
+    # 2. Collision Check (Prefix & Domain)
+    if db.query(Organization).filter(Organization.entity_prefix == prefix_clean).first():
+        raise HTTPException(status_code=409, detail=f"PREFIX '{prefix_clean}' IS TAKEN")
+    
+    if db.query(Organization).filter(Organization.domain == domain).first():
+        # TODO: Check if domain is 'public' (gmail etc) before blocking
+        # For now, allow multiple users to join existing orgs via a separate 'Request Join' endpoint
+        raise HTTPException(status_code=409, detail=f"ORGANIZATION FOR '{domain}' ALREADY EXISTS")
+
+    # 3. Create Org
+    org_id = f"org_{secrets.token_hex(4)}"
+    org = Organization(
+        id=org_id,
+        entity_prefix=prefix_clean,
+        display_name=display_name,
+        domain=domain,
+        server_region=server_region,
+        hr_contact=email,
+        created_at=datetime.utcnow().isoformat()
+    )
+    db.add(org)
+    
+    # 4. Create Owner Account
+    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    user = User(
+        id=f"usr_{secrets.token_hex(4)}",
+        email=email.strip().lower(),
+        org_id=org_id,
+        display_name=display_name,
+        role="owner",
+        hashed_pass=hashed,
+        status="active",
+        email_verified=True,
+        created_at=datetime.utcnow().isoformat()
+    )
+    db.add(user)
+    db.commit()
+
+    return {"status": "SUCCESS", "org_id": org_id, "message": "Organization provisioned."}
+
+
+@auth_router.post("/projects/create")
+def create_project(
+    project_name: str = Form(...),
+    tier: str = Form("enterprise"),
+    current_admin: dict = Depends(get_current_org_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    [Admin Only] Self-service project provisioning. 
+    Generates a unique prefixed entity_id and secret keys.
+    """
+    # 1. Validate Project Name
+    prj_slug = project_name.strip().lower().replace(" ", "-")
+    _validate_slug(prj_slug, "Project Name")
+    
+    # 2. Generate Global Entity ID (Prefix-Project)
+    org_slug = current_admin["org_slug"]
+    full_entity_id = f"{org_slug}-{prj_slug}"
+    
+    # Check for collision
+    if db.query(Fleet).filter(Fleet.entity_id == full_entity_id).first():
+        raise HTTPException(status_code=409, detail=f"PROJECT '{full_entity_id}' ALREADY EXISTS")
+
+    # 3. Generate Sensitive Credentials (Shown ONCE)
+    raw_secret_key = _generate_key()
+    hashed_secret  = bcrypt.hashpw(raw_secret_key.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    
+    mat = "0x" + secrets.token_hex(32)
+    mat_hash = hashlib.sha256(mat.encode()).hexdigest()
+
+    # 4. Save Project (Fleet)
+    project = Fleet(
+        entity_id=full_entity_id,
+        org_id=current_admin["org_id"],
+        name=project_name,
+        tier=tier,
+        key_hash=mat_hash,
+        secret_hash=hashed_secret,
+        created_at=datetime.utcnow().isoformat(),
+        provisioned_by=current_admin["sub"]
+    )
+    db.add(project)
+    db.commit()
+
+    return {
+        "status":        "PROVISIONED",
+        "entity_id":     full_entity_id,
+        "secret_key":    raw_secret_key, # SHOWN ONCE
+        "sdk_mat":       mat,            # SHOWN ONCE
+        "server_region": current_admin.get("region", "IN"),
+        "provisioned_by": current_admin["sub"]
+    }
+
+
+@auth_router.get("/projects")
+def list_org_projects(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Lists all projects within the user's organisation."""
+    projects = db.query(Fleet).filter(Fleet.org_id == current_user["org_id"]).all()
+    return [
+        {
+            "entity_id": p.entity_id,
+            "name": p.name,
+            "tier": p.tier,
+            "created_at": p.created_at,
+            "provisioned_by": p.provisioned_by
+        }
+        for p in projects
+    ]
+
+    """Regulators request access. Auto-generates entity_id from jurisdiction.
+    Sends verification email. Status remains 'pending' until admin approves."""
+
+    # Generate entity_id from jurisdiction
+    prefix = JURISDICTION_PREFIX.get(jurisdiction, "reg_other")
+    entity_id = f"{prefix}_{secrets.token_hex(3)}"
+
+    # Generate credentials
+    raw_key = secrets.token_urlsafe(32)
+    hashed = bcrypt.hashpw(raw_key.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    verification_token = secrets.token_urlsafe(32)
+
+    user = User(
+        id=f"usr_{secrets.token_hex(4)}",
+        entity_id=entity_id,
+        display_name=display_name,
+        email=email,
+        role="regulator",
+        hashed_key=hashed,
+        status="pending",
+        email_verified=False,
+        verification_token=verification_token,
+        created_at=datetime.utcnow().isoformat(),
+    )
+    db.add(user)
+    db.commit()
+
+    # Send verification email with credentials
+    send_auditor_verification(email, display_name, entity_id, raw_key, verification_token)
+
+    return {
+        "status": "PENDING_APPROVAL",
+        "entity_id": entity_id,
+        "secret_key": raw_key,
+        "message": (
+            f"Request submitted for {jurisdiction}. "
+            f"A verification email has been sent to {email}. "
+            f"Click the link to verify your email and receive temporary access."
+        )
+    }
+
+
+@auth_router.get("/verify-email")
+def verify_email(token: str = Query(...), db: Session = Depends(get_db)):
+    """Verifies an auditor's email via the one-time token link.
+    Grants temporary first-session access while keeping status 'pending'."""
+
+    user = db.query(User).filter(User.verification_token == token).first()
+    if not user:
+        return HTMLResponse(
+            content=_verification_page("INVALID TOKEN", "This verification link is invalid or has expired.", False),
+            status_code=400
+        )
+
+    if user.email_verified:
+        return HTMLResponse(
+            content=_verification_page("ALREADY VERIFIED", f"Email for {user.entity_id} has already been verified. You can log in.", True),
+            status_code=200
+        )
+
+    # Mark as verified — grants temp first-session access
+    user.email_verified = True
+    user.verification_token = None  # Burn the token
+    db.commit()
+
+    return HTMLResponse(
+        content=_verification_page(
+            "EMAIL VERIFIED",
+            f"Welcome, {user.display_name}. Your email has been confirmed. "
+            f"You now have temporary access. Log in with your Entity ID ({user.entity_id}) and Secret Key. "
+            f"Full access will be granted after Master Node administrator approval.",
+            True
+        ),
+        status_code=200
+    )
+
+
+def _verification_page(title: str, message: str, success: bool) -> str:
+    """Renders a styled HTML verification result page."""
+    color = "#10B981" if success else "#EF4444"
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head><title>Anchor — Email Verification</title></head>
+    <body style="background:#08080D; color:#E2E8F0; font-family:monospace; display:flex; 
+                 align-items:center; justify-content:center; min-height:100vh; margin:0;">
+        <div style="background:#0D0D14; border:1px solid #1E293B; padding:48px; max-width:500px; text-align:center;">
+            <h1 style="color:{color}; letter-spacing:0.15em; font-size:18px;">{title}</h1>
+            <p style="color:#94A3B8; font-size:13px; line-height:1.7;">{message}</p>
+            <a href="/" style="display:inline-block; margin-top:24px; padding:12px 28px; 
+                               background:{color}; color:#08080D; text-decoration:none; 
+                               font-weight:bold; letter-spacing:0.1em; font-size:11px;">
+                GO TO ANCHOR
+            </a>
+        </div>
+    </body>
+    </html>
+    """
+
+
+@auth_router.post("/approve")
+def approve_user(
+    target_entity_id: str = Form(...),
+    current_user: dict = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to approve a pending user."""
+    user = db.query(User).filter(User.entity_id == target_entity_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="USER NOT FOUND")
+
+    user.status = "approved"
+    user.approved_at = datetime.utcnow().isoformat()
+    user.approved_by = current_user["sub"]
+    db.commit()
+
+    # Send approval notification email
+    if user.email:
+        send_approval_notification(user.email, user.display_name, user.entity_id)
+
+    return {"status": "APPROVED", "entity_id": target_entity_id}
+
+
+@auth_router.post("/revoke")
+def revoke_user(
+    target_entity_id: str = Form(...),
+    current_user: dict = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to revoke a user's access."""
+    user = db.query(User).filter(User.entity_id == target_entity_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="USER NOT FOUND")
+
+    user.status = "revoked"
+    db.commit()
+    return {"status": "REVOKED", "entity_id": target_entity_id}
+
+
+@auth_router.get("/pending")
+def get_pending_users(
+    current_user: dict = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to list all pending access requests."""
+    pending = db.query(User).filter(User.status == "pending").all()
+    return [
+        {
+            "entity_id": u.entity_id,
+            "display_name": u.display_name,
+            "email": u.email,
+            "role": u.role,
+            "email_verified": u.email_verified,
+            "created_at": u.created_at,
+        }
+        for u in pending
+    ]
+
+
+@auth_router.get("/admin/orgs")
+def list_all_organizations(
+    current_user: dict = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Root-admin endpoint: lists every registered Organization on the mesh."""
+    orgs = db.query(Organization).order_by(Organization.created_at.desc()).all()
+    return [
+        {
+            "id":             o.id,
+            "entity_prefix":  o.entity_prefix,
+            "display_name":   o.display_name,
+            "domain":         o.domain,
+            "server_region":  o.server_region,
+            "status":         o.status,
+            "created_at":     o.created_at,
+            "project_count":  len(o.projects),
+            "member_count":   len(o.members),
+        }
+        for o in orgs
+    ]
+
+
+# --- INVITE SYSTEM ENDPOINTS ---
+
+@auth_router.post("/invite")
+def create_invite(
+    email: str = Form(...),
+    role: str = Form("member"),
+    current_admin: dict = Depends(get_current_org_admin),
+    db: Session = Depends(get_db)
+):
+    """Generates a secure invitation for a new team member."""
+    # 1. Check if user already exists
+    if db.query(User).filter(User.email == email.strip().lower()).first():
+         raise HTTPException(status_code=400, detail="USER ALREADY REGISTERED IN THE MESH")
+
+    # 2. Create Invite
+    token = str(uuid.uuid4())
+    expires = datetime.utcnow() + timedelta(hours=48)
+    
+    invite = OrgInvite(
+        id=token,
+        org_id=current_admin["org_id"],
+        invited_email=email.strip().lower(),
+        role=role,
+        status="pending",
+        created_at=datetime.utcnow().isoformat(),
+        expires_at=expires.isoformat()
+    )
+    db.add(invite)
+    db.commit()
+
+    return {
+        "status": "INVITE_CREATED",
+        "token": token,
+        "role": role,
+        "expires_at": invite.expires_at
+    }
+
+
+@auth_router.get("/invite/verify/{token}")
+def verify_invite(token: str, db: Session = Depends(get_db)):
+    """Validates an invite token and returns org context."""
+    invite = db.query(OrgInvite).filter(OrgInvite.id == token).first()
+    if not invite or invite.status != "pending":
+        raise HTTPException(status_code=404, detail="INVALID OR EXPIRED INVITE")
+    
+    # Check expiry
+    if datetime.fromisoformat(invite.expires_at) < datetime.utcnow():
+        invite.status = "expired"
+        db.commit()
+        raise HTTPException(status_code=400, detail="INVITE EXPIRED")
+
+    return {
+        "org_name": invite.organization.display_name,
+        "email": invite.invited_email,
+        "role": invite.role
+    }
+
+
+@auth_router.post("/register/accept-invite")
+def accept_invite(
+    token: str = Form(...),
+    display_name: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Completes registration for an invited user."""
+    invite = db.query(OrgInvite).filter(OrgInvite.id == token).first()
+    if not invite or invite.status != "pending":
+        raise HTTPException(status_code=400, detail="INVALID INVITE TOKEN")
+
+    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    
+    user = User(
+        id=f"usr_{secrets.token_hex(4)}",
+        email=invite.invited_email,
+        org_id=invite.org_id,
+        display_name=display_name,
+        role=invite.role,
+        hashed_pass=hashed,
+        status="active", # Already verified by invite logic
+        email_verified=True,
+        created_at=datetime.utcnow().isoformat()
+    )
+    
+    invite.status = "accepted"
+    db.add(user)
+    db.commit()
+
+    return {"status": "SUCCESS", "message": f"Welcome to {invite.organization.display_name}"}
+
+
+@auth_router.get("/me")
+def get_current_user_profile(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Validates the JWT and returns the user's full profile."""
+    user = db.query(User).filter(User.email == current_user["sub"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="USER NOT FOUND")
+
+    return {
+        "sub":           user.email,           # login identity
+        "email":         user.email,
+        "display_name":  user.display_name,
+        "role":          user.role,
+        "status":        user.status,
+        "org_id":        user.org_id,
+        "email_verified": user.email_verified,
+        "entity_id":     user.email,           # Legacy compat for older dashboard code
+    }
