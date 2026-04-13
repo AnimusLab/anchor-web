@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Link } from 'react-router-dom';
 
 /* ── TOKENS ─────────────────────────────────────────────────
    Color schema: Deep obsidian + crisp white + judicial gold
@@ -215,7 +216,7 @@ function DigitalMark({ size = 48, animate = "", glow = true }) {
         position: "absolute", inset: size * 0.15, border: `1px solid ${C.gold}`,
         opacity: .2, borderRadius: size * 0.05,
       }} />
-      
+
       {/* Central 'A' structure */}
       <svg width={size * 0.6} height={size * 0.6} viewBox="0 0 24 24" fill="none">
         <path d="M12 4L4 20H7L12 8L17 20H20L12 4Z" fill={C.gold} />
@@ -223,7 +224,7 @@ function DigitalMark({ size = 48, animate = "", glow = true }) {
       </svg>
 
       {/* Data corner pips */}
-      {[ [0,0], [1,0], [0,1], [1,1] ].map(([x,y], i) => (
+      {[[0, 0], [1, 0], [0, 1], [1, 1]].map(([x, y], i) => (
         <div key={i} style={{
           position: "absolute", width: size * 0.08, height: size * 0.08,
           background: C.gold, top: y ? "auto" : 0, bottom: y ? 0 : "auto",
@@ -231,7 +232,7 @@ function DigitalMark({ size = 48, animate = "", glow = true }) {
           opacity: .6,
         }} />
       ))}
-      
+
       {glow && (
         <div style={{
           position: "absolute", inset: -4, borderRadius: "50%",
@@ -261,12 +262,12 @@ function FinancialChart({ data, width = 60, height = 30, color = C.gold, fill = 
         {/* Grid lines */}
         {[0, 0.5, 1].map(v => <line key={v} x1={0} y1={v * height} x2={width} y2={v * height} stroke={C.border} strokeWidth=".5" strokeDasharray="1 2" />)}
         {[0, 0.5, 1].map(v => <line key={v} x1={v * width} y1={0} x2={v * width} y2={height} stroke={C.border} strokeWidth=".5" strokeDasharray="1 2" />)}
-        
+
         {fill && <path d={areaPath} fill={`${color}22`} />}
         <path d={path} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="2" fill={color} />
       </svg>
-      <div style={{ position: "absolute", right: -3, top: points[points.length-1].y - 3, width: 6, height: 6, borderRadius: "50%", background: color, animation: "pulse 1.5s infinite", opacity: .5 }} />
+      <div style={{ position: "absolute", right: -3, top: points[points.length - 1].y - 3, width: 6, height: 6, borderRadius: "50%", background: color, animation: "pulse 1.5s infinite", opacity: .5 }} />
     </div>
   );
 }
@@ -280,7 +281,7 @@ function Sparkline({ data = [20, 45, 30, 80, 50, 90, 60], width = 80, height = 2
   return (
     <svg width={width} height={height} style={{ overflow: "visible" }}>
       <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={width} cy={height - ((data[data.length-1] - min) / range) * height} r="2" fill={color} />
+      <circle cx={width} cy={height - ((data[data.length - 1] - min) / range) * height} r="2" fill={color} />
     </svg>
   );
 }
@@ -334,10 +335,9 @@ function CopyBtn({ text }) {
 
 /* ── WELCOME ANIMATION (Terminal Boot) ────────────────────── */
 function WelcomeScreen({ onDone }) {
-  // phases: boot → matrix → ready → done
   const [phase, setPhase] = useState("boot");
   const logs = [
-    "INITIALIZING ANCHOR KERNEL v5.0.0...",
+    "INITIALIZING ANCHOR KERNEL V4.3.5...",
     "LOADING SEC REGULATORY MODULES [OK]",
     "LOADING EU AI ACT PROTOCOLS [OK]",
     "ESTABLISHING CRYPTOGRAPHIC TRUST CHAIN...",
@@ -351,8 +351,8 @@ function WelcomeScreen({ onDone }) {
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase("matrix"), 2000);
-    const t2 = setTimeout(() => setPhase("ready"),  4000);
-    const t3 = setTimeout(() => setPhase("done"),   6500);
+    const t2 = setTimeout(() => setPhase("ready"), 4000);
+    const t3 = setTimeout(() => setPhase("done"), 6500);
     return () => [t1, t2, t3].forEach(clearTimeout);
   }, []);
 
@@ -368,7 +368,6 @@ function WelcomeScreen({ onDone }) {
       pointerEvents: phase === "ready" ? "none" : "auto",
       fontFamily: C.mono,
     }}>
-      {/* Background Data Flow */}
       {phase === "boot" && (
         <div style={{ position: "absolute", inset: "20px", overflow: "hidden", opacity: 0.3 }}>
           <div style={{ animation: "terminalScroll 2s linear infinite", display: "flex", flexDirection: "column", gap: 8 }}>
@@ -381,7 +380,6 @@ function WelcomeScreen({ onDone }) {
         </div>
       )}
 
-      {/* Main Content */}
       <div style={{ position: "relative", zIndex: 2, textAlign: "center" }}>
         {phase === "boot" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -402,15 +400,15 @@ function WelcomeScreen({ onDone }) {
         {phase === "matrix" && (
           <div style={{ animation: "logoAssemble 0.8s ease both" }}>
             <DigitalMark size={160} glow={false} />
-            <div style={{ 
-              marginTop: 32, fontSize: "28px", fontWeight: 900, 
+            <div style={{
+              marginTop: 32, fontSize: "28px", fontWeight: 900,
               color: C.txt, letterSpacing: "0.2em", textTransform: "uppercase",
               fontFamily: C.serif
             }}>
               Anchor
             </div>
             <div style={{
-              fontSize: "10px", color: C.gold, letterSpacing: "0.4em", 
+              fontSize: "10px", color: C.gold, letterSpacing: "0.4em",
               marginTop: 12, textTransform: "uppercase"
             }}>
               Governing the Unseen
@@ -425,7 +423,6 @@ function WelcomeScreen({ onDone }) {
         )}
       </div>
 
-      {/* Grid Overlay */}
       <div style={{
         position: "absolute", inset: 0, pointerEvents: "none",
         backgroundImage: `linear-gradient(rgba(201,168,76,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,.03) 1px,transparent 1px)`,
@@ -497,20 +494,20 @@ function Nav({ loaded }) {
       transform: loaded ? "none" : "translateY(-10px)",
     }}>
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: m ? "0 20px" : "0 40px", height: "66px", display: "flex", alignItems: "center", gap: "16px" }}>
-        <a href="#" style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, textDecoration: "none" }}>
+        <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, textDecoration: "none" }}>
           <DigitalMark size={40} glow={false} />
           <div>
             <div style={{ fontFamily: C.serif, fontWeight: 700, fontSize: "20px", color: C.txt, lineHeight: 1, letterSpacing: "-.01em" }}>Anchor</div>
             <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".14em", color: C.gold, lineHeight: 1.3 }}>GOVERNANCE ENGINE</div>
           </div>
-          {!m && <span style={{ fontFamily: C.mono, fontSize: "10px", letterSpacing: ".1em", color: "rgba(201,168,76,.65)", border: `1px solid rgba(201,168,76,.25)`, padding: "2px 8px" }}>v5.0.0</span>}
-        </a>
+          {!m && <span style={{ fontFamily: C.mono, fontSize: "10px", letterSpacing: ".1em", color: "rgba(201,168,76,.65)", border: `1px solid rgba(201,168,76,.25)`, padding: "2px 8px" }}>V4.3.5</span>}
+        </Link>
 
         {!m && <LiveClock />}
 
         {!m && (
           <div style={{ display: "flex", gap: "28px", marginLeft: "auto" }}>
-            {[["§ Problem", "#problem"], ["§ Engine", "#engine"], ["§ Coverage", "#coverage"], ["§ Audits", "#audits"], ["§ Contact", "#contact"], ["GitHub ↗", "https://github.com/Tanishq1030/Anchor"]].map(([label, href]) => (
+            {[["§ Problem", "#problem"], ["§ Engine", "#engine"], ["§ Coverage", "#coverage"], ["GitHub ↗", "https://github.com/AnimusLab/Anchor"]].map(([label, href]) => (
               <a key={label} href={href}
                 target={href.startsWith("http") ? "_blank" : undefined} rel="noreferrer"
                 style={{ fontFamily: C.mono, fontSize: "12px", fontWeight: 500, letterSpacing: ".06em", color: hoverLink === label ? C.goldB : C.txtS, transition: "color .2s", textDecoration: "none" }}
@@ -521,11 +518,26 @@ function Nav({ loaded }) {
           </div>
         )}
 
-        <a href="https://github.com/Tanishq1030/Anchor" target="_blank" rel="noreferrer"
-          style={{ marginLeft: m ? "auto" : undefined, fontFamily: C.mono, fontSize: "11px", letterSpacing: ".12em", fontWeight: 600, color: "#08080D", background: `linear-gradient(135deg,${C.gold},${C.goldB})`, padding: "8px 16px", textDecoration: "none", flexShrink: 0, transition: "opacity .2s", boxShadow: "0 4px 24px rgba(201,168,76,.3)" }}
-          onMouseEnter={e => e.currentTarget.style.opacity = ".85"}
-          onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-        >{m ? "GitHub ↗" : "GET STARTED"}</a>
+        {/* RESTORED BLOOMBERG STYLING FOR NAV LINKS */}
+        <div style={{ display: "flex", gap: "12px", marginLeft: m ? "auto" : "28px" }}>
+          {!m && (
+            <Link to="/network"
+              style={{ fontFamily: C.mono, fontSize: "11px", letterSpacing: ".12em", fontWeight: 600, color: C.gold, border: `1px solid rgba(201,168,76,.4)`, padding: "8px 16px", textDecoration: "none", transition: "all .2s" }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.goldD; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+            >
+              MESH ↗
+            </Link>
+          )}
+          <Link to="/auth"
+            style={{ fontFamily: C.mono, fontSize: "11px", letterSpacing: ".12em", fontWeight: 600, color: "#08080D", background: `linear-gradient(135deg,${C.gold},${C.goldB})`, padding: "8px 16px", textDecoration: "none", flexShrink: 0, transition: "opacity .2s", boxShadow: "0 4px 24px rgba(201,168,76,.3)" }}
+            onMouseEnter={e => e.currentTarget.style.opacity = ".85"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+          >
+            {m ? "LOGIN" : "AUTHENTICATE"}
+          </Link>
+        </div>
+
       </div>
       <div style={{ height: "1.5px", background: `linear-gradient(90deg,transparent,${C.gold},${C.goldB},${C.gold},transparent)`, opacity: .45 }} />
     </nav>
@@ -589,7 +601,7 @@ function SH({ rev, title }) {
 /* ── TERMINAL ────────────────────────────────────────────── */
 const LINES = [
   { text: "anchor init --regulators rbi,eu --domains privacy,agentic", type: "cmd", delay: 0 },
-  { text: "⚓  Anchor v5 — Governance Fleet", type: "info", delay: 600 },
+  { text: "⚓  Anchor V4 — Governance Fleet", type: "info", delay: 600 },
   { text: "  ✓ Security (SEC) — constitutional floor", type: "ok", delay: 900 },
   { text: "  ✓ Ethics (ETH) — constitutional floor", type: "ok", delay: 1100 },
   { text: "  ✓ Privacy (PRV)", type: "ok", delay: 1300 },
@@ -601,7 +613,7 @@ const LINES = [
   { text: "$ anchor check .", type: "cmd", delay: 2600 },
   { text: "Scanning 164 paths · 43 domains · 170 active mappings", type: "info", delay: 3000 },
   { text: "Diamond Cage: ACTIVE · WASM verified", type: "cage", delay: 3300 },
-  { text: "Analyzing  ████████████████████  100%", type: "info", delay: 3900 },
+  { text: "Analyzing", type: "info", delay: 3900 },
   { text: "", type: "blank", delay: 4200 },
   { text: "  BLOCKER : 0", type: "ok", delay: 4500 },
   { text: "  ERROR   : 0", type: "ok", delay: 4650 },
@@ -661,26 +673,47 @@ function TerminalLine({ line, onComplete }) {
   }, [showProgress, onComplete]);
 
   const lc = { cmd: C.txt, info: C.txtS, ok: C.green, cage: C.cyan, pass: C.green, blank: "transparent" };
-  
-  const renderText = () => {
-    if (line.text.includes("Analyzing")) {
-      const bars = Math.floor(progress / 5);
-      const barStr = "█".repeat(bars) + "░".repeat(20 - bars);
-      return `Analyzing  ${barStr}  ${progress}%`;
-    }
-    return displayed;
-  };
+
+  const isAnalyzing = line.text.includes("Analyzing");
 
   return (
-    <div style={{ 
-      color: lc[line.type] || C.txtS, 
-      whiteSpace: "pre-wrap", 
+    <div style={{
+      color: lc[line.type] || C.txtS,
+      whiteSpace: "pre-wrap",
       wordBreak: "break-all",
       fontWeight: line.type === "pass" ? 700 : 400,
       marginBottom: line.type === "blank" ? "12px" : "0"
     }}>
       {line.type === "cmd" && <span style={{ opacity: .5, marginRight: 8 }}>$</span>}
-      {renderText()}
+      {isAnalyzing ? (
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "12px", width: "100%" }}>
+          <span>Analyzing</span>
+          <span style={{
+            display: "inline-block",
+            width: "180px",
+            height: "8px",
+            background: C.bg,
+            border: `1px solid ${C.borderB}`,
+            borderRadius: "1px",
+            overflow: "hidden",
+            position: "relative",
+            flexShrink: 0,
+          }}>
+            <span style={{
+              display: "block",
+              width: `${progress}%`,
+              height: "100%",
+              background: `linear-gradient(90deg, ${C.gold}, ${C.goldB})`,
+              borderRadius: "1px",
+              transition: "width 0.05s linear",
+              boxShadow: progress > 0 ? `0 0 8px rgba(201,168,76,.4)` : "none",
+            }} />
+          </span>
+          <span style={{ fontVariantNumeric: "tabular-nums", minWidth: "32px", textAlign: "right" }}>{progress}%</span>
+        </span>
+      ) : (
+        displayed
+      )}
     </div>
   );
 }
@@ -697,16 +730,16 @@ function Terminal() {
   }, []);
 
   return (
-    <div ref={ref} style={{ 
-      background: C.bg1, 
-      border: `1px solid ${C.borderB}`, 
-      overflow: "hidden", 
+    <div ref={ref} style={{
+      background: C.bg1,
+      border: `1px solid ${C.borderB}`,
+      overflow: "hidden",
       boxShadow: `0 0 60px rgba(201,168,76,.05), 0 20px 60px rgba(0,0,0,.4)`,
       position: "relative"
     }}>
       {/* Scanline overlay */}
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06))", zIndex: 10, pointerEvents: "none", backgroundSize: "100% 4px, 3px 100%" }} />
-      
+
       <div style={{ background: C.bg2, borderBottom: `1px solid ${C.border}`, padding: "10px 16px", display: "flex", alignItems: "center", gap: "8px", position: "relative", zIndex: 11 }}>
         <div style={{ display: "flex", gap: "6px" }}>
           {["#FF5F57", "#FFBD2E", "#28C840"].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />)}
@@ -717,14 +750,14 @@ function Terminal() {
 
       <div style={{ padding: "24px", minHeight: "280px", fontFamily: C.mono, fontSize: "11px", lineHeight: "1.8", position: "relative", zIndex: 11, overflowX: "auto" }}>
         {started && LINES.slice(0, idx + 1).map((l, i) => (
-          <TerminalLine 
-            key={i} 
-            line={l} 
+          <TerminalLine
+            key={i}
+            line={l}
             onComplete={() => {
               if (i === idx && idx < LINES.length - 1) {
                 setTimeout(() => setIdx(prev => prev + 1), l.type === "blank" ? 0 : 200);
               }
-            }} 
+            }}
           />
         ))}
         {started && idx < LINES.length - 1 && (
@@ -738,21 +771,21 @@ function Terminal() {
 /* ── HERO ────────────────────────────────────────────────── */
 function AmbientParticles() {
   const dots = [
-    { top:"20%",left:"8%",  size:3, delay:0,    dur:"7s",  dx:"14px" },
-    { top:"55%",left:"14%", size:2, delay:1.2,  dur:"9s",  dx:"-10px" },
-    { top:"30%",left:"92%", size:3, delay:0.5,  dur:"8s",  dx:"-18px" },
-    { top:"70%",left:"88%", size:2, delay:2,    dur:"11s", dx:"12px" },
-    { top:"80%",left:"50%", size:2, delay:0.8,  dur:"10s", dx:"8px" },
-    { top:"15%",left:"60%", size:3, delay:1.6,  dur:"8.5s",dx:"-14px" },
+    { top: "20%", left: "8%", size: 3, delay: 0, dur: "7s", dx: "14px" },
+    { top: "55%", left: "14%", size: 2, delay: 1.2, dur: "9s", dx: "-10px" },
+    { top: "30%", left: "92%", size: 3, delay: 0.5, dur: "8s", dx: "-18px" },
+    { top: "70%", left: "88%", size: 2, delay: 2, dur: "11s", dx: "12px" },
+    { top: "80%", left: "50%", size: 2, delay: 0.8, dur: "10s", dx: "8px" },
+    { top: "15%", left: "60%", size: 3, delay: 1.6, dur: "8.5s", dx: "-14px" },
   ];
   return (
-    <div style={{ position:"absolute", inset:0, pointerEvents:"none", zIndex:0, overflow:"hidden" }}>
-      {dots.map((d,i) => (
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+      {dots.map((d, i) => (
         <div key={i} style={{
-          position:"absolute", top:d.top, left:d.left,
-          width:d.size, height:d.size, borderRadius:"50%",
-          background:`rgba(201,168,76,${d.size===3?.55:.35})`,
-          animation:`particleDrift ${d.dur} ${d.delay}s ease-in-out infinite`,
+          position: "absolute", top: d.top, left: d.left,
+          width: d.size, height: d.size, borderRadius: "50%",
+          background: `rgba(201,168,76,${d.size === 3 ? .55 : .35})`,
+          animation: `particleDrift ${d.dur} ${d.delay}s ease-in-out infinite`,
           "--dx": d.dx,
         }} />
       ))}
@@ -763,7 +796,7 @@ function AmbientParticles() {
 function Hero() {
   const m = useIsMobile();
   return (
-    <section style={{ borderBottom: `1px solid ${C.border}`, padding: m ? "0 20px" : "0 40px", position:"relative", overflow:"hidden" }}>
+    <section style={{ borderBottom: `1px solid ${C.border}`, padding: m ? "0 20px" : "0 40px", position: "relative", overflow: "hidden" }}>
       <AmbientParticles />
       <div style={{ maxWidth: "1200px", margin: "0 auto", display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1px 1fr", alignItems: "center", gap: 0 }}>
 
@@ -784,12 +817,13 @@ function Hero() {
             Anchor audits AI-adjacent code against a cryptographically sealed constitutional rule set. Every violation mapped to the exact statute it breaches.
           </p>
 
-          <div style={{ display: "flex", alignItems: "stretch", height: "44px", border: `1px solid rgba(201,168,76,.4)`, overflow: "hidden", maxWidth: "100%", marginBottom: "20px", background: C.goldD, boxShadow: "0 0 30px rgba(201,168,76,.08)" }}>
-            <code style={{ padding: "0 18px", fontFamily: C.mono, fontSize: "13px", color: C.txt, display: "flex", alignItems: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>pip install anchor-audit</code>
+          {/* FIX: Added flex: 1 to code block and maxWidth: 400px to align with paragraph */}
+          <div style={{ display: "flex", alignItems: "stretch", height: "44px", border: `1px solid rgba(201,168,76,.4)`, overflow: "hidden", maxWidth: "400px", marginBottom: "20px", background: C.goldD, boxShadow: "0 0 30px rgba(201,168,76,.08)" }}>
+            <code style={{ flex: 1, padding: "0 18px", fontFamily: C.mono, fontSize: "13px", color: C.txt, display: "flex", alignItems: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>pip install anchor-audit</code>
             <CopyBtn text="pip install anchor-audit" />
           </div>
 
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", maxWidth: "400px" }}>
             {["Apache 2.0", "Python 3.8+", "43 domain rules", "170 regulatory mappings"].map(c => (
               <span key={c} style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".07em", textTransform: "uppercase", color: C.txtS, background: C.bg1, border: `1px solid ${C.border}`, padding: "4px 10px", transition: "border-color .2s, color .2s" }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.color = C.gold; }}
@@ -797,6 +831,26 @@ function Hero() {
               >{c}</span>
             ))}
           </div>
+
+          {/* v5.0 CTAs: Deploy Engine (GitHub), Request Access (Auth Gateway), Global Mesh (Public) */}
+          <div style={{ display: "flex", gap: "12px", marginTop: "40px", flexWrap: "wrap" }}>
+            <a href="https://github.com/AnimusLab/Anchor" target="_blank" rel="noopener noreferrer" style={{ fontFamily: C.mono, fontSize: "11px", fontWeight: 700, letterSpacing: ".1em", color: "#08080D", background: `linear-gradient(135deg,${C.gold},${C.goldB})`, padding: "14px 24px", textDecoration: "none", textTransform: "uppercase", transition: "opacity .2s", boxShadow: "0 4px 24px rgba(201,168,76,.25)" }}
+              onMouseEnter={e => e.currentTarget.style.opacity = ".85"}
+              onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+              Deploy Engine ↗
+            </a>
+            <Link to="/auth" style={{ fontFamily: C.mono, fontSize: "11px", fontWeight: 700, letterSpacing: ".1em", color: C.txtS, border: `1px solid ${C.border}`, background: C.bg1, padding: "14px 24px", textDecoration: "none", textTransform: "uppercase", transition: "all .2s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.color = C.txt; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.txtS; }}>
+              Request Access
+            </Link>
+            <Link to="/network" style={{ fontFamily: C.mono, fontSize: "11px", fontWeight: 700, letterSpacing: ".08em", color: "rgba(201,168,76,.6)", border: `1px solid rgba(201,168,76,.2)`, background: "transparent", padding: "14px 24px", textDecoration: "none", textTransform: "uppercase", transition: "all .2s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.color = C.gold; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,.2)"; e.currentTarget.style.color = "rgba(201,168,76,.6)"; }}>
+              Global Mesh
+            </Link>
+          </div>
+
         </div>
 
         {!m && <div style={{ background: C.border, margin: "40px 0" }} />}
@@ -927,14 +981,26 @@ function EngineSection() {
           </div>
 
           <Reveal delay={120}>
-            <div style={{ background: C.bg, border: `1px solid ${C.borderB}`, borderTop: `2px solid ${C.borderB}`, padding: "32px" }}>
+            <div style={{ background: C.bg, border: `1px solid ${C.borderB}`, borderTop: `2px solid ${C.gold}`, padding: "32px", position: "relative", overflow: "hidden" }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = `0 0 40px rgba(201,168,76,.08)`}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+            >
               <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".2em", color: C.txtD, marginBottom: "8px" }}>LAYER 02</div>
-              <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".12em", color: C.txtS, marginBottom: "20px" }}>◌ IN DEVELOPMENT</div>
+              <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "20px" }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.gold, display: "inline-block", animation: "pulse 1.5s infinite" }} />
+                <span style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".12em", color: C.gold, textTransform: "uppercase", fontWeight: 700 }}>LIVE INGRESS</span>
+              </div>
               <h3 style={{ fontFamily: C.serif, fontSize: "28px", color: C.txt, marginBottom: "18px", fontWeight: 700 }}>Runtime Decision Audit Chain</h3>
               <p style={{ fontFamily: C.mono, fontSize: "12px", lineHeight: 1.85, color: C.txtS, marginBottom: "24px", paddingLeft: "14px", borderLeft: `2px solid ${C.borderB}` }}>
-                AnchorRuntime intercepts live AI inference. Every decision produces an <code style={{ color: C.gold, fontSize: "11px" }}>AuditEntry</code> — SHA-256 signed, hash-chained, append-only. CIMS-reportable on demand.
+                Anchor Gateway intercepts live AI inference across the mesh. Every decision produces an <code style={{ color: C.gold, fontSize: "11px" }}>AuditEntry</code> — signed via unique MAT tokens, hash-chained, and stored in the Forensic Vault.
               </p>
-              {feat(["HMAC-SHA256 per-decision signing", "Hash-chained append-only log", "cims_payload() — RBI CIMS format", "adverse_action_reasons() — CFPB Reg B", "compliance_assertion() — EU AI Act"], C.txtS)}
+              {feat([
+                "Zero-Trust Machine Access Tokens (MAT)", 
+                "Multi-Tenant Identity Isolation", 
+                "Hash-chained Append-Only Ledger", 
+                "Night-Vision Forensic Vault UI", 
+                "Verified Remediation Protocol"
+              ], C.gold)}
             </div>
           </Reveal>
         </div>
@@ -1110,11 +1176,11 @@ function CasesSection() {
         </Reveal>
         <div style={{ background: C.bg, border: `1px solid ${C.border}`, padding: "40px", position: "relative", minHeight: "400px" }}>
           <AuditGraph data={[
-            { name: "Hugging Face", n: 12, href: "https://github.com/Tanishq1030/Anchor/blob/main/case-studies/governance_audits/huggingface_hub/governance_audit.md" },
-            { name: "Architecture-as-Code", n: 11, href: "https://github.com/Tanishq1030/Anchor/blob/main/case-studies/governance_audits/architecture-as-code/governance_audit.md" },
-            { name: "Django 5.x", n: 7, href: "https://github.com/Tanishq1030/Anchor/blob/main/case-studies/governance_audits/django/governance_audit.md" },
-            { name: "Anchor Engine", n: 5, href: "https://github.com/Tanishq1030/Anchor/blob/main/case-studies/governance_audits/anchor/governance_audit.md" },
-            { name: "Open Spiel", n: 4, href: "https://github.com/Tanishq1030/Anchor/blob/main/case-studies/governance_audits/open_spiel/governance_audit.md" },
+            { name: "Hugging Face", n: 12, href: "https://github.com/AnimusLab/Anchor/blob/main/case-studies/governance_audits/huggingface_hub/governance_audit.md" },
+            { name: "Architecture-as-Code", n: 11, href: "https://github.com/AnimusLab/Anchor/blob/main/case-studies/governance_audits/architecture-as-code/governance_audit.md" },
+            { name: "Django 5.x", n: 7, href: "https://github.com/AnimusLab/Anchor/blob/main/case-studies/governance_audits/django/governance_audit.md" },
+            { name: "Anchor Engine", n: 5, href: "https://github.com/AnimusLab/Anchor/blob/main/case-studies/governance_audits/anchor/governance_audit.md" },
+            { name: "Open Spiel", n: 4, href: "https://github.com/AnimusLab/Anchor/blob/main/case-studies/governance_audits/open_spiel/governance_audit.md" },
           ]} />
         </div>
       </div>
@@ -1127,7 +1193,7 @@ function AuditGraph({ data }) {
   const width = 1120;
   const maxN = 15;
   const padding = 60;
-  
+
   const points = data.map((d, i) => ({
     x: padding + (i / (data.length - 1)) * (width - padding * 2),
     y: height - padding - (d.n / maxN) * (height - padding * 2),
@@ -1149,13 +1215,13 @@ function AuditGraph({ data }) {
             </g>
           );
         })}
-        
+
         {/* Axis Labels */}
         <text x={padding - 45} y={height / 2} transform={`rotate(-90, ${padding - 45}, ${height / 2})`} style={{ fontFamily: C.mono, fontSize: "9px", fill: C.gold, letterSpacing: ".1em", textTransform: "uppercase" }}>Violations Detected</text>
 
         {/* The Line */}
         <path d={path} fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity={.6} />
-        
+
         {/* The Points */}
         {points.map((p, i) => (
           <g key={i} style={{ cursor: "pointer" }} onClick={() => window.open(p.href, "_blank")}>
@@ -1172,15 +1238,15 @@ function AuditGraph({ data }) {
         ))}
       </svg>
       <div style={{ marginTop: "40px", display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "20px" }}>
-         {data.map((d, i) => (
-           <a key={i} href={d.href} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: C.bg1, border: `1px solid ${C.border}`, padding: "12px", transition: "border-color .2s" }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = C.gold}
-              onMouseLeave={e => e.currentTarget.style.borderColor = C.border}
-           >
-             <div style={{ fontFamily: C.mono, fontSize: "9px", color: C.gold, marginBottom: "4px" }}>{d.n} FINDINGS</div>
-             <div style={{ fontFamily: C.serif, fontSize: "13px", color: C.txt, fontWeight: 600 }}>{d.name} →</div>
-           </a>
-         ))}
+        {data.map((d, i) => (
+          <a key={i} href={d.href} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: C.bg1, border: `1px solid ${C.border}`, padding: "12px", transition: "border-color .2s" }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = C.gold}
+            onMouseLeave={e => e.currentTarget.style.borderColor = C.border}
+          >
+            <div style={{ fontFamily: C.mono, fontSize: "9px", color: C.gold, marginBottom: "4px" }}>{d.n} FINDINGS</div>
+            <div style={{ fontFamily: C.serif, fontSize: "13px", color: C.txt, fontWeight: 600 }}>{d.name} →</div>
+          </a>
+        ))}
       </div>
     </div>
   );
@@ -1222,16 +1288,16 @@ function GetStartedSection() {
         </Reveal>
         <Reveal delay={200}>
           <div style={{ display: "flex", justifyContent: "center", gap: "16px", flexWrap: "wrap" }}>
-            <a href="https://github.com/Tanishq1030/Anchor" target="_blank" rel="noreferrer"
+            <Link to="/network"
               style={{ fontFamily: C.mono, fontSize: "11px", letterSpacing: ".1em", fontWeight: 700, color: "#08080D", background: `linear-gradient(135deg,${C.gold},${C.goldB})`, padding: "13px 30px", textDecoration: "none", boxShadow: "0 4px 24px rgba(201,168,76,.25)", transition: "opacity .2s" }}
               onMouseEnter={e => e.currentTarget.style.opacity = ".85"}
               onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-            >VIEW ON GITHUB →</a>
-            <a href="https://pypi.org/project/anchor-audit/" target="_blank" rel="noreferrer"
+            >ENTER GLOBAL MESH →</Link>
+            <a href="https://github.com/AnimusLab/Anchor" target="_blank" rel="noreferrer"
               style={{ fontFamily: C.mono, fontSize: "11px", color: C.txtS, border: `1px solid ${C.border}`, padding: "13px 22px", textDecoration: "none", transition: "all .2s" }}
               onMouseEnter={e => { e.currentTarget.style.color = C.txt; e.currentTarget.style.borderColor = C.gold; }}
               onMouseLeave={e => { e.currentTarget.style.color = C.txtS; e.currentTarget.style.borderColor = C.border; }}
-            >PyPI package</a>
+            >View on GitHub</a>
           </div>
         </Reveal>
       </div>
@@ -1258,7 +1324,7 @@ function ContactSection() {
         </Reveal>
         <Reveal delay={300}>
           <div style={{ display: "inline-flex", flexDirection: "column", gap: "12px", alignItems: "center" }}>
-             <a href="mailto:tan@anchorgovernance.tech" style={{
+            <a href="mailto:tan@anchorgovernance.tech" style={{
               fontFamily: C.mono, fontSize: m ? "14px" : "20px", color: C.bg, background: `linear-gradient(135deg, ${C.gold}, ${C.goldB})`, textDecoration: "none", padding: m ? "18px 28px" : "24px 64px", transition: "transform .2s, box-shadow .2s", fontWeight: 700, boxShadow: "0 10px 40px rgba(201,168,76,.15)", wordBreak: "break-all"
             }}
               onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 15px 50px rgba(201,168,76,.25)"; }}
@@ -1295,7 +1361,7 @@ function Footer() {
             </div>
           </div>
           <div className="footer-links" style={{ display: "flex", gap: "24px", alignItems: "center" }}>
-            {[["GitHub", "https://github.com/Tanishq1030/Anchor"], ["PyPI", "https://pypi.org/project/anchor-audit/"], ["Changelog", "https://github.com/Tanishq1030/Anchor/blob/main/CHANGELOG.md"]].map(([l, h]) => (
+            {[["GitHub", "https://github.com/AnimusLab/Anchor"], ["PyPI", "https://pypi.org/project/anchor-audit/"], ["Changelog", "https://github.com/AnimusLab/Anchor/blob/main/CHANGELOG.md"]].map(([l, h]) => (
               <a key={l} href={h} target="_blank" rel="noreferrer"
                 style={{ fontFamily: C.mono, fontSize: "10px", letterSpacing: ".08em", textTransform: "uppercase", color: C.txtS, textDecoration: "none", transition: "color .2s" }}
                 onMouseEnter={e => e.target.style.color = C.gold}
@@ -1313,7 +1379,7 @@ function Footer() {
 }
 
 /* ── APP ─────────────────────────────────────────────────── */
-export default function App() {
+export default function LandingPage() {
   const [loaded, setLoaded] = useState(false);
   const handleDone = useCallback(() => setLoaded(true), []);
 

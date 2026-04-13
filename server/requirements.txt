@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+sqlalchemy
+alembic
+cryptography
+httpx
+tenacity
+pyahocorasick
+python-dotenv
+bcrypt
+PyJWT
+psycopg2-binary
+websockets
+sib-api-v3-sdk
+pyotp
+qrcode[pil]
