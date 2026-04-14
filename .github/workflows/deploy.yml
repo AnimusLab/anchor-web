@@ -27,6 +27,8 @@ jobs:
           cache-dependency-path: './${{ matrix.project }}/package-lock.json'
 
       - name: Install & Build ${{ matrix.project }}
+        env:
+          VITE_API_URL: https://animuslab-anchor.hf.space
         run: |
           cd ${{ matrix.project }}
           # Use ci if lockfile exists, otherwise standard install
