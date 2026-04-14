@@ -80,12 +80,12 @@ export default function LoginPage() {
         {time}
       </div>
 
-      <div className="w-full max-w-lg border border-[#161B22] bg-[#08090C] overflow-hidden animate-slide-up shadow-2xl relative z-10">
+      <div className="w-full max-w-xl bg-[#0D0D14] border border-[#1E1E2A] shadow-2xl overflow-hidden relative z-10 animate-fade-in">
         <div className="h-1 bg-cyan-400/20">
           <div className={`h-full bg-cyan-400 transition-all duration-1000 ${loading ? 'w-full' : 'w-0'}`} />
         </div>
         
-        <form onSubmit={handleLogin} className="p-12 space-y-10">
+        <form onSubmit={handleLogin} className="p-12 space-y-12">
           <div className="text-center mb-6">
             <h2 className="text-xs tracking-[0.4em] text-[#8B949E] uppercase font-bold">Admin Clearance</h2>
           </div>

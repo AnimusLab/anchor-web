@@ -259,7 +259,7 @@ export default function LoginPage() {
           background: '#0C0C12',
           border:     '1px solid #1E1E2E',
           borderTop:  'none',
-          padding:    '64px 64px 56px',
+          padding:    '48px', // Matching p-12 (48px)
         }}>
 
           {/* Stage label */}

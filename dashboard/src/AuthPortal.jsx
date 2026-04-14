@@ -203,16 +203,11 @@ export default function AuthPortal({ isInvite = false }) {
             </div>
 
             <div className="w-full max-w-xl bg-[#0D0D14] border border-[#1E293B] shadow-2xl overflow-hidden relative z-10">
-                {!isInvite && (
+                {activeTab === 'accept_invite' && (
                     <div className="flex border-b border-[#1E293B]">
-                        {['login', 'register', 'auditor'].map((tab) => (
-                            <button key={tab} onClick={() => { setActiveTab(tab); setError(''); }}
-                                className={`flex-1 py-4 text-[10px] tracking-widest uppercase transition-all ${
-                                    activeTab === tab ? 'bg-[#1E293B]/50 text-cyan-400 border-b-2 border-cyan-400 font-bold' : 'text-slate-500 hover:text-slate-300'
-                                }`}>
-                                {tab === 'register' ? 'ONBOARD ORG' : tab}
-                            </button>
-                        ))}
+                        <div className="flex-1 py-4 text-[11px] tracking-[0.3em] uppercase text-emerald-400 text-center font-bold bg-[#1E293B]/20">
+                            Invitational Clearance
+                        </div>
                     </div>
                 )}
 

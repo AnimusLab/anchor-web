@@ -344,7 +344,8 @@ function WelcomeScreen({ onDone }) {
     "BOOTING LLM ENFORCEMENT LAYER...",
     "SYNCING STATUTES: 170 MAPPED RULES LOADED",
     "VERIFYING WASM SANDBOX INTEGRITY...",
-    "CONNECTING TO GLOBAL GOVERNANCE FLEET...",
+    "CONNECTING TO GLOBAL SOVEREIGN MESH...",
+    "ESTABLISHING HUB-SPOKE RELAY [OK]",
     "SYSTEM STATUS: COMPLIANT",
     "ANCHOR READY."
   ];
@@ -501,7 +502,7 @@ function Nav({ loaded }) {
           <DigitalMark size={40} glow={false} />
           <div>
             <div style={{ fontFamily: C.serif, fontWeight: 700, fontSize: "20px", color: C.txt, lineHeight: 1, letterSpacing: "-.01em" }}>Anchor</div>
-            <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".14em", color: C.gold, lineHeight: 1.3 }}>GOVERNANCE ENGINE</div>
+            <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".14em", color: C.gold, lineHeight: 1.3 }}>SOVEREIGN GOVERNANCE MESH</div>
           </div>
           {!m && <span style={{ fontFamily: C.mono, fontSize: "10px", letterSpacing: ".1em", color: "rgba(201,168,76,.65)", border: `1px solid rgba(201,168,76,.25)`, padding: "2px 8px" }}>v5.0.0</span>}
         </a>
@@ -521,11 +522,11 @@ function Nav({ loaded }) {
           </div>
         )}
 
-        <a href="https://github.com/Tanishq1030/Anchor" target="_blank" rel="noreferrer"
+        <a href="https://app.anchorgovernance.tech" target="_blank" rel="noreferrer"
           style={{ marginLeft: m ? "auto" : undefined, fontFamily: C.mono, fontSize: "11px", letterSpacing: ".12em", fontWeight: 600, color: "#08080D", background: `linear-gradient(135deg,${C.gold},${C.goldB})`, padding: "8px 16px", textDecoration: "none", flexShrink: 0, transition: "opacity .2s", boxShadow: "0 4px 24px rgba(201,168,76,.3)" }}
           onMouseEnter={e => e.currentTarget.style.opacity = ".85"}
           onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-        >{m ? "GitHub ↗" : "GET STARTED"}</a>
+        >{m ? "Launch" : "LAUNCH CONSOLE"}</a>
       </div>
       <div style={{ height: "1.5px", background: `linear-gradient(90deg,transparent,${C.gold},${C.goldB},${C.gold},transparent)`, opacity: .45 }} />
     </nav>
@@ -543,11 +544,10 @@ function DataBar({ loaded }) {
       opacity: loaded ? 1 : 0, transition: "opacity .6s .3s ease",
     }}>
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 40px", display: "flex", gap: "0", alignItems: "center", flexWrap: "wrap" }}>
-        {[
+          { label: "FEDERATED NODES", val: "12", change: "6 US · 4 EU · 2 IN", up: true, data: [2, 5, 8, 10, 12] },
           { label: "DOMAIN RULES", val: "43", change: "+12 v4", up: true, data: [28, 31, 35, 40, 43] },
           { label: "TOTAL COVERAGE", val: "170", change: "+114 mappings", up: true, chart: "bar", data: [65, 90, 120, 150, 170] },
-          { label: "FRAMEWORKS", val: "9", change: "RBI · EU · SEBI", up: true, data: [6, 7, 8, 9, 9] },
-          { label: "SELF-AUDIT", val: "0 FAIL", change: "✓ CLEAN", up: true, data: [0, 0, 0, 0] },
+          { label: "SELF-AUDIT", val: "PASS", change: "✓ CRYPTO-SEALED", up: true, data: [0, 0, 0, 0] },
         ].map((item, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "0 28px", borderRight: `1px solid ${C.border}` }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -588,15 +588,15 @@ function SH({ rev, title }) {
 
 /* ── TERMINAL ────────────────────────────────────────────── */
 const LINES = [
-  { text: "anchor init --regulators rbi,eu --domains privacy,agentic", type: "cmd", delay: 0 },
-  { text: "⚓  Anchor v5 — Governance Fleet", type: "info", delay: 600 },
-  { text: "  ✓ Security (SEC) — constitutional floor", type: "ok", delay: 900 },
-  { text: "  ✓ Ethics (ETH) — constitutional floor", type: "ok", delay: 1100 },
-  { text: "  ✓ Privacy (PRV)", type: "ok", delay: 1300 },
-  { text: "  ✓ Agentic AI (AGT)", type: "ok", delay: 1500 },
-  { text: "  ✓ RBI FREE-AI Report 2025", type: "ok", delay: 1700 },
-  { text: "  ✓ EU AI Act 2024/1689", type: "ok", delay: 1900 },
-  { text: "  ✓ GOVERNANCE.lock: sha256:d238a6d5...", type: "ok", delay: 2100 },
+  { text: "anchor init --mesh global --role enterprise", type: "cmd", delay: 0 },
+  { text: "⚓  Anchor v5 — Sovereign Mesh Node", type: "info", delay: 600 },
+  { text: "  ✓ Hub Relay (Regulate) — CONNECTED", type: "ok", delay: 900 },
+  { text: "  ✓ Spoke Node (Sovereign) — LOCAL_READY", type: "ok", delay: 1100 },
+  { text: "  ✓ Privacy Shield — ACTIVE", type: "ok", delay: 1300 },
+  { text: "  ✓ Agentic Enforcement Flow", type: "ok", delay: 1500 },
+  { text: "  ✓ RBI/EU Sync — 170 Mappings", type: "ok", delay: 1700 },
+  { text: "  ✓ Lattice Signature — VERIFIED", type: "ok", delay: 1900 },
+  { text: "  ✓ MESH_RELAY_ID: sha256:d238a6d5...", type: "ok", delay: 2100 },
   { text: "", type: "blank", delay: 2400 },
   { text: "$ anchor check .", type: "cmd", delay: 2600 },
   { text: "Scanning 164 paths · 43 domains · 170 active mappings", type: "info", delay: 3000 },
@@ -760,6 +760,56 @@ function AmbientParticles() {
   );
 }
 
+/* ── MESH SECTION ───────────────────────────────────────── */
+function MeshSection() {
+  const m = useIsMobile();
+  return (
+    <section style={{ padding: m ? "60px 20px" : "88px 40px", borderBottom: `1px solid ${C.border}`, background: C.bg1 }} id="mesh">
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        <Reveal>
+          <SH rev="MX" title="Federated Architecture" />
+          <h2 style={{ fontFamily: C.serif, fontSize: "clamp(32px,3.5vw,48px)", color: C.txt, marginBottom: "52px", fontWeight: 900, textAlign: "center" }}>
+            Data Stays Local.<br />
+            <span style={{ color: C.gold }}>Compliance Stays Global.</span>
+          </h2>
+        </Reveal>
+
+        <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1px 1fr", gap: m ? "40px" : "0", alignItems: "start" }}>
+          {/* Spoke */}
+          <Reveal dir="left">
+            <div style={{ padding: m ? 0 : "0 60px 0 0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <div style={{ background: C.cyanD, border: `1px solid ${C.cyan}`, padding: "6px 12px", fontFamily: C.mono, fontSize: "10px", color: C.cyan, fontWeight: 700 }}>THE SPOKE</div>
+                <span style={{ fontFamily: C.mono, fontSize: "9px", color: C.txtD, tracking: ".1em" }}>ENTERPRISE NODE</span>
+              </div>
+              <h3 style={{ fontFamily: C.serif, fontSize: "28px", color: C.txt, marginBottom: "20px" }}>Absolute Sovereignty.</h3>
+              <p style={{ fontFamily: C.mono, fontSize: "13px", color: C.txtS, lineHeight: 1.8 }}>
+                The Spoke node is deployed inside the corporate firewall. Your logs, your keys, and your inference data never leave your infrastructure. Governance is executed locally at the speed of code.
+              </p>
+            </div>
+          </Reveal>
+
+          {!m && <div style={{ background: C.border, alignSelf: "stretch" }} />}
+
+          {/* Hub */}
+          <Reveal dir="up">
+            <div style={{ padding: m ? 0 : "0 0 0 60px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <div style={{ background: C.goldD, border: `1px solid ${C.gold}`, padding: "6px 12px", fontFamily: C.mono, fontSize: "10px", color: C.gold, fontWeight: 700 }}>THE HUB</div>
+                <span style={{ fontFamily: C.mono, fontSize: "9px", color: C.txtD, tracking: ".1em" }}>REGULATORY RELAY</span>
+              </div>
+              <h3 style={{ fontFamily: C.serif, fontSize: "28px", color: C.txt, marginBottom: "20px" }}>Universal Integrity.</h3>
+              <p style={{ fontFamily: C.mono, fontSize: "13px", color: C.txtS, lineHeight: 1.8 }}>
+                The Hub acts as a cryptographically sealed registry of every regulatory framework. It relays mandated rule-sets to local spokes while providing a single pane of oversight for authorized regulatory agents.
+              </p>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Hero() {
   const m = useIsMobile();
   return (
@@ -774,19 +824,25 @@ function Hero() {
             <span style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".18em", color: "rgba(201,168,76,.75)", textTransform: "uppercase" }}>v5.0.0 — Governance Fleet · AnimusLab</span>
           </div>
 
-          <h1 style={{ fontFamily: C.serif, fontSize: "clamp(48px,5.5vw,76px)", lineHeight: .98, letterSpacing: "-.02em", color: C.txt, marginBottom: "24px", fontWeight: 900 }}>
-            The law your<br />
-            AI code<br />
-            <span style={{ color: C.gold, fontStyle: "italic" }}>answers to.</span>
+          <h1 style={{ fontFamily: C.serif, fontSize: "clamp(48px,5.5vw,76px)", lineHeight: 0.95, letterSpacing: "-.03em", color: C.txt, marginBottom: "24px", fontWeight: 900 }}>
+            One Sovereign Mesh.<br />
+            Global <span style={{ color: C.gold, fontStyle: "italic" }}>Enforcement.</span>
           </h1>
 
-          <p style={{ fontFamily: C.mono, fontSize: "13px", lineHeight: 1.85, color: C.txtS, maxWidth: "400px", marginBottom: "40px", paddingLeft: "16px", borderLeft: `2px solid ${C.gold}` }}>
-            Anchor audits AI-adjacent code against a cryptographically sealed constitutional rule set. Every violation mapped to the exact statute it breaches.
+          <p style={{ fontFamily: C.mono, fontSize: "14px", lineHeight: 1.7, color: C.txtS, maxWidth: "450px", marginBottom: "40px", paddingLeft: "16px", borderLeft: `2px solid ${C.gold}` }}>
+            Federated governance for the agentic age. Enterprises maintain data sovereignty via Spoke nodes; regulators maintain cryptographic oversight via the Global Hub.
           </p>
 
-          <div style={{ display: "flex", alignItems: "stretch", height: "44px", border: `1px solid rgba(201,168,76,.4)`, overflow: "hidden", maxWidth: "100%", marginBottom: "20px", background: C.goldD, boxShadow: "0 0 30px rgba(201,168,76,.08)" }}>
-            <code style={{ padding: "0 18px", fontFamily: C.mono, fontSize: "13px", color: C.txt, display: "flex", alignItems: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>pip install anchor-audit</code>
-            <CopyBtn text="pip install anchor-audit" />
+          <div style={{ display: "flex", gap: "16px", marginBottom: "32px", flexWrap: m ? "column" : "row" }}>
+            <a href="https://app.anchorgovernance.tech" target="_blank" rel="noreferrer" style={{
+              fontFamily: C.mono, fontSize: "13px", fontWeight: 700, color: C.bg, background: `linear-gradient(135deg, ${C.gold}, ${C.goldB})`,
+              padding: "18px 32px", textDecoration: "none", letterSpacing: ".1em", textTransform: "uppercase", boxShadow: "0 12px 30px rgba(201,168,76,.2)"
+            }}>Launch Enterprise Console</a>
+            
+            <a href="https://oversight.anchorgovernance.tech" target="_blank" rel="noreferrer" style={{
+              fontFamily: C.mono, fontSize: "13px", fontWeight: 700, color: C.gold, border: `1px solid ${C.gold}`,
+              padding: "18px 32px", textDecoration: "none", letterSpacing: ".1em", textTransform: "uppercase"
+            }}>Access Auditor Portal</a>
           </div>
 
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
@@ -1295,7 +1351,12 @@ function Footer() {
             </div>
           </div>
           <div className="footer-links" style={{ display: "flex", gap: "24px", alignItems: "center" }}>
-            {[["GitHub", "https://github.com/Tanishq1030/Anchor"], ["PyPI", "https://pypi.org/project/anchor-audit/"], ["Changelog", "https://github.com/Tanishq1030/Anchor/blob/main/CHANGELOG.md"]].map(([l, h]) => (
+            {[
+              ["Enterprise Console", "https://app.anchorgovernance.tech"],
+              ["Auditor Portal", "https://oversight.anchorgovernance.tech"],
+              ["Root Admin", "https://root.anchorgovernance.tech"],
+              ["PyPI", "https://pypi.org/project/anchor-audit/"]
+            ].map(([l, h]) => (
               <a key={l} href={h} target="_blank" rel="noreferrer"
                 style={{ fontFamily: C.mono, fontSize: "10px", letterSpacing: ".08em", textTransform: "uppercase", color: C.txtS, textDecoration: "none", transition: "color .2s" }}
                 onMouseEnter={e => e.target.style.color = C.gold}
@@ -1340,6 +1401,7 @@ export default function App() {
           </div>
         </div>
         <Hero />
+        <MeshSection />
         <ProblemSection />
         <EngineSection />
         <ViolationsSection />
