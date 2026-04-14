@@ -1,39 +1,21 @@
+/* Global CSS Reset for Anchor Sovereign Mesh */
 @import "tailwindcss";
 
 :root {
   --bg-noc: #08080D;
-  --neon-rose: #f43f5e;
-  --neon-emerald: #10b981;
-  --glass: rgba(13, 13, 20, 0.7);
 }
 
 body {
   margin: 0;
+  padding: 0;
   background-color: var(--bg-noc);
   color: #94a3b8; 
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  min-height: 100vh;
 }
 
-@keyframes barGrow {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 2px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--neon-rose);
+#root {
+  width: 100%;
+  min-height: 100vh;
 }

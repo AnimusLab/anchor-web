@@ -1,12 +1,13 @@
-// src/lib/api.js
-
-export const API_BASE = import.meta.env.VITE_API_URL || ''
+// src/lib/api.js — Root Admin portal API client
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export const endpoints = {
-  // Admin Auth (reusing existing system admin login)
-  login: `${API_BASE}/api/auth/login`, 
+  // Isolated Master Auth
+  identify: `${API_BASE}/api/auth/admin/identify`,
+  verifyTotp: `${API_BASE}/api/auth/admin/verify-totp`,
+  
   me:    `${API_BASE}/api/auth/me`,
-
+  
   // Oversight Admin
   provision: `${API_BASE}/api/admin/provision`,
   auditors:  `${API_BASE}/api/oversight/admin/auditors`,

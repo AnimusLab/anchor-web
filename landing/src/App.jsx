@@ -839,11 +839,6 @@ function Hero() {
               fontFamily: C.mono, fontSize: "13px", fontWeight: 700, color: C.bg, background: `linear-gradient(135deg, ${C.gold}, ${C.goldB})`,
               padding: "18px 32px", textDecoration: "none", letterSpacing: ".1em", textTransform: "uppercase", boxShadow: "0 12px 30px rgba(201,168,76,.2)"
             }}>Launch Enterprise Console</a>
-            
-            <a href="https://oversight.anchorgovernance.tech" target="_blank" rel="noreferrer" style={{
-              fontFamily: C.mono, fontSize: "13px", fontWeight: 700, color: C.gold, border: `1px solid ${C.gold}`,
-              padding: "18px 32px", textDecoration: "none", letterSpacing: ".1em", textTransform: "uppercase"
-            }}>Access Auditor Portal</a>
           </div>
 
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
@@ -987,11 +982,11 @@ function EngineSection() {
             <div style={{ background: C.bg, border: `1px solid ${C.borderB}`, borderTop: `2px solid ${C.borderB}`, padding: "32px" }}>
               <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".2em", color: C.txtD, marginBottom: "8px" }}>LAYER 02</div>
               <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".12em", color: C.txtS, marginBottom: "20px" }}>◌ IN DEVELOPMENT</div>
-              <h3 style={{ fontFamily: C.serif, fontSize: "28px", color: C.txt, marginBottom: "18px", fontWeight: 700 }}>Runtime Decision Audit Chain</h3>
+              <h3 style={{ fontFamily: C.serif, fontSize: "28px", color: C.txt, marginBottom: "18px", fontWeight: 700 }}>Federated Governance Relay</h3>
               <p style={{ fontFamily: C.mono, fontSize: "12px", lineHeight: 1.85, color: C.txtS, marginBottom: "24px", paddingLeft: "14px", borderLeft: `2px solid ${C.borderB}` }}>
-                AnchorRuntime intercepts live AI inference. Every decision produces an <code style={{ color: C.gold, fontSize: "11px" }}>AuditEntry</code> — SHA-256 signed, hash-chained, append-only. CIMS-reportable on demand.
+                Decentralized forensic audit chain brokered via Hub-Spoke architecture. Real-time CIMS-compliant telemetry for global regulators without compromising Spoke data sovereignty.
               </p>
-              {feat(["HMAC-SHA256 per-decision signing", "Hash-chained append-only log", "cims_payload() — RBI CIMS format", "adverse_action_reasons() — CFPB Reg B", "compliance_assertion() — EU AI Act"], C.txtS)}
+              {feat(["Hub-Spoke Blockchain Link", "SHA-256 Hash Chaining", "cims_payload() — RBI CIMS Format", "Cross-Border Forensic Handover", "Regulatory Node Oversight"], C.txtS)}
             </div>
           </Reveal>
         </div>
@@ -1354,8 +1349,6 @@ function Footer() {
           <div className="footer-links" style={{ display: "flex", gap: "24px", alignItems: "center" }}>
             {[
               ["Enterprise Console", "https://app.anchorgovernance.tech"],
-              ["Auditor Portal", "https://oversight.anchorgovernance.tech"],
-              ["Root Admin", "https://root.anchorgovernance.tech"],
               ["PyPI", "https://pypi.org/project/anchor-audit/"]
             ].map(([l, h]) => (
               <a key={l} href={h} target="_blank" rel="noreferrer"

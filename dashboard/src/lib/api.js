@@ -11,8 +11,8 @@ export const endpoints = {
     revoke: `${API_BASE}/api/auth/revoke`,
     pending: `${API_BASE}/api/auth/pending`,
     me: `${API_BASE}/api/auth/me`,
-    identify: `${API_BASE}/api/auth/identify`,
-    verifyTotp: `${API_BASE}/api/auth/verify-totp`,
+    identify: `${API_BASE}/api/auth/enterprise/identify`,
+    verifyTotp: `${API_BASE}/api/auth/enterprise/verify-totp`,
 
     // Projects (Multi-Project Support)
     createProject: `${API_BASE}/api/auth/projects/create`,

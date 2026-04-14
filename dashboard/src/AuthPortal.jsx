@@ -154,15 +154,19 @@ export default function AuthPortal({ isInvite = false }) {
     return (
         <div className="min-h-screen bg-[#08080D] flex flex-col items-center justify-center font-mono p-4 relative">
             <GridBackground />
-            <div className="mb-8 text-center text-slate-200">
-                <h1 className="text-2xl tracking-[0.5em] font-bold text-white">ANCHOR COMMAND</h1>
-                <div className="flex items-center justify-center space-x-2 text-[10px] mt-2 opacity-60">
-                    <span className="h-2 w-2 bg-cyan-400 rounded-full animate-pulse"></span>
-                    <span className="tracking-widest uppercase">Federated Node Link Established</span>
+            <div className="w-full max-w-xl bg-[#0D0D14] border border-[#1E293B] shadow-2xl overflow-hidden relative z-10">
+                {/* Header Strip */}
+                <div className="flex items-center gap-4 px-8 py-6 bg-[#08080D] border-b border-[#1E293B]">
+                    <div className="w-8 h-8 flex items-center justify-center bg-cyan-500/10 border border-cyan-500/30">
+                        <div className="w-3 h-3 bg-cyan-500" />
+                    </div>
+                    <div>
+                        <div className="text-[12px] font-bold tracking-[0.2em] uppercase text-cyan-400">Security Clearance</div>
+                        <div className="text-[9px] tracking-widest uppercase text-slate-600 mt-1">Federated Node Link Established</div>
+                    </div>
                 </div>
-            </div>
 
-            <div className="w-full max-w-xl bg-[#0D0D14] border border-[#1E293B] shadow-2xl overflow-hidden relative z-10 p-12">
+                <div className="p-20">
                 {error && (
                     <div className="mb-8 p-4 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[10px] uppercase font-bold tracking-widest leading-relaxed">
                         [SECURITY_ERROR] {error}
@@ -170,7 +174,7 @@ export default function AuthPortal({ isInvite = false }) {
                 )}
 
                 {activeTab === 'login' && (
-                    <form onSubmit={handleLogin} className="space-y-12 animate-in fade-in duration-500">
+                    <form onSubmit={handleLogin} className="space-y-16 animate-in fade-in duration-500">
                         {loginStep === 'identify' ? (
                             <>
                                 <div className="space-y-4">
@@ -208,6 +212,13 @@ export default function AuthPortal({ isInvite = false }) {
                         </button>
                     </form>
                 )}
+                </div>
+                
+                {/* System Bar */}
+                <div className="flex items-center justify-between px-8 py-4 bg-[#08080D] border-t border-[#1E293B]">
+                    <span className="text-[9px] tracking-widest uppercase text-slate-700">mesh.anchorgovernance.tech</span>
+                    <span className="text-[9px] font-mono text-slate-700 uppercase">Authenticated Session Required</span>
+                </div>
             </div>
         </div>
     );

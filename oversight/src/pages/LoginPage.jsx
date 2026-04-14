@@ -1,308 +1,194 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import { endpoints } from '../lib/api'
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const TOTP_LEN = 6
-
-function StatusBar({ time }) {
-  return (
-    <div className="fixed top-0 inset-x-0 h-9 flex items-center justify-between px-6 z-50 shadow-sm"
-      style={{ background: '#06060A', borderBottom: '1px solid #1E1E2E' }}>
-      <div className="flex items-center gap-4">
-        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-        <span className="text-[10px] font-bold tracking-[0.3em] text-amber-500 uppercase">
-          Anchor Oversight
-        </span>
-        <span className="text-[9px] tracking-widest uppercase"
-          style={{ color: '#4A5568', borderLeft: '1px solid #1E1E2E', paddingLeft: '12px' }}>
-          Regulatory Access Terminal
-        </span>
-      </div>
-      <div className="flex items-center gap-6">
-        <span className="text-[9px] tracking-widest" style={{ color: '#4A5568' }}>
-          SECURE CHANNEL · TLS 1.3
-        </span>
-        <span className="text-[9px] font-mono" style={{ color: '#4A5568' }}>
-          {time}
-        </span>
-      </div>
-    </div>
-  )
-}
-
-function GridBackground() {
-  return (
-    <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-      {/* Subtle amber vignette at center */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(201,168,76,0.04) 0%, transparent 70%)',
-      }} />
-      <div style={{
-        position: 'absolute', inset: 0,
-        backgroundImage: `
-          linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px)
-        `,
-        backgroundSize: '48px 48px',
-      }} />
-    </div>
-  )
-}
-
-function TotpInput({ value, onChange, disabled }) {
-  const inputRefs = useRef([])
-  const digits = value.padEnd(TOTP_LEN, '').split('').slice(0, TOTP_LEN)
-
-  const handleKey = (e, idx) => {
-    if (e.key === 'Backspace') {
-      const next = value.slice(0, -1)
-      onChange(next)
-      if (idx > 0 && value.length <= idx) inputRefs.current[idx - 1]?.focus()
-      return
-    }
-    if (e.key === 'ArrowLeft' && idx > 0) { inputRefs.current[idx - 1]?.focus(); return }
-    if (e.key === 'ArrowRight' && idx < TOTP_LEN - 1) { inputRefs.current[idx + 1]?.focus(); return }
-  }
-
-  const handleChange = (e, idx) => {
-    const char = e.target.value.replace(/\D/g, '').slice(-1)
-    if (!char) return
-    const arr  = value.padEnd(TOTP_LEN, '').split('')
-    arr[idx]   = char
-    const next = arr.join('').slice(0, TOTP_LEN)
-    onChange(next)
-    if (idx < TOTP_LEN - 1) inputRefs.current[idx + 1]?.focus()
-  }
-
-  return (
-    <div className="flex gap-4 justify-center">
-      {Array.from({ length: TOTP_LEN }).map((_, idx) => (
-        <input
-          key={idx}
-          ref={el => inputRefs.current[idx] = el}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={digits[idx] || ''}
-          disabled={disabled}
-          onChange={e => handleChange(e, idx)}
-          onKeyDown={e => handleKey(e, idx)}
-          onFocus={e => e.target.select()}
-          className="w-12 h-16 text-center text-3xl font-bold outline-none transition-all duration-300 rounded-lg shadow-inner disabled:opacity-40"
-          style={{
-            background: digits[idx] ? 'rgba(201,168,76,0.1)' : '#0C0C12',
-            border:     digits[idx] ? '2px solid rgba(201,168,76,0.8)' : '2px solid #1E1E2E',
-            color:      '#C9A84C',
-            fontFamily: "'JetBrains Mono', monospace",
-          }}
-        />
-      ))}
-    </div>
-  )
+// Regulatory Colors
+const C = {
+  bg: '#06060A',
+  card: '#0C0C12',
+  amber: '#C9A84C',
+  amberDim: 'rgba(201,168,76,0.1)',
+  border: '#1E1E2E',
+  txt: '#E2E8F0',
+  txtS: '#94A3B8',
+  txtD: '#475569'
 }
 
 export default function LoginPage() {
-  const navigate  = useNavigate()
-  const { login } = useAuth()
-
-  const [entityId,  setEntityId]  = useState('')
-  const [email,     setEmail]     = useState('')
-  const [totp,      setTotp]      = useState('')
-  const [stage,     setStage]     = useState('credentials') 
+  const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [entityId, setEntityId] = useState('')
+  const [totp, setTotp] = useState('')
+  const [stage, setStage] = useState('identify') // identify -> verify
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [intentToken, setIntentToken] = useState(null)
-  const [error,     setError]     = useState('')
-  const [shake,     setShake]     = useState(false)
-  const [time,      setTime]      = useState('')
+  
   const entityRef = useRef(null)
 
-  useEffect(() => {
-    const tick = () => setTime(new Date().toUTCString().replace('GMT', 'UTC'))
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [])
-
-  useEffect(() => { entityRef.current?.focus() }, [])
-
-  const triggerShake = (msg) => {
-    setError(msg)
-    setShake(true)
-    setTimeout(() => setShake(false), 450)
-  }
-
-  const handleCredentialsNext = async (e) => {
+  const handleIdentify = async (e) => {
     e.preventDefault()
-    const id = entityId.trim().toUpperCase()
-    const em = email.trim().toLowerCase()
-    if (!id || id.length < 3) { triggerShake('ENTITY ID REQUIRED'); return }
-    if (!em.includes('@'))    { triggerShake('VALID EMAIL REQUIRED'); return }
-    
-    setStage('loading')
+    setLoading(true)
     setError('')
-    
     try {
-      const res = await fetch(endpoints.identify, {
+      const res = await fetch('http://localhost:8000/api/auth/oversight/identify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: em, org_id: id })
+        body: JSON.stringify({ email, org_id: entityId })
       })
       const data = await res.json()
-      
       if (res.ok) {
         setIntentToken(data.intent_token)
-        setStage('totp')
+        setStage('verify')
       } else {
-        triggerShake(data.detail || 'IDENTITY NOT RECOGNISED')
-        setStage('credentials')
-      }
-    } catch (err) {
-      triggerShake('CONNECTION ERROR')
-      setStage('credentials')
-    }
-  }
-
-  const handleLogin = async (e) => {
-    e?.preventDefault()
-    if (totp.length < TOTP_LEN) { triggerShake('ENTER ALL 6 DIGITS'); return }
-
-    setStage('authenticating')
-    setError('')
-
-    try {
-      const res = await fetch(endpoints.verifyTotp, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          org_id:    entityId.trim().toUpperCase(),
-          email:     email.trim().toLowerCase(),
-          totp_code: totp,
-          intent_token: intentToken
-        }),
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        login(data.access_token, {
-          entity_id:    data.user.org_id,
-          display_name: data.user.display_name,
-          role:         data.user.role,
-        })
-        navigate('/dashboard', { replace: true })
-      } else {
-        const err = await res.json().catch(() => ({}))
-        setTotp('')
-        setStage('totp')
-        triggerShake(err.detail || 'SECURITY HANDSHAKE FAILED')
+        setError(data.detail || 'IDENTITY NOT RECOGNIZED BY HUB')
       }
     } catch {
-      setTotp('')
-      setStage('totp')
-      triggerShake('NETWORK ERROR — RETRY')
+      setError('HUB CONNECTION TIMEOUT')
+    } finally {
+      setLoading(false)
     }
   }
 
-  // Auto-submit
-  useEffect(() => {
-    if (stage === 'totp' && totp.length === TOTP_LEN) handleLogin()
-  }, [totp])
+  const handleVerify = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('http://localhost:8000/api/auth/oversight/verify-totp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, org_id: entityId, totp_code: totp, intent_token: intentToken })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        localStorage.setItem('anchor_token', data.access_token)
+        navigate('/dashboard')
+      } else {
+        setError(data.detail || 'VERIFICATION FAILED')
+      }
+    } catch {
+      setError('SECURITY HANDSHAKE FAILED')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function RadarBackground() {
+    return (
+      <div className="fixed inset-0 pointer-events-none opacity-20" style={{ zIndex: 0 }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: `radial-gradient(circle at 50% 50%, ${C.amberDim} 0%, transparent 70%)`,
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: `linear-gradient(transparent 99%, ${C.amber} 100%), linear-gradient(90deg, transparent 99%, ${C.amber} 100%)`,
+          backgroundSize: '80px 80px',
+        }} />
+        {/* Radar Line */}
+        <div className="absolute top-0 left-0 w-full h-[2px] bg-amber-500/30 animate-scan" style={{
+            boxShadow: '0 0 20px #C9A84C'
+        }} />
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative bg-[#06060A]">
-      <StatusBar time={time} />
-      <GridBackground />
-
-      <div className={`relative z-10 w-full max-w-xl mt-12 transition-all ${shake ? 'animate-shake' : ''}`}>
+    <div className="min-h-screen bg-[#06060A] flex flex-col items-center justify-center p-8 font-mono relative overflow-hidden">
+      <RadarBackground />
+      
+      <div className="w-full max-w-xl bg-[#0C0C12] border border-[#1E1E2E] shadow-2xl relative z-10 overflow-hidden">
         
-        {/* Header Strip */}
-        <div className="flex items-center gap-4 px-8 py-6 bg-[#0C0C12] border-t border-x border-[#1E1E2E]">
-          <div className="w-8 h-8 flex items-center justify-center bg-amber-500/10 border border-amber-500/30">
-            <div className="w-3 h-3 bg-amber-500" />
+        {/* Authority Header */}
+        <div className="flex items-center gap-5 px-10 py-8 bg-[#030305] border-b border-[#1E1E2E]">
+          <div className="w-10 h-10 flex items-center justify-center border border-amber-500/40 bg-amber-500/5">
+            <div className="w-4 h-4 bg-amber-500 animate-pulse" />
           </div>
           <div>
-            <div className="text-[12px] font-bold tracking-[0.2em] uppercase text-amber-500">Security Clearance</div>
-            <div className="text-[9px] tracking-widest uppercase text-slate-600 mt-1">Oversight Identity Node Established</div>
-          </div>
-          <div className="ml-auto text-right">
-            <div className="text-[9px] tracking-widest uppercase text-slate-700">Auth Priority</div>
-            <div className="text-[10px] font-mono text-slate-500 font-bold">LEVEL-01</div>
+            <div className="text-[14px] font-bold tracking-[0.3em] uppercase text-amber-500">Authority Access</div>
+            <div className="text-[10px] tracking-widest uppercase text-slate-600 mt-1">Regulatory Node Handshake Initiated</div>
           </div>
         </div>
 
-        {/* Dynamic Progress */}
-        <div className="h-1.5 bg-[#1E1E2E]">
-          <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 transition-all duration-700" 
-            style={{ width: stage === 'credentials' ? '33%' : stage === 'totp' ? '66%' : '100%' }} />
-        </div>
-
-        {/* Main Form Body */}
-        <div className="bg-[#0C0C12] border-x border-b border-[#1E1E2E] p-12 shadow-2xl">
-          
-          <div className="flex items-center gap-3 mb-10">
-            <span className="text-[10px] tracking-[0.3em] uppercase font-bold text-slate-500">
-               {stage === 'credentials' ? '01 // IDENTITY HANDSHAKE' : 
-                stage === 'totp' ? '02 // CRYPTOGRAPHIC CHALLENGE' : 
-                '03 // ESTABLISHING SESSION'}
+        <div className="p-20">
+          <div className="flex items-center gap-3 mb-12">
+            <span className="text-[11px] tracking-[0.4em] uppercase font-bold text-slate-500">
+               {stage === 'identify' ? '01 // IDENTITY CHALLENGE' : '02 // CRYPTOGRAPHIC VERIFY'}
             </span>
-            {(stage === 'loading' || stage === 'authenticating') && <div className="w-2 h-2 bg-amber-500 animate-ping rounded-full" />}
           </div>
 
           {error && (
-            <div className="mb-8 p-4 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[10px] font-bold tracking-[0.2em] uppercase">
-              ⚠ [HANDSHAKE ERR] {error}
+            <div className="mb-10 p-6 bg-rose-500/5 border border-rose-500/20 text-rose-500 text-[11px] font-bold tracking-widest uppercase leading-relaxed">
+              ⚠ [HANDSHAKE_ERROR]: {error}
             </div>
           )}
 
-          {stage === 'credentials' ? (
-            <form onSubmit={handleCredentialsNext} className="space-y-10 animate-in fade-in duration-500">
-              <div className="space-y-4">
-                <label className="block text-[11px] tracking-[0.3em] uppercase font-bold text-[#8B949E]">Regulator ID / Prefix</label>
-                <input ref={entityRef} type="text" value={entityId} onChange={e => setEntityId(e.target.value.toUpperCase())}
-                  placeholder="e.g. SEC, RBI" className="w-full h-14 px-5 bg-black border border-[#1E1E2E] focus:border-amber-500/50 text-amber-500 text-sm font-mono outline-none transition-all shadow-inner tracking-widest" />
+          {stage === 'identify' ? (
+            <form onSubmit={handleIdentify} className="space-y-16 animate-in fade-in duration-500">
+              <div className="space-y-6">
+                <label className="block text-[11px] tracking-[0.4em] uppercase font-bold text-slate-500">Entity ID / Jurisdiction</label>
+                <input required type="text" value={entityId} onChange={e => setEntityId(e.target.value.toUpperCase())}
+                  className="w-full h-16 bg-black border border-[#1E1E2E] focus:border-amber-500/50 text-amber-500 px-6 text-sm outline-none transition-all shadow-inner tracking-widest font-bold"
+                  placeholder="EX: SEC / RBI / SEBI" />
               </div>
-              <div className="space-y-4">
-                <label className="block text-[11px] tracking-[0.3em] uppercase font-bold text-[#8B949E]">Official Agent Email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="agent@authority.gov" className="w-full h-14 px-5 bg-black border border-[#1E1E2E] focus:border-amber-500/50 text-slate-200 text-sm font-mono outline-none transition-all shadow-inner" />
+
+              <div className="space-y-6">
+                <label className="block text-[11px] tracking-[0.4em] uppercase font-bold text-slate-500">Official Auditor Mail</label>
+                <input required type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  className="w-full h-16 bg-black border border-[#1E1E2E] focus:border-amber-500/50 text-amber-500 px-6 text-sm outline-none transition-all shadow-inner"
+                  placeholder="auditor@regulator.gov" />
               </div>
-              <button type="submit" disabled={stage === 'loading'} className="w-full h-14 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-black border border-amber-500/50 font-bold text-[11px] tracking-[0.3em] uppercase transition-all duration-300">
-                {stage === 'loading' ? 'LOCATING IDENTITY...' : 'INITIATE HANDSHAKE →'}
+
+              <button type="submit" disabled={loading} 
+                className="w-full h-16 bg-amber-500/10 border border-amber-500/40 text-amber-500 hover:bg-amber-500 hover:text-black font-bold text-[12px] tracking-[0.4em] uppercase transition-all duration-300">
+                {loading ? 'ANALYZING CLEARANCE...' : 'INITIATE REGULATORY HANDSHAKE'}
               </button>
             </form>
           ) : (
-            <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-               <div className="text-center bg-amber-500/5 border border-amber-500/20 p-6 rounded-lg">
-                  <p className="text-[10px] tracking-widest uppercase text-slate-500 mb-1">Authenticating Agency</p>
-                  <p className="text-amber-500 font-bold tracking-widest text-lg">{entityId}</p>
+            <form onSubmit={handleVerify} className="space-y-16 animate-in slide-in-from-right-4 duration-500">
+               <div className="text-center bg-amber-500/5 border border-amber-500/20 p-12">
+                  <p className="text-[11px] tracking-widest uppercase text-slate-500 mb-2">Authenticated Agency</p>
+                  <p className="text-amber-500 font-bold tracking-[0.5em] text-2xl">{entityId}</p>
                </div>
                
-               <div className="space-y-4">
-                  <p className="text-[10px] tracking-[0.2em] uppercase text-center text-slate-500">Input 6-Digit Secondary Verify Code</p>
-                  <TotpInput value={totp} onChange={setTotp} disabled={stage === 'authenticating'} />
+               <div className="space-y-6 text-center">
+                  <p className="text-[11px] tracking-[0.3em] uppercase text-slate-500">Secondary Verify Code</p>
+                  <input required maxLength={6} type="text" value={totp} onChange={e => setTotp(e.target.value)}
+                    className="w-full h-24 bg-transparent border-b-2 border-amber-900 focus:border-amber-500 text-amber-500 text-center text-5xl font-bold outline-none transition-all tracking-[0.6em]"
+                    placeholder="000000" autoFocus />
                </div>
 
-               <div className="flex gap-4">
-                  <button onClick={() => { setStage('credentials'); setTotp(''); setError('') }}
+               <div className="flex gap-6">
+                  <button type="button" onClick={() => setStage('identify')}
                     className="flex-1 h-14 border border-[#1E1E2E] text-slate-500 hover:text-white text-[10px] font-bold tracking-widest transition-all">
-                    BACK
+                    ABORT
                   </button>
-                  <button onClick={handleLogin} disabled={totp.length < TOTP_LEN || stage === 'authenticating'}
-                    className="flex-[2] h-14 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-black border border-amber-500/50 font-bold text-[11px] tracking-[0.3em] transition-all">
-                    {stage === 'authenticating' ? 'VERIFYING...' : 'FINALIZE ACCESS'}
+                  <button type="submit" disabled={totp.length < 6 || loading}
+                    className="flex-[2] h-14 bg-amber-500/10 border border-amber-500/40 text-amber-500 hover:bg-amber-500 hover:text-black font-bold text-[12px] tracking-[0.4em] transition-all">
+                    {loading ? 'ESTABLISHING...' : 'FINALIZE ACCESS'}
                   </button>
                </div>
-            </div>
+            </form>
           )}
         </div>
 
         {/* System Bar */}
-        <div className="flex items-center justify-between px-6 py-3 bg-[#080810] border-x border-b border-[#1E1E2E] rounded-b-lg">
-           <span className="text-[9px] tracking-widest uppercase text-[#2A2A3E]">oversight.anchorgovernance.tech</span>
-           <span className="text-[9px] font-mono text-[#2A2A3E]">DECRYPTED VIA MASTER KEY</span>
+        <div className="flex items-center justify-between px-10 py-5 bg-[#030305] border-t border-[#1E1E2E]">
+           <span className="text-[10px] tracking-widest uppercase text-slate-700">oversight.anchorgovernance.tech</span>
+           <span className="text-[10px] font-mono text-slate-700 uppercase">Enforcement Priority: 01</span>
         </div>
       </div>
+      
+      <style>{`
+        @keyframes scan {
+          0% { transform: translateY(-100%); opacity: 0; }
+          50% { opacity: 0.5; }
+          100% { transform: translateY(100vh); opacity: 0; }
+        }
+        .animate-scan {
+          animation: scan 4s linear infinite;
+        }
+      `}</style>
     </div>
   )
 }

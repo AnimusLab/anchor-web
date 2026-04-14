@@ -150,82 +150,67 @@ def login(
         }
     }
 
-@auth_router.post("/identify")
-def identify_challenge(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
-    """Phase 1: Verifies identity and generates an Auth Intent for TOTP challenge."""
-    email = request.email.strip().lower()
-    org_prefix = request.org_id.strip().lower()
-
-    user = db.query(User).filter(User.email == email).first()
+def _identify_logic(email: str, org_prefix: str, allowed_roles: list, db: Session):
+    """Internal shared logic for identity challenge with strict role scoping."""
+    user = db.query(User).filter(User.email == email.strip().lower()).first()
     if not user:
         raise HTTPException(status_code=401, detail="IDENTITY NOT FOUND")
-
+    if user.role not in allowed_roles:
+        raise HTTPException(status_code=401, detail="INSUFFICIENT CLEARANCE")
     org = db.query(Organization).filter(Organization.id == user.org_id).first()
-    if not org or org.entity_prefix != org_prefix:
-        # Check if org_id was passed instead of prefix
-        if org.id != org_prefix:
-            raise HTTPException(status_code=401, detail="ORGANIZATIONAL MISMATCH")
-
+    if not org or (org.entity_prefix != org_prefix.strip().lower() and org.id != org_prefix.strip().lower()):
+        raise HTTPException(status_code=401, detail="ORGANIZATIONAL MISMATCH")
     if user.status == "revoked":
         raise HTTPException(status_code=403, detail="ACCESS PERMANENTLY REVOKED")
-
-    # Generate an Auth Intent (valid for 5 mins)
     intent_exp = datetime.utcnow() + timedelta(minutes=5)
     intent_token = jwt.encode({
-        "sub": email,
-        "org_id": user.org_id,
-        "type": "auth_intent",
-        "exp": intent_exp
+        "sub": user.email, "org_id": user.org_id, "role": user.role, "type": "auth_intent", "exp": intent_exp
     }, ANCHOR_MASTER_KEY, algorithm="HS256")
+    return {"status": "CHALLENGE_AUTHORIZED", "intent_token": intent_token, "display_name": user.display_name, "role": user.role}
 
-    return {
-        "status": "CHALLENGE_AUTHORIZED",
-        "intent_token": intent_token,
-        "display_name": user.display_name,
-        "role": user.role
-    }
-
-@auth_router.post("/verify-totp")
-def verify_totp_login(request: TotpVerifyRequest, db: Session = Depends(get_db)):
-    """Phase 2: Validates the 6-digit TOTP against the stored secret and issues full session."""
+def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
+    """Internal shared logic for TOTP verification with strict role scoping."""
     try:
         payload = jwt.decode(request.intent_token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
         if payload.get("type") != "auth_intent" or payload.get("sub") != request.email:
             raise HTTPException(status_code=401, detail="INVALID INTENT")
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="CHALLENGE EXPIRED")
-    except jwt.InvalidTokenError:
+        if payload.get("role") not in allowed_roles:
+             raise HTTPException(status_code=401, detail="ROLE MISMATCH")
+    except Exception:
         raise HTTPException(status_code=401, detail="INVALID HANDSHAKE")
-
     user = db.query(User).filter(User.email == request.email).first()
     if not user or not user.totp_secret:
         raise HTTPException(status_code=401, detail="SECURITY NOT PROVISIONED")
-
-    # Verify TOTP
     totp = pyotp.TOTP(user.totp_secret)
     if not totp.verify(request.totp_code, valid_window=1):
-        raise HTTPException(status_code=401, detail="INVALID VERIFICATION CODE")
+        raise HTTPException(status_code=401, detail="INVALID CODE")
+    exp = datetime.utcnow() + timedelta(days=1)
+    token = jwt.encode({"sub": user.email, "role": user.role, "org_id": user.org_id, "exp": exp}, ANCHOR_MASTER_KEY, algorithm="HS256")
+    return {"access_token": token, "token_type": "bearer", "user": {"id": user.id, "email": user.email, "role": user.role, "org_id": user.org_id}}
 
-    # Success: Issue full session token
-    exp = datetime.utcnow() + timedelta(days=7)
-    token = jwt.encode({
-        "sub": user.email, 
-        "role": user.role, 
-        "org_id": user.org_id, 
-        "exp": exp
-    }, ANCHOR_MASTER_KEY, algorithm="HS256")
+@auth_router.post("/enterprise/identify")
+def enterprise_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
+    return _identify_logic(request.email, request.org_id, ["owner", "admin", "member"], db)
 
-    return {
-        "access_token": token,
-        "token_type":   "bearer",
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "display_name": user.display_name,
-            "role": user.role,
-            "org_id": user.org_id
-        }
-    }
+@auth_router.post("/enterprise/verify-totp")
+def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
+    return _verify_logic(request, ["owner", "admin", "member"], db)
+
+@auth_router.post("/oversight/identify")
+def oversight_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
+    return _identify_logic(request.email, request.org_id, ["auditor", "regulator"], db)
+
+@auth_router.post("/oversight/verify-totp")
+def oversight_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
+    return _verify_logic(request, ["auditor", "regulator"], db)
+
+@auth_router.post("/admin/identify")
+def admin_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
+    return _identify_logic(request.email, request.org_id, ["root", "admin"], db)
+
+@auth_router.post("/admin/verify-totp")
+def admin_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
+    return _verify_logic(request, ["root", "admin"], db)
 
 
 @auth_router.get("/check-domain/{domain}")
