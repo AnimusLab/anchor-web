@@ -154,6 +154,27 @@ export default function AuthPortal({ isInvite = false }) {
         setActiveTab('login');
     };
 
+    function GridBackground() {
+        return (
+            <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+                {/* Subtle cyan vignette at center */}
+                <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(34,211,238,0.03) 0%, transparent 70%)',
+                }} />
+                {/* Grid lines */}
+                <div style={{
+                    position: 'absolute', inset: 0,
+                    backgroundImage: `
+                        linear-gradient(rgba(34,211,238,0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(34,211,238,0.03) 1px, transparent 1px)
+                    `,
+                    backgroundSize: '48px 48px',
+                }} />
+            </div>
+        )
+    }
+
     if (successData) {
         return (
             <div className="min-h-screen bg-[#08080D] flex items-center justify-center font-mono p-4">
@@ -171,7 +192,8 @@ export default function AuthPortal({ isInvite = false }) {
     }
 
     return (
-        <div className="min-h-screen bg-[#08080D] flex flex-col items-center justify-center font-mono p-4">
+        <div className="min-h-screen bg-[#08080D] flex flex-col items-center justify-center font-mono p-4 relative">
+            <GridBackground />
             <div className="mb-8 text-center text-slate-200">
                 <h1 className="text-2xl tracking-[0.5em] font-bold">ANCHOR COMMAND</h1>
                 <div className="flex items-center justify-center space-x-2 text-[10px] mt-2 opacity-60">
@@ -180,7 +202,7 @@ export default function AuthPortal({ isInvite = false }) {
                 </div>
             </div>
 
-            <div className="w-full max-w-md bg-[#0D0D14] border border-[#1E293B] shadow-2xl overflow-hidden">
+            <div className="w-full max-w-xl bg-[#0D0D14] border border-[#1E293B] shadow-2xl overflow-hidden relative z-10">
                 {!isInvite && (
                     <div className="flex border-b border-[#1E293B]">
                         {['login', 'register', 'auditor'].map((tab) => (
@@ -194,15 +216,15 @@ export default function AuthPortal({ isInvite = false }) {
                     </div>
                 )}
 
-                <div className="p-8">
+                <div className="p-12">
                     {error && (
-                        <div className="mb-6 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[10px] uppercase font-bold tracking-widest">
+                        <div className="mb-8 p-4 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[10px] uppercase font-bold tracking-widest">
                             [SECURITY_ERROR] {error}
                         </div>
                     )}
 
                     {activeTab === 'login' && (
-                        <form onSubmit={handleLogin} className="space-y-6">
+                        <form onSubmit={handleLogin} className="space-y-10">
                             <div>
                                 <label className="block text-[10px] text-slate-500 tracking-widest uppercase mb-2">Primary Identity (Email)</label>
                                 <input required type="email" name="email" value={formData.email} onChange={handleInputChange}

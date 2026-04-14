@@ -213,8 +213,8 @@ export default function LoginPage() {
 
       {/* ── Card ── */}
       <div
-        className={`relative z-10 w-full max-w-md mt-9 animate-fade-in ${shake ? 'animate-shake' : ''}`}
-        style={{ padding: '0 16px' }}
+        className={`relative z-10 w-full max-w-lg mt-12 animate-fade-in ${shake ? 'animate-shake' : ''}`}
+        style={{ padding: '0 24px' }}
       >
         {/* Card header — authority seal */}
         <div className="mb-0 flex items-center gap-3 px-6 py-4"
@@ -259,7 +259,7 @@ export default function LoginPage() {
           background: '#0C0C12',
           border:     '1px solid #1E1E2E',
           borderTop:  'none',
-          padding:    '32px 32px 28px',
+          padding:    '48px 48px 42px',
         }}>
 
           {/* Stage label */}
@@ -284,7 +284,7 @@ export default function LoginPage() {
 
           {/* ── Stage 1: Credentials ── */}
           {stage === 'credentials' && (
-            <form onSubmit={handleCredentialsNext} className="space-y-4">
+            <form onSubmit={handleCredentialsNext} className="space-y-8">
               <div>
                 <label className="block text-[9px] tracking-[0.2em] uppercase mb-2"
                   style={{ color: '#4A5568' }}>

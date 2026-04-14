@@ -48,33 +48,38 @@ def init_db():
 
 
 def seed_admin(db):
-    """Genesis Seeder — Injects the root admin identity if none exists."""
+    """Genesis Seeder — Injects the root admin identities if none exist."""
     from models import User
 
-    existing_admin = db.query(User).filter(User.role == "admin").first()
-    if existing_admin:
-        print(f"[BOOT] Root admin already exists: entity_id='{existing_admin.entity_id}'")
-        return
-
+    # List of authorized emails for the Anchor Root
+    root_emails = ["tan@anchorgovernance.tech", "artisianecho@gmail.com"]
+    
     master_key = os.getenv("ANCHOR_MASTER_KEY")
     if not master_key:
-        print("[WARNING] ANCHOR_MASTER_KEY not found. Root admin NOT seeded.")
+        print("[WARNING] ANCHOR_MASTER_KEY not found. Root admins NOT seeded.")
         return
 
-    # Hash the master key with bcrypt — never store plaintext
+    # Hash the master key with bcrypt
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(master_key.encode("utf-8"), salt).decode("utf-8")
 
-    admin = User(
-        id="usr_root_001",
-        entity_id="root",
-        display_name="Master Node Admin",
-        role="admin",
-        hashed_key=hashed,
-        status="approved",
-        created_at=datetime.utcnow().isoformat(),
-    )
-    db.add(admin)
+    for email in root_emails:
+        existing = db.query(User).filter(User.email == email).first()
+        if not existing:
+            admin = User(
+                id=f"usr_root_{email.split('@')[0]}",
+                email=email,
+                display_name=f"Admin ({email.split('@')[0]})",
+                role="admin",
+                hashed_pass=hashed,
+                status="approved",
+                email_verified=True,
+                created_at=datetime.utcnow().isoformat(),
+            )
+            db.add(admin)
+            print(f"[SYSTEM] Root admin identity seeded: email='{email}'")
+        else:
+            print(f"[BOOT] Admin identity already verified: email='{email}'")
+    
     db.commit()
-    print("[SYSTEM] Root admin identity seeded into the mesh. entity_id='root'")
 

@@ -48,8 +48,30 @@ export default function LoginPage() {
     }
   }
 
+  function GridBackground() {
+    return (
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+        {/* Subtle cyan vignette at center */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(34,211,238,0.03) 0%, transparent 70%)',
+        }} />
+        {/* Grid lines */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: `
+            linear-gradient(rgba(34,211,238,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(34,211,238,0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: '48px 48px',
+        }} />
+      </div>
+    )
+  }
+
   return (
     <div className="h-screen bg-[#030305] flex flex-col items-center justify-center p-6 relative">
+      <GridBackground />
       <div className="absolute top-8 left-8 flex items-center gap-3">
         <div className="w-2 h-2 bg-cyan-400 rounded-sm animate-pulse" />
         <span className="text-[10px] tracking-[0.4em] text-cyan-400 uppercase font-bold">Anchor Root Console</span>
@@ -58,17 +80,17 @@ export default function LoginPage() {
         {time}
       </div>
 
-      <div className="w-full max-w-sm border border-[#161B22] bg-[#08090C] overflow-hidden animate-slide-up shadow-2xl">
+      <div className="w-full max-w-lg border border-[#161B22] bg-[#08090C] overflow-hidden animate-slide-up shadow-2xl relative z-10">
         <div className="h-1 bg-cyan-400/20">
           <div className={`h-full bg-cyan-400 transition-all duration-1000 ${loading ? 'w-full' : 'w-0'}`} />
         </div>
         
-        <form onSubmit={handleLogin} className="p-8 space-y-6">
-          <div className="text-center mb-4">
-            <h2 className="text-xs tracking-[0.3em] text-[#8B949E] uppercase font-bold">Admin Clearance</h2>
+        <form onSubmit={handleLogin} className="p-12 space-y-10">
+          <div className="text-center mb-6">
+            <h2 className="text-xs tracking-[0.4em] text-[#8B949E] uppercase font-bold">Admin Clearance</h2>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-8">
             <div>
               <label className="block text-[9px] text-[#484F58] uppercase tracking-widest mb-2 ml-1">Admin Email</label>
               <input
