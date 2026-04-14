@@ -27,4 +27,6 @@ venv.bak/
 # Project Specific
 server/anchor.db
 server/anchor_mesh.db
+*.db
+*.sqlite
 .anchor/
