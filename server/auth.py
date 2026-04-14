@@ -85,10 +85,28 @@ def _validate_slug(slug: str, type_name: str = "ID"):
 # Authentication Routes
 # =============================================================================
 
+from pydantic import BaseModel
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
 @auth_router.post("/login")
-def login(email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    """Authenticates a user by email and returns a scoped JWT."""
-    user = db.query(User).filter(User.email == email.strip().lower()).first()
+def login(
+    request_data: LoginRequest = None,
+    email: str = Form(None), 
+    password: str = Form(None), 
+    db: Session = Depends(get_db)
+):
+    """Authenticates a user and returns a scoped JWT. Supports both JSON and Form inputs."""
+    # Handle both JSON (from Root Console) and Form (from legacy Dashboards)
+    final_email = request_data.email if request_data else email
+    final_pass = request_data.password if request_data else password
+
+    if not final_email or not final_pass:
+        raise HTTPException(status_code=400, detail="MISSING CREDENTIALS")
+
+    user = db.query(User).filter(User.email == final_email.strip().lower()).first()
 
     if not user:
         raise HTTPException(status_code=401, detail="IDENTITY NOT FOUND")
@@ -98,8 +116,8 @@ def login(email: str = Form(...), password: str = Form(...), db: Session = Depen
     if not user.email_verified:
         raise HTTPException(status_code=403, detail="EMAIL NOT VERIFIED")
 
-    # Verify password
-    if not bcrypt.checkpw(password.encode("utf-8"), user.hashed_pass.encode("utf-8")):
+    # Verify password (which is the ANCHOR_MASTER_KEY for root admins)
+    if not bcrypt.checkpw(final_pass.encode("utf-8"), user.hashed_pass.encode("utf-8")):
         raise HTTPException(status_code=401, detail="INVALID SIGNATURE")
 
     # Scoped Token Generation

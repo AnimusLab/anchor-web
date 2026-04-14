@@ -224,17 +224,17 @@ export default function AuthPortal({ isInvite = false }) {
                     )}
 
                     {activeTab === 'login' && (
-                        <form onSubmit={handleLogin} className="space-y-10">
+                        <form onSubmit={handleLogin} className="space-y-12">
                             <div>
-                                <label className="block text-[10px] text-slate-500 tracking-widest uppercase mb-2">Primary Identity (Email)</label>
+                                <label className="block text-[11px] text-[#8B949E] tracking-[0.3em] uppercase mb-4 font-bold">Primary Identity (Email)</label>
                                 <input required type="email" name="email" value={formData.email} onChange={handleInputChange}
-                                    className="w-full bg-[#08080D] border border-[#1E293B] focus:border-cyan-400/50 text-slate-200 p-4 text-sm outline-none transition-all"
+                                    className="w-full bg-[#08080D] border border-[#1E293B] focus:border-cyan-400/50 text-slate-200 h-14 px-5 text-sm outline-none transition-all shadow-inner"
                                     placeholder="user@organization.com" />
                             </div>
                             <div>
-                                <label className="block text-[10px] text-slate-500 tracking-widest uppercase mb-2">Key Phrase (Password)</label>
+                                <label className="block text-[11px] text-[#8B949E] tracking-[0.3em] uppercase mb-4 font-bold">Key Phrase (Password)</label>
                                 <input required type="password" name="password" value={formData.password} onChange={handleInputChange}
-                                    className="w-full bg-[#08080D] border border-[#1E293B] focus:border-cyan-400/50 text-slate-200 p-4 text-sm outline-none transition-all"
+                                    className="w-full bg-[#08080D] border border-[#1E293B] focus:border-cyan-400/50 text-slate-200 h-14 px-5 text-sm outline-none transition-all shadow-inner"
                                     placeholder="••••••••" />
                             </div>
                             <button disabled={isLoading} type="submit"

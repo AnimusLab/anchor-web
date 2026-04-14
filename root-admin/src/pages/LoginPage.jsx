@@ -90,20 +90,20 @@ export default function LoginPage() {
             <h2 className="text-xs tracking-[0.4em] text-[#8B949E] uppercase font-bold">Admin Clearance</h2>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-10">
             <div>
-              <label className="block text-[9px] text-[#484F58] uppercase tracking-widest mb-2 ml-1">Admin Email</label>
+              <label className="block text-[10px] text-[#8B949E] uppercase tracking-[0.3em] mb-4 ml-1 font-bold">Admin Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="w-full bg-[#0E1015] border border-[#212830] h-10 px-4 text-xs font-mono text-cyan-400 outline-none focus:border-cyan-400/50 transition-colors"
-                placeholder="admin@anchorgovernance.tech"
+                className="w-full bg-[#0E1015] border border-[#212830] h-14 px-5 text-sm font-mono text-cyan-400 outline-none focus:border-cyan-400/50 transition-colors shadow-inner"
+                placeholder="tan@anchorgovernance.tech"
                 required
               />
             </div>
             <div>
-              <label className="block text-[9px] text-[#484F58] uppercase tracking-widest mb-2 ml-1">Security Key</label>
+              <label className="block text-[10px] text-[#8B949E] uppercase tracking-[0.3em] mb-4 ml-1 font-bold">Security Key</label>
               <input
                 type="password"
                 value={password}
@@ -126,8 +126,8 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="bg-[#0E1015] border-t border-[#161B22] p-4 text-center">
-          <p className="text-[9px] text-[#484F58] tracking-widest leading-relaxed">
+        <div className="bg-[#0E1015] border-t border-[#161B22] p-8 text-center">
+          <p className="text-[10px] text-[#6E7681] tracking-[0.2em] leading-relaxed font-mono">
             RESTRICTED GOVERNMENT CLOUD GATEWAY<br/>
             ALL TRANSMISSIONS ARE ENCRYPTED AND LOGGED.
           </p>

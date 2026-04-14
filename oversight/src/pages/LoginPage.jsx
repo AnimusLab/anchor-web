@@ -213,7 +213,7 @@ export default function LoginPage() {
 
       {/* ── Card ── */}
       <div
-        className={`relative z-10 w-full max-w-lg mt-12 animate-fade-in ${shake ? 'animate-shake' : ''}`}
+        className={`relative z-10 w-full max-w-xl mt-12 animate-fade-in ${shake ? 'animate-shake' : ''}`}
         style={{ padding: '0 24px' }}
       >
         {/* Card header — authority seal */}
@@ -259,7 +259,7 @@ export default function LoginPage() {
           background: '#0C0C12',
           border:     '1px solid #1E1E2E',
           borderTop:  'none',
-          padding:    '48px 48px 42px',
+          padding:    '64px 64px 56px',
         }}>
 
           {/* Stage label */}
@@ -286,8 +286,8 @@ export default function LoginPage() {
           {stage === 'credentials' && (
             <form onSubmit={handleCredentialsNext} className="space-y-8">
               <div>
-                <label className="block text-[9px] tracking-[0.2em] uppercase mb-2"
-                  style={{ color: '#4A5568' }}>
+                <label className="block text-[10px] tracking-[0.3em] uppercase mb-4 font-bold"
+                  style={{ color: '#8B949E' }}>
                   Entity ID
                 </label>
                 <input
