@@ -544,6 +544,7 @@ function DataBar({ loaded }) {
       opacity: loaded ? 1 : 0, transition: "opacity .6s .3s ease",
     }}>
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 40px", display: "flex", gap: "0", alignItems: "center", flexWrap: "wrap" }}>
+        {[
           { label: "FEDERATED NODES", val: "12", change: "6 US · 4 EU · 2 IN", up: true, data: [2, 5, 8, 10, 12] },
           { label: "DOMAIN RULES", val: "43", change: "+12 v4", up: true, data: [28, 31, 35, 40, 43] },
           { label: "TOTAL COVERAGE", val: "170", change: "+114 mappings", up: true, chart: "bar", data: [65, 90, 120, 150, 170] },
