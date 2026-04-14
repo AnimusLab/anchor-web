@@ -1,0 +1,54 @@
+name: Cloudflare & Hugging Face Deployment
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to main
+
+jobs:
+  # --- 1. FRONTEND DEPLOYMENT (Cloudflare Pages) ---
+  deploy-frontends:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [landing, dashboard, oversight, root-admin]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install & Build ${{ matrix.project }}
+        run: |
+          cd ${{ matrix.project }}
+          npm install
+          npm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: anchor-${{ matrix.project }}
+          directory: ${{ matrix.project }}/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+  # --- 2. BACKEND DEPLOYMENT (Hugging Face Space) ---
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Sync to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # 1. Setup HF Remote
+          git remote add hf https://AnimusLab:${HF_TOKEN}@huggingface.co/spaces/AnimusLab/Anchor
+          
+          # 2. Create a temporary deployment branch
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          
+          # 3. Use subtree to push only the 'server' directory
+          # Note: This will push the contents of 'server' to the root of the Space
+          git subtree push --prefix server hf main --force
