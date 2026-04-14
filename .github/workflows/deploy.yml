@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  deployments: write
+
 jobs:
   # --- 1. FRONTEND DEPLOYMENT (Cloudflare Pages) ---
   deploy-frontends:
