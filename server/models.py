@@ -10,6 +10,7 @@ class Organization(Base):
     server_region  = Column(String, default="IN")                  # "IN", "EU", "US"
     hr_contact     = Column(String, nullable=True)                  # Onboarding Manager
     status         = Column(String, default="active")               # "active", "suspended"
+    org_type       = Column(String, default="enterprise")           # "enterprise", "regulator"
     created_at     = Column(String, nullable=False)                 # ISO-8601
 
     projects = relationship("Fleet", back_populates="organization")
@@ -72,8 +73,11 @@ class User(Base):
     email        = Column(String, unique=True, index=True)        # Personal/Work Email
     org_id       = Column(String, ForeignKey("organizations.id")) # Parent Org
     display_name = Column(String, nullable=False)
-    role         = Column(String, nullable=False)                 # "owner", "admin", "lead", "member"
-    hashed_pass  = Column(String, nullable=False)                 # Login Password
+    role         = Column(String, nullable=False)                 # "owner", "admin", "lead", "member", "regulator"
+    hashed_pass  = Column(String, nullable=True)                  # Optional for regulators
+    totp_secret  = Column(String, nullable=True)                  # Google Authenticator Secret
+    avatar_url   = Column(String, nullable=True)                  # Instagram-like Profile Pix
+    official_id  = Column(String, nullable=True)                  # "SEC-JHONDOC-2604"
     status       = Column(String, default="pending")
     email_verified = Column(Boolean, default=False)
     created_at   = Column(String, nullable=False)

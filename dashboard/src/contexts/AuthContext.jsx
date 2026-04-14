@@ -29,39 +29,6 @@ export function AuthProvider({ children }) {
         }
     }, [token]);
 
-    const login = async (email, password) => {
-        const formData = new FormData();
-        formData.append('email', email);
-        formData.append('password', password);
-
-        const res = await fetch(endpoints.login, {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.detail || 'Authentication Failed');
-        }
-
-        const data = await res.json();
-        
-        // Fetch user profile immediately to ensure state is ready before navigation
-        const profileRes = await fetch(endpoints.me, {
-            headers: { Authorization: `Bearer ${data.access_token}` }
-        });
-        
-        if (profileRes.ok) {
-            const profileData = await profileRes.json();
-            setUser(profileData);
-        }
-
-        localStorage.setItem('anchor_token', data.access_token);
-        setToken(data.access_token);
-
-        // Return the role so the UI knows where to route
-        return data.role;
-    };
 
     const logout = () => {
         localStorage.removeItem('anchor_token');

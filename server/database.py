@@ -3,9 +3,10 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from dotenv import load_dotenv
 import os
 import bcrypt
+import secrets
 from datetime import datetime
 
-# Always load .env regardless of call context (proxy.py, scripts, or direct calls)
+# Always load .env regardless of call context
 load_dotenv()
 
 # 1. Pull the URL from the environment, fallback to local SQLite for safety
@@ -15,7 +16,6 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./anchor.db")
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
-    # Use standard PostgreSQL engine for cloud deployments (Render, Supabase, Neon)
     engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -30,56 +30,83 @@ def get_db():
     finally:
         db.close()
 
-
 def init_db():
-    """Creates all tables and seeds the root admin identity on first boot."""
-    # Import models so Base.metadata knows about all tables
+    """Creates all tables and seeds the sovereign mesh identities on first boot."""
     import models  # noqa: F401
-
     Base.metadata.create_all(bind=engine)
-    print("[BOOT] Database tables verified.")
+    print("[BOOT] Sovereign Mesh — Tables Verified.")
 
-    # Seed the root admin
     db = SessionLocal()
     try:
-        seed_admin(db)
+        seed_mesh_identities(db)
     finally:
         db.close()
 
+def seed_mesh_identities(db):
+    """Genesis Seeder — Injects regulatory bodies and primary identities."""
+    from models import User, Organization
 
-def seed_admin(db):
-    """Genesis Seeder — Injects the root admin identities if none exist."""
-    from models import User
+    # 1. Seed Organizations
+    org_configs = [
+        {"id": "org_sec_master", "prefix": "sec", "name": "Securities & Exchange Commission", "type": "regulator"},
+        {"id": "org_rbi_master", "prefix": "rbi", "name": "Reserve Bank of India", "type": "regulator"},
+        {"id": "org_animus_001", "prefix": "animus", "name": "Animus Global Lab", "type": "enterprise"},
+    ]
 
-    # List of authorized emails for the Anchor Root
-    root_emails = ["tan@anchorgovernance.tech", "artisianecho@gmail.com"]
-    
-    master_key = os.getenv("ANCHOR_MASTER_KEY")
-    if not master_key:
-        print("[WARNING] ANCHOR_MASTER_KEY not found. Root admins NOT seeded.")
-        return
-
-    # Hash the master key with bcrypt
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(master_key.encode("utf-8"), salt).decode("utf-8")
-
-    for email in root_emails:
-        existing = db.query(User).filter(User.email == email).first()
+    for cfg in org_configs:
+        existing = db.query(Organization).filter(Organization.id == cfg["id"]).first()
         if not existing:
-            admin = User(
-                id=f"usr_root_{email.split('@')[0]}",
-                email=email,
-                display_name=f"Admin ({email.split('@')[0]})",
-                role="admin",
-                hashed_pass=hashed,
-                status="approved",
-                email_verified=True,
-                created_at=datetime.utcnow().isoformat(),
+            org = Organization(
+                id=cfg["id"],
+                entity_prefix=cfg["prefix"],
+                display_name=cfg["name"],
+                org_type=cfg["type"],
+                domain=f"{cfg['prefix']}.gov" if cfg["type"] == "regulator" else "animuslab.ai",
+                created_at=datetime.utcnow().isoformat()
             )
-            db.add(admin)
-            print(f"[SYSTEM] Root admin identity seeded: email='{email}'")
-        else:
-            print(f"[BOOT] Admin identity already verified: email='{email}'")
-    
+            db.add(org)
+            print(f"[SYSTEM] Mesh Node Seeded: {cfg['prefix'].upper()}")
+
     db.commit()
 
+    # 2. Seed Primary Identities (Passwordless Role Models)
+    # Fixed TOTP Secret: "JBSWY3DPEHPK3PXP" (Enter this in Authenticator for testing)
+    test_secret = "JBSWY3DPEHPK3PXP" 
+    
+    users_to_seed = [
+        {
+            "email": "tan@anchorgovernance.tech", 
+            "name": "Tan (Lead Manager)", 
+            "role": "owner", 
+            "org_id": "org_animus_001",
+            "oid": "ANIMUS-MGMT-001"
+        },
+        {
+            "email": "artisianecho@gmail.com", 
+            "name": "Audit Echo", 
+            "role": "regulator", 
+            "org_id": "org_sec_master",
+            "oid": "SEC-AUDITOR-99"
+        }
+    ]
+
+    for u_cfg in users_to_seed:
+        existing = db.query(User).filter(User.email == u_cfg["email"]).first()
+        if not existing:
+            user = User(
+                id=f"usr_{secrets.token_hex(4)}",
+                email=u_cfg["email"],
+                display_name=u_cfg["name"],
+                role=u_cfg["role"],
+                org_id=u_cfg["org_id"],
+                official_id=u_cfg["oid"],
+                totp_secret=test_secret,
+                status="approved",
+                email_verified=True,
+                created_at=datetime.utcnow().isoformat()
+            )
+            db.add(user)
+            print(f"[SYSTEM] Identity Provisioned: {u_cfg['email']} ({u_cfg['role']})")
+    
+    db.commit()
+    print("[BOOT] Sovereign Mesh — Genesis Seeding Complete.")

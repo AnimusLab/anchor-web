@@ -224,28 +224,6 @@ export default function PrivateDashboard() {
         <div className="min-h-screen bg-[#08080D] text-slate-300 font-mono p-6">
             
             {/* Header & Org Context */}
-            <div className="max-w-6xl mx-auto mb-8 flex justify-between items-end border-b border-[#1E293B] pb-4">
-                <div>
-                    <div className="flex items-center space-x-3 mb-2">
-                        <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] tracking-widest uppercase">
-                            ORGANIZATION CONTROL CENTER
-                        </span>
-                        <span className="flex items-center text-[10px] text-cyan-400 tracking-widest">
-                            <span className="h-2 w-2 bg-cyan-400 rounded-full animate-pulse mr-2"></span>
-                            ACTIVE JURISDICTION: {stats?.primary_region || 'GLOBAL'}
-                        </span>
-                    </div>
-                    <h1 className="text-3xl text-slate-100 tracking-wide">{user?.display_name || 'Organization Admin'}</h1>
-                    <p className="text-slate-500 text-[10px] mt-1 tracking-widest uppercase">DOMAIN: {user?.sub?.split('@')[1]} // ORG_ID: {user?.org_id}</p>
-                </div>
-                
-                <button 
-                    onClick={logout}
-                    className="px-4 py-2 text-xs text-rose-400 border border-rose-500/30 hover:bg-rose-500/10 transition-colors"
-                >
-                    SHUTDOWN SESSION
-                </button>
-            </div>
 
             {error && (
                 <div className="max-w-6xl mx-auto mb-6 p-4 border border-rose-500/30 bg-rose-500/5 text-rose-400 text-xs">
