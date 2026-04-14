@@ -1,6 +1,18 @@
 export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 export const WS_BASE = API_BASE.replace('https', 'wss').replace('http', 'ws');
 
+export const endpoints = {
+    // Auth
+    login: `${API_BASE}/api/auth/login`,
+    registerOrg: `${API_BASE}/api/auth/register/org`,
+    checkDomain: (domain) => `${API_BASE}/api/auth/check-domain/${domain}`,
+    requestAccess: `${API_BASE}/api/auth/request-access`,
+    approve: `${API_BASE}/api/auth/approve`,
+    revoke: `${API_BASE}/api/auth/revoke`,
+    pending: `${API_BASE}/api/auth/pending`,
+    me: `${API_BASE}/api/auth/me`,
+    identify: `${API_BASE}/api/auth/identify`,
+    verifyTotp: `${API_BASE}/api/auth/verify-totp`,
 
     // Projects (Multi-Project Support)
     createProject: `${API_BASE}/api/auth/projects/create`,
