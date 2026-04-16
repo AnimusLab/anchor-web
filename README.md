@@ -1,3 +1,12 @@
+---
+title: Anchor Master Node
+emoji: ⚓
+colorFrom: amber
+colorTo: slate
+sdk: docker
+pinned: false
+---
+
 # Anchor Governance Engine
 
 Anchor is an enterprise-grade AI governance and oversight platform designed to move compliance from "post-audit logging" to "real-time native constraints." This repository contains the full federated stack of the Anchor system.
