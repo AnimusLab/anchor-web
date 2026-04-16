@@ -337,17 +337,16 @@ function WelcomeScreen({ onDone }) {
   // phases: boot → matrix → ready → done
   const [phase, setPhase] = useState("boot");
   const logs = [
-    "INITIALIZING ANCHOR KERNEL v5.0.0...",
+    "INITIALIZING ANCHOR MASTER NODE v5.0.1...",
     "LOADING SEC REGULATORY MODULES [OK]",
-    "LOADING EU AI ACT PROTOCOLS [OK]",
-    "ESTABLISHING CRYPTOGRAPHIC TRUST CHAIN...",
+    "ESTABLISHING FEDERATED RELAY CHAIN...",
     "BOOTING LLM ENFORCEMENT LAYER...",
     "SYNCING STATUTES: 170 MAPPED RULES LOADED",
     "VERIFYING WASM SANDBOX INTEGRITY...",
     "CONNECTING TO GLOBAL SOVEREIGN MESH...",
     "ESTABLISHING HUB-SPOKE RELAY [OK]",
-    "SYSTEM STATUS: COMPLIANT",
-    "ANCHOR READY."
+    "MESH STATUS: COMPLIANT",
+    "RELAY NODE READY."
   ];
 
   useEffect(() => {
@@ -502,9 +501,9 @@ function Nav({ loaded }) {
           <DigitalMark size={40} glow={false} />
           <div>
             <div style={{ fontFamily: C.serif, fontWeight: 700, fontSize: "20px", color: C.txt, lineHeight: 1, letterSpacing: "-.01em" }}>Anchor</div>
-            <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".14em", color: C.gold, lineHeight: 1.3 }}>SOVEREIGN GOVERNANCE MESH</div>
+            <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".14em", color: C.gold, lineHeight: 1.3 }}>SOVEREIGN GOVERNANCE RELAY</div>
           </div>
-          {!m && <span style={{ fontFamily: C.mono, fontSize: "10px", letterSpacing: ".1em", color: "rgba(201,168,76,.65)", border: `1px solid rgba(201,168,76,.25)`, padding: "2px 8px" }}>v5.0.0</span>}
+          {!m && <span style={{ fontFamily: C.mono, fontSize: "10px", letterSpacing: ".1em", color: "rgba(201,168,76,.65)", border: `1px solid rgba(201,168,76,.25)`, padding: "2px 8px" }}>v5.0.1</span>}
         </a>
 
         {!m && <LiveClock />}
@@ -545,10 +544,10 @@ function DataBar({ loaded }) {
     }}>
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 40px", display: "flex", gap: "0", alignItems: "center", flexWrap: "wrap" }}>
         {[
-          { label: "FEDERATED NODES", val: "12", change: "6 US · 4 EU · 2 IN", up: true, data: [2, 5, 8, 10, 12] },
-          { label: "DOMAIN RULES", val: "43", change: "+12 v4", up: true, data: [28, 31, 35, 40, 43] },
-          { label: "TOTAL COVERAGE", val: "170", change: "+114 mappings", up: true, chart: "bar", data: [65, 90, 120, 150, 170] },
-          { label: "SELF-AUDIT", val: "PASS", change: "✓ CRYPTO-SEALED", up: true, data: [0, 0, 0, 0] },
+          { label: "FEDERATED NODES", val: "24", change: "12 US · 8 EU · 4 IN", up: true, data: [2, 8, 14, 19, 24] },
+          { label: "DOMAIN RULES", val: "164", change: "+121 v5", up: true, data: [43, 65, 98, 130, 164] },
+          { label: "MAPPED LAWS", val: "1,240", change: "+170 mappings", up: true, chart: "bar", data: [650, 900, 1020, 1150, 1240] },
+          { label: "MESH SECURITY", val: "L3", change: "✓ CRYPTO-SEALED", up: true, data: [0, 0, 0, 0] },
         ].map((item, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "0 28px", borderRight: `1px solid ${C.border}` }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -822,7 +821,7 @@ function Hero() {
         <div style={{ padding: m ? "56px 0 32px" : "72px 64px 72px 0", animation: "fadeUp .8s .1s ease both" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "28px" }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.gold, animation: "pulse 2s infinite" }} />
-            <span style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".18em", color: "rgba(201,168,76,.75)", textTransform: "uppercase" }}>v5.0.0 — Governance Fleet · AnimusLab</span>
+            <span style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".18em", color: "rgba(201,168,76,.75)", textTransform: "uppercase" }}>v5.0.1 — Governance Fleet · AnimusLab</span>
           </div>
 
           <h1 style={{ fontFamily: C.serif, fontSize: "clamp(48px,5.5vw,76px)", lineHeight: 0.95, letterSpacing: "-.03em", color: C.txt, marginBottom: "24px", fontWeight: 900 }}>
@@ -981,12 +980,15 @@ function EngineSection() {
           <Reveal delay={120}>
             <div style={{ background: C.bg, border: `1px solid ${C.borderB}`, borderTop: `2px solid ${C.borderB}`, padding: "32px" }}>
               <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".2em", color: C.txtD, marginBottom: "8px" }}>LAYER 02</div>
-              <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".12em", color: C.txtS, marginBottom: "20px" }}>◌ IN DEVELOPMENT</div>
+              <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "20px" }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.gold, display: "inline-block", animation: "pulse 1.5s infinite" }} />
+                <span style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".12em", color: C.gold, textTransform: "uppercase", fontWeight: 700 }}>LIVE RELAY</span>
+              </div>
               <h3 style={{ fontFamily: C.serif, fontSize: "28px", color: C.txt, marginBottom: "18px", fontWeight: 700 }}>Federated Governance Relay</h3>
               <p style={{ fontFamily: C.mono, fontSize: "12px", lineHeight: 1.85, color: C.txtS, marginBottom: "24px", paddingLeft: "14px", borderLeft: `2px solid ${C.borderB}` }}>
                 Decentralized forensic audit chain brokered via Hub-Spoke architecture. Real-time CIMS-compliant telemetry for global regulators without compromising Spoke data sovereignty.
               </p>
-              {feat(["Hub-Spoke Blockchain Link", "SHA-256 Hash Chaining", "cims_payload() — RBI CIMS Format", "Cross-Border Forensic Handover", "Regulatory Node Oversight"], C.txtS)}
+              {feat(["Hub-Spoke Sovereign Link", "Lattice Signature Verification", "cims_payload() — RBI CIMS Production", "Multi-Jurisdiction Forensic Handover", "Governance Hub Oversight"], C.gold)}
             </div>
           </Reveal>
         </div>
@@ -1339,7 +1341,7 @@ function Footer() {
               <div style={{ fontFamily: C.serif, fontWeight: 700, fontSize: "22px", color: C.txt, letterSpacing: "-.01em", marginBottom: "8px" }}>Anchor</div>
               <div style={{ fontFamily: C.mono, fontSize: "11px", color: C.txtS, marginBottom: "8px" }}>The surveillance and enforcement layer for AI.</div>
               <div style={{ fontFamily: C.serif, fontSize: "13px", fontStyle: "italic", color: C.txtD, marginBottom: "8px" }}>"Governance without enforcement is documentation."</div>
-              <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".08em", textTransform: "uppercase", color: C.txtD, marginBottom: "8px" }}>Apache 2.0 · Open source · anchorgovernance.tech · v5.0.0</div>
+              <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".08em", textTransform: "uppercase", color: C.txtD, marginBottom: "8px" }}>Apache 2.0 · Open source · anchorgovernance.tech · v5.0.1</div>
               <a href="mailto:tan@anchorgovernance.tech" style={{ fontFamily: C.mono, fontSize: "10px", color: C.gold, textDecoration: "none", opacity: .8, transition: "opacity .2s" }}
                 onMouseEnter={e => e.target.style.opacity = "1"}
                 onMouseLeave={e => e.target.style.opacity = ".8"}
@@ -1360,7 +1362,7 @@ function Footer() {
           </div>
         </div>
         <div style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".1em", textTransform: "uppercase", color: C.txtD, textAlign: "center" }}>
-          Anchor v5.0.0 · REV 5.0 · anchorgovernance.tech · Apache 2.0
+          Anchor v5.0.1 · REV 5.1 · anchorgovernance.tech · Apache 2.0
         </div>
       </div>
     </footer>

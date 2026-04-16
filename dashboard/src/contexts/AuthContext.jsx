@@ -30,6 +30,25 @@ export function AuthProvider({ children }) {
     }, [token]);
 
 
+    const completeRelayLogin = async (newToken) => {
+        setToken(newToken);
+        localStorage.setItem('anchor_token', newToken);
+        
+        try {
+            const res = await fetch(endpoints.me, {
+                headers: { Authorization: `Bearer ${newToken}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setUser(data);
+                return data.role;
+            }
+        } catch (err) {
+            console.error("Failed to establish session:", err);
+        }
+        return null;
+    };
+
     const logout = () => {
         localStorage.removeItem('anchor_token');
         setToken(null);
@@ -37,7 +56,7 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
+        <AuthContext.Provider value={{ user, token, isLoading, completeRelayLogin, logout }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,5 +1,4 @@
 """
-anchor-web/server/oversight_auth.py
 
 Oversight Auth Router — TOTP-based authentication for regulatory auditors.
 Mounted at /api/oversight/
@@ -52,15 +51,17 @@ OVERSIGHT_JWT_TTL = int(os.getenv("OVERSIGHT_JWT_TTL_HOURS", "8"))  # 8-hour ses
 # ---------------------------------------------------------------------------
 
 class OversightLoginRequest(BaseModel):
-    entity_id: str
-    email:     str
-    totp_code: str   # 6-digit rotating code from Google Authenticator
+    entity_id:    str
+    jurisdiction: str
+    email:        str
+    totp_code:    str   # 6-digit rotating code from Google Authenticator
 
 
 class ProvisionRequest(BaseModel):
     display_name: str
     email:        str
     regulator:    str       # "SEC", "RBI", "SEBI", "FCA", "CFPB", "EU"
+    jurisdiction: str = "GLO" # "US", "IN", "EU"
     access_level: str = "READ_ONLY"
 
 
@@ -147,8 +148,12 @@ def oversight_login(body: OversightLoginRequest, request: Request):
     - TOTP code validated with ±1 window (30-sec skew tolerance)
     - All failures return the same 401 to prevent enumeration
     """
-    # 1. Validate entity_id + email against master config
-    auditor = lookup_auditor(body.entity_id.strip().upper(), body.email.strip())
+    # 1. Validate entity_id + jurisdiction + email against master config
+    auditor = lookup_auditor(
+        body.entity_id.strip().upper(), 
+        body.jurisdiction.strip().upper(), 
+        body.email.strip()
+    )
     if not auditor:
         # Constant-time-safe generic error — don't reveal which field failed
         raise HTTPException(status_code=401, detail="IDENTITY VERIFICATION FAILED")
@@ -238,6 +243,7 @@ def provision_new_auditor(
         display_name   = body.display_name,
         email          = body.email,
         regulator      = body.regulator,
+        jurisdiction   = body.jurisdiction,
         access_level   = body.access_level,
         provisioned_by = current_admin["sub"],
     )

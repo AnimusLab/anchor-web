@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom'
 const C = {
   bg: '#030305',
   card: '#0D0D14',
-  indigo: '#4F46E5', // Indigo-600
-  indigoDim: 'rgba(79,70,229,0.05)',
+  amber: '#F59E0B',
+  amberDim: 'rgba(245,158,11,0.05)',
   border: '#1E1E2A',
   txt: '#E2E8F0',
   txtS: '#94A3B8',
@@ -86,86 +86,95 @@ export default function LoginPage() {
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
         <div style={{
           position: 'absolute', inset: 0,
-          background: `radial-gradient(circle at 50% 50%, ${C.indigoDim} 0%, transparent 70%)`,
+          background: `radial-gradient(circle at 50% 50%, ${C.amberDim} 0%, transparent 70%)`,
         }} />
         <div style={{
           position: 'absolute', inset: 0,
           backgroundImage: `
-            linear-gradient(${C.indigoDim} 1px, transparent 1px),
-            linear-gradient(90deg, ${C.indigoDim} 1px, transparent 1px)
+            linear-gradient(${C.amberDim} 1px, transparent 1px),
+            linear-gradient(90deg, ${C.amberDim} 1px, transparent 1px)
           `,
           backgroundSize: '100px 100px',
         }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-indigo-500/10 rounded-full animate-spin-slow opacity-20" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-amber-500/10 rounded-full animate-spin-slow opacity-20" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#030305] flex flex-col items-center justify-center p-8 font-mono relative">
+    <div className="min-h-screen bg-[#08080D] flex flex-col items-center justify-center p-8 font-mono relative">
       <HexBackground />
       
-      <div className="w-full max-w-xl bg-[#0D0D14] border border-[#1E1E2A] shadow-2xl relative z-10 overflow-hidden">
+      <div className="w-full max-w-xl bg-[#0D0D14] border border-[#1E1E2A] shadow-2xl relative z-10 overflow-hidden rounded-2xl">
         
-        {/* Kernel Header */}
-        <div className="flex items-center gap-5 px-10 py-8 bg-black border-b border-[#1E1E2A]">
-          <div className="w-10 h-10 flex items-center justify-center border border-indigo-500/40 bg-indigo-500/5">
-            <div className="w-4 h-4 bg-indigo-500" />
+        {/* Authority Header */}
+        <div className="flex items-center gap-4 px-8 py-6 bg-[#08080D] border-b border-[#1E293B]">
+          <div className="w-8 h-8 flex items-center justify-center bg-amber-500/10 border border-amber-500/30">
+            <div className="w-3 h-3 bg-amber-500" />
           </div>
           <div>
-            <div className="text-[14px] font-bold tracking-[0.4em] uppercase text-indigo-500">Master Kernel Access</div>
-            <div className="text-[10px] tracking-widest uppercase text-slate-700 mt-1">Lattice Authority Link Established</div>
+            <div className="text-[12px] font-bold tracking-[0.2em] uppercase text-amber-500">Master Kernel Access</div>
+            <div className="text-[10px] tracking-widest uppercase text-slate-600 mt-1">Lattice Authority Link Established</div>
           </div>
         </div>
 
-        <div className="p-20">
-          <div className="flex items-center gap-3 mb-12">
-            <span className="text-[11px] tracking-[0.4em] uppercase font-bold text-slate-500">
-               {stage === 'identify' ? '01 // KERNEL HANDSHAKE' : '02 // MASTER VERIFICATION'}
+        <div className="p-12 md:p-20">
+          <div className="mb-14 text-center">
+            <span className="text-[12px] tracking-[0.5em] uppercase font-bold text-slate-500 border-b border-amber-500/20 pb-2">
+               {stage === 'identify' ? 'Level 01 // Kernel Handshake' : 'Level 02 // Master Verify'}
             </span>
           </div>
 
           {error && (
-            <div className="mb-10 p-6 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[11px] font-bold tracking-widest uppercase text-center">
+            <div className="mb-8 p-5 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[11px] font-bold tracking-widest uppercase text-center leading-relaxed">
               ⚠ [SYSTEM_ERROR]: {error}
             </div>
           )}
 
           {stage === 'identify' ? (
-            <form onSubmit={handleIdentify} className="space-y-16 animate-in fade-in duration-500">
-              <div className="space-y-6">
-                <label className="block text-[11px] tracking-[0.4em] uppercase font-bold text-slate-600">Root Admin Mail</label>
+            <form onSubmit={handleIdentify} className="flex flex-col gap-10 animate-in fade-in duration-500">
+              <div className="flex flex-col gap-4">
+                <label className="block text-[12px] tracking-[0.2em] uppercase font-bold text-slate-200">Master Admin Email</label>
                 <input required type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  className="w-full h-16 bg-[#08080A] border border-[#1E1E2A] focus:border-indigo-500/50 text-indigo-500 px-6 text-sm outline-none transition-all shadow-inner tracking-tight"
+                  className="w-full h-12 bg-[#08080D]/50 border border-[#1E293B] focus:border-amber-500/50 text-white px-5 text-base outline-none transition-all shadow-inner tracking-tight placeholder:text-slate-500 rounded-lg"
                   placeholder="admin@anchorgovernance.tech" />
               </div>
 
-              <button type="submit" disabled={loading} 
-                className="w-full h-16 bg-indigo-500/10 border border-indigo-500/40 text-indigo-500 hover:bg-indigo-500 hover:text-white font-bold text-[12px] tracking-[0.5em] uppercase transition-all duration-500 active:scale-95">
-                {loading ? 'REQUESTING KERNEL ACCESS...' : 'INITIATE MASTER HANDSHAKE'}
-              </button>
+              <div className="flex flex-col gap-4">
+                <label className="block text-[12px] tracking-[0.2em] uppercase font-bold text-slate-200">Secret Key (Master Access)</label>
+                <input required type="password" 
+                  className="w-full h-12 bg-[#08080D]/50 border border-[#1E293B] focus:border-amber-500/50 text-white px-5 text-base outline-none transition-all shadow-inner placeholder:text-slate-500 rounded-lg"
+                  placeholder="••••••••••••••••" />
+              </div>
+
+              <div className="pt-2">
+                <button type="submit" disabled={loading} 
+                  className="w-full h-12 bg-amber-500/10 border border-amber-500/40 text-amber-500 hover:bg-amber-500 hover:text-white font-bold text-[13px] tracking-[0.5em] uppercase transition-all duration-500 active:scale-95 rounded-lg">
+                  {loading ? 'REQUESTING KERNEL ACCESS...' : 'INITIATE KERNEL HANDSHAKE'}
+                </button>
+              </div>
             </form>
           ) : (
-            <form onSubmit={handleVerify} className="space-y-16 animate-in slide-in-from-right-4 duration-500">
-               <div className="text-center bg-indigo-500/5 border border-indigo-500/20 p-12">
-                  <p className="text-[11px] tracking-widest uppercase text-slate-600 mb-2">Master Identity</p>
-                  <p className="text-indigo-500 font-bold tracking-[0.4em] text-2xl">{email}</p>
+            <form onSubmit={handleVerify} className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+               <div className="text-center bg-amber-500/5 border border-amber-500/20 p-8">
+                  <p className="text-[10px] tracking-widest uppercase text-slate-500 mb-2">Master Identity</p>
+                  <p className="text-amber-500 font-bold tracking-[0.4em] text-xl">{email}</p>
                </div>
                
-               <div className="space-y-6 text-center">
-                  <p className="text-[11px] tracking-[0.3em] uppercase text-slate-600">Master Handover Code</p>
+               <div className="space-y-8 text-center">
+                  <p className="text-[12px] tracking-[0.3em] uppercase text-slate-300 font-bold">Master Handover Code</p>
                   <input required maxLength={6} type="text" value={totp} onChange={e => setTotp(e.target.value)}
-                    className="w-full h-24 bg-transparent border-b-2 border-indigo-900 focus:border-indigo-500 text-indigo-500 text-center text-5xl font-bold outline-none transition-all tracking-[0.6em]"
+                    className="w-full h-20 bg-transparent border-b-2 border-amber-900 focus:border-amber-500 text-amber-500 text-center text-5xl font-bold outline-none transition-all tracking-[0.6em]"
                     placeholder="000000" autoFocus />
                </div>
 
-               <div className="flex gap-6">
+               <div className="flex gap-4 pt-4">
                   <button type="button" onClick={() => setStage('identify')}
-                    className="flex-1 h-14 border border-[#1E1E2A] text-slate-600 hover:text-white text-[10px] font-bold tracking-widest transition-all">
+                    className="flex-1 h-12 border border-[#1E1E2A] text-slate-600 hover:text-white text-[10px] font-bold tracking-widest transition-all">
                     ABORT
                   </button>
                   <button type="submit" disabled={totp.length < 6 || loading}
-                    className="flex-[2] h-14 bg-indigo-500/10 border border-indigo-500/40 text-indigo-500 hover:bg-indigo-500 hover:text-white font-bold text-[12px] tracking-[0.4em] transition-all">
+                    className="flex-[2] h-12 bg-amber-500/10 border border-amber-500/40 text-amber-500 hover:bg-amber-500 hover:text-white font-bold text-[12px] tracking-[0.4em] transition-all">
                     {loading ? 'SYNCHRONIZING...' : 'ASSERT MASTER ACCESS'}
                   </button>
                </div>
@@ -174,9 +183,11 @@ export default function LoginPage() {
         </div>
 
         {/* System Bar */}
-        <div className="flex items-center justify-between px-10 py-5 bg-black border-t border-[#1E1E2A]">
-           <span className="text-[10px] tracking-widest uppercase text-slate-800">root.anchorgovernance.tech</span>
-           <span className="text-[10px] font-mono text-slate-800 uppercase">{time}</span>
+        <div className="flex items-center justify-between px-10 py-5 bg-[#08080D] border-t border-[#1E293B]">
+          <span className="text-[9px] tracking-widest uppercase text-slate-700">root.anchorgovernance.tech</span>
+          <span className="text-[9px] font-mono text-slate-700 uppercase">
+            {new Date().toUTCString().toUpperCase()}
+          </span>
         </div>
       </div>
       

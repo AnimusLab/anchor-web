@@ -1,5 +1,4 @@
 """
-anchor-web/server/master_config.py
 
 Master Config — Auditor registry backed by an AES-256-GCM encrypted JSON file.
 
@@ -10,6 +9,7 @@ Schema:
         "entity_id":      "SEC-JOHNDOE-2604",
         "display_name":   "John Doe",
         "email_hash":     "sha256(lowercase email)",
+        "jurisdiction":   "US",             # Legal proof of jurisdiction
         "regulator":      "SEC",
         "access_level":   "READ_ONLY",
         "totp_secret":    "base32-encoded TOTP secret (encrypted at rest)",
@@ -157,6 +157,7 @@ def provision_auditor(
     display_name: str,
     email: str,
     regulator: str,
+    jurisdiction: str = "GLO",
     access_level: str = "READ_ONLY",
     provisioned_by: str = "root",
 ) -> dict:
@@ -176,6 +177,7 @@ def provision_auditor(
         "display_name":   display_name,
         "email_hash":     email_hash(email),
         "regulator":      regulator.upper(),
+        "jurisdiction":   jurisdiction.upper(),
         "access_level":   access_level,
         "totp_secret":    raw_secret,    # encrypted implicitly by save_config
         "provisioned_at": _now(),
@@ -192,9 +194,9 @@ def provision_auditor(
     return dict(record)
 
 
-def lookup_auditor(entity_id: str, provided_email: str) -> Optional[dict]:
+def lookup_auditor(entity_id: str, jurisdiction: str, provided_email: str) -> Optional[dict]:
     """
-    Looks up an auditor by entity_id + email hash.
+    Looks up an auditor by entity_id + jurisdiction + email hash.
     Returns the auditor record if found and ACTIVE, else None.
     """
     config  = load_config()
@@ -202,6 +204,8 @@ def lookup_auditor(entity_id: str, provided_email: str) -> Optional[dict]:
     if not record:
         return None
     if record.get("status") != "ACTIVE":
+        return None
+    if record.get("jurisdiction", "").upper() != jurisdiction.strip().upper():
         return None
     if record.get("email_hash") != email_hash(provided_email):
         return None

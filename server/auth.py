@@ -96,6 +96,7 @@ class LoginRequest(BaseModel):
     password: str
 
 class IdentityChallengeRequest(BaseModel):
+    display_name: str
     email: str
     org_id: str
 
@@ -150,11 +151,17 @@ def login(
         }
     }
 
-def _identify_logic(email: str, org_prefix: str, allowed_roles: list, db: Session):
+def _identify_logic(display_name: str, email: str, org_prefix: str, allowed_roles: list, db: Session):
     """Internal shared logic for identity challenge with strict role scoping."""
     user = db.query(User).filter(User.email == email.strip().lower()).first()
     if not user:
         raise HTTPException(status_code=401, detail="IDENTITY NOT FOUND")
+    
+    # Optional: Verify display_name match (loose check to prevent strict typos blocking users)
+    if display_name.strip().lower() not in user.display_name.lower():
+        # Log mismatch but don't hard block yet to avoid UX friction if user just wrote 'John' vs 'John Doe'
+        pass
+
     if user.role not in allowed_roles:
         raise HTTPException(status_code=401, detail="INSUFFICIENT CLEARANCE")
     org = db.query(Organization).filter(Organization.id == user.org_id).first()
@@ -190,7 +197,7 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
 
 @auth_router.post("/enterprise/identify")
 def enterprise_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
-    return _identify_logic(request.email, request.org_id, ["owner", "admin", "member"], db)
+    return _identify_logic(request.display_name, request.email, request.org_id, ["owner", "admin", "member"], db)
 
 @auth_router.post("/enterprise/verify-totp")
 def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
@@ -198,7 +205,7 @@ def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db))
 
 @auth_router.post("/oversight/identify")
 def oversight_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
-    return _identify_logic(request.email, request.org_id, ["auditor", "regulator"], db)
+    return _identify_logic(request.display_name, request.email, request.org_id, ["auditor", "regulator"], db)
 
 @auth_router.post("/oversight/verify-totp")
 def oversight_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
@@ -206,7 +213,7 @@ def oversight_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
 
 @auth_router.post("/admin/identify")
 def admin_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
-    return _identify_logic(request.email, request.org_id, ["root", "admin"], db)
+    return _identify_logic(request.display_name, request.email, request.org_id, ["root", "admin"], db)
 
 @auth_router.post("/admin/verify-totp")
 def admin_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):

@@ -78,6 +78,7 @@ class User(Base):
     totp_secret  = Column(String, nullable=True)                  # Google Authenticator Secret
     avatar_url   = Column(String, nullable=True)                  # Instagram-like Profile Pix
     official_id  = Column(String, nullable=True)                  # "SEC-JHONDOC-2604"
+    jurisdiction = Column(String, nullable=True)                  # "US", "IN", "EU"
     status       = Column(String, default="pending")
     email_verified = Column(Boolean, default=False)
     created_at   = Column(String, nullable=False)
