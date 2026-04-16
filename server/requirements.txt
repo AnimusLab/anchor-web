@@ -14,3 +14,4 @@ websockets
 sib-api-v3-sdk
 pyotp
 qrcode[pil]
+anchor-audit
