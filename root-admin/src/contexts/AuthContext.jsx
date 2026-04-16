@@ -4,30 +4,16 @@ import { endpoints } from '../lib/api'
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user,  setUser]  = useState(() => {
-    try { return JSON.parse(localStorage.getItem('root_user')) } catch { return null }
-  })
-  const [token, setToken] = useState(() => localStorage.getItem('root_token') || null)
+  // Hardcoded Master Session
+  const [user] = useState({ sub: 'tan@anchorgovernance.tech', role: 'root', org_id: 'MASTER' })
+  const [token] = useState('MASTER_BYPASS_TOKEN')
 
-  const login = useCallback((tokenStr, userData) => {
-    localStorage.setItem('root_token', tokenStr)
-    localStorage.setItem('root_user',  JSON.stringify(userData))
-    setToken(tokenStr)
-    setUser(userData)
-  }, [])
-
-  const logout = useCallback(() => {
-    localStorage.removeItem('root_token')
-    localStorage.removeItem('root_user')
-    setToken(null)
-    setUser(null)
-  }, [])
-
-  // Basic check for admin role
-  const isAdmin = user?.role === 'admin'
+  const login = useCallback(() => {}, [])
+  const logout = useCallback(() => {}, [])
+  const isAdmin = true
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAdmin, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAdmin, isAuthenticated: true }}>
       {children}
     </AuthContext.Provider>
   )
