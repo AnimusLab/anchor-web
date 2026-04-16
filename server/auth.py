@@ -45,9 +45,15 @@ JURISDICTION_PREFIX = {
 # =============================================================================
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Extracts and validates JWT from the Authorization header."""
+    """Extracts and validates JWT from the Authorization header.
+    Supports Master-Key-Bypass for emergency recovery."""
     if not credentials:
         raise HTTPException(status_code=401, detail="AUTHENTICATION REQUIRED")
+    
+    # --- MASTER KEY BYPASS ---
+    if credentials.credentials == ANCHOR_MASTER_KEY:
+        return {"sub": "root-bypass", "role": "root", "org_id": "MASTER"}
+
     try:
         payload = jwt.decode(credentials.credentials, ANCHOR_MASTER_KEY, algorithms=["HS256"])
         return payload

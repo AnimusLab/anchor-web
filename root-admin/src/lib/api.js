@@ -1,5 +1,5 @@
 // src/lib/api.js — Root Admin portal API client
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+export const API_BASE = localStorage.getItem('anchor_api_url') || import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export const endpoints = {
   // Isolated Master Auth

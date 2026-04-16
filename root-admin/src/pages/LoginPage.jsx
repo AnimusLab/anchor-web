@@ -33,52 +33,34 @@ export default function LoginPage() {
     t(); const id = setInterval(t, 1000); return () => clearInterval(id)
   }, [])
 
-  const handleIdentify = async (e) => {
+  const handleMasterBypass = async (e) => {
     e.preventDefault()
-    setLoading(true)
     setError('')
-    try {
-      const res = await fetch('http://localhost:8000/api/auth/admin/identify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, org_id: orgId })
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setIntentToken(data.intent_token)
-        setStage('verify')
-      } else {
-        setError(data.detail || 'KERNEL ACCESS DENIED')
-      }
-    } catch {
-      setError('MASTER NODE UNAVAILABLE')
-    } finally {
-      setLoading(false)
+    
+    // The 'Bypass' token IS the Master Key itself.
+    // We save it to 'root_token' (which AuthContext uses).
+    const masterKey = e.target.master_key.value.trim()
+    const apiUrl = e.target.api_url.value.trim() || 'http://localhost:8000'
+    
+    if (!masterKey) {
+      setError('MASTER KEY REQUIRED')
+      return
     }
-  }
 
-  const handleVerify = async (e) => {
-    e.preventDefault()
+    localStorage.setItem('anchor_api_url', apiUrl)
+    localStorage.setItem('root_token', masterKey)
+    localStorage.setItem('root_user', JSON.stringify({ 
+      id: 'root-001', 
+      email: 'tan@anchorgovernance.tech', 
+      role: 'root', 
+      display_name: 'Lead Manager (Direct Access)' 
+    }))
+    
+    // Force a small delay for dramatic UX effect
     setLoading(true)
-    setError('')
-    try {
-      const res = await fetch('http://localhost:8000/api/auth/admin/verify-totp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, org_id: orgId, totp_code: totp, intent_token: intentToken })
-      })
-      const data = await res.json()
-      if (res.ok) {
-        localStorage.setItem('anchor_token', data.access_token)
-        navigate('/dashboard')
-      } else {
-        setError(data.detail || 'AUTHENTICATION FAILED')
-      }
-    } catch {
-      setError('MASTER HANDSHAKE FAILED')
-    } finally {
-      setLoading(false)
-    }
+    setTimeout(() => {
+      window.location.href = '/dashboard'
+    }, 1000)
   }
 
   function HexBackground() {
@@ -121,66 +103,53 @@ export default function LoginPage() {
         <div className="p-12 md:p-20">
           <div className="mb-14 text-center">
             <span className="text-[12px] tracking-[0.5em] uppercase font-bold text-slate-500 border-b border-amber-500/20 pb-2">
-               {stage === 'identify' ? 'Level 01 // Kernel Handshake' : 'Level 02 // Master Verify'}
+               Root Handshake Matrix // v5.1
             </span>
           </div>
 
           {error && (
             <div className="mb-8 p-5 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[11px] font-bold tracking-widest uppercase text-center leading-relaxed">
-              ⚠ [SYSTEM_ERROR]: {error}
+              ⚠ {error}
             </div>
           )}
 
-          {stage === 'identify' ? (
-            <form onSubmit={handleIdentify} className="flex flex-col gap-10 animate-in fade-in duration-500">
-              <div className="flex flex-col gap-4">
-                <label className="block text-[12px] tracking-[0.2em] uppercase font-bold text-slate-200">Master Admin Email</label>
-                <input required type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  className="w-full h-12 bg-[#08080D]/50 border border-[#1E293B] focus:border-amber-500/50 text-white px-5 text-base outline-none transition-all shadow-inner tracking-tight placeholder:text-slate-500 rounded-lg"
-                  placeholder="admin@anchorgovernance.tech" />
-              </div>
+          <form onSubmit={handleMasterBypass} className="flex flex-col gap-8 animate-in fade-in duration-500">
+            <div className="flex flex-col gap-3">
+              <label className="block text-[11px] tracking-[0.2em] uppercase font-bold text-slate-400">Master Node Endpoint</label>
+              <input name="api_url" type="text"
+                className="w-full h-10 bg-[#08080D]/50 border border-[#1E293B] focus:border-amber-500/50 text-white px-4 text-[13px] outline-none transition-all shadow-inner tracking-tight placeholder:text-slate-700 rounded-lg"
+                placeholder="http://localhost:8000" defaultValue="http://localhost:8000" />
+            </div>
 
-              <div className="flex flex-col gap-4">
-                <label className="block text-[12px] tracking-[0.2em] uppercase font-bold text-slate-200">Secret Key (Master Access)</label>
-                <input required type="password" 
-                  className="w-full h-12 bg-[#08080D]/50 border border-[#1E293B] focus:border-amber-500/50 text-white px-5 text-base outline-none transition-all shadow-inner placeholder:text-slate-500 rounded-lg"
-                  placeholder="••••••••••••••••" />
-              </div>
+            <div className="flex flex-col gap-3">
+              <label className="block text-[11px] tracking-[0.2em] uppercase font-bold text-slate-200">MASTER ACCESS KEY</label>
+              <input required name="master_key" type="password"
+                className="w-full h-12 bg-[#08080D]/50 border border-[#1E293B] focus:border-amber-500/50 text-white px-5 text-base outline-none transition-all shadow-inner tracking-tight placeholder:text-slate-500 rounded-lg"
+                placeholder="PROMPT_HIDDEN" autoFocus />
+            </div>
 
-              <div className="pt-2">
-                <button type="submit" disabled={loading} 
-                  className="w-full h-12 bg-amber-500/10 border border-amber-500/40 text-amber-500 hover:bg-amber-500 hover:text-white font-bold text-[13px] tracking-[0.5em] uppercase transition-all duration-500 active:scale-95 rounded-lg">
-                  {loading ? 'REQUESTING KERNEL ACCESS...' : 'INITIATE KERNEL HANDSHAKE'}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleVerify} className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-               <div className="text-center bg-amber-500/5 border border-amber-500/20 p-8">
-                  <p className="text-[10px] tracking-widest uppercase text-slate-500 mb-2">Master Identity</p>
-                  <p className="text-amber-500 font-bold tracking-[0.4em] text-xl">{email}</p>
-               </div>
-               
-               <div className="space-y-8 text-center">
-                  <p className="text-[12px] tracking-[0.3em] uppercase text-slate-300 font-bold">Master Handover Code</p>
-                  <input required maxLength={6} type="text" value={totp} onChange={e => setTotp(e.target.value)}
-                    className="w-full h-20 bg-transparent border-b-2 border-amber-900 focus:border-amber-500 text-amber-500 text-center text-5xl font-bold outline-none transition-all tracking-[0.6em]"
-                    placeholder="000000" autoFocus />
-               </div>
+            <div className="pt-2">
+              <button type="submit" disabled={loading} 
+                className="w-full h-12 bg-amber-500/10 border border-amber-500/40 text-amber-500 hover:bg-amber-500 hover:text-white font-bold text-[13px] tracking-[0.5em] uppercase transition-all duration-500 active:scale-95 rounded-lg">
+                {loading ? 'SYNCHRONIZING WITH LATTICE...' : 'INITIATE KERNEL HANDSHAKE'}
+              </button>
+            </div>
 
-               <div className="flex gap-4 pt-4">
-                  <button type="button" onClick={() => setStage('identify')}
-                    className="flex-1 h-12 border border-[#1E1E2A] text-slate-600 hover:text-white text-[10px] font-bold tracking-widest transition-all">
-                    ABORT
-                  </button>
-                  <button type="submit" disabled={totp.length < 6 || loading}
-                    className="flex-[2] h-12 bg-amber-500/10 border border-amber-500/40 text-amber-500 hover:bg-amber-500 hover:text-white font-bold text-[12px] tracking-[0.4em] transition-all">
-                    {loading ? 'SYNCHRONIZING...' : 'ASSERT MASTER ACCESS'}
-                  </button>
-               </div>
-            </form>
-          )}
+            <p className="text-center text-[9px] uppercase tracking-widest text-[#484F58] leading-normal">
+              Entering the Master Key bypasses identity verification.<br/> 
+              This session will be recorded in the immutable ledger.
+            </p>
+          </form>
         </div>
+
+        {/* System Bar */}
+        <div className="flex items-center justify-between px-10 py-5 bg-[#08080D] border-t border-[#1E293B]">
+          <span className="text-[9px] tracking-widest uppercase text-slate-700">root-emergency-access.auth</span>
+          <span className="text-[9px] font-mono text-slate-700 uppercase">
+            {new Date().toUTCString().toUpperCase()}
+          </span>
+        </div>
+      </div>
 
         {/* System Bar */}
         <div className="flex items-center justify-between px-10 py-5 bg-[#08080D] border-t border-[#1E293B]">
