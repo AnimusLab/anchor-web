@@ -1,9 +1,10 @@
 ---
-title: Anchor Master Node
+title: Anchor
 emoji: ⚓
 colorFrom: amber
 colorTo: slate
 sdk: docker
+app_port: 7860
 pinned: false
 ---
 
