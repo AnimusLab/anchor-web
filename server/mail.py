@@ -219,3 +219,25 @@ def send_auditor_provisioned(to_email: str, display_name: str, entity_id: str, r
     """
     return _send_email(to_email, subject, html)
 
+
+def send_admin_access_code(to_email: str, code: str):
+    """Sends a one-time administrative access code for the Master Console."""
+    subject = f"Your Anchor Access Code: {code}"
+    html = f"""
+    <div style="font-family: monospace; background: #08080D; color: #E2E8F0; padding: 40px; max-width: 600px;">
+        <h2 style="color: #F59E0B; letter-spacing: 0.15em;">MASTER CONSOLE ACCESS</h2>
+        <p style="color: #94A3B8;">A request was made to access the Anchor Master Node with this email.</p>
+        
+        <div style="background: #0D0D14; border: 1px solid #F59E0B; padding: 30px; margin: 30px 0; text-align: center;">
+            <p style="color: #94A3B8; font-size: 11px; margin: 0 0 12px; letter-spacing: 0.2em;">ONE-TIME ACCESS CODE</p>
+            <span style="color: #F59E0B; font-size: 42px; font-weight: bold; letter-spacing: 0.3em;">{code}</span>
+        </div>
+        
+        <p style="color: #64748B; font-size: 11px;">
+            This code will expire in 10 minutes.<br>
+            If you did not request this access, your account remains secure. No further action is required.
+        </p>
+    </div>
+    """
+    return _send_email(to_email, subject, html)
+
