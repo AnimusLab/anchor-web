@@ -150,15 +150,6 @@ export default function LoginPage() {
           </span>
         </div>
       </div>
-
-        {/* System Bar */}
-        <div className="flex items-center justify-between px-10 py-5 bg-[#08080D] border-t border-[#1E293B]">
-          <span className="text-[9px] tracking-widest uppercase text-slate-700">root.anchorgovernance.tech</span>
-          <span className="text-[9px] font-mono text-slate-700 uppercase">
-            {new Date().toUTCString().toUpperCase()}
-          </span>
-        </div>
-      </div>
       
       <style>{`
         @keyframes spin-slow {
