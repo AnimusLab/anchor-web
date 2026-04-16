@@ -1,4 +1,7 @@
+import React, { useState, useEffect } from 'react';
 import PortalLayout from '../components/PortalLayout';
+import { useAuth } from '../contexts/AuthContext';
+import { endpoints } from '../lib/api';
 
 export default function Dashboard() {
   const { token, logout } = useAuth()
