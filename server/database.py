@@ -73,26 +73,32 @@ def seed_mesh_identities(db):
     # Fixed TOTP Secret: "JBSWY3DPEHPK3PXP" (Enter this in Authenticator for testing)
     test_secret = "JBSWY3DPEHPK3PXP" 
     
+    # Root admin password is the ANCHOR_MASTER_KEY from .env
+    ANCHOR_MASTER_KEY = os.getenv("ANCHOR_MASTER_KEY")
+    hashed_master = bcrypt.hashpw(ANCHOR_MASTER_KEY.encode(), bcrypt.gensalt()).decode() if ANCHOR_MASTER_KEY else None
+
     users_to_seed = [
         {
             "email": "tan@anchorgovernance.tech", 
             "name": "Tan (Lead Manager)", 
             "role": "owner", 
             "org_id": "org_animus_001",
-            "oid": "ANIMUS-MGMT-001"
+            "oid": "ANIMUS-MGMT-001",
+            "pass": hashed_master
         },
         {
             "email": "artisianecho@gmail.com", 
             "name": "Audit Echo", 
             "role": "regulator", 
             "org_id": "org_sec_master",
-            "oid": "SEC-AUDITOR-99"
+            "oid": "SEC-AUDITOR-99",
+            "pass": hashed_master
         }
     ]
 
     for u_cfg in users_to_seed:
-        existing = db.query(User).filter(User.email == u_cfg["email"]).first()
-        if not existing:
+        user = db.query(User).filter(User.email == u_cfg["email"]).first()
+        if not user:
             user = User(
                 id=f"usr_{secrets.token_hex(4)}",
                 email=u_cfg["email"],
@@ -106,7 +112,12 @@ def seed_mesh_identities(db):
                 created_at=datetime.utcnow().isoformat()
             )
             db.add(user)
-            print(f"[SYSTEM] Identity Provisioned: {u_cfg['email']} ({u_cfg['role']})")
+        
+        # Always ensure the password/hash is synchronized with the latest .env
+        if u_cfg["pass"]:
+            user.hashed_pass = u_cfg["pass"]
+            
+        print(f"[SYSTEM] Identity Synchronized: {u_cfg['email']} ({u_cfg['role']})")
     
     db.commit()
     print("[BOOT] Sovereign Mesh — Genesis Seeding Complete.")
