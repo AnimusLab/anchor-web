@@ -20,9 +20,12 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from database import Base
+from database import Base, DATABASE_URL
 import models
 target_metadata = Base.metadata
+
+# Override the sqlalchemy.url from alembic.ini with the one from our .env
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

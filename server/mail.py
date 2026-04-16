@@ -6,6 +6,8 @@ Falls back to console logging if no key is configured.
 """
 import os
 import re
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 
 # Configuration from environment
 BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")

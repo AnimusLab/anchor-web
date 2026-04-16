@@ -1,3 +1,7 @@
+from sqlalchemy import Column, String, Boolean, Text, ForeignKey
+from sqlalchemy.orm import relationship
+from database import Base
+
 # --- 1. ORGANIZATION (Sovereign Bucket) ---
 class Organization(Base):
     """v5.0 Top-level entity representing a company/regulator agency."""
