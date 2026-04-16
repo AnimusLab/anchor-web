@@ -1,8 +1,8 @@
 ---
 title: Anchor
 emoji: ⚓
-colorFrom: amber
-colorTo: slate
+colorFrom: yellow
+colorTo: gray
 sdk: docker
 app_port: 7860
 pinned: false
