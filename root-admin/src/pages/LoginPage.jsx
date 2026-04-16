@@ -40,7 +40,12 @@ export default function LoginPage() {
     // The 'Bypass' token IS the Master Key itself.
     // We save it to 'root_token' (which AuthContext uses).
     const masterKey = e.target.master_key.value.trim()
-    const apiUrl = e.target.api_url.value.trim() || 'http://localhost:8000'
+    const apiUrl = e.target.api_url.value.trim()
+    
+    if (!apiUrl) {
+      setError('ENDPOINT URL REQUIRED')
+      return
+    }
     
     if (!masterKey) {
       setError('MASTER KEY REQUIRED')
@@ -118,7 +123,7 @@ export default function LoginPage() {
               <label className="block text-[11px] tracking-[0.2em] uppercase font-bold text-slate-400">Master Node Endpoint</label>
               <input name="api_url" type="text"
                 className="w-full h-10 bg-[#08080D]/50 border border-[#1E293B] focus:border-amber-500/50 text-white px-4 text-[13px] outline-none transition-all shadow-inner tracking-tight placeholder:text-slate-700 rounded-lg"
-                placeholder="http://localhost:8000" defaultValue="http://localhost:8000" />
+                placeholder="https://app.anchorgovernance.tech" />
             </div>
 
             <div className="flex flex-col gap-3">

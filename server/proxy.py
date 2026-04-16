@@ -457,7 +457,7 @@ def get_fleet_stats(entity_id: str = None, current_user: dict = Depends(get_curr
     # 1. Enforce Tenant Isolation
     if current_user["role"] == "enterprise":
         target_entity = current_user["sub"]
-    elif current_user["role"] in ("admin", "regulator"):
+    elif current_user["role"] in ("admin", "regulator", "root"):
         target_entity = entity_id # Allow global visibility for oversight roles
     else:
         raise HTTPException(status_code=403, detail="ACCESS DENIED")
@@ -544,7 +544,7 @@ def get_fleet_stats(entity_id: str = None, current_user: dict = Depends(get_curr
 def get_fleet_ledger(entity_id: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """The Regulator's DAC Chain: Paginated historical record for a specific fleet"""
     # Only admins and regulators can access audit endpoints
-    if current_user["role"] not in ("admin", "regulator"):
+    if current_user["role"] not in ("admin", "regulator", "root"):
         raise HTTPException(status_code=403, detail="AUDITOR OR ADMIN PRIVILEGES REQUIRED")
     
     entries = db.query(LedgerEntry).filter(LedgerEntry.entity_id == entity_id).order_by(desc(LedgerEntry.timestamp)).all()
@@ -553,7 +553,7 @@ def get_fleet_ledger(entity_id: str, current_user: dict = Depends(get_current_us
 @app.get("/api/audit/{entity_id}/verify")
 def verify_fleet_chain(entity_id: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """The ZK-Integrity Check: Verifies the full cryptographic chain for a fleet"""
-    if current_user["role"] not in ("admin", "regulator"):
+    if current_user["role"] not in ("admin", "regulator", "root"):
         raise HTTPException(status_code=403, detail="AUDITOR OR ADMIN PRIVILEGES REQUIRED")
     
     entries = db.query(LedgerEntry).filter(LedgerEntry.entity_id == entity_id).order_by(LedgerEntry.timestamp).all()
@@ -572,7 +572,7 @@ def verify_fleet_chain(entity_id: str, current_user: dict = Depends(get_current_
 @app.get("/api/audit/{entity_id}/entry/{entry_id}")
 def get_translated_entry(entity_id: str, entry_id: str, dialect: str = "RBI", current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """The Polymorphic Reporter: Generates a dialect-specific translation for a single violation"""
-    if current_user["role"] not in ("admin", "regulator"):
+    if current_user["role"] not in ("admin", "regulator", "root"):
         raise HTTPException(status_code=403, detail="AUDITOR OR ADMIN PRIVILEGES REQUIRED")
          
     entry = db.query(LedgerEntry).filter(LedgerEntry.id == entry_id, LedgerEntry.entity_id == entity_id).first()
