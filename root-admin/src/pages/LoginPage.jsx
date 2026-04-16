@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 // Master Kernel Colors
 const C = {
@@ -14,15 +13,6 @@ const C = {
 }
 
 export default function LoginPage() {
-  const navigate = useNavigate()
-  
-  // Auth State
-  const [email, setEmail] = useState('')
-  const [orgId, setOrgId] = useState('MASTER')
-  const [totp, setTotp] = useState('')
-  const [stage, setStage] = useState('identify')
-  const [intentToken, setIntentToken] = useState(null)
-  
   // UI State
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
