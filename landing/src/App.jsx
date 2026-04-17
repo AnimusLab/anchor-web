@@ -836,12 +836,12 @@ function Hero() {
           <div style={{ display: "flex", gap: "12px", marginBottom: "32px", flexWrap: "wrap" }}>
             <a href="https://app.anchorgovernance.tech" target="_blank" rel="noreferrer" style={{
               fontFamily: C.mono, fontSize: "12px", fontWeight: 700, color: C.bg, background: `linear-gradient(135deg, ${C.gold}, ${C.goldB})`,
-              padding: "14px 24px", textDecoration: "none", letterSpacing: ".08em", textTransform: "uppercase", boxShadow: "0 8px 24px rgba(201,168,76,.2)",
+              padding: "14px 28px", textDecoration: "none", letterSpacing: ".08em", textTransform: "uppercase", boxShadow: "0 8px 24px rgba(201,168,76,.2)",
               transition: "opacity .2s", flexShrink: 0,
             }}
               onMouseEnter={e => e.currentTarget.style.opacity = ".85"}
               onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-            >Launch Console</a>
+            >Launch Enterprise Console</a>
             <a href="https://mesh.anchorgovernance.tech" target="_blank" rel="noreferrer" style={{
               fontFamily: C.mono, fontSize: "12px", fontWeight: 700, color: C.cyan, background: "transparent",
               padding: "14px 24px", textDecoration: "none", letterSpacing: ".08em", textTransform: "uppercase",
@@ -849,18 +849,8 @@ function Hero() {
             }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,212,184,.08)"; e.currentTarget.style.boxShadow = "0 0 20px rgba(0,212,184,.15)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.boxShadow = "none"; }}
-            >⬡ Global Mesh</a>
-            <a href="https://oversight.anchorgovernance.tech" target="_blank" rel="noreferrer" style={{
-              fontFamily: C.mono, fontSize: "12px", fontWeight: 700, color: C.txtS, background: "transparent",
-              padding: "14px 20px", textDecoration: "none", letterSpacing: ".08em", textTransform: "uppercase",
-              border: `1px solid ${C.border}`, transition: "all .2s", flexShrink: 0,
-            }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.color = C.gold; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.txtS; }}
-            >⚖ Regulatory Portal</a>
+            >⬡ World Monitor</a>
           </div>
-
-
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             {["Apache 2.0", "Python 3.8+", "43 domain rules", "170 regulatory mappings"].map(c => (
               <span key={c} style={{ fontFamily: C.mono, fontSize: "9px", letterSpacing: ".07em", textTransform: "uppercase", color: C.txtS, background: C.bg1, border: `1px solid ${C.border}`, padding: "4px 10px", transition: "border-color .2s, color .2s" }}

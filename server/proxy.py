@@ -52,14 +52,96 @@ app.include_router(oversight_router)
 def on_startup():
     init_db()
 
+
+# --- PUBLIC MESH TELEMETRY (No auth — all identifiers hashed) ---
+@app.get("/api/public/stats")
+def get_public_mesh_stats(db: Session = Depends(get_db)):
+    """
+    Public World Monitor endpoint for the Global Mesh page.
+    Returns aggregate governance telemetry with ALL identifying information
+    replaced by truncated SHA-256 hashes — no company, project, or file names exposed.
+    """
+    entries = db.query(LedgerEntry).order_by(desc(LedgerEntry.timestamp)).all()
+
+    total_audits = 0
+    total_violations = 0
+    total_mitigations = 0
+    recent_violations = []
+
+    # Violation type → one-line public description map
+    VIOLATION_DESCRIPTIONS = {
+        "runtime_violation": "Governance rule breach detected in inference chain",
+        "prompt_injection":  "Prompt injection vector identified in agent input",
+        "ethics_breach":     "Ethics policy violation flagged by domain engine",
+        "privacy_leak":      "Sensitive data exfiltration pattern detected",
+        "supply_chain":      "MCP supply chain integrity compromise detected",
+        "alignment":         "Model alignment drift beyond tolerance threshold",
+        "agentic":           "Unauthorized autonomous action outside policy scope",
+    }
+
+    for e in entries:
+        if e.type == "remediation":
+            total_mitigations += 1
+            continue
+
+        total_audits += 1
+        is_violation = (e.type == "runtime_violation")
+        if is_violation:
+            total_violations += 1
+
+        if is_violation and len(recent_violations) < 50:
+            try:
+                payload = json.loads(e.payload)
+            except Exception:
+                payload = {}
+
+            # Hash all identifying fields
+            entity_hash  = hashlib.sha256((e.entity_id or "").encode()).hexdigest()[:8]
+            project_raw  = payload.get("project_name", e.entity_id or "unknown")
+            project_hash = hashlib.sha256(project_raw.encode()).hexdigest()[:8]
+            rule_id      = payload.get("rule_id", e.type or "UNKNOWN")
+
+            # Jurisdiction derived from rule_id prefix (SEC, RBI, ETH, etc.)
+            loc = rule_id.split("-")[0].upper() if "-" in rule_id else "GLO"
+
+            desc_text = VIOLATION_DESCRIPTIONS.get(e.type, "Policy deviation recorded in audit ledger")
+
+            recent_violations.append({
+                "violation_id": f"{rule_id}-{entity_hash[:4].upper()}",
+                "timestamp":    e.timestamp,
+                "location":     loc,
+                "description":  desc_text,
+                "chain_hash":   (e.chain_hash or "")[:16] + "...",
+                "entity":       f"0x{entity_hash}",
+                "project":      f"0x{project_hash}",
+            })
+
+    compliance_rate = (
+        100 if total_audits == 0
+        else round(((total_audits - total_violations) / total_audits) * 100, 1)
+    )
+
+    return {
+        "total_audits":     total_audits,
+        "total_violations": total_violations,
+        "total_mitigations":total_mitigations,
+        "compliance_rate":  compliance_rate,
+        "active_nodes":     db.query(func.count(LedgerEntry.entity_id.distinct())).scalar() or 0,
+        "violations":       recent_violations,
+    }
+
+
+
 # Lock down CORS to your specific subdomains
 ALLOWED_ORIGINS = [
     "http://localhost:5173", # Local dev
     "https://anchorgovernance.tech",
     "https://app.anchorgovernance.tech",
     "https://oversight.anchorgovernance.tech",
-    "https://root.anchorgovernance.tech"
+    "https://root.anchorgovernance.tech",
+    "https://mesh.anchorgovernance.tech",
 ]
+
 
 # Open CORS for emergency connectivity between Cloudflare/HF Spaces
 app.add_middleware(

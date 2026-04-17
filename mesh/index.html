@@ -3,535 +3,420 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Anchor Global Mesh — Sovereign Governance Relay</title>
-  <meta name="description" content="The Anchor Global Governance Mesh — a federated relay network for enterprise AI compliance and regulatory oversight." />
+  <title>Anchor Global Mesh — World Monitor</title>
+  <meta name="description" content="Live telemetry of AI governance violations and compliance across the Anchor Global Mesh network. All identifiers cryptographically anonymized." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      background: #070710;
-      color: #f1f5f9;
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+    html, body { background: #07080f; color: #e2e8f0; font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
 
     :root {
-      --gold:   #c9a84c;
-      --goldL:  #e8c97a;
       --cyan:   #00d4b8;
-      --cyanD:  rgba(0,212,184,0.08);
-      --purple: #8b5cf6;
-      --purpleD:rgba(139,92,246,0.1);
+      --cyanD:  rgba(0,212,184,0.07);
       --green:  #10b981;
-      --border: #1a1f2e;
-      --bg1:    #0d0d18;
-      --bg2:    #111120;
-      --txt:    #f1f5f9;
-      --txtS:   #94a3b8;
-      --txtD:   #374151;
+      --greenD: rgba(16,185,129,0.08);
+      --red:    #ef4444;
+      --redD:   rgba(239,68,68,0.08);
+      --amber:  #f59e0b;
+      --amberD: rgba(245,158,11,0.08);
+      --gold:   #c9a84c;
+      --border: #161b28;
+      --bg1:    #0c0e1a;
+      --bg2:    #10121f;
+      --txt:    #e2e8f0;
+      --txtS:   #64748b;
+      --txtD:   #2d3344;
       --mono:   'JetBrains Mono', monospace;
     }
 
-    /* ── Animations ── */
-    @keyframes pulse    { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.85)} }
-    @keyframes scanH    { from{transform:translateY(-100%);opacity:0} 50%{opacity:.2} to{transform:translateY(100vh);opacity:0} }
-    @keyframes fadeUp   { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
-    @keyframes fadeIn   { from{opacity:0} to{opacity:1} }
-    @keyframes nodeGlow { 0%,100%{box-shadow:0 0 12px rgba(0,212,184,.3)} 50%{box-shadow:0 0 32px rgba(0,212,184,.7)} }
-    @keyframes lineFlow { 0%{stroke-dashoffset:200} 100%{stroke-dashoffset:0} }
-    @keyframes rotate   { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-    @keyframes orbitSpin{ from{transform:rotate(0deg) translateX(110px) rotate(0deg)} to{transform:rotate(360deg) translateX(110px) rotate(-360deg)} }
-    @keyframes float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-    @keyframes tickerMove { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    @keyframes pulse     { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.8)} }
+    @keyframes fadeIn    { from{opacity:0} to{opacity:1} }
+    @keyframes fadeUp    { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+    @keyframes scanLine  { from{transform:translateY(-100%);opacity:0} 50%{opacity:.18} to{transform:translateY(100vh);opacity:0} }
+    @keyframes slideIn   { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:none} }
+    @keyframes ticker    { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    @keyframes barGrow   { from{width:0} to{width:var(--w)} }
+    @keyframes countUp   { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+    @keyframes spin      { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
     /* ── Background ── */
-    .bg-grid {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background-image:
-        linear-gradient(rgba(0,212,184,.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,212,184,.025) 1px, transparent 1px);
-      background-size: 56px 56px;
-    }
-    .bg-radial {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background: radial-gradient(ellipse 80% 55% at 50% 0%, rgba(0,212,184,.05) 0%, transparent 60%);
+    body::before {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image: linear-gradient(rgba(0,212,184,.018) 1px,transparent 1px), linear-gradient(90deg,rgba(0,212,184,.018) 1px,transparent 1px);
+      background-size: 52px 52px;
     }
     .scan-beam {
-      position: fixed; left: 0; right: 0; top: 0; height: 2px; z-index: 0;
-      background: linear-gradient(90deg, transparent, rgba(0,212,184,.35), transparent);
-      pointer-events: none;
-      animation: scanH 7s linear infinite;
+      position:fixed; left:0; right:0; top:0; height:2px; z-index:0; pointer-events:none;
+      background:linear-gradient(90deg,transparent,rgba(0,212,184,.3),transparent);
+      animation:scanLine 8s linear infinite;
     }
 
     /* ── Nav ── */
     nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      padding: 0 40px;
-      height: 64px;
-      display: flex; align-items: center; gap: 16px;
-      background: rgba(7,7,16,.92);
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(20px);
-      animation: fadeIn .5s ease both;
+      position:fixed; top:0; left:0; right:0; z-index:100;
+      height:58px; padding:0 32px;
+      display:flex; align-items:center; gap:14px;
+      background:rgba(7,8,15,.96); border-bottom:1px solid var(--border);
+      backdrop-filter:blur(16px);
     }
-    .nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
-    .nav-mark {
-      width: 32px; height: 32px; background: var(--cyan); border-radius: 7px;
-      display: flex; align-items: center; justify-content: center;
+    .nav-mark { width:28px; height:28px; background:var(--cyan); border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .nav-mark svg { width:16px; height:16px; fill:#03131a; }
+    .nav-wordmark { font-size:14px; font-weight:800; color:var(--txt); letter-spacing:-.02em; }
+    .nav-sub { font-size:9px; color:var(--cyan); letter-spacing:.14em; font-family:var(--mono); }
+    .nav-badge { font-family:var(--mono); font-size:9px; color:rgba(0,212,184,.6); border:1px solid rgba(0,212,184,.2); padding:2px 7px; border-radius:4px; }
+    .nav-sep { width:1px; height:24px; background:var(--border); }
+    .live-dot { display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:9px; color:var(--green); letter-spacing:.1em; }
+    .live-dot span { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:pulse 2s infinite; }
+    .nav-right { margin-left:auto; display:flex; align-items:center; gap:12px; }
+    .nav-clock { font-family:var(--mono); font-size:10px; color:var(--txtS); }
+    .nav-btn {
+      font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+      padding:7px 14px; border-radius:6px; text-decoration:none; border:none; cursor:pointer;
+      transition:all .15s;
     }
-    .nav-title { font-size: 15px; font-weight: 800; color: var(--txt); letter-spacing: -.02em; }
-    .nav-sub   { font-size: 10px; color: var(--cyan); letter-spacing: .1em; font-family: var(--mono); }
-    .nav-badge {
-      font-family: var(--mono); font-size: 10px; color: rgba(0,212,184,.7);
-      border: 1px solid rgba(0,212,184,.25); padding: 2px 8px; border-radius: 4px;
-    }
-    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-    .status-dot {
-      display: flex; align-items: center; gap: 6px;
-      font-family: var(--mono); font-size: 10px; color: var(--green); letter-spacing: .08em;
-    }
-    .status-dot span { width:7px; height:7px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; box-shadow:0 0 7px var(--green); }
-
-    /* ── Hero ── */
-    .hero {
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 100px 40px 60px;
-      position: relative; z-index: 1;
-      text-align: center;
-    }
-    .hero-eyebrow {
-      display: flex; align-items: center; gap: 8px;
-      margin-bottom: 32px;
-      animation: fadeUp .6s .1s ease both;
-    }
-    .eyebrow-tag {
-      font-family: var(--mono); font-size: 10px; font-weight: 700;
-      color: var(--cyan); background: var(--cyanD);
-      border: 1px solid rgba(0,212,184,.3); padding: 4px 12px; border-radius: 4px;
-      letter-spacing: .1em; text-transform: uppercase;
-    }
-    h1 {
-      font-size: clamp(42px, 6vw, 80px);
-      font-weight: 900; line-height: .95;
-      letter-spacing: -.03em;
-      margin-bottom: 24px;
-      animation: fadeUp .6s .2s ease both;
-    }
-    h1 .accent { color: var(--cyan); }
-    .hero-desc {
-      font-size: clamp(14px, 1.5vw, 17px);
-      color: var(--txtS); line-height: 1.7;
-      max-width: 580px; margin: 0 auto 48px;
-      animation: fadeUp .6s .3s ease both;
-    }
-
-    /* ── CTA Buttons ── */
-    .cta-group {
-      display: flex; gap: 14px; flex-wrap: wrap;
-      justify-content: center; margin-bottom: 64px;
-      animation: fadeUp .6s .4s ease both;
-    }
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 14px 28px; border-radius: 8px;
-      font-family: var(--mono); font-size: 12px; font-weight: 700;
-      letter-spacing: .08em; text-transform: uppercase;
-      text-decoration: none; cursor: pointer; border: none;
-      transition: all .2s ease;
-    }
-    .btn-primary {
-      background: var(--cyan); color: #03131a;
-      box-shadow: 0 8px 24px rgba(0,212,184,.25);
-    }
-    .btn-primary:hover { opacity: .88; transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,212,184,.35); }
-    .btn-secondary {
-      background: transparent; color: var(--gold);
-      border: 1px solid rgba(201,168,76,.4);
-    }
-    .btn-secondary:hover { background: rgba(201,168,76,.08); border-color: var(--gold); transform: translateY(-2px); }
-    .btn-ghost {
-      background: transparent; color: var(--txtS);
-      border: 1px solid var(--border);
-    }
-    .btn-ghost:hover { border-color: rgba(139,92,246,.5); color: #c4b5fd; background: var(--purpleD); }
-
-    /* ── Mesh Diagram ── */
-    .mesh-diagram {
-      position: relative; width: 280px; height: 280px;
-      margin: 0 auto 64px;
-      animation: float 6s ease-in-out infinite, fadeIn .8s .5s ease both;
-    }
-    .mesh-hub {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 72px; height: 72px; border-radius: 50%;
-      background: var(--cyanD);
-      border: 2px solid var(--cyan);
-      display: flex; align-items: center; justify-content: center;
-      animation: nodeGlow 2.5s ease infinite;
-      z-index: 2;
-    }
-    .hub-ring {
-      width: 56px; height: 56px; border-radius: 50%;
-      border: 1px solid rgba(0,212,184,.3);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .hub-core {
-      width: 28px; height: 28px; background: var(--cyan); border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .hub-core svg { width: 16px; height: 16px; fill: #03131a; }
-    .orbit-ring {
-      position: absolute; top: 50%; left: 50%;
-      width: 220px; height: 220px;
-      margin: -110px 0 0 -110px;
-      border: 1px dashed rgba(0,212,184,.15);
-      border-radius: 50%;
-    }
-    .spoke-node {
-      position: absolute;
-      width: 40px; height: 40px; border-radius: 50%;
-      background: var(--bg2);
-      border: 1.5px solid;
-      display: flex; align-items: center; justify-content: center;
-      font-family: var(--mono); font-size: 7px; font-weight: 700;
-      text-align: center; line-height: 1.3;
-      z-index: 2;
-    }
-    .spoke-line {
-      position: absolute; top: 50%; left: 50%;
-      width: 110px; height: 1px;
-      transform-origin: left center;
-      background: linear-gradient(90deg, var(--cyan), transparent);
-      opacity: .35;
-    }
+    .btn-enterprise { background:var(--cyan); color:#03131a; }
+    .btn-enterprise:hover { opacity:.88; }
+    .btn-oversight   { background:transparent; color:var(--amber); border:1px solid rgba(245,158,11,.35); }
+    .btn-oversight:hover { background:var(--amberD); }
 
     /* ── Ticker ── */
-    .ticker {
-      width: 100%; overflow: hidden;
-      padding: 10px 0;
-      background: linear-gradient(90deg, var(--cyan), #00b8a0, var(--cyan));
-      margin-bottom: 80px;
-      position: relative; z-index: 1;
-    }
-    .ticker-inner {
-      display: flex; white-space: nowrap; width: max-content;
-      animation: tickerMove 40s linear infinite;
-    }
-    .ticker-item {
-      font-family: var(--mono); font-size: 10px; font-weight: 700;
-      color: #03131a; padding: 0 32px; letter-spacing: .1em; text-transform: uppercase;
-    }
+    .ticker-bar { background:linear-gradient(90deg,var(--cyan),#00b8a0,var(--cyan)); padding:8px 0; overflow:hidden; position:relative; z-index:1; margin-top:58px; }
+    .ticker-inner { display:flex; white-space:nowrap; width:max-content; animation:ticker 50s linear infinite; }
+    .ticker-item { font-family:var(--mono); font-size:9px; font-weight:700; color:#03131a; padding:0 28px; letter-spacing:.1em; text-transform:uppercase; }
 
-    /* ── Node Cards ── */
-    .nodes-section {
-      padding: 0 40px 80px;
-      max-width: 1100px; margin: 0 auto;
-      position: relative; z-index: 1;
-    }
-    .section-label {
-      text-align: center; margin-bottom: 40px;
-      font-family: var(--mono); font-size: 10px; font-weight: 700;
-      color: rgba(0,212,184,.6); letter-spacing: .2em; text-transform: uppercase;
-    }
-    .nodes-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 16px;
-    }
-    .node-card {
-      background: var(--bg1);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 28px;
-      text-decoration: none;
-      transition: all .2s ease;
-      display: block;
-      position: relative;
-      overflow: hidden;
-    }
-    .node-card::before {
-      content: ''; position: absolute;
-      top: 0; left: 0; right: 0; height: 2px;
-      border-radius: 12px 12px 0 0;
-    }
-    .node-card:hover { transform: translateY(-4px); }
-    .node-card:hover .node-arrow { opacity: 1; transform: translateX(4px); }
-    .node-card.cyan::before  { background: var(--cyan); }
-    .node-card.gold::before  { background: var(--gold); }
-    .node-card.purple::before { background: var(--purple); }
-    .node-card.cyan:hover  { border-color: rgba(0,212,184,.4); box-shadow: 0 12px 40px rgba(0,212,184,.08); }
-    .node-card.gold:hover  { border-color: rgba(201,168,76,.4); box-shadow: 0 12px 40px rgba(201,168,76,.08); }
-    .node-card.purple:hover{ border-color: rgba(139,92,246,.4); box-shadow: 0 12px 40px rgba(139,92,246,.08); }
+    /* ── Main layout ── */
+    main { max-width:1280px; margin:0 auto; padding:32px 32px 60px; position:relative; z-index:1; }
+    .page-title { font-size:11px; font-weight:700; color:var(--txt); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px; font-family:var(--mono); }
+    .page-sub   { font-size:13px; color:var(--txtS); margin-bottom:28px; }
 
-    .node-icon {
-      width: 44px; height: 44px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; margin-bottom: 18px;
-    }
-    .node-icon.cyan   { background: var(--cyanD); border: 1px solid rgba(0,212,184,.3); }
-    .node-icon.gold   { background: rgba(201,168,76,.08); border: 1px solid rgba(201,168,76,.3); }
-    .node-icon.purple { background: var(--purpleD); border: 1px solid rgba(139,92,246,.3); }
+    /* ── Stats Row ── */
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:24px; }
+    .stat-cell { background:var(--bg1); padding:22px 24px; position:relative; }
+    .stat-cell::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+    .stat-cell.cyan::after  { background:var(--cyan); }
+    .stat-cell.red::after   { background:var(--red); }
+    .stat-cell.green::after { background:var(--green); }
+    .stat-cell.amber::after { background:var(--amber); }
+    .stat-label { font-family:var(--mono); font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--txtS); margin-bottom:10px; }
+    .stat-value { font-size:36px; font-weight:800; line-height:1; color:var(--txt); animation:countUp .5s ease both; }
+    .stat-sub   { font-family:var(--mono); font-size:10px; margin-top:6px; }
+    .stat-cell.cyan  .stat-sub { color:var(--cyan); }
+    .stat-cell.red   .stat-sub { color:var(--red); }
+    .stat-cell.green .stat-sub { color:var(--green); }
+    .stat-cell.amber .stat-sub { color:var(--amber); }
 
-    .node-tag {
-      font-family: var(--mono); font-size: 9px; font-weight: 700;
-      letter-spacing: .14em; text-transform: uppercase; margin-bottom: 10px;
-    }
-    .node-tag.cyan   { color: var(--cyan); }
-    .node-tag.gold   { color: var(--gold); }
-    .node-tag.purple { color: #c4b5fd; }
+    /* ── Compliance meter ── */
+    .compliance-row { display:grid; grid-template-columns:1fr 340px; gap:16px; margin-bottom:24px; align-items:stretch; }
+    .card { background:var(--bg1); border:1px solid var(--border); border-radius:10px; }
+    .card-header { padding:18px 20px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+    .card-header-title { font-size:12px; font-weight:700; color:var(--txt); letter-spacing:.04em; }
+    .card-header-badge { font-family:var(--mono); font-size:9px; padding:2px 7px; border-radius:4px; font-weight:700; }
+    .badge-live { background:rgba(16,185,129,.12); color:var(--green); border:1px solid rgba(16,185,129,.25); }
+    .card-body { padding:18px 20px; }
 
-    .node-title { font-size: 18px; font-weight: 700; color: var(--txt); margin-bottom: 10px; }
-    .node-desc  { font-size: 13px; color: var(--txtS); line-height: 1.65; margin-bottom: 20px; }
-    .node-features { display: flex; flex-direction: column; gap: 6px; margin-bottom: 24px; }
-    .node-feature {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 12px; color: var(--txtS);
-    }
-    .node-feature::before {
-      content: ''; width: 4px; height: 4px; border-radius: 50%;
-      background: var(--txtD); flex-shrink: 0;
-    }
-    .node-footer {
-      display: flex; align-items: center; justify-content: space-between;
-      padding-top: 16px; border-top: 1px solid var(--border);
-    }
-    .node-url { font-family: var(--mono); font-size: 10px; color: var(--txtD); }
-    .node-arrow {
-      font-size: 16px; opacity: .4;
-      transition: all .2s ease; color: var(--txtS);
-    }
+    /* Compliance bar */
+    .compliance-number { font-size:56px; font-weight:900; line-height:1; letter-spacing:-.04em; color:var(--txt); }
+    .compliance-label  { font-family:var(--mono); font-size:9px; color:var(--txtS); letter-spacing:.14em; margin-bottom:18px; margin-top:4px; }
+    .compliance-bar { height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:6px; }
+    .compliance-fill { height:100%; border-radius:3px; transition:width 1s ease; background:var(--green); }
+    .compliance-fill.warn  { background:var(--amber); }
+    .compliance-fill.crit  { background:var(--red); }
+    .compliance-ticks { display:flex; justify-content:space-between; font-family:var(--mono); font-size:8px; color:var(--txtD); }
 
-    /* ── Stats bar ── */
-    .stats-bar {
-      max-width: 1100px; margin: 0 auto 80px;
-      padding: 0 40px;
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 1px; background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 10px; overflow: hidden;
-      position: relative; z-index: 1;
-    }
-    .stat-cell {
-      background: var(--bg1); padding: 24px 28px;
-    }
-    .stat-label { font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--txtD); margin-bottom: 8px; }
-    .stat-value { font-size: 28px; font-weight: 800; color: var(--txt); line-height: 1; }
-    .stat-sub   { font-family: var(--mono); font-size: 10px; color: var(--green); margin-top: 4px; }
+    /* Integrity score card */
+    .integrity-list { display:flex; flex-direction:column; gap:10px; }
+    .integrity-item { display:flex; align-items:center; gap:10px; }
+    .integrity-dot  { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+    .integrity-name { font-size:12px; color:var(--txtS); flex:1; }
+    .integrity-bar  { height:4px; flex:2; background:var(--border); border-radius:2px; overflow:hidden; }
+    .integrity-fill { height:100%; border-radius:2px; }
+    .integrity-val  { font-family:var(--mono); font-size:10px; color:var(--txt); width:32px; text-align:right; }
+
+    /* ── Violation feed ── */
+    .feed-section { margin-bottom:24px; }
+    .feed-header { display:flex; align-items:center; gap:10px; padding:16px 20px 14px; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px; }
+    .feed-count  { font-family:var(--mono); font-size:9px; color:var(--txtS); margin-left:auto; }
+    .feed-table  { width:100%; border-collapse:collapse; }
+    .feed-table th { font-family:var(--mono); font-size:9px; font-weight:700; color:var(--txtS); letter-spacing:.1em; text-transform:uppercase; padding:10px 16px; border-bottom:1px solid var(--border); text-align:left; background:var(--bg2); }
+    .feed-table td { padding:10px 16px; border-bottom:1px solid var(--border); font-size:12px; color:var(--txtS); vertical-align:middle; }
+    .feed-table tr:last-child td { border-bottom:none; }
+    .feed-table tr:hover td { background:rgba(255,255,255,.015); }
+    .v-id  { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--red); }
+    .v-ts  { font-family:var(--mono); font-size:10px; color:var(--txtS); white-space:nowrap; }
+    .v-loc { display:inline-flex; align-items:center; padding:2px 6px; border-radius:4px; font-family:var(--mono); font-size:9px; font-weight:700; background:rgba(0,212,184,.07); color:var(--cyan); border:1px solid rgba(0,212,184,.2); }
+    .v-desc { font-size:12px; color:#94a3b8; }
+    .v-hash { font-family:var(--mono); font-size:9px; color:var(--txtD); }
+    .feed-empty { padding:48px; text-align:center; font-family:var(--mono); font-size:12px; color:var(--txtD); }
+
+    /* ── Spinner ── */
+    .spinner { width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--cyan); border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
 
     /* ── Footer ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 32px 40px;
-      text-align: center;
-      position: relative; z-index: 1;
-    }
-    footer p { font-family: var(--mono); font-size: 10px; color: var(--txtD); letter-spacing: .08em; }
+    .mesh-footer { border-top:1px solid var(--border); padding:24px 32px; text-align:center; position:relative; z-index:1; }
+    .mesh-footer p { font-family:var(--mono); font-size:9px; color:var(--txtD); letter-spacing:.08em; line-height:1.8; }
+    .mesh-footer a { color:var(--cyan); text-decoration:none; }
+    .mesh-footer a:hover { opacity:.8; }
 
-    @media (max-width: 768px) {
-      nav { padding: 0 20px; }
-      .hero { padding: 100px 20px 40px; }
-      .nodes-section { padding: 0 20px 60px; }
-      h1 { font-size: 38px; }
-      .stats-bar { grid-template-columns: 1fr 1fr; padding: 0 20px; }
-      .cta-group { flex-direction: column; align-items: center; }
-      .mesh-diagram { width: 220px; height: 220px; }
+    @media(max-width:900px) {
+      nav { padding:0 16px; }
+      main { padding:24px 16px 48px; }
+      .stats-row { grid-template-columns:1fr 1fr; }
+      .compliance-row { grid-template-columns:1fr; }
+      .feed-table th:nth-child(4), .feed-table td:nth-child(4) { display:none; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Background layers -->
-  <div class="bg-grid"></div>
-  <div class="bg-radial"></div>
-  <div class="scan-beam"></div>
+<div class="scan-beam"></div>
 
-  <!-- Nav -->
-  <nav>
-    <a href="/" class="nav-logo">
-      <div class="nav-mark">
-        <svg viewBox="0 0 20 20" fill="#03131a" style="width:18px;height:18px;">
-          <path d="M10 2L2 6l8 4 8-4-8-4zM2 14l8 4 8-4M2 10l8 4 8-4"/>
-        </svg>
-      </div>
-      <div>
-        <div class="nav-title">Anchor</div>
-        <div class="nav-sub">GLOBAL MESH</div>
-      </div>
-    </a>
-    <span class="nav-badge">v5.0</span>
-    <div class="nav-right">
-      <div class="status-dot"><span></span>SOVEREIGN RELAY ACTIVE</div>
-    </div>
-  </nav>
-
-  <!-- Hero -->
-  <section class="hero">
-    <div class="hero-eyebrow">
-      <span class="eyebrow-tag">⬡ Global Governance Mesh</span>
-    </div>
-
-    <h1>
-      One Federated Mesh.<br/>
-      <span class="accent">Every Jurisdiction.</span>
-    </h1>
-
-    <p class="hero-desc">
-      The Anchor Global Mesh is a cryptographically sealed relay network — enterprises maintain data sovereignty via Spoke nodes, regulators maintain real-time oversight via the Hub, and the root administrator governs it all.
-    </p>
-
-    <div class="cta-group">
-      <a href="https://root.anchorgovernance.tech" class="btn btn-primary">
-        ⬡ Root Admin Console
-      </a>
-      <a href="https://app.anchorgovernance.tech" class="btn btn-secondary">
-        🏢 Enterprise Console
-      </a>
-      <a href="https://oversight.anchorgovernance.tech" class="btn btn-ghost">
-        ⚖ Regulatory Portal
-      </a>
-    </div>
-
-    <!-- Mesh Diagram -->
-    <div class="mesh-diagram">
-      <!-- Orbit ring -->
-      <div class="orbit-ring"></div>
-
-      <!-- Spoke lines -->
-      <div class="spoke-line" style="transform:rotate(0deg);"></div>
-      <div class="spoke-line" style="transform:rotate(60deg);"></div>
-      <div class="spoke-line" style="transform:rotate(120deg);"></div>
-      <div class="spoke-line" style="transform:rotate(180deg);"></div>
-      <div class="spoke-line" style="transform:rotate(240deg);"></div>
-      <div class="spoke-line" style="transform:rotate(300deg);"></div>
-
-      <!-- Hub -->
-      <div class="mesh-hub">
-        <div class="hub-ring">
-          <div class="hub-core">
-            <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          </div>
-        </div>
-      </div>
-
-      <!-- Spoke nodes -->
-      <div class="spoke-node" style="border-color:rgba(0,212,184,.5);color:#00d4b8;top:10px;left:50%;transform:translateX(-50%);">SEC<br/>US</div>
-      <div class="spoke-node" style="border-color:rgba(201,168,76,.5);color:#c9a84c;top:35%;right:0;">RBI<br/>IN</div>
-      <div class="spoke-node" style="border-color:rgba(139,92,246,.5);color:#c4b5fd;bottom:10%;right:10%;">EU<br/>ACT</div>
-      <div class="spoke-node" style="border-color:rgba(16,185,129,.5);color:#10b981;bottom:10%;left:10%;">FCA<br/>UK</div>
-      <div class="spoke-node" style="border-color:rgba(201,168,76,.5);color:#c9a84c;top:35%;left:0;">SEBI<br/>IN</div>
-    </div>
-  </section>
-
-  <!-- Ticker -->
-  <div class="ticker">
-    <div class="ticker-inner" id="ticker-inner"></div>
+<!-- Nav -->
+<nav>
+  <div class="nav-mark">
+    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
   </div>
+  <div>
+    <div class="nav-wordmark">Anchor</div>
+    <div class="nav-sub">GLOBAL MESH</div>
+  </div>
+  <span class="nav-badge">v5.0</span>
+  <div class="nav-sep"></div>
+  <div class="live-dot"><span></span>WORLD MONITOR</div>
+  <div class="nav-right">
+    <span class="nav-clock" id="clock"></span>
+    <a href="https://app.anchorgovernance.tech" class="nav-btn btn-enterprise" target="_blank" rel="noreferrer">Enterprise Console</a>
+    <a href="https://oversight.anchorgovernance.tech" class="nav-btn btn-oversight" target="_blank" rel="noreferrer">⚖ Regulatory Portal</a>
+  </div>
+</nav>
 
-  <!-- Stats -->
-  <div class="stats-bar">
-    <div class="stat-cell">
+<!-- Ticker -->
+<div class="ticker-bar">
+  <div class="ticker-inner" id="ticker"></div>
+</div>
+
+<main style="animation:fadeIn .5s ease both;">
+  <div class="page-title">World Monitor</div>
+  <div class="page-sub">Live telemetry of AI governance across the Anchor Global Mesh — all identifiers cryptographically anonymized.</div>
+
+  <!-- Stats Row -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-cell cyan">
+      <div class="stat-label">Total Audits</div>
+      <div class="stat-value" id="s-audits">—</div>
+      <div class="stat-sub">Cumulative ledger entries</div>
+    </div>
+    <div class="stat-cell red">
+      <div class="stat-label">Active Violations</div>
+      <div class="stat-value" id="s-violations">—</div>
+      <div class="stat-sub" id="s-v-sub">Unmitigated across mesh</div>
+    </div>
+    <div class="stat-cell green">
+      <div class="stat-label">Mitigations</div>
+      <div class="stat-value" id="s-mitigations">—</div>
+      <div class="stat-sub">Remediated entries</div>
+    </div>
+    <div class="stat-cell amber">
       <div class="stat-label">Active Nodes</div>
-      <div class="stat-value">24</div>
-      <div class="stat-sub">↑ 12 US · 8 EU · 4 IN</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-label">Governance Rules</div>
-      <div class="stat-value">170</div>
-      <div class="stat-sub">↑ All V5 primitives</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-label">Jurisdictions</div>
-      <div class="stat-value">6</div>
-      <div class="stat-sub">SEC · FCA · RBI · SEBI · EU · CFPB</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-label">Mesh Security</div>
-      <div class="stat-value">L3</div>
-      <div class="stat-sub">✓ Crypto-sealed relay</div>
+      <div class="stat-value" id="s-nodes">—</div>
+      <div class="stat-sub">Federated enterprises</div>
     </div>
   </div>
 
-  <!-- Node cards -->
-  <div class="nodes-section">
-    <div class="section-label">— Access Portals —</div>
-    <div class="nodes-grid">
+  <!-- Compliance + Integrity -->
+  <div class="compliance-row">
+    <!-- Compliance meter -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-title">Network Compliance Rate</div>
+        <span class="card-header-badge badge-live">● LIVE</span>
+      </div>
+      <div class="card-body">
+        <div class="compliance-number" id="c-rate">—</div>
+        <div class="compliance-label">GLOBAL MESH INTEGRITY SCORE</div>
+        <div class="compliance-bar">
+          <div class="compliance-fill" id="c-bar" style="width:0%"></div>
+        </div>
+        <div class="compliance-ticks">
+          <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+        </div>
+      </div>
+    </div>
 
-      <a href="https://root.anchorgovernance.tech" class="node-card cyan">
-        <div class="node-icon cyan">⬡</div>
-        <div class="node-tag cyan">Root Administrator</div>
-        <div class="node-title">Master Node Console</div>
-        <div class="node-desc">Full mesh governance — fleet provisioning, live telemetry, identity operations, cryptographic engine, and global network overrides.</div>
-        <div class="node-features">
-          <div class="node-feature">Fleet Provisioning & Credential Dispatch</div>
-          <div class="node-feature">Live NOC & Audit Telemetry</div>
-          <div class="node-feature">Identity Resolution & Recovery</div>
-          <div class="node-feature">Global Network Overrides</div>
+    <!-- Domain integrity -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-title">Domain Coverage</div>
+      </div>
+      <div class="card-body">
+        <div class="integrity-list">
+          <div id="d-bars"></div>
         </div>
-        <div class="node-footer">
-          <span class="node-url">root.anchorgovernance.tech</span>
-          <span class="node-arrow">→</span>
-        </div>
-      </a>
-
-      <a href="https://app.anchorgovernance.tech" class="node-card gold">
-        <div class="node-icon gold">🏢</div>
-        <div class="node-tag gold">Enterprise Spoke</div>
-        <div class="node-title">Enterprise Console</div>
-        <div class="node-desc">Sovereign enterprise governance dashboard — audit logs, agent monitoring, compliance timelines, and real-time violation feeds for your organization.</div>
-        <div class="node-features">
-          <div class="node-feature">Real-time Audit Ledger</div>
-          <div class="node-feature">Agent Fleet Monitoring</div>
-          <div class="node-feature">Compliance Timeline</div>
-          <div class="node-feature">Webhook & SDK Integration</div>
-        </div>
-        <div class="node-footer">
-          <span class="node-url">app.anchorgovernance.tech</span>
-          <span class="node-arrow">→</span>
-        </div>
-      </a>
-
-      <a href="https://oversight.anchorgovernance.tech" class="node-card purple">
-        <div class="node-icon purple">⚖</div>
-        <div class="node-tag purple">Regulatory Node</div>
-        <div class="node-title">Regulatory Portal</div>
-        <div class="node-desc">Cryptographic access for authorized government regulators — tamper-evident audit records, violation trails, and jurisdictional compliance evidence.</div>
-        <div class="node-features">
-          <div class="node-feature">Tamper-evident Audit Chain</div>
-          <div class="node-feature">Jurisdictional Scoping</div>
-          <div class="node-feature">TOTP Cryptographic Login</div>
-          <div class="node-feature">Digital Evidence Export</div>
-        </div>
-        <div class="node-footer">
-          <span class="node-url">oversight.anchorgovernance.tech</span>
-          <span class="node-arrow">→</span>
-        </div>
-      </a>
-
+      </div>
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer>
-    <p>ANCHOR GLOBAL MESH · v5.0 · SOVEREIGN GOVERNANCE RELAY · anchorgovernance.tech · Apache 2.0</p>
-  </footer>
+  <!-- Violation Feed -->
+  <div class="card feed-section">
+    <div class="card-header feed-header">
+      <div class="live-dot"><span></span></div>
+      <div class="card-header-title">Live Violation Feed</div>
+      <span class="card-header-badge badge-live">CRYPTOGRAPHIC FIREHOSE</span>
+      <span class="feed-count" id="feed-count">Fetching…</span>
+    </div>
+    <div id="feed-body">
+      <div class="feed-empty"><span class="spinner"></span>  Connecting to mesh relay…</div>
+    </div>
+  </div>
 
-  <script>
-    // Populate ticker
-    const items = [
-      'Sovereign Hub · 24 Active Nodes', 'RBI FREE-AI · 26 Recommendations Enforced',
-      'EU AI Act · Full Enforcement August 2026', 'SEC AI Governance · Exam Priority 2026',
-      'FCA CCO Personal Liability · September 2026', 'SEBI AI/ML 2025 Mandate · Active',
-      '170 Governance Rules · All V5 Primitives', 'MESH SECURITY · L3 CRYPTO-SEALED',
-    ];
-    const ticker = document.getElementById('ticker-inner');
-    const all = [...items, ...items];
-    ticker.innerHTML = all.map(t => `<span class="ticker-item">${t} <span style="opacity:.4">§</span></span>`).join('');
-  </script>
+  <div style="font-family:var(--mono);font-size:10px;color:var(--txtD);text-align:center;margin-top:8px;line-height:1.8;">
+    All entity IDs, project names, and file paths are replaced with truncated SHA-256 hashes before transmission.<br>
+    No personally identifiable information is exposed. Anchor is Apache 2.0 open source.
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="mesh-footer">
+  <p>
+    <a href="https://anchorgovernance.tech">anchorgovernance.tech</a> &nbsp;·&nbsp;
+    <a href="https://github.com/Tanishq1030/Anchor" target="_blank" rel="noreferrer">GitHub</a> &nbsp;·&nbsp;
+    <a href="https://pypi.org/project/anchor-audit/" target="_blank" rel="noreferrer">PyPI</a> &nbsp;·&nbsp;
+    ANCHOR v5.0 · APACHE 2.0 · SOVEREIGN GOVERNANCE RELAY
+  </p>
+</footer>
+
+<script>
+  const API = 'https://animuslab-anchor-api.hf.space';
+  const POLL_MS = 15_000;
+
+  // ── Clock ──
+  const clockEl = document.getElementById('clock');
+  function tick() {
+    clockEl.textContent = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }) + ' UTC';
+  }
+  tick(); setInterval(tick, 1000);
+
+  // ── Ticker ──
+  const TICKER_ITEMS = [
+    'ANCHOR GLOBAL MESH · AI Governance in Real-Time',
+    'RBI FREE-AI · 26 Mandatory Recommendations Enforced',
+    'EU AI Act · Full Enforcement August 2026',
+    'SEC AI Governance · #1 Exam Priority 2026',
+    'FCA · CCO Personal Liability · September 2026',
+    'SEBI AI/ML 2025 · 5-Year Data Retention Mandate',
+    'All Identifiers Hashed · Zero PII Exposure',
+    'NIST AI RMF 1.0 · Govern · Map · Measure · Manage',
+    'OWASP LLM Top 10 · 2025 Edition · Enforced by Anchor',
+  ];
+  const t = document.getElementById('ticker');
+  t.innerHTML = [...TICKER_ITEMS, ...TICKER_ITEMS].map(i => `<span class="ticker-item">${i} <span style="opacity:.4">§</span></span>`).join('');
+
+  // ── Domain bars ──
+  const DOMAINS = [
+    { name:'SEC · Security',          pct:100, color:'#10b981' },
+    { name:'ETH · Ethics',            pct:100, color:'#10b981' },
+    { name:'PRV · Privacy',           pct:100, color:'#10b981' },
+    { name:'AGT · Agentic AI',        pct:100, color:'#00d4b8' },
+    { name:'ALN · Alignment',         pct:100, color:'#00d4b8' },
+    { name:'LEG · Legal',             pct:100, color:'#f59e0b' },
+  ];
+  document.getElementById('d-bars').innerHTML = DOMAINS.map(d => `
+    <div class="integrity-item" style="margin-bottom:10px;">
+      <div class="integrity-dot" style="background:${d.color}"></div>
+      <div class="integrity-name">${d.name}</div>
+      <div class="integrity-bar"><div class="integrity-fill" style="background:${d.color};width:${d.pct}%"></div></div>
+      <div class="integrity-val">${d.pct}%</div>
+    </div>
+  `).join('');
+
+  // ── Fetch + render ──
+  function fmtTime(ts) {
+    if (!ts) return '—';
+    try {
+      const d = new Date(ts);
+      return d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+    } catch { return ts; }
+  }
+
+  function renderStats(data) {
+    document.getElementById('s-audits').textContent     = data.total_audits     ?? '—';
+    document.getElementById('s-violations').textContent = data.total_violations  ?? '—';
+    document.getElementById('s-mitigations').textContent= data.total_mitigations ?? '—';
+    document.getElementById('s-nodes').textContent      = data.active_nodes      ?? '—';
+
+    const rate = data.compliance_rate ?? 0;
+    document.getElementById('c-rate').textContent = `${rate}%`;
+    const fill = document.getElementById('c-bar');
+    fill.style.width = `${rate}%`;
+    fill.className = 'compliance-fill' + (rate < 50 ? ' crit' : rate < 80 ? ' warn' : '');
+  }
+
+  function renderFeed(violations) {
+    const body = document.getElementById('feed-body');
+    const count = document.getElementById('feed-count');
+
+    if (!violations || violations.length === 0) {
+      count.textContent = '0 violations logged';
+      body.innerHTML = `<div class="feed-empty" style="color:var(--green)">✓ No active violations detected across the mesh</div>`;
+      return;
+    }
+
+    count.textContent = `${violations.length} violation${violations.length !== 1 ? 's' : ''} on record`;
+    body.innerHTML = `
+      <table class="feed-table">
+        <thead>
+          <tr>
+            <th>Violation ID</th>
+            <th>Timestamp</th>
+            <th>Jurisdiction</th>
+            <th>Description</th>
+            <th>Chain Hash</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${violations.map(v => `
+            <tr style="animation:slideIn .3s ease both">
+              <td><span class="v-id">${v.violation_id || '—'}</span></td>
+              <td><span class="v-ts">${fmtTime(v.timestamp)}</span></td>
+              <td><span class="v-loc">${v.location || 'GLO'}</span></td>
+              <td><span class="v-desc">${v.description || 'Policy deviation recorded'}</span></td>
+              <td><span class="v-hash">${v.chain_hash || '—'}</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // Demo data shown when API is unreachable (new deployments / cold starts)
+  const DEMO = {
+    total_audits: 34, total_violations: 7, total_mitigations: 9,
+    compliance_rate: 79.4, active_nodes: 3,
+    violations: [
+      { violation_id:'ETH-001-A2B3', timestamp: new Date().toISOString(), location:'GLO', description:'Ethics policy violation flagged by domain engine', chain_hash:'0xf2a9c3e1b7d4...' },
+      { violation_id:'SEC-004-C4D5', timestamp: new Date(Date.now()-30000).toISOString(), location:'US',  description:'MCP supply chain integrity compromise detected',  chain_hash:'0x3d8a2f1c9e7b...' },
+      { violation_id:'AGT-002-E6F7', timestamp: new Date(Date.now()-90000).toISOString(), location:'EU',  description:'Unauthorized autonomous action outside policy scope', chain_hash:'0xa1b2c3d4e5f6...' },
+      { violation_id:'PRV-003-G8H9', timestamp: new Date(Date.now()-150000).toISOString(), location:'IN',  description:'Sensitive data exfiltration pattern detected',         chain_hash:'0x7e6f5d4c3b2a...' },
+    ]
+  };
+
+  async function fetchAndRender() {
+    try {
+      const res = await fetch(`${API}/api/public/stats`, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      renderStats(data);
+      renderFeed(data.violations);
+    } catch {
+      // Show demo data on failure (cold start / tunnel issue)
+      renderStats(DEMO);
+      renderFeed(DEMO.violations);
+      document.getElementById('feed-count').textContent += ' (demo — API reconnecting)';
+    }
+  }
+
+  fetchAndRender();
+  setInterval(fetchAndRender, POLL_MS);
+</script>
 </body>
 </html>
