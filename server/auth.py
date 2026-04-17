@@ -117,6 +117,9 @@ class AdminVerifyRequest(BaseModel):
     email: str
     code: str
 
+class AdminAccessRequest(BaseModel):
+    email: str
+
 class AuditorProvisionRequest(BaseModel):
     display_name: str
     email: str
