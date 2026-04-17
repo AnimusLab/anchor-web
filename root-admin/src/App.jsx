@@ -2,7 +2,7 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import Dashboard from './pages/Dashboard'
-import AuditorManagement from './pages/AuditorManagement'
+import ProvisioningPortal from './pages/ProvisioningPortal'
 import LiveNOC from './pages/LiveNOC'
 
 function Layout({ children }) {
@@ -15,7 +15,7 @@ function Layout({ children }) {
           <h1 className="text-sm font-bold tracking-[0.3em] uppercase text-cyan-400">Anchor Root // MASTER_ACCESS</h1>
           <nav className="flex gap-6 ml-10">
             <a href="/dashboard" className="text-[10px] tracking-widest text-[#8B949E] hover:text-cyan-400 transition-colors">FLEET STATUS</a>
-            <a href="/provisioning" className="text-[10px] tracking-widest text-[#8B949E] hover:text-cyan-400 transition-colors">AUDITORS</a>
+            <a href="/provisioning" className="text-[10px] tracking-widest text-[#8B949E] hover:text-cyan-400 transition-colors">PROVISIONING</a>
             <a href="/noc" className="text-[10px] tracking-widest text-[#8B949E] hover:text-cyan-400 transition-colors">LIVE NOC</a>
           </nav>
         </div>
@@ -35,7 +35,7 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-        <Route path="/provisioning" element={<Layout><AuditorManagement /></Layout>} />
+        <Route path="/provisioning" element={<Layout><ProvisioningPortal /></Layout>} />
         <Route path="/noc" element={<Layout><LiveNOC /></Layout>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

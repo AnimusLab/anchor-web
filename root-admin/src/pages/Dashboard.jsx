@@ -1,128 +1,153 @@
 import React, { useState, useEffect } from 'react';
-import PortalLayout from '../components/PortalLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { endpoints } from '../lib/api';
 
 export default function Dashboard() {
-  const { token, logout } = useAuth()
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { token } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch(endpoints.stats, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        if (res.status === 401) { logout(); return }
-        const data = await res.json()
-        setStats(data)
-      } catch (err) { console.error(err) }
-      finally { setLoading(false) }
-    }
-    fetchStats()
-  }, [token])
+        const res = await fetch(`${endpoints.baseUrl}/api/stats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data);
+        }
+      } catch (e) {
+        console.error("Stats Fetch Failure", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 10000);
+    return () => clearInterval(interval);
+  }, [token]);
+
+  if (loading) return (
+    <div className="h-full bg-[#030305] flex items-center justify-center">
+      <div className="text-[10px] tracking-[0.5em] text-cyan-400 animate-pulse uppercase">INITIALIZING_GRID_METRICS...</div>
+    </div>
+  );
 
   return (
-    <PortalLayout>
-      <div className="flex flex-col h-[calc(100vh-160px)] gap-8 overflow-y-auto pr-2 custom-scrollbar">
-        
-        {/* ── Authority Metrics ── */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[
-            { label: 'Network Audits', value: stats?.total_audits || 0, icon: 'KERNEL' },
-            { label: 'Provisioned Nodes', value: stats?.active_projects || 0, icon: 'LATTICE' },
-            { label: 'Mesh Integrity', value: `${stats?.compliance_rate || 100}%`, icon: 'SHIELD', color: 'text-amber-500' },
-            { label: 'Resolved Threats', value: stats?.total_violations || 0, icon: 'ALPHA', color: stats?.total_violations > 0 ? 'text-rose-500' : 'text-amber-400' }
-          ].map((stat, i) => (
-            <div key={i} className="border border-[#161B22] bg-[#08090C] p-6 relative group overflow-hidden shadow-inner">
-              <div className="absolute top-0 right-0 w-20 h-20 border-r border-t border-amber-500/5 group-hover:border-amber-500/20 transition-all duration-500" />
-              <div className="text-[10px] text-[#484F58] tracking-[0.4em] uppercase mb-4 font-bold">{stat.label}</div>
-              <div className={`text-3xl font-bold tracking-tighter ${stat.color || 'text-slate-100'}`}>
-                {loading ? '---' : stat.value}
-              </div>
-              <div className="mt-6 text-[9px] font-mono text-amber-900 tracking-widest">LOG_TYPE // {stat.icon}</div>
+    <div className="h-full bg-[#030305] flex flex-col p-10 gap-10 overflow-y-auto">
+      
+      {/* --- Authority Header Block --- */}
+      <div className="flex justify-between items-end border-b border-[#161B22] pb-8">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+             <div className="w-4 h-4 bg-cyan-400 p-[3px]">
+               <div className="w-full h-full bg-[#030305]" />
+             </div>
+             <h2 className="text-sm font-bold tracking-[0.4em] uppercase text-[#F0F6FC]">System_Root // Lead_Authority</h2>
+          </div>
+          <div className="flex gap-8 text-[10px] font-mono">
+            <div className="flex flex-col">
+              <span className="text-[#484F58] uppercase">Global_ID</span>
+              <span className="text-cyan-400">0x00001_MASTER</span>
             </div>
-          ))}
+            <div className="flex flex-col border-l border-[#161B22] pl-8">
+              <span className="text-[#484F58] uppercase">Authorization</span>
+              <span className="text-cyan-400">LEVEL_ROOT_CLEARANCE</span>
+            </div>
+            <div className="flex flex-col border-l border-[#161B22] pl-8">
+              <span className="text-[#484F58] uppercase">Status</span>
+              <span className="text-green-500">GRID_SECURE // NOMINAL</span>
+            </div>
+          </div>
+        </div>
+        <div className="text-right">
+           <div className="text-[10px] text-[#484F58] uppercase mb-1">Grid_Uptime</div>
+           <div className="text-xs font-mono text-cyan-400/50">99.9997% // NO_DRIFT</div>
+        </div>
+      </div>
+
+      {/* --- Summary Metrics Grid --- */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[
+          { label: 'Network Audits', value: stats?.total_audits || 0, sub: 'LOG_TYPE // KERNEL', color: 'text-cyan-400' },
+          { label: 'Provisioned Nodes', value: stats?.active_projects || 0, sub: 'LOG_TYPE // LATTICE', color: 'text-cyan-400' },
+          { label: 'Mesh Integrity', value: `${stats?.compliance_rate || 100}%`, sub: 'LOG_TYPE // SHIELD', color: 'text-green-500' },
+          { label: 'Resolved Threats', value: stats?.total_violations || 0, sub: 'LOG_TYPE // ALPHA', color: 'text-amber-500' }
+        ].map((m, i) => (
+          <div key={i} className="group p-6 border border-[#161B22] bg-[#0D1117]/50 hover:bg-cyan-400/5 transition-all relative">
+            <div className="absolute top-0 right-0 w-8 h-8 opacity-10 font-mono text-cyan-400 text-xs p-2">0{i+1}</div>
+            <div className="text-[10px] text-[#484F58] uppercase tracking-widest mb-4 font-bold group-hover:text-cyan-400/50">{m.label}</div>
+            <div className={`text-3xl font-bold tracking-tighter mb-2 ${m.color}`}>{m.value}</div>
+            <div className="text-[9px] text-[#2A2A3E] font-mono tracking-widest">{m.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* --- Main Operational Grid --- */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-10 min-h-[500px]">
+        
+        {/* --- Fleet Matrix --- */}
+        <div className="border border-[#161B22] bg-[#08090C] flex flex-col overflow-hidden relative group">
+          <div className="h-12 px-6 border-b border-[#161B22] flex items-center justify-between">
+            <span className="text-[10px] font-bold text-white tracking-[0.2em] uppercase">System_Fleet_Matrix</span>
+            <span className="text-[9px] text-[#484F58] font-mono">LATENCY: 12MS</span>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="text-[9px] text-[#484F58] uppercase tracking-widest border-b border-[#161B22]">
+                  <th className="pb-4 font-normal">Node Identity</th>
+                  <th className="pb-4 font-normal">Integrity Level</th>
+                  <th className="pb-4 font-normal">Audit Cycle</th>
+                </tr>
+              </thead>
+              <tbody className="text-[11px] font-mono">
+                {stats?.project_health?.length > 0 ? stats.project_health.map((p, i) => (
+                  <tr key={i} className="border-b border-[#161B22]/50 hover:bg-white/[0.02] transition-colors group/row">
+                    <td className="py-4 text-[#8B949E] group-hover/row:text-white">{p.name}</td>
+                    <td className="py-4">
+                      <span className={`px-2 py-0.5 rounded-sm text-[9px] ${p.status === 'COMPLIANT' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="py-4 text-[#484F58]">{p.audits} PULSES</td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan="3" className="py-20 text-center text-[#2A2A3E] text-[10px] tracking-widest">AWAITING_NODE_HANDSHAKE...</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
-          
-          {/* ── Fleet Status Matrix ── */}
-          <div className="lg:col-span-2 border border-[#161B22] bg-[#08090C] flex flex-col shadow-xl">
-            <div className="h-12 px-8 border-b border-[#161B22] flex items-center justify-between bg-[#0E1015]">
-              <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-amber-500 animate-amber-pulse" />
-                  <span className="text-[11px] font-bold tracking-[0.3em] text-[#8B949E] uppercase">System Fleet Matrix</span>
-              </div>
-              <div className="flex gap-4">
-                <span className="text-[9px] text-slate-700 tracking-widest uppercase font-bold">Latency: 12ms</span>
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-[#161B22] bg-[#06060A]/50">
-                    <th className="px-8 py-5 text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Node Identity</th>
-                    <th className="px-8 py-5 text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold">Integrity Level</th>
-                    <th className="px-8 py-5 text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold text-center">Audit_Cycle</th>
-                    <th className="px-8 py-5 text-right pr-8"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#161B22]">
-                  {loading ? (
-                    <tr><td colSpan="4" className="px-8 py-16 text-center text-[11px] text-amber-900 uppercase tracking-[0.5em] animate-pulse">Syncing Lattice Sensors...</td></tr>
-                  ) : stats?.project_health?.map((p, i) => (
-                    <tr key={p.name} className="hover:bg-[#111319] transition-all duration-200 group">
-                      <td className="px-8 py-5">
-                        <div className="text-[12px] font-bold text-slate-200 uppercase tracking-widest group-hover:text-amber-400 transition-colors">{p.name}</div>
-                      </td>
-                      <td className="px-8 py-5">
-                        <span className={`text-[10px] px-3 py-1 border font-bold tracking-widest ${p.status === 'COMPLIANT' ? 'border-amber-500/20 text-amber-500 bg-amber-500/5' : 'border-rose-500/20 text-rose-500 bg-rose-500/5'}`}>
-                          {p.status}
-                        </span>
-                      </td>
-                      <td className="px-8 py-5 text-center">
-                        <span className="text-[12px] font-mono text-slate-500 font-bold">{p.audits}</span>
-                      </td>
-                      <td className="px-8 py-5 text-right pr-8">
-                        <button className="text-[10px] text-slate-700 hover:text-amber-500 uppercase tracking-[0.3em] font-bold transition-all border border-transparent hover:border-amber-500/30 px-4 py-2">MANAGE</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {/* --- Global Action Ledger --- */}
+        <div className="border border-[#161B22] bg-[#08090C] flex flex-col overflow-hidden relative">
+           <div className="h-12 px-6 border-b border-[#161B22] flex items-center">
+            <span className="text-[10px] font-bold text-white tracking-[0.2em] uppercase">Global_Action_Ledger</span>
           </div>
-
-          {/* ── Action Ledger ── */}
-          <div className="border border-[#161B22] bg-[#08090C] flex flex-col h-full overflow-hidden shadow-xl">
-            <div className="h-12 px-8 border-b border-[#161B22] bg-[#0E1015] flex items-center">
-               <span className="text-[11px] font-bold tracking-[0.3em] text-[#8B949E] uppercase">Global Action Ledger</span>
-            </div>
-            <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
-              {stats?.recent?.map((r, i) => (
-                <div key={i} className="flex gap-5 items-start">
-                  <div className={`mt-2 w-2 h-2 shrink-0 ${r.status === 'VIOLATION' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]'}`} />
-                  <div className="flex-1 border-b border-[#161B22]/50 pb-4">
-                    <div className="flex justify-between items-baseline mb-2">
-                      <span className="text-[11px] font-bold text-slate-200 uppercase tracking-widest">{r.project}</span>
-                      <span className="text-[9px] font-mono text-slate-700 uppercase tracking-tighter">REF_{r.commit}</span>
-                    </div>
-                    <div className="text-[10px] flex justify-between font-bold">
-                      <span className={r.status === 'VIOLATION' ? 'text-rose-400' : 'text-amber-900 tracking-widest'}>{r.status}</span>
-                      <span className="text-[9px] text-slate-800 font-mono">HASH::{r.hash}</span>
-                    </div>
-                  </div>
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {stats?.recent?.map((e, i) => (
+              <div key={i} className="flex flex-col gap-2 p-4 bg-[#0D1117] border-l-2 border-cyan-500/30 hover:border-cyan-400 transition-all">
+                <div className="flex justify-between items-center">
+                  <span className={`text-[9px] font-bold tracking-widest ${e.status === 'VIOLATION' ? 'text-red-500' : (e.status === 'RESOLVED' ? 'text-green-500' : 'text-cyan-900')}`}>
+                    [{e.status}]
+                  </span>
+                  <span className="text-[9px] text-[#484F58] font-mono">COMMIT: {e.commit}</span>
                 </div>
-              ))}
-              {!stats?.recent && <div className="text-center py-20 text-[11px] text-amber-900/30 uppercase tracking-[0.5em] font-bold">Awaiting Authority Pulse...</div>}
-            </div>
+                <div className="text-[11px] text-[#8B949E]">
+                   PROJECT {e.project} DISPATCHED AUDIT PULSE // HASH: {e.hash}
+                </div>
+              </div>
+            ))}
+            {!stats?.recent?.length && (
+               <div className="h-full flex items-center justify-center text-[#2A2A3E] text-[10px] tracking-widest">NO_RECENT_ACTIVITY</div>
+            )}
           </div>
-
         </div>
 
       </div>
-    </PortalLayout>
-  )
+
+    </div>
+  );
 }

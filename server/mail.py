@@ -160,61 +160,68 @@ def send_approval_notification(to_email: str, display_name: str, entity_id: str)
     return _send_email(to_email, subject, html)
 
 
-def send_auditor_provisioned(to_email: str, display_name: str, entity_id: str, regulator: str):
+def send_auditor_provisioned(to_email: str, display_name: str, entity_id: str, regulator: str, qr_base64: str):
     """
-    Notifies a provisioned auditor that their oversight access is ready.
-    Directs them to oversight.anchorgovernance.tech — NO keys included.
-    Keys (TOTP QR) are shared separately by the admin via a secure channel.
+    Sends the auditor their provisioned access packet.
+    Includes the Entity ID, Regulator context, and the TOTP QR code.
     """
-    subject = f"Anchor Oversight — Your Access Has Been Provisioned [{entity_id}]"
+    subject = f"Anchor Oversight — Access Provisioned [{entity_id}]"
     html = f"""
-    <div style="font-family: 'JetBrains Mono', monospace; background: #06060A; color: #E2E8F0; padding: 40px; max-width: 600px; margin: 0 auto;">
-
-      <div style="border-bottom: 1px solid #1E1E2E; padding-bottom: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
-        <div style="width: 10px; height: 10px; background: #C9A84C;"></div>
-        <h2 style="color: #C9A84C; letter-spacing: 0.2em; font-size: 13px; margin: 0; text-transform: uppercase;">
-          Anchor Oversight System
-        </h2>
-      </div>
-
-      <p style="color: #94A3B8; font-size: 13px; line-height: 1.7; margin-bottom: 20px;">
-        <strong style="color: #E2E8F0;">{display_name}</strong>, your regulatory oversight
-        access to the Anchor Governance Engine has been provisioned by the Master Node administrator.
+    <div style="font-family: monospace; background: #06060A; color: #E2E8F0; padding: 40px; max-width: 600px; margin: 0 auto; border: 1px solid #161B22;">
+      <h2 style="color: #10B981; letter-spacing: 0.2em; font-size: 14px; border-bottom: 1px solid #161B22; padding-bottom: 15px;">AUTHORITY_PROVISIONED // LEVEL_1</h2>
+      
+      <p style="color: #94A3B8; font-size: 12px; line-height: 1.6;">
+        Welcome <strong>{display_name}</strong>. You have been authorized as a regulatory official for <strong>{regulator}</strong>.
       </p>
 
-      <div style="background: #0C0C12; border: 1px solid #1E1E2E; padding: 20px; margin-bottom: 20px;">
-        <p style="color: #4A5568; font-size: 10px; margin: 0 0 8px; letter-spacing: 0.15em; text-transform: uppercase;">Entity ID</p>
-        <code style="color: #C9A84C; font-size: 16px; letter-spacing: 0.15em;">{entity_id}</code>
+      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
+        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">ENTITY_ID</p>
+        <code style="color: #10B981; font-size: 16px;">{entity_id}</code>
       </div>
 
-      <div style="background: #0C0C12; border: 1px solid #1E1E2E; padding: 20px; margin-bottom: 20px;">
-        <p style="color: #4A5568; font-size: 10px; margin: 0 0 8px; letter-spacing: 0.15em; text-transform: uppercase;">Regulatory Authority</p>
-        <code style="color: #E2E8F0; font-size: 14px;">{regulator}</code>
+      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0; text-align: center;">
+        <p style="color: #484F58; font-size: 10px; margin: 0 0 15px; tracking: 0.2em;">AUTHENTICATOR_HANDSHAKE (SCAN NOW)</p>
+        <img src="data:image/png;base64,{qr_base64}" width="180" height="180" style="filter: contrast(1.1);" />
+        <p style="color: #484F58; font-size: 9px; margin-top: 15px;">SCAN WITH GOOGLE AUTHENTICATOR OR AUTHY</p>
       </div>
 
-      <div style="background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.2); padding: 16px; margin-bottom: 24px;">
-        <p style="color: #C9A84C; font-size: 10px; margin: 0 0 6px; letter-spacing: 0.15em; text-transform: uppercase;">⚠ Before You Log In</p>
-        <p style="color: #94A3B8; font-size: 12px; margin: 0; line-height: 1.6;">
-          Your administrator will share a QR code with you via a secure channel.
-          Scan it with <strong>Google Authenticator</strong> or <strong>Authy</strong> before
-          attempting to log in. This is required for authentication.
-        </p>
+      <div style="text-align: center; margin-top: 30px;">
+        <a href="https://oversight.anchorgovernance.tech" style="background: #10B981; color: #000; padding: 12px 25px; text-decoration: none; font-weight: bold; font-size: 11px; tracking: 0.2em;">OPEN TERMINAL →</a>
       </div>
+    </div>
+    """
+    return _send_email(to_email, subject, html)
 
-      <div style="text-align: center; margin: 32px 0;">
-        <a href="https://oversight.anchorgovernance.tech"
-           style="display: inline-block; background: linear-gradient(135deg, #92702A, #C9A84C);
-                  color: #06060A; padding: 14px 36px; text-decoration: none;
-                  font-weight: bold; letter-spacing: 0.15em; font-size: 11px; text-transform: uppercase;">
-          OPEN OVERSIGHT TERMINAL →
-        </a>
-      </div>
-
-      <p style="color: #2A2A3E; font-size: 10px; text-align: center; line-height: 1.7; margin-top: 24px; border-top: 1px solid #1E1E2E; padding-top: 16px;">
-        oversight.anchorgovernance.tech &nbsp;·&nbsp;
-        All sessions are cryptographically logged and legally admissible.<br/>
-        If you did not request this access, contact the Anchor administrator immediately.
+def send_enterprise_provisioned(to_email: str, display_name: str, company: str, region: str, entity_id: str, master_key: str, qr_base64: str):
+    """
+    Sends an Enterprise Owner their regional master packet.
+    Includes the Master Key for project integration and the TOTP QR code for login.
+    """
+    subject = f"Anchor Enterprise — Regional Master Node Provisioned [{region}]"
+    html = f"""
+    <div style="font-family: monospace; background: #06060A; color: #E2E8F0; padding: 40px; max-width: 600px; margin: 0 auto; border: 1px solid #161B22;">
+      <h2 style="color: #F59E0B; letter-spacing: 0.2em; font-size: 14px; border-bottom: 1px solid #161B22; padding-bottom: 15px;">REGIONAL_MASTER_PROVISIONED // {region}</h2>
+      
+      <p style="color: #94A3B8; font-size: 12px; line-height: 1.6;">
+        Welcome <strong>{display_name}</strong>. You are now the authorizing owner for <strong>{company} ({region})</strong>.
       </p>
+
+      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
+        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">REGIONAL_MASTER_KEY (FOR PROJECT INTEGRATION)</p>
+        <code style="color: #F59E0B; font-size: 14px; word-break: break-all;">{master_key}</code>
+        <p style="color: #484F58; font-size: 9px; margin-top: 10px;">IMPORTANT: Include this key in your AI project configuration to connect to the grid.</p>
+      </div>
+
+      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0; text-align: center;">
+        <p style="color: #484F58; font-size: 10px; margin: 0 0 15px; tracking: 0.2em;">AUTHENTICATOR_HANDSHAKE (SCAN NOW)</p>
+        <img src="data:image/png;base64,{qr_base64}" width="180" height="180" style="filter: contrast(1.1);" />
+      </div>
+
+      <div style="text-align: center; margin-top: 30px;">
+        <a href="https://enterprise.anchorgovernance.tech" style="background: #F59E0B; color: #000; padding: 12px 25px; text-decoration: none; font-weight: bold; font-size: 11px; tracking: 0.2em;">OPEN ENTERPRISE DASHBOARD →</a>
+      </div>
+      
+      <p style="color: #484F58; font-size: 9px; margin-top: 20px; text-align: center;">ENTITY_ID: {entity_id}</p>
     </div>
     """
     return _send_email(to_email, subject, html)

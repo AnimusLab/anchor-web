@@ -188,10 +188,32 @@ def hash_key(mat: str) -> str:
     return hashlib.sha256(mat.encode()).hexdigest()
 
 def verify_entity(entity_id: str, provided_mat: str, db: Session) -> bool:
-    """Verifies an incoming MAT against the stored hash in SQLAlchemy"""
+    """
+    Verifies an incoming MAT against the stored hash in SQLAlchemy.
+    Supports both legacy Entity-level MATs and the new v5.0 Regional Org Master Keys.
+    """
+    # 1. Check Legacy Entity Mat
     fleet = db.query(Fleet).filter(Fleet.entity_id == entity_id).first()
-    if fleet and fleet.key_hash == hash_key(provided_mat):
+    if fleet and fleet.key_hash == hashlib.sha256(provided_mat.encode()).hexdigest():
         return True
+
+    # 2. Check Modern Regional Master Key (Direct Integration)
+    # The 'entity_id' in this flow refers to the specific project being audited.
+    # We look up the parent organization of that project.
+    if fleet and fleet.org_id:
+        org = db.query(Organization).filter(Organization.id == fleet.org_id).first()
+        if org and org.master_key_hash == hashlib.sha256(provided_mat.encode()).hexdigest():
+            return True
+
+    # 3. Handle Auto-Provisioning of dynamic projects via Master Key
+    # If the project (entity_id) doesn't exist yet, but the Master Key is valid for an Org.
+    # We allow the ingress and dynamically link the project to the Org later (Phase 3).
+    # For now, we perform a global search for any Org that owns this Master Key.
+    if not fleet:
+        org = db.query(Organization).filter(Organization.master_key_hash == hashlib.sha256(provided_mat.encode()).hexdigest()).first()
+        if org:
+            return True
+
     return False
 
 # --- 4. PYDANTIC MODELS (Payload Schemas) ---
@@ -339,15 +361,15 @@ def submit_telemetry(payload: IngressPayload, background_tasks: BackgroundTasks,
     entry_id = audit.get("entry_id", f"led_{int(time.time()*1000)}")
     
     # 1. Persist to Global Ledger (Using SQLAlchemy)
-    # We store the full JSON payload to satisfy forensic audit requirements
+    # We store the full JSON payload, but the forensic 'payload' block is already encrypted.
     new_entry = LedgerEntry(
         id=entry_id,
         entity_id=payload.entity_id,
         timestamp=audit.get("timestamp"),
-        type=audit.get("execution_context", {}).get("layer", "runtime"),
+        type="forensic_audit" if audit.get("forensic_data") else audit.get("execution_context", {}).get("layer", "runtime"),
         chain_hash=audit.get("cryptography", {}).get("chain_hash"),
         signature=audit.get("cryptography", {}).get("signature"),
-        payload=json.dumps(audit)
+        payload=json.dumps(audit) # Hub hosts the encrypted blob
     )
     
     db.add(new_entry)

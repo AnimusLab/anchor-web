@@ -11,6 +11,8 @@ class Organization(Base):
     entity_prefix  = Column(String, unique=True, index=True)        # "animuslab", "sec"
     display_name   = Column(String, nullable=False)                 # "Animus Global"
     domain         = Column(String, unique=True, index=True)        # "animuslab.ai"
+    region         = Column(String, nullable=True)                  # "India", "USA", "UK"
+    master_key_hash= Column(String, nullable=True)                  # SHA-256 of the Org Regional Master Key
     server_region  = Column(String, default="IN")                  # "IN", "EU", "US"
     hr_contact     = Column(String, nullable=True)                  # Onboarding Manager
     status         = Column(String, default="active")               # "active", "suspended"
@@ -82,6 +84,7 @@ class User(Base):
     totp_secret  = Column(String, nullable=True)                  # Google Authenticator Secret
     avatar_url   = Column(String, nullable=True)                  # Instagram-like Profile Pix
     official_id  = Column(String, nullable=True)                  # "SEC-JHONDOC-2604"
+    department   = Column(String, nullable=True)                  # "Compliance", "Lending AI", etc.
     jurisdiction = Column(String, nullable=True)                  # "US", "IN", "EU"
     status       = Column(String, default="pending")
     email_verified = Column(Boolean, default=False)
