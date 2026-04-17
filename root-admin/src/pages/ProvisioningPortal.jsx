@@ -33,10 +33,10 @@ export default function ProvisioningPortal() {
     try {
       const payload = type === 'AUDITOR' ? auditorData : enterpriseData;
       const endpoint = type === 'AUDITOR'
-        ? '/api/auth/admin/provision/auditor'
-        : '/api/auth/admin/provision/enterprise';
+        ? endpoints.provisionAuditor
+        : endpoints.provisionEnterprise;
 
-      const res = await fetch(`${endpoints.baseUrl}${endpoint}`, {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

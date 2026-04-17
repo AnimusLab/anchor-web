@@ -26,7 +26,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch(`${endpoints.baseUrl}/api/stats`, {
+        const res = await fetch(endpoints.stats, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) setStats(await res.json());
