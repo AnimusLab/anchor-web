@@ -2,6 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { endpoints } from '../lib/api';
 
+function StatCard({ label, value, sub, color, colorClass }) {
+  return (
+    <div className={`stat-card ${colorClass}`}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 32, fontWeight: 700, color, lineHeight: 1, marginBottom: 6 }}>
+        {value}
+      </div>
+      <div style={{ fontSize: 12, color: 'var(--text-dim)', fontFamily: 'JetBrains Mono, monospace' }}>
+        {sub}
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { token } = useAuth();
   const [stats, setStats] = useState(null);
@@ -13,12 +29,9 @@ export default function Dashboard() {
         const res = await fetch(`${endpoints.baseUrl}/api/stats`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (res.ok) {
-          const data = await res.json();
-          setStats(data);
-        }
+        if (res.ok) setStats(await res.json());
       } catch (e) {
-        console.error("Stats Fetch Failure", e);
+        console.error("Stats fetch failure", e);
       } finally {
         setLoading(false);
       }
@@ -28,124 +41,209 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [token]);
 
-  if (loading) return (
-    <div className="h-full bg-[#030305] flex items-center justify-center">
-      <div className="text-[10px] tracking-[0.5em] text-cyan-400 animate-pulse uppercase">INITIALIZING_GRID_METRICS...</div>
-    </div>
-  );
+  const metrics = [
+    {
+      label: 'Total Audits',
+      value: stats?.total_audits ?? 0,
+      sub: 'Across all nodes',
+      color: 'var(--cyan)',
+      colorClass: 'cyan',
+    },
+    {
+      label: 'Provisioned Nodes',
+      value: stats?.active_projects ?? 0,
+      sub: 'Active enterprises',
+      color: 'var(--accent-soft)',
+      colorClass: 'accent',
+    },
+    {
+      label: 'Mesh Integrity',
+      value: `${stats?.compliance_rate ?? 100}%`,
+      sub: 'Governance coverage',
+      color: 'var(--green)',
+      colorClass: 'green',
+    },
+    {
+      label: 'Open Violations',
+      value: stats?.total_violations ?? 0,
+      sub: 'Require remediation',
+      color: stats?.total_violations > 0 ? 'var(--red)' : 'var(--green)',
+      colorClass: stats?.total_violations > 0 ? 'red' : 'green',
+    },
+  ];
 
   return (
-    <div className="h-full bg-[#030305] flex flex-col p-10 gap-10 overflow-y-auto">
-      
-      {/* --- Authority Header Block --- */}
-      <div className="flex justify-between items-end border-b border-[#161B22] pb-8">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-             <div className="w-4 h-4 bg-cyan-400 p-[3px]">
-               <div className="w-full h-full bg-[#030305]" />
-             </div>
-             <h2 className="text-sm font-bold tracking-[0.4em] uppercase text-[#F0F6FC]">System_Root // Lead_Authority</h2>
+    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {/* Authority header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+      }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
+            System Overview
           </div>
-          <div className="flex gap-8 text-[10px] font-mono">
-            <div className="flex flex-col">
-              <span className="text-[#484F58] uppercase">Global_ID</span>
-              <span className="text-cyan-400">0x00001_MASTER</span>
-            </div>
-            <div className="flex flex-col border-l border-[#161B22] pl-8">
-              <span className="text-[#484F58] uppercase">Authorization</span>
-              <span className="text-cyan-400">LEVEL_ROOT_CLEARANCE</span>
-            </div>
-            <div className="flex flex-col border-l border-[#161B22] pl-8">
-              <span className="text-[#484F58] uppercase">Status</span>
-              <span className="text-green-500">GRID_SECURE // NOMINAL</span>
-            </div>
+          <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+            Root-level view across the entire Anchor governance mesh.
           </div>
         </div>
-        <div className="text-right">
-           <div className="text-[10px] text-[#484F58] uppercase mb-1">Grid_Uptime</div>
-           <div className="text-xs font-mono text-cyan-400/50">99.9997% // NO_DRIFT</div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 14px',
+          background: 'rgba(16,185,129,0.08)',
+          borderRadius: 6,
+          border: '1px solid rgba(16,185,129,0.2)',
+        }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 6px var(--green)' }}/>
+          <span style={{ fontSize: 13, color: 'var(--green-soft)', fontWeight: 600 }}>GRID SECURE</span>
         </div>
       </div>
 
-      {/* --- Summary Metrics Grid --- */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {[
-          { label: 'Network Audits', value: stats?.total_audits || 0, sub: 'LOG_TYPE // KERNEL', color: 'text-cyan-400' },
-          { label: 'Provisioned Nodes', value: stats?.active_projects || 0, sub: 'LOG_TYPE // LATTICE', color: 'text-cyan-400' },
-          { label: 'Mesh Integrity', value: `${stats?.compliance_rate || 100}%`, sub: 'LOG_TYPE // SHIELD', color: 'text-green-500' },
-          { label: 'Resolved Threats', value: stats?.total_violations || 0, sub: 'LOG_TYPE // ALPHA', color: 'text-amber-500' }
-        ].map((m, i) => (
-          <div key={i} className="group p-6 border border-[#161B22] bg-[#0D1117]/50 hover:bg-cyan-400/5 transition-all relative">
-            <div className="absolute top-0 right-0 w-8 h-8 opacity-10 font-mono text-cyan-400 text-xs p-2">0{i+1}</div>
-            <div className="text-[10px] text-[#484F58] uppercase tracking-widest mb-4 font-bold group-hover:text-cyan-400/50">{m.label}</div>
-            <div className={`text-3xl font-bold tracking-tighter mb-2 ${m.color}`}>{m.value}</div>
-            <div className="text-[9px] text-[#2A2A3E] font-mono tracking-widest">{m.sub}</div>
-          </div>
-        ))}
-      </div>
+      {/* Stats grid */}
+      {loading ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          {[0,1,2,3].map(i => (
+            <div key={i} style={{
+              height: 110,
+              background: 'var(--bg-card)',
+              borderRadius: 6,
+              border: '1px solid var(--border)',
+              animation: 'pulse 1.5s ease-in-out infinite',
+              opacity: 0.5,
+            }} />
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          {metrics.map((m, i) => <StatCard key={i} {...m} />)}
+        </div>
+      )}
 
-      {/* --- Main Operational Grid --- */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-10 min-h-[500px]">
-        
-        {/* --- Fleet Matrix --- */}
-        <div className="border border-[#161B22] bg-[#08090C] flex flex-col overflow-hidden relative group">
-          <div className="h-12 px-6 border-b border-[#161B22] flex items-center justify-between">
-            <span className="text-[10px] font-bold text-white tracking-[0.2em] uppercase">System_Fleet_Matrix</span>
-            <span className="text-[9px] text-[#484F58] font-mono">LATENCY: 12MS</span>
+      {/* Main grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+
+        {/* Fleet Matrix */}
+        <div className="ra-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Fleet Matrix</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>All provisioned enterprise nodes</div>
+            </div>
+            <span className="badge badge-cyan">LIVE</span>
           </div>
-          <div className="flex-1 overflow-y-auto p-6">
-            <table className="w-full text-left border-collapse">
+          <div style={{ overflowY: 'auto' }}>
+            <table className="ra-table">
               <thead>
-                <tr className="text-[9px] text-[#484F58] uppercase tracking-widest border-b border-[#161B22]">
-                  <th className="pb-4 font-normal">Node Identity</th>
-                  <th className="pb-4 font-normal">Integrity Level</th>
-                  <th className="pb-4 font-normal">Audit Cycle</th>
+                <tr>
+                  <th>Entity</th>
+                  <th>Status</th>
+                  <th>Audit Cycles</th>
                 </tr>
               </thead>
-              <tbody className="text-[11px] font-mono">
+              <tbody>
                 {stats?.project_health?.length > 0 ? stats.project_health.map((p, i) => (
-                  <tr key={i} className="border-b border-[#161B22]/50 hover:bg-white/[0.02] transition-colors group/row">
-                    <td className="py-4 text-[#8B949E] group-hover/row:text-white">{p.name}</td>
-                    <td className="py-4">
-                      <span className={`px-2 py-0.5 rounded-sm text-[9px] ${p.status === 'COMPLIANT' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                  <tr key={i}>
+                    <td style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{p.name}</td>
+                    <td>
+                      <span className={`badge ${p.status === 'COMPLIANT' ? 'badge-green' : 'badge-red'}`}>
                         {p.status}
                       </span>
                     </td>
-                    <td className="py-4 text-[#484F58]">{p.audits} PULSES</td>
+                    <td className="mono" style={{ fontSize: 12 }}>{p.audits}</td>
                   </tr>
                 )) : (
-                  <tr><td colSpan="3" className="py-20 text-center text-[#2A2A3E] text-[10px] tracking-widest">AWAITING_NODE_HANDSHAKE...</td></tr>
+                  <tr>
+                    <td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '40px 0', fontSize: 13 }}>
+                      No nodes provisioned yet
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* --- Global Action Ledger --- */}
-        <div className="border border-[#161B22] bg-[#08090C] flex flex-col overflow-hidden relative">
-           <div className="h-12 px-6 border-b border-[#161B22] flex items-center">
-            <span className="text-[10px] font-bold text-white tracking-[0.2em] uppercase">Global_Action_Ledger</span>
+        {/* Global Action Ledger */}
+        <div className="ra-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Global Action Ledger</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Recent governance events</div>
+            </div>
+            <span className="badge badge-purple">ENCRYPTED</span>
           </div>
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {stats?.recent?.map((e, i) => (
-              <div key={i} className="flex flex-col gap-2 p-4 bg-[#0D1117] border-l-2 border-cyan-500/30 hover:border-cyan-400 transition-all">
-                <div className="flex justify-between items-center">
-                  <span className={`text-[9px] font-bold tracking-widest ${e.status === 'VIOLATION' ? 'text-red-500' : (e.status === 'RESOLVED' ? 'text-green-500' : 'text-cyan-900')}`}>
-                    [{e.status}]
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {stats?.recent?.length > 0 ? stats.recent.map((e, i) => (
+              <div key={i} className={`log-entry ${e.status === 'VIOLATION' ? 'violation' : 'clean'} slide-in`}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span className={`badge ${e.status === 'VIOLATION' ? 'badge-red' : 'badge-green'}`}>
+                    {e.status}
                   </span>
-                  <span className="text-[9px] text-[#484F58] font-mono">COMMIT: {e.commit}</span>
+                  <span className="mono" style={{ fontSize: 11, color: 'var(--text-dim)' }}>{e.commit?.slice(0, 8)}</span>
                 </div>
-                <div className="text-[11px] text-[#8B949E]">
-                   PROJECT {e.project} DISPATCHED AUDIT PULSE // HASH: {e.hash}
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{e.project}</span>
+                  {' — '}audit pulse dispatched
                 </div>
               </div>
-            ))}
-            {!stats?.recent?.length && (
-               <div className="h-full flex items-center justify-center text-[#2A2A3E] text-[10px] tracking-widest">NO_RECENT_ACTIVITY</div>
+            )) : (
+              <div style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--text-dim)', fontSize: 13,
+              }}>
+                No recent activity
+              </div>
             )}
           </div>
         </div>
 
+      </div>
+
+      {/* Quick actions */}
+      <div className="ra-card" style={{ padding: '20px 24px' }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>Quick Actions</div>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {[
+            { label: 'Provision Auditor', path: '/provisioning', accent: 'var(--accent)' },
+            { label: 'Provision Enterprise', path: '/provisioning', accent: 'var(--cyan)' },
+            { label: 'View Live NOC', path: '/noc', accent: 'var(--amber)' },
+            { label: 'Fleet Inspection', path: '/fleet', accent: 'var(--green)' },
+          ].map((a, i) => (
+            <a key={i} href={a.path} style={{
+              padding: '9px 18px',
+              borderRadius: 6,
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#fff',
+              background: a.accent,
+              textDecoration: 'none',
+              display: 'inline-block',
+              opacity: 0.9,
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '0.9'}
+            >
+              {a.label}
+            </a>
+          ))}
+        </div>
       </div>
 
     </div>

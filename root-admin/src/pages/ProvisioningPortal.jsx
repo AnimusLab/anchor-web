@@ -2,13 +2,24 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { endpoints } from '../lib/api';
 
+const REGULATORS = ['SEC', 'FCA', 'RBI', 'SEBI', 'EU-AI', 'CFPB', 'MAS', 'CFTC'];
+const REGIONS = ['USA', 'UK', 'India', 'EU', 'Singapore', 'Canada', 'Australia', 'Japan'];
+
+function Field({ label, children }) {
+  return (
+    <div>
+      <div className="field-label">{label}</div>
+      {children}
+    </div>
+  );
+}
+
 export default function ProvisioningPortal() {
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState('AUDITOR');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
-  // Form States
   const [auditorData, setAuditorData] = useState({
     display_name: '', email: '', regulator: 'SEC', department: '', jurisdiction: 'USA'
   });
@@ -21,8 +32,10 @@ export default function ProvisioningPortal() {
     setMessage(null);
     try {
       const payload = type === 'AUDITOR' ? auditorData : enterpriseData;
-      const endpoint = type === 'AUDITOR' ? '/api/auth/admin/provision/auditor' : '/api/auth/admin/provision/enterprise';
-      
+      const endpoint = type === 'AUDITOR'
+        ? '/api/auth/admin/provision/auditor'
+        : '/api/auth/admin/provision/enterprise';
+
       const res = await fetch(`${endpoints.baseUrl}${endpoint}`, {
         method: 'POST',
         headers: {
@@ -31,198 +44,259 @@ export default function ProvisioningPortal() {
         },
         body: JSON.stringify(payload)
       });
-      
+
       if (res.ok) {
-        setMessage({ type: 'SUCCESS', text: `Handshake Dispatched: ${type} credentials sent to ${payload.email}` });
+        setMessage({ type: 'SUCCESS', text: `Credentials dispatched to ${payload.email}. Sovereign Gatekeeper handshake initiated.` });
       } else {
         const err = await res.json();
-        setMessage({ type: 'ERROR', text: err.detail || 'Provisioning Failed' });
+        setMessage({ type: 'ERROR', text: err.detail || 'Provisioning failed — check payload.' });
       }
     } catch (e) {
-      setMessage({ type: 'ERROR', text: 'Network Error: Check Connection' });
+      setMessage({ type: 'ERROR', text: 'Network error — verify server connectivity.' });
     }
     setLoading(false);
   };
 
   return (
-    <div className="h-full bg-[#030305] p-10 flex flex-col gap-8 overflow-y-auto">
-      
-      {/* --- Page Header --- */}
-      <div className="flex flex-col gap-2">
-        <h2 className="text-xs font-bold tracking-[0.4em] uppercase text-[#F0F6FC]">Provisioning_Nexus // GATEKEEPER</h2>
-        <p className="text-[11px] text-[#8B949E] font-mono opacity-60">Manual authorization and credential dispatch for the global compliance grid.</p>
-      </div>
+    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1100 }}>
 
-      {/* --- Tab Navigation --- */}
-      <div className="flex gap-1 border-b border-[#161B22]">
-        <button 
-          onClick={() => setActiveTab('AUDITOR')}
-          className={`px-8 py-3 text-[10px] tracking-[0.2em] font-bold transition-all ${activeTab === 'AUDITOR' ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-400/5' : 'text-[#484F58] hover:text-[#8B949E]'}`}
-        >
-          REGULATORY_OFFICIALS
-        </button>
-        <button 
-          onClick={() => setActiveTab('ENTERPRISE')}
-          className={`px-8 py-3 text-[10px] tracking-[0.2em] font-bold transition-all ${activeTab === 'ENTERPRISE' ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-400/5' : 'text-[#484F58] hover:text-[#8B949E]'}`}
-        >
-          ENTERPRISE_OWNERS
-        </button>
-      </div>
-
-      <div className="flex-1 max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-10">
-        
-        {/* --- Form Section --- */}
-        <div className="flex flex-col gap-6 p-8 border border-[#161B22] bg-[#0D1117]/50 backdrop-blur-sm relative group">
-          <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyan-400/30 group-hover:border-cyan-400 transition-colors" />
-          
-          <h3 className="text-[10px] font-bold text-white tracking-widest uppercase mb-2">New Identity Metadata</h3>
-          
-          {activeTab === 'AUDITOR' ? (
-            <div className="flex flex-col gap-4 text-[11px]">
-              <div className="flex flex-col gap-2">
-                <label className="text-[#484F58] uppercase tracking-tighter">Official Full Name</label>
-                <input 
-                  className="bg-[#030305] border border-[#161B22] p-3 text-cyan-400 outline-none focus:border-cyan-400/50 transition-all font-mono"
-                  placeholder="EX: JOHN DOE"
-                  value={auditorData.display_name}
-                  onChange={e => setAuditorData({...auditorData, display_name: e.target.value})}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[#484F58] uppercase tracking-tighter">Government Email</label>
-                <input 
-                  className="bg-[#030305] border border-[#161B22] p-3 text-cyan-400 outline-none focus:border-cyan-400/50 transition-all font-mono"
-                  placeholder="name@regulator.gov"
-                  value={auditorData.email}
-                  onChange={e => setAuditorData({...auditorData, email: e.target.value})}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[#484F58] uppercase tracking-tighter">Regulatory Body</label>
-                  <select 
-                    className="bg-[#030305] border border-[#161B22] p-3 text-cyan-400 outline-none focus:border-cyan-400/50 appearance-none font-mono"
-                    value={auditorData.regulator}
-                    onChange={e => setAuditorData({...auditorData, regulator: e.target.value})}
-                  >
-                    <option>SEC</option><option>FCA</option><option>RBI</option><option>EU-AI</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[#484F58] uppercase tracking-tighter">Jurisdiction</label>
-                  <input 
-                    className="bg-[#030305] border border-[#161B22] p-3 text-cyan-400 outline-none focus:border-cyan-400/50 font-mono"
-                    placeholder="USA"
-                    value={auditorData.jurisdiction}
-                    onChange={e => setAuditorData({...auditorData, jurisdiction: e.target.value})}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[#484F58] uppercase tracking-tighter">Department</label>
-                <input 
-                  className="bg-[#030305] border border-[#161B22] p-3 text-cyan-400 outline-none focus:border-cyan-400/50 font-mono"
-                  placeholder="Compliance Oversight"
-                  value={auditorData.department}
-                  onChange={e => setAuditorData({...auditorData, department: e.target.value})}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4 text-[11px]">
-              <div className="flex flex-col gap-2">
-                <label className="text-[#484F58] uppercase tracking-tighter">Owner Full Name</label>
-                <input 
-                  className="bg-[#030305] border border-[#161B22] p-3 text-cyan-400 outline-none focus:border-cyan-400/50 font-mono"
-                  placeholder="EX: HARITHA DESAI"
-                  value={enterpriseData.display_name}
-                  onChange={e => setEnterpriseData({...enterpriseData, display_name: e.target.value})}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[#484F58] uppercase tracking-tighter">Corporate Email</label>
-                <input 
-                  className="bg-[#030305] border border-[#161B22] p-3 text-cyan-400 outline-none focus:border-cyan-400/50 font-mono"
-                  placeholder="owner@company.ai"
-                  value={enterpriseData.email}
-                  onChange={e => setEnterpriseData({...enterpriseData, email: e.target.value})}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[#484F58] uppercase tracking-tighter">Company Name</label>
-                <input 
-                  className="bg-[#030305] border border-[#161B22] p-3 text-cyan-400 outline-none focus:border-cyan-400/50 font-mono"
-                  placeholder="EX: Global Bank A"
-                  value={enterpriseData.company_name}
-                  onChange={e => setEnterpriseData({...enterpriseData, company_name: e.target.value})}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[#484F58] uppercase tracking-tighter">Region</label>
-                  <input 
-                    className="bg-[#030305] border border-[#161B22] p-3 text-cyan-400 outline-none focus:border-cyan-400/50 font-mono"
-                    placeholder="India"
-                    value={enterpriseData.region}
-                    onChange={e => setEnterpriseData({...enterpriseData, region: e.target.value})}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[#484F58] uppercase tracking-tighter">Department</label>
-                  <input 
-                    className="bg-[#030305] border border-[#161B22] p-3 text-cyan-400 outline-none focus:border-cyan-400/50 font-mono"
-                    placeholder="AI Safety Branch"
-                    value={enterpriseData.department}
-                    onChange={e => setEnterpriseData({...enterpriseData, department: e.target.value})}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          <button 
-            disabled={loading}
-            onClick={() => handleProvision(activeTab)}
-            className="mt-4 bg-cyan-400 text-[#030305] py-4 text-[11px] font-bold tracking-[0.3em] uppercase hover:bg-cyan-300 transition-all disabled:opacity-50"
-          >
-            {loading ? 'EXECUTING_HANDSHAKE...' : 'APPROVE & GRANT ACCESS'}
-          </button>
+      {/* Page header */}
+      <div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
+          Fleet Provisioning
         </div>
+        <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+          Generate identities and dispatch credentials to Regulatory Officials or Enterprise Owners.
+        </div>
+      </div>
 
-        {/* --- Guidance & Notification Section --- */}
-        <div className="flex flex-col gap-6">
-          <div className="p-6 border border-[#161B22] bg-[#0D1117]/30">
-            <h4 className="text-[10px] font-bold text-cyan-400 tracking-widest uppercase mb-4">Operational Protocol</h4>
-            <ul className="text-[10px] text-[#8B949E] space-y-4 font-mono leading-relaxed">
-              <li className="flex gap-3">
-                <span className="text-cyan-900">[01]</span>
-                <span>Submitting this form triggers a background credential generation sequence (ID + TOTP + Master Key).</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-cyan-900">[02]</span>
-                <span>The system pulls the official's public key (if available) or embeds a secure TOTP setup QR directly into the welcome packet.</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-cyan-900">[03]</span>
-                <span>An automated transmission is dispatched via the Sovereign Gatekeeper (mail.py) to the provided address.</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-cyan-900">[04]</span>
-                <span>Access is logged in the Audit Ledger as a "PROVISION_EVENT" for Root Accountability.</span>
-              </li>
-            </ul>
+      {/* Tab switcher */}
+      <div style={{
+        display: 'flex',
+        gap: 4,
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        borderRadius: 8,
+        padding: 4,
+        alignSelf: 'flex-start',
+      }}>
+        {['AUDITOR', 'ENTERPRISE'].map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '8px 20px',
+              borderRadius: 6,
+              fontSize: 13,
+              fontWeight: 600,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              background: activeTab === tab ? 'var(--accent)' : 'transparent',
+              color: activeTab === tab ? '#fff' : 'var(--text-secondary)',
+            }}
+          >
+            {tab === 'AUDITOR' ? '🏛 Regulatory Officials' : '🏢 Enterprise Owners'}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 20, alignItems: 'start' }}>
+
+        {/* Form */}
+        <div className="ra-card" style={{ padding: 28 }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 24 }}>
+            {activeTab === 'AUDITOR' ? 'Official Identity Metadata' : 'Enterprise Owner Details'}
           </div>
 
-          {message && (
-            <div className={`p-6 border ${message.type === 'SUCCESS' ? 'border-green-500/30 bg-green-500/5 text-green-400' : 'border-red-500/30 bg-red-500/5 text-red-400'} animate-slide-up`}>
-              <div className="text-[10px] font-bold tracking-widest uppercase mb-2">SYSTEM_RESPONSE</div>
-              <div className="text-[11px] font-mono leading-relaxed">{message.text}</div>
-            </div>
-          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {activeTab === 'AUDITOR' ? (
+              <>
+                <Field label="Official Full Name">
+                  <input
+                    className="ra-input"
+                    placeholder="e.g. John Doe"
+                    value={auditorData.display_name}
+                    onChange={e => setAuditorData({ ...auditorData, display_name: e.target.value })}
+                  />
+                </Field>
+                <Field label="Government Email">
+                  <input
+                    className="ra-input"
+                    type="email"
+                    placeholder="name@regulator.gov"
+                    value={auditorData.email}
+                    onChange={e => setAuditorData({ ...auditorData, email: e.target.value })}
+                  />
+                </Field>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <Field label="Regulatory Body">
+                    <select
+                      className="ra-select"
+                      value={auditorData.regulator}
+                      onChange={e => setAuditorData({ ...auditorData, regulator: e.target.value })}
+                    >
+                      {REGULATORS.map(r => <option key={r}>{r}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Jurisdiction">
+                    <select
+                      className="ra-select"
+                      value={auditorData.jurisdiction}
+                      onChange={e => setAuditorData({ ...auditorData, jurisdiction: e.target.value })}
+                    >
+                      {REGIONS.map(r => <option key={r}>{r}</option>)}
+                    </select>
+                  </Field>
+                </div>
+                <Field label="Department">
+                  <input
+                    className="ra-input"
+                    placeholder="e.g. Compliance Oversight"
+                    value={auditorData.department}
+                    onChange={e => setAuditorData({ ...auditorData, department: e.target.value })}
+                  />
+                </Field>
+              </>
+            ) : (
+              <>
+                <Field label="Owner Full Name">
+                  <input
+                    className="ra-input"
+                    placeholder="e.g. Haritha Desai"
+                    value={enterpriseData.display_name}
+                    onChange={e => setEnterpriseData({ ...enterpriseData, display_name: e.target.value })}
+                  />
+                </Field>
+                <Field label="Corporate Email">
+                  <input
+                    className="ra-input"
+                    type="email"
+                    placeholder="owner@company.ai"
+                    value={enterpriseData.email}
+                    onChange={e => setEnterpriseData({ ...enterpriseData, email: e.target.value })}
+                  />
+                </Field>
+                <Field label="Company Name">
+                  <input
+                    className="ra-input"
+                    placeholder="e.g. Global Bank AI"
+                    value={enterpriseData.company_name}
+                    onChange={e => setEnterpriseData({ ...enterpriseData, company_name: e.target.value })}
+                  />
+                </Field>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <Field label="Region">
+                    <select
+                      className="ra-select"
+                      value={enterpriseData.region}
+                      onChange={e => setEnterpriseData({ ...enterpriseData, region: e.target.value })}
+                    >
+                      {REGIONS.map(r => <option key={r}>{r}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Department">
+                    <input
+                      className="ra-input"
+                      placeholder="AI Safety Branch"
+                      value={enterpriseData.department}
+                      onChange={e => setEnterpriseData({ ...enterpriseData, department: e.target.value })}
+                    />
+                  </Field>
+                </div>
+              </>
+            )}
+
+            <button
+              className="btn-primary"
+              disabled={loading}
+              onClick={() => handleProvision(activeTab)}
+              style={{
+                width: '100%',
+                padding: '13px',
+                fontSize: 14,
+                marginTop: 6,
+                opacity: loading ? 0.6 : 1,
+                cursor: loading ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {loading ? 'Dispatching Credentials...' : `Approve & Grant ${activeTab === 'AUDITOR' ? 'Auditor' : 'Enterprise'} Access`}
+            </button>
+          </div>
         </div>
 
-      </div>
+        {/* Right panel */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+          {/* Protocol steps */}
+          <div className="ra-card" style={{ padding: 24 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 18 }}>
+              Operational Protocol
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[
+                { n: '01', text: 'Submitting triggers background credential generation — ID + TOTP + Master Key.' },
+                { n: '02', text: 'System pulls the official\'s public key or embeds a secure TOTP QR in the welcome packet.' },
+                { n: '03', text: 'Automated transmission dispatched via Sovereign Gatekeeper (mail.py).' },
+                { n: '04', text: 'Access logged in Audit Ledger as a PROVISION_EVENT for Root accountability.' },
+              ].map(s => (
+                <div key={s.n} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                  <span style={{
+                    width: 24, height: 24, flexShrink: 0,
+                    background: 'var(--accent-dim)',
+                    borderRadius: 6,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, fontWeight: 700, color: 'var(--accent-soft)',
+                    fontFamily: 'JetBrains Mono, monospace',
+                  }}>{s.n}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{s.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Response message */}
+          {message && (
+            <div style={{
+              padding: '16px 20px',
+              borderRadius: 6,
+              border: `1px solid ${message.type === 'SUCCESS' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+              background: message.type === 'SUCCESS' ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)',
+            }} className="slide-in">
+              <div style={{
+                fontSize: 12, fontWeight: 700, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em',
+                color: message.type === 'SUCCESS' ? 'var(--green-soft)' : 'var(--red-soft)',
+              }}>
+                {message.type === 'SUCCESS' ? '✓ Success' : '✗ Error'}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{message.text}</div>
+            </div>
+          )}
+
+          {/* Audit counts */}
+          <div className="ra-card" style={{ padding: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 12 }}>Recent Provisions</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {[
+                { label: 'Auditors', value: '—', color: 'var(--cyan)' },
+                { label: 'Enterprises', value: '—', color: 'var(--accent-soft)' },
+              ].map(item => (
+                <div key={item.label} style={{
+                  background: 'var(--bg-void)',
+                  borderRadius: 6,
+                  padding: '12px 16px',
+                  border: '1px solid var(--border)',
+                }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 4 }}>{item.label}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: item.color }}>{item.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }
