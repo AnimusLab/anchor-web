@@ -30,17 +30,55 @@ def get_db():
     finally:
         db.close()
 
+def run_migrations():
+    """Idempotent schema migration — safely adds any columns that exist in the
+    SQLAlchemy models but are absent from the live database table.
+    Uses IF NOT EXISTS so it is safe to run on every startup."""
+    from sqlalchemy import text
+    migrations = [
+        # organizations table — columns added after initial deploy
+        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS region VARCHAR;",
+        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS master_key_hash VARCHAR;",
+        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS server_region VARCHAR DEFAULT 'IN';",
+        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS hr_contact VARCHAR;",
+        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'active';",
+        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS org_type VARCHAR DEFAULT 'enterprise';",
+        # users table — columns added after initial deploy
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS official_id VARCHAR;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS jurisdiction VARCHAR;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret VARCHAR;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS hashed_pass VARCHAR;",
+    ]
+
+    # Only run ALTER TABLE on Postgres (SQLite doesn't support IF NOT EXISTS)
+    if not DATABASE_URL.startswith("sqlite"):
+        with engine.connect() as conn:
+            for stmt in migrations:
+                try:
+                    conn.execute(text(stmt))
+                    conn.commit()
+                except Exception as e:
+                    print(f"[MIGRATION] Skipped (already exists?): {stmt.split('ADD COLUMN')[1].strip()[:40]} — {e}")
+        print("[BOOT] Schema migrations applied.")
+
 def init_db():
     """Creates all tables and seeds the sovereign mesh identities on first boot."""
     import models  # noqa: F401
     Base.metadata.create_all(bind=engine)
     print("[BOOT] Sovereign Mesh — Tables Verified.")
 
+    # Apply any missing column migrations before seeding
+    run_migrations()
+
     db = SessionLocal()
     try:
         seed_mesh_identities(db)
     finally:
         db.close()
+
 
 def seed_mesh_identities(db):
     """Genesis Seeder — Injects regulatory bodies and primary identities."""
