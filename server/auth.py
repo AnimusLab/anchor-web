@@ -18,7 +18,7 @@ from io import BytesIO
 from database import get_db, SessionLocal
 from models import User, Fleet, Organization, OrgInvite
 from security import encrypt_secret
-from mail import send_enterprise_credentials, send_auditor_verification, send_approval_notification, send_admin_access_code
+from mail import send_enterprise_credentials, send_enterprise_provisioned, send_auditor_verification, send_approval_notification, send_admin_access_code
 
 # =============================================================================
 # Router & Security Setup
