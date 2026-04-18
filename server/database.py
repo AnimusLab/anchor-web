@@ -44,16 +44,19 @@ def run_migrations():
     migrations = [
         # organizations table — columns added after initial deploy
         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS region VARCHAR;",
+        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS domain VARCHAR;",
         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS master_key_hash VARCHAR;",
         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS server_region VARCHAR DEFAULT 'IN';",
         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS hr_contact VARCHAR;",
         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'active';",
         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS org_type VARCHAR DEFAULT 'enterprise';",
         # users table — columns added after initial deploy
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS org_id VARCHAR;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS official_id VARCHAR;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS jurisdiction VARCHAR;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'pending';",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret VARCHAR;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS hashed_pass VARCHAR;",

@@ -18,7 +18,14 @@ from io import BytesIO
 from database import get_db, SessionLocal
 from models import User, Fleet, Organization, OrgInvite
 from security import encrypt_secret
-from mail import send_enterprise_credentials, send_enterprise_provisioned, send_auditor_verification, send_approval_notification, send_admin_access_code
+from mail import (
+    send_enterprise_credentials, 
+    send_enterprise_provisioned, 
+    send_auditor_verification, 
+    send_auditor_provisioned,
+    send_approval_notification, 
+    send_admin_access_code
+)
 
 # =============================================================================
 # Router & Security Setup
@@ -253,11 +260,16 @@ def provision_auditor(
     entity_id = f"aud_{secrets.token_hex(3)}_{request.regulator.lower()}"
     totp_secret = pyotp.random_base32()
     
-    # 3. Create User in 'pending' state
+    # 3. Lookup Regulatory Org
+    reg_org = db.query(Organization).filter(Organization.entity_prefix == request.regulator.lower()).first()
+    org_id = reg_org.id if reg_org else None
+
+    # 4. Create User in 'pending' state
     official = User(
         id=f"usr_{secrets.token_hex(4)}",
         email=request.email.strip().lower(),
         display_name=request.display_name,
+        org_id=org_id,
         role="regulator",
         official_id=entity_id,
         department=request.department,
@@ -270,14 +282,14 @@ def provision_auditor(
     db.add(official)
     db.commit()
 
-    # 4. Generate QR Code
+    # 5. Generate QR Code
     totp_uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(name=request.email, issuer_name="Anchor Oversight")
     img = qrcode.make(totp_uri)
     buffered = BytesIO()
     img.save(buffered, format="PNG")
     qr_base64 = base64.b64encode(buffered.getvalue()).decode()
 
-    # 5. Dispatch Email
+    # 6. Dispatch Email
     send_auditor_provisioned(request.email, request.display_name, entity_id, request.regulator, qr_base64)
 
     return {"status": "SUCCESS", "entity_id": entity_id}

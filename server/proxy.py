@@ -47,6 +47,18 @@ app.include_router(auth_router)
 # --- OVERSIGHT ENGINE (Auditor TOTP Auth) ---
 app.include_router(oversight_router)
 
+# --- ROOT GATEWAY STATUS ---
+@app.get("/")
+def get_system_status():
+    """Health check and system status for the Master Node."""
+    return {
+        "status": "ACTIVE",
+        "engine": "Anchor Governance Master Node",
+        "version": "5.0.0",
+        "jurisdictions": ["USA", "UK", "IN", "EU"],
+        "node_type": "HUB"
+    }
+
 # --- STARTUP: Initialize database + seed root admin ---
 @app.on_event("startup")
 def on_startup():
