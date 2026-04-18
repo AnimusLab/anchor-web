@@ -1,4 +1,4 @@
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_BASE = import.meta.env.VITE_API_URL || 'https://animuslab-anchor.hf.space';
 export const WS_BASE = API_BASE.replace('https', 'wss').replace('http', 'ws');
 
 export const endpoints = {

@@ -1,16 +1,34 @@
-from database import engine
-from sqlalchemy import inspect
+import sys
 import os
+from sqlalchemy import text
+from database import engine, SessionLocal
+from models import Organization, User
 
-try:
-    inspector = inspect(engine)
-    tables = inspector.get_table_names()
-    print("EXISTING TABLES:")
-    for t in tables:
-        print(f" - {t}")
-        # Check columns for 'users' if it exists
-        if t == 'users':
-            columns = [c['name'] for c in inspector.get_columns('users')]
-            print(f"   COLUMNS: {columns}")
-except Exception as e:
-    print(f"ERROR: {e}")
+def check_db():
+    print("\n--- ANCHOR DATABASE INSPECTION ---\n")
+    db = SessionLocal()
+    try:
+        # 1. Check Organizations
+        print("[ORGANIZATIONS]")
+        orgs = db.query(Organization).all()
+        if not orgs:
+            print("  No organizations found.")
+        for org in orgs:
+            print(f"  - ID: {org.id} | Prefix: {org.entity_prefix} | Name: {org.display_name} | Region: {org.region}")
+
+        # 2. Check Users
+        print("\n[USERS]")
+        users = db.query(User).all()
+        if not users:
+            print("  No users found.")
+        for user in users:
+            print(f"  - Email: {user.email} | Role: {user.role} | Organization ID: {user.org_id} | Status: {user.status}")
+
+        print("\n----------------------------------")
+    except Exception as e:
+        print(f"Error querying database: {e}")
+    finally:
+        db.close()
+
+if __name__ == "__main__":
+    check_db()

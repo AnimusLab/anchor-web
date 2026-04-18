@@ -2,7 +2,7 @@
 // Production: HuggingFace Space. Override via VITE_API_URL env var or localStorage.
 export const API_BASE = localStorage.getItem('anchor_api_url')
   || import.meta.env.VITE_API_URL
-  || 'https://animuslab-anchor-api.hf.space'
+  || 'https://animuslab-anchor.hf.space'
 
 export const endpoints = {
   // Expose raw base for components that build paths manually

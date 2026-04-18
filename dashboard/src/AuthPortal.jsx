@@ -84,7 +84,7 @@ export default function AuthPortal({ isInvite = false }) {
   const [formData, setFormData] = useState({
     email: '', orgId: '', name: '', totpCode: '',
     entityPrefix: '', serverRegion: 'IN', jurisdiction: '',
-    displayName: '',
+    displayName: '', companyName: '',
   });
 
   useEffect(() => {
@@ -149,8 +149,11 @@ export default function AuthPortal({ isInvite = false }) {
     setIsLoading(true);
     try {
       const payload = new FormData();
-      payload.append('entity_prefix', formData.entityPrefix.trim().toLowerCase());
+      // Derive prefix: lowercase, no spaces
+      const derivedPrefix = formData.companyName.trim().toLowerCase().replace(/\s+/g, '-');
+      payload.append('entity_prefix', derivedPrefix);
       payload.append('display_name', formData.displayName);
+      payload.append('company_name', formData.companyName);
       payload.append('email', formData.email);
       payload.append('password', 'DUMMY_UNUSED');
       payload.append('server_region', formData.serverRegion);
@@ -412,10 +415,10 @@ export default function AuthPortal({ isInvite = false }) {
                   onBlur={e => e.target.style.borderColor = '#1f2937'}
                 />
               </Field>
-              <Field label="Entity Prefix">
-                <input required type="text" name="entityPrefix" value={formData.entityPrefix} onChange={handleInputChange}
-                  placeholder="e.g. globalbank (lowercase, no spaces)"
-                  style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace', borderColor: '#1f2937' }}
+              <Field label="Company Name">
+                <input required type="text" name="companyName" value={formData.companyName} onChange={handleInputChange}
+                  placeholder="e.g. Global Bank"
+                  style={{ ...inputStyle, borderColor: '#1f2937' }}
                   onFocus={e => e.target.style.borderColor = '#10b981'}
                   onBlur={e => e.target.style.borderColor = '#1f2937'}
                 />

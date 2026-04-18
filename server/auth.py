@@ -304,54 +304,71 @@ def provision_enterprise(
     MANUAL PROVISIONING: Root Admin creates a new Enterprise Regional Owner.
     Generates Master Key, QR, and dispatches the welcome packet.
     """
-    # 1. Check if Org already exists for this region
+    # 1. Derive slug from company name
     slug = f"{request.company_name.lower().replace(' ', '-')}-{request.region.lower()}"
-    if db.query(Organization).filter(Organization.entity_prefix == slug).first():
-         raise HTTPException(status_code=400, detail="REGIONAL BRANCH ALREADY REGISTERED")
-
-    # 2. Generate Master Key & Entity ID
-    master_key = f"amat_{secrets.token_urlsafe(32)}"
-    master_key_hash = hashlib.sha256(master_key.encode()).hexdigest()
-    org_id = f"org_{secrets.token_hex(4)}"
+    
+    # 2. Check if Org already exists
+    org = db.query(Organization).filter(Organization.entity_prefix == slug).first()
+    
+    if not org:
+        # Create new Organization if missing
+        master_key = f"amat_{secrets.token_urlsafe(32)}"
+        master_key_hash = hashlib.sha256(master_key.encode()).hexdigest()
+        org_id = f"org_{secrets.token_hex(4)}"
+        
+        org = Organization(
+            id=org_id,
+            entity_prefix=slug,
+            display_name=request.company_name,
+            region=request.region,
+            master_key_hash=master_key_hash,
+            org_type="enterprise",
+            created_at=datetime.utcnow().isoformat()
+        )
+        db.add(org)
+    else:
+        # Reuse existing Org
+        org_id = org.id
+        master_key = "[REDACTED] (Organization already exists)"
+        # We don't have the clear master key anymore as it was hashed
+    
     entity_id = f"own_{secrets.token_hex(3)}"
-
-    # 3. Create Organization
-    org = Organization(
-        id=org_id,
-        entity_prefix=slug,
-        display_name=request.company_name,
-        region=request.region,
-        master_key_hash=master_key_hash,
-        org_type="enterprise",
-        created_at=datetime.utcnow().isoformat()
-    )
-    db.add(org)
-
-    # 4. Create Owner User
-    totp_secret = pyotp.random_base32()
-    owner = User(
-        id=f"usr_{secrets.token_hex(4)}",
-        email=request.email.strip().lower(),
-        org_id=org_id,
-        display_name=request.display_name,
-        role="owner",
-        department=request.department,
-        totp_secret=totp_secret,
-        status="active",
-        email_verified=True,
-        created_at=datetime.utcnow().isoformat()
-    )
-    db.add(owner)
+    
+    # 3. Handle Owner User
+    owner = db.query(User).filter(User.email == request.email.strip().lower()).first()
+    
+    if not owner:
+        totp_secret = pyotp.random_base32()
+        owner = User(
+            id=f"usr_{secrets.token_hex(4)}",
+            email=request.email.strip().lower(),
+            org_id=org_id,
+            display_name=request.display_name,
+            role="owner",
+            department=request.department,
+            totp_secret=totp_secret,
+            status="active",
+            email_verified=True,
+            created_at=datetime.utcnow().isoformat()
+        )
+        db.add(owner)
+    else:
+        # If user exists, ensure they are linked to the correct Org
+        owner.org_id = org_id
+        owner.role = "owner"
+        totp_secret = owner.totp_secret or pyotp.random_base32()
+        owner.totp_secret = totp_secret
+        
     db.commit()
 
-    # 5. Generate QR Code
+    # 4. Generate QR Code
     totp_uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(name=request.email, issuer_name=f"Anchor {request.company_name}")
     img = qrcode.make(totp_uri)
     buffered = BytesIO()
     img.save(buffered, format="PNG")
     qr_base64 = base64.b64encode(buffered.getvalue()).decode()
 
-    # 6. Dispatch Email
+    # 5. Dispatch Email
     send_enterprise_provisioned(request.email, request.display_name, request.company_name, request.region, entity_id, master_key, qr_base64)
 
     return {"status": "SUCCESS", "entity_id": entity_id, "org_id": org_id}
