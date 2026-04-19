@@ -1,0 +1,41 @@
+# ANCHOR GOVERNANCE — ARCHITECTURAL DECISIONS
+
+This document tracks high-level decisions regarding the Anchor Governance Engine's identity, ownership, and onboarding models.
+
+---
+
+## 🛡️ IDENTITY & ACCESS
+
+### [DECISION] Removal of Redundant Name Fields
+- **Status**: ACTIVE
+- **Context**: During the Sign-In flow, users were previously asked for their "Full Name".
+- **Decision**: Remove the "Full Name" field from all Sign-In forms.
+- **Rationale**: The system already has the name associated with the Email/Entity ID. Requiring it again creates data redundancy and potential mismatches.
+
+### [DECISION] Decentralized Regulator Onboarding
+- **Status**: ACTIVE
+- **Context**: Onboarding was initially a manual Root-only process.
+- **Decision**: Implement a public-facing "Onboard" section for the Oversight (Regulator) portal.
+- **Rationale**: Allows government officials to submit their own credentials for review, reducing manual overhead for the Master Node administrator.
+
+### [DECISION] Paused Enterprise Onboarding
+- **Status**: ON HOLD
+- **Context**: Automated the creation of Enterprise Owners via a public form.
+- **Decision**: Enterprise onboarding remains a manual (Excel/CSV list-based) process for now.
+- **Rationale**: Security concerns regarding "Who becomes the Owner". Automated onboarding without strict identity verification (like corporate domain matching) is too risky for primary owner accounts.
+
+---
+
+## 🌎 JURISDICTIONS & COMPLIANCE
+
+### [DECISION] Granular Bureau Selection
+- **Status**: ACTIVE
+- **Context**: Previous versions only tracked the country (e.g., USA).
+- **Decision**: Mandatory "Department" and "Jurisdiction" fields added.
+- **Implementation**: Jurisdictions are stored in a centralized `jurisdictions.json` file for easy updates.
+
+### [DECISION] Request-for-Access Model
+- **Status**: ACTIVE
+- **Context**: Initial implementation auto-provisioned keys on registration.
+- **Decision**: All public registrations result in a `status="pending"` state.
+- **Rationale**: Prevents unauthorized access. Keys/IDs are only delivered via secure email AFTER Root Admin approval.

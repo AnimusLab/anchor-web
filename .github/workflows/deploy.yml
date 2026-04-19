@@ -15,11 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        project: [landing, dashboard, oversight, root-admin]
+        project: [landing, dashboard, oversight, root-admin, mesh]
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node
+        if: matrix.project != 'mesh'
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -27,11 +28,11 @@ jobs:
           cache-dependency-path: './${{ matrix.project }}/package-lock.json'
 
       - name: Install & Build ${{ matrix.project }}
+        if: matrix.project != 'mesh'
         env:
           VITE_API_URL: https://animuslab-anchor.hf.space
         run: |
           cd ${{ matrix.project }}
-          # Use ci if lockfile exists, otherwise standard install
           npm install
           npm run build
 
@@ -40,8 +41,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: anchor-${{ matrix.project }}
-          directory: ${{ matrix.project }}/dist
+          projectName: ${{ matrix.project == 'mesh' && 'meshdashboard' || format('anchor-{0}', matrix.project) }}
+          directory: ${{ matrix.project == 'mesh' && 'mesh' || format('{0}/dist', matrix.project) }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
   # --- 2. BACKEND DEPLOYMENT (Hugging Face Space) ---

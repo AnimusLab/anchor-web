@@ -112,11 +112,10 @@ export default function AuthPortal({ isInvite = false }) {
     setError('');
     setIsLoading(true);
     try {
-      if (loginStep === 'identify') {
         const res = await fetch(endpoints.identify, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ display_name: formData.name, email: formData.email, org_id: formData.orgId })
+          body: JSON.stringify({ email: formData.email, org_id: formData.orgId })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Identity lookup failed');
@@ -312,17 +311,6 @@ export default function AuthPortal({ isInvite = false }) {
                     <div style={{ fontSize: 22, fontWeight: 700, color: '#f9fafb', marginBottom: 6 }}>Welcome back</div>
                     <div style={{ fontSize: 14, color: '#6b7280' }}>Enter your identity credentials to proceed.</div>
                   </div>
-                  <Field label="Full Name">
-                    <input required type="text" name="name" value={formData.name} onChange={handleInputChange}
-                      placeholder="Haritha Desai"
-                      style={{
-                        ...inputStyle,
-                        borderColor: focusedField === 'name' ? '#10b981' : '#1f2937',
-                        boxShadow: focusedField === 'name' ? '0 0 0 3px rgba(16,185,129,0.1)' : 'none',
-                      }}
-                      onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)}
-                    />
-                  </Field>
                   <Field label="Email Address">
                     <input required type="email" name="email" value={formData.email} onChange={handleInputChange}
                       placeholder="owner@company.ai"
@@ -399,7 +387,7 @@ export default function AuthPortal({ isInvite = false }) {
                 <div style={{ fontSize: 22, fontWeight: 700, color: '#f9fafb', marginBottom: 6 }}>Onboard Enterprise</div>
                 <div style={{ fontSize: 14, color: '#6b7280' }}>Register your organization on the Anchor mesh.</div>
               </div>
-              <Field label="Owner Full Name">
+              <Field label="Your Full Name">
                 <input required type="text" name="displayName" value={formData.displayName} onChange={handleInputChange}
                   placeholder="YOUR FULL NAME"
                   style={{ ...inputStyle, borderColor: '#1f2937' }}
@@ -407,7 +395,7 @@ export default function AuthPortal({ isInvite = false }) {
                   onBlur={e => e.target.style.borderColor = '#1f2937'}
                 />
               </Field>
-              <Field label="Corporate Email">
+              <Field label="Your Corporate Email">
                 <input required type="email" name="email" value={formData.email} onChange={handleInputChange}
                   placeholder="owner@company.ai"
                   style={{ ...inputStyle, borderColor: '#1f2937' }}
@@ -423,9 +411,10 @@ export default function AuthPortal({ isInvite = false }) {
                   onBlur={e => e.target.style.borderColor = '#1f2937'}
                 />
               </Field>
-              <Field label="Server Region">
-                <select name="serverRegion" value={formData.serverRegion} onChange={handleInputChange}
+              <Field label="Region of your department or company">
+                <select required name="serverRegion" value={formData.serverRegion} onChange={handleInputChange}
                   style={{ ...inputStyle, appearance: 'none', borderColor: '#1f2937', cursor: 'pointer' }}>
+                  <option value="">Select Region</option>
                   <option value="IN">India (IN)</option>
                   <option value="US">United States (US)</option>
                   <option value="EU">European Union (EU)</option>

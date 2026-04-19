@@ -1,0 +1,59 @@
+{
+  "jurisdictions": [
+    {
+      "id": "USA",
+      "label": "United States",
+      "departments": [
+        { "id": "SEC", "label": "SEC (Securities & Exchange Commission)" },
+        { "id": "CFPB", "label": "CFPB (Consumer Financial Protection Bureau)" },
+        { "id": "NIST", "label": "NIST (Standards & Technology)" },
+        { "id": "FTC", "label": "FTC (Federal Trade Commission)" },
+        { "id": "DOJ", "label": "DOJ (Department of Justice)" }
+      ]
+    },
+    {
+      "id": "INDIA",
+      "label": "India",
+      "departments": [
+        { "id": "RBI", "label": "RBI (Reserve Bank of India)" },
+        { "id": "SEBI", "label": "SEBI (Securities and Exchange Board)" },
+        { "id": "MEITY", "label": "MeitY (Ministry of IT & AI)" },
+        { "id": "TRAI", "label": "TRAI (Telecom Regulatory Authority)" }
+      ]
+    },
+    {
+      "id": "UK",
+      "label": "United Kingdom",
+      "departments": [
+        { "id": "FCA", "label": "FCA (Financial Conduct Authority)" },
+        { "id": "ICO", "label": "ICO (Information Commissioner's Office)" },
+        { "id": "CMA", "label": "CMA (Competition and Markets Authority)" }
+      ]
+    },
+    {
+      "id": "EU",
+      "label": "European Union",
+      "departments": [
+        { "id": "AI_OFFICE", "label": "EU AI Office (EU AI Act)" },
+        { "id": "EDPS", "label": "EDPS (Data Protection Supervisor)" }
+      ]
+    },
+    {
+      "id": "SG",
+      "label": "Singapore",
+      "departments": [
+        { "id": "MAS", "label": "MAS (Monetary Authority of Singapore)" },
+        { "id": "IMDA", "label": "IMDA (Media/Digital Communications)" }
+      ]
+    },
+    {
+      "id": "GLOBAL",
+      "label": "Global / Intergovernmental",
+      "departments": [
+        { "id": "FINOS", "label": "FINOS (Open Source Financial Standards)" },
+        { "id": "OWASP", "label": "OWASP (AI Security Project)" },
+        { "id": "ISO", "label": "ISO (International Standards)" }
+      ]
+    }
+  ]
+}

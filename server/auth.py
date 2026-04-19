@@ -130,9 +130,8 @@ class AdminAccessRequest(BaseModel):
 class AuditorProvisionRequest(BaseModel):
     display_name: str
     email: str
-    regulator: str
-    department: str
     jurisdiction: str
+    department: str
 
 class EnterpriseProvisionRequest(BaseModel):
     display_name: str
@@ -140,6 +139,7 @@ class EnterpriseProvisionRequest(BaseModel):
     company_name: str
     region: str
     department: str
+    jurisdiction: str
 
 @auth_router.post("/login")
 def login(
@@ -185,6 +185,16 @@ def login(
             "org_id": user.org_id
         }
     }
+
+@auth_router.get("/jurisdictions")
+def get_jurisdictions():
+    """Returns the centralized list of global jurisdictions and bureaus."""
+    import json
+    try:
+        with open("server/jurisdictions.json", "r") as f:
+            return json.load(f)
+    except Exception:
+        return {"jurisdictions": []}
 
 def _identify_logic(display_name: str, email: str, org_prefix: str, allowed_roles: list, db: Session):
     """Internal shared logic for identity challenge with strict role scoping."""
@@ -493,23 +503,24 @@ def register_organization(
     )
     db.add(org)
     
-    # 4. Create Owner Account
-    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    # 4. Create Owner Account (Pending Approval)
     user = User(
         id=f"usr_{secrets.token_hex(4)}",
         email=email.strip().lower(),
         org_id=org_id,
         display_name=display_name,
         role="owner",
-        hashed_pass=hashed,
-        status="active",
+        status="pending", # Decision Log: Initial state is always pending
         email_verified=True,
         created_at=datetime.utcnow().isoformat()
     )
     db.add(user)
     db.commit()
 
-    return {"status": "SUCCESS", "org_id": org_id, "message": "Organization provisioned."}
+    return {
+        "status": "SUCCESS", 
+        "message": "Onboarding request submitted. The Root Administrator will review your corporate identity before provisioning your Master Node."
+    }
 
 
 @auth_router.post("/projects/create")
@@ -596,13 +607,14 @@ def list_org_projects(
     hashed = bcrypt.hashpw(raw_key.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     verification_token = secrets.token_urlsafe(32)
 
+    # 4. Verify/Create Regulator (Pending Approval)
     user = User(
         id=f"usr_{secrets.token_hex(4)}",
-        entity_id=entity_id,
+        email=email.strip().lower(),
         display_name=display_name,
-        email=email,
+        department=department,
+        jurisdiction=jurisdiction,
         role="regulator",
-        hashed_key=hashed,
         status="pending",
         email_verified=False,
         verification_token=verification_token,
@@ -611,18 +623,12 @@ def list_org_projects(
     db.add(user)
     db.commit()
 
-    # Send verification email with credentials
-    send_auditor_verification(email, display_name, entity_id, raw_key, verification_token)
+    # Send verification email for email identity proofing (but not keys)
+    send_auditor_verification(email, display_name, "PENDING", "[REDACTED]", verification_token)
 
     return {
         "status": "PENDING_APPROVAL",
-        "entity_id": entity_id,
-        "secret_key": raw_key,
-        "message": (
-            f"Request submitted for {jurisdiction}. "
-            f"A verification email has been sent to {email}. "
-            f"Click the link to verify your email and receive temporary access."
-        )
+        "message": f"Request submitted for {jurisdiction} ({department}). A verification link has been sent to {email}. Access keys will be delivered after administrative review."
     }
 
 
