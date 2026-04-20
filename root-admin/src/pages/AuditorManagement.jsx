@@ -13,6 +13,8 @@ export default function AuditorManagement() {
   const [provisioning, setProvisioning] = useState(false)
   const [newAuditor, setNewAuditor] = useState(null) // Stores the result with QR code
   const [error, setError] = useState('')
+  const [pending, setPending] = useState([])
+  const [approving, setApproving] = useState(null) // track which entity is being approved
 
   const fetchAuditors = async () => {
     setLoading(true)
@@ -27,7 +29,20 @@ export default function AuditorManagement() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchAuditors() }, [])
+  const fetchPending = async () => {
+    try {
+      const res = await fetch(endpoints.pending, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      setPending(data)
+    } catch (err) { console.error(err) }
+  }
+
+  useEffect(() => { 
+    fetchAuditors()
+    fetchPending() 
+  }, [])
 
   const handleProvision = async (e) => {
     e.preventDefault()
@@ -71,6 +86,32 @@ export default function AuditorManagement() {
       })
       fetchAuditors()
     } catch (err) { console.error(err) }
+  }
+
+  const handleApprove = async (entity_id) => {
+    setApproving(entity_id)
+    try {
+      const formData = new FormData()
+      formData.append('target_entity_id', entity_id)
+
+      const res = await fetch(endpoints.approve, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      })
+      if (res.ok) {
+        fetchAuditors()
+        fetchPending()
+        setApproving(null)
+      } else {
+        const err = await res.json()
+        alert(err.detail || 'APPROVAL FAILED')
+      }
+    } catch {
+      alert('NETWORK ERROR')
+    } finally {
+      setApproving(null)
+    }
   }
 
   return (
@@ -135,13 +176,37 @@ export default function AuditorManagement() {
           </form>
         </div>
 
-        <div className="flex-1 border border-[#161B22] bg-[#0E1015] p-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 border-r-2 border-t-2 border-cyan-400/10" />
-          <h3 className="text-[9px] text-[#484F58] tracking-widest mb-4 uppercase">System Log</h3>
-          <div className="space-y-2 font-mono text-[9px] text-cyan-900 leading-relaxed uppercase">
-            <div>READY FOR PROVISIONING...</div>
-            <div>WAITING FOR ADMIN INPUT...</div>
-            <div>ENCRYPTION: AES-256 ACTIVE</div>
+        <div className="flex-1 border border-[#161B22] bg-[#0E1015] flex flex-col relative overflow-hidden">
+          <div className="h-10 px-4 border-b border-[#161B22] flex items-center justify-between bg-[#08090C]">
+            <span className="text-[10px] font-bold tracking-[0.2em] text-amber-500 uppercase">Pending Review</span>
+            <div className="text-[9px] text-amber-900 font-mono">{pending.length} WAITING</div>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto">
+            {pending.length === 0 ? (
+              <div className="p-6 text-[9px] text-[#484F58] font-mono tracking-widest uppercase text-center">
+                NO PENDING REQUESTS
+              </div>
+            ) : (
+              <div className="divide-y divide-[#161B22]">
+                {pending.map(p => (
+                  <div key={p.entity_id} className="p-4 hover:bg-amber-500/5 transition-colors group">
+                    <div className="flex justify-between items-start mb-2">
+                       <div className="text-[11px] font-bold text-white uppercase">{p.display_name}</div>
+                       <div className="text-[9px] font-mono text-amber-500/50">{p.entity_id}</div>
+                    </div>
+                    <div className="text-[9px] text-[#484F58] font-mono mb-3 uppercase truncate">{p.email}</div>
+                    <button 
+                      onClick={() => handleApprove(p.entity_id)}
+                      disabled={approving === p.entity_id}
+                      className="w-full h-7 border border-amber-500/20 text-amber-500 text-[9px] font-bold uppercase tracking-widest hover:bg-amber-500 hover:text-black transition-all disabled:opacity-30"
+                    >
+                      {approving === p.entity_id ? 'AUTHENTICATING...' : 'APPROVE ACCESS →'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

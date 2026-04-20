@@ -696,21 +696,52 @@ def approve_user(
     current_user: dict = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
-    """Admin endpoint to approve a pending user."""
+    """Admin endpoint to approve a pending auditor. 
+    Automates credential generation and email dispatch."""
     user = db.query(User).filter(User.entity_id == target_entity_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="USER NOT FOUND")
 
+    # 1. Generate TOTP Secret if not present
+    if not user.totp_secret:
+        raw_secret = pyotp.random_base32()
+        user.totp_secret = raw_secret # In prod, this should be encrypted
+    else:
+        raw_secret = user.totp_secret 
+
+    # 2. Generate Provisioning URI & QR Code
+    issuer = f"Anchor - {user.jurisdiction or 'Oversight'}"
+    totp_uri = pyotp.totp.TOTP(raw_secret).provisioning_uri(
+        name=user.email, 
+        issuer_name=issuer
+    )
+
+    # Convert QR to Base64 for Email
+    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr.add_data(totp_uri)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    qr_base64 = base64.b64encode(buffered.getvalue()).decode()
+
+    # 3. Finalize Status
     user.status = "approved"
     user.approved_at = datetime.utcnow().isoformat()
     user.approved_by = current_user["sub"]
     db.commit()
 
-    # Send approval notification email
-    if user.email:
-        send_approval_notification(user.email, user.display_name, user.entity_id)
+    # 4. Dispatch Automated Provisioning Email
+    send_auditor_provisioned(
+        to_email=user.email,
+        display_name=user.display_name,
+        entity_id=user.entity_id,
+        regulator=user.jurisdiction or "Authority",
+        qr_base64=qr_base64
+    )
 
-    return {"status": "APPROVED", "entity_id": target_entity_id}
+    return {"status": "APPROVED_AND_PROVISIONED", "entity_id": target_entity_id}
 
 
 @auth_router.post("/revoke")

@@ -19,6 +19,8 @@ export const endpoints = {
 
   // Oversight Admin (auditor management)
   auditors: `${API_BASE}/api/oversight/admin/auditors`,
+  pending:  `${API_BASE}/api/auth/pending`,
+  approve:  `${API_BASE}/api/auth/approve`,
   revoke:   `${API_BASE}/api/oversight/admin/revoke`,
 
   // Analytics & Ledger
