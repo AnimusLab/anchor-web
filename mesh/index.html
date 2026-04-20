@@ -1,255 +1,318 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANCHOR MESH // PROTOCOL PULSE</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #050508;
-            --card: rgba(13, 14, 21, 0.6);
-            --border: rgba(255, 255, 255, 0.06);
-            --cyan: #06B6D4;
-            --gold: #C9A84C;
-            --txt: #F1F5F9;
-            --txt-dim: #64748B;
-            --mono: 'JetBrains Mono', monospace;
-            --sans: 'Outfit', sans-serif;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ANCHOR MESH // GLOBAL LATTICE</title>
+  
+  <!-- CSS Reset & Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <!-- Globe.gl & Three.js -->
+  <script src="//unpkg.com/three"></script>
+  <script src="//unpkg.com/globe.gl"></script>
 
-        * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; }
+  <style>
+    :root {
+      --bg: #030308;
+      --cyan: #06B6D4;
+      --gold: #C9A84C;
+      --glass: rgba(13, 14, 21, 0.45);
+      --border: rgba(255, 255, 255, 0.08);
+      --txt: #F1F5F9;
+      --txt-dim: #94A3B8;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Outfit', sans-serif;
+    }
 
-        body {
-            background: var(--bg);
-            color: var(--txt);
-            font-family: var(--sans);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+    * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; }
 
-        /* ── FX ── */
-        .glow-overlay {
-            position: fixed; inset: 0; pointer-events: none;
-            background: 
-                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 70%),
-                radial-gradient(circle at 0% 0%, rgba(201, 168, 76, 0.03) 0%, transparent 50%);
-        }
+    body {
+      background: var(--bg);
+      color: var(--txt);
+      font-family: var(--sans);
+      height: 100vh;
+      overflow: hidden;
+      margin: 0;
+    }
 
-        /* ── TOP NAV ── */
-        header {
-            height: 80px; display: flex; align-items: center; justify-content: space-between;
-            padding: 0 40px; border-bottom: 1px solid var(--border);
-            background: rgba(5, 5, 8, 0.8); backdrop-filter: blur(20px); z-index: 10;
-        }
-        .brand { display: flex; align-items: center; gap: 15px; }
-        .brand-icon { width: 32px; height: 32px; border: 2px solid var(--cyan); display: flex; align-items: center; justify-content: center; }
-        .brand-icon-inner { width: 12px; height: 12px; border: 2px solid var(--gold); }
-        .brand-text { font-weight: 900; letter-spacing: 0.15em; font-size: 16px; text-transform: uppercase; }
-        .brand-text span { color: var(--cyan); }
+    #globe-viz {
+      position: absolute; inset: 0; z-index: 1;
+    }
 
-        .actions { display: flex; gap: 20px; }
-        .btn { 
-            padding: 10px 20px; font-family: var(--mono); font-size: 11px; font-weight: 700; 
-            text-transform: uppercase; text-decoration: none; border: 1px solid var(--border);
-            color: var(--txt); transition: all 0.2s;
-        }
-        .btn:hover { border-color: var(--cyan); background: rgba(6, 182, 212, 0.1); }
-        .btn-noc { background: var(--cyan); color: #000; border: none; }
+    /* ── GHOST HUD LAYOUT ── */
+    #hud-overlay {
+      position: relative; z-index: 10; height: 100vh;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 32px; pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
 
-        /* ── MAIN LAYOUT ── */
-        main {
-            flex: 1; display: grid; grid-template-columns: 320px 1fr 320px;
-            gap: 40px; padding: 40px; z-index: 5;
-        }
+    #hud-overlay * { pointer-events: auto; }
 
-        .side-panel { display: flex; flex-direction: column; gap: 24px; }
-        .card { 
-            background: var(--card); border: 1px solid var(--border); 
-            border-radius: 1px; padding: 24px; display: flex; flex-direction: column;
-            backdrop-filter: blur(10px);
-        }
-        .card-label { 
-            font-size: 10px; font-weight: 900; letter-spacing: 0.2em; 
-            text-transform: uppercase; color: var(--txt-dim); margin-bottom: 16px;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .card-label::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+    header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
 
-        /* CENTER VISUAL: THE PULSE */
-        .pulse-container {
-            position: relative; display: flex; align-items: center; justify-content: center;
-        }
-        .pulse-core {
-            position: relative; width: 400px; height: 400px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .pulse-ring {
-            position: absolute; border-radius: 50%; border: 1px solid var(--cyan);
-            opacity: 0.1; transition: all 0.4s;
-        }
-        .ring-1 { width: 100%; height: 100%; animation: orbit 20s linear infinite; }
-        .ring-2 { width: 75%; height: 75%; animation: orbit 15s linear reverse infinite; border-style: dashed; }
-        .ring-3 { width: 50%; height: 50%; animation: orbit 30s linear infinite; }
-        
-        .protocol-sphere {
-            width: 100px; height: 100px; border: 3px solid var(--cyan);
-            display: flex; align-items: center; justify-content: center;
-            background: radial-gradient(circle, var(--cyan) 0%, transparent 70%);
-            box-shadow: 0 0 50px var(--cyan); animation: core-pulse 4s ease-in-out infinite;
-        }
-        @keyframes orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes core-pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .brand-id { 
+      font-weight: 900; font-size: 18px; letter-spacing: 0.2em; 
+      text-transform: uppercase; line-height: 1;
+    }
+    .brand-id span { color: var(--cyan); }
+    .node-status { 
+      font-family: var(--mono); font-size: 10px; color: var(--txt-dim); margin-top: 4px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .dot { width: 6px; height: 6px; background: var(--cyan); border-radius: 50%; box-shadow: 0 0 10px var(--cyan); }
 
-        /* LEDGER FEED */
-        .ledger-box { flex: 1; font-family: var(--mono); font-size: 10px; overflow-y: hidden; }
-        .ledger-item { padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
-        .l-type { color: var(--cyan); font-weight: 700; font-size: 9px; }
-        .l-hash { color: var(--txt-dim); font-size: 8px; }
+    .top-right { display: flex; gap: 16px; }
+    .btn {
+      background: var(--glass); border: 1px solid var(--border);
+      color: var(--txt); font-family: var(--mono); font-size: 10px; font-weight: 700;
+      padding: 10px 20px; text-transform: uppercase; text-decoration: none;
+      backdrop-filter: blur(8px); transition: all 0.2s;
+    }
+    .btn:hover { border-color: var(--cyan); background: rgba(6, 182, 212, 0.1); }
+    .btn-active { background: var(--cyan); color: #000; border: none; }
 
-        /* DATA TILES */
-        .tile-val { font-size: 42px; font-weight: 900; color: var(--gold); line-height: 1; }
-        .tile-sub { font-family: var(--mono); font-size: 11px; color: var(--txt-dim); margin-top: 8px; }
+    /* ── PANELS ── */
+    .main-grid {
+      display: grid; grid-template-columns: 320px 1fr 320px; gap: 32px; flex: 1; margin: 40px 0;
+    }
 
-        /* ── FOOTER HUD ── */
-        footer {
-            height: 60px; padding: 0 40px; display: flex; align-items: center;
-            border-top: 1px solid var(--border); font-family: var(--mono);
-            font-size: 10px; color: var(--txt-dim); letter-spacing: 0.05em;
-        }
-        .f-stat { margin-right: 32px; }
-        .f-stat span { color: var(--cyan); }
+    .panel { display: flex; flex-direction: column; gap: 24px; }
+    .card {
+      background: var(--glass); border: 1px solid var(--border);
+      backdrop-filter: blur(12px); padding: 24px; position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: ""; position: absolute; top: 0; left: 0; width: 2px; height: 20px; background: var(--cyan);
+    }
 
-        /* ── NOC WATERMARK ── */
-        .watermark {
-            position: fixed; bottom: 40px; right: 40px; z-index: 1000;
-            display: none; opacity: 0.4; pointer-events: none;
-        }
-        .noc-active .watermark { display: block; }
+    .label { 
+      font-size: 9px; font-weight: 900; letter-spacing: 0.15em; color: var(--txt-dim);
+      text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+    }
+    .label::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 
-        .noc-active header, .noc-active footer, .noc-active .side-panel { display: none; }
-        .noc-active main { grid-template-columns: 1fr; }
-        .noc-active .pulse-core { width: 600px; height: 600px; }
-    </style>
+    .val { font-size: 32px; font-weight: 900; color: var(--gold); }
+    .sub { font-family: var(--mono); font-size: 10px; color: var(--txt-dim); margin-top: 4px; }
+
+    /* ── LEDGER ── */
+    #ledger-feed { font-family: var(--mono); font-size: 10px; height: 280px; overflow: hidden; }
+    .ledger-row { padding: 10px 0; border-bottom: 1px dashed var(--border); display: flex; flex-direction: column; gap: 2px; }
+    .l-meta { color: var(--cyan); font-weight: 700; }
+    .l-hash { color: var(--txt-dim); font-size: 9px; opacity: 0.6; }
+
+    /* ── FOOTER ── */
+    footer {
+      display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px;
+      color: var(--txt-dim); letter-spacing: 0.1em;
+    }
+    .stat-bar { display: flex; gap: 24px; }
+    .stat-bar span span { color: var(--cyan); }
+
+    /* ── NOC MODE ── */
+    body.noc-active #hud-overlay {
+      pointer-events: none;
+    }
+    body.noc-active header .brand, 
+    body.noc-active .main-grid, 
+    body.noc-active footer {
+      opacity: 0; pointer-events: none; visibility: hidden;
+    }
+    body.noc-active #noc-controls {
+      opacity: 1; visibility: visible; pointer-events: auto;
+    }
+
+    #noc-controls {
+      position: fixed; top: 32px; right: 32px; z-index: 100;
+      opacity: 0.3; transition: opacity 0.3s;
+    }
+    #noc-controls:hover { opacity: 1; }
+
+    .watermark {
+      position: fixed; bottom: 40px; left: 40px; z-index: 50;
+      opacity: 0.2; pointer-events: none; display: none;
+    }
+    body.noc-active .watermark { display: block; }
+  </style>
 </head>
 <body id="mesh-body">
-    <div class="glow-overlay"></div>
-    
-    <div class="watermark">
-        <div style="font-weight: 900; font-size: 24px; letter-spacing: 8px;">ANCHOR</div>
-        <div style="font-family: var(--mono); font-size: 9px; text-align: right;">PROTOCOL PULSE // 04</div>
-    </div>
 
+  <div id="globe-viz"></div>
+
+  <div class="watermark">
+    <div style="font-weight: 900; font-size: 24px; letter-spacing: 8px;">ANCHOR</div>
+    <div style="font-family: var(--mono); font-size: 9px;">GLOBAL GOVERNANCE MESH // NOC_PULSE</div>
+  </div>
+
+  <div id="noc-controls">
+    <button class="btn" style="border-color: var(--cyan); color: var(--cyan);" onclick="toggleNOC()">Exit NOC Mode</button>
+  </div>
+
+  <div id="hud-overlay">
     <header>
-        <div class="brand">
-            <div class="brand-icon"><div class="brand-icon-inner"></div></div>
-            <div class="brand-text">Anchor <span>Mesh Protocol</span></div>
+      <div class="brand">
+        <div>
+          <div class="brand-id">Anchor <span>Mesh</span></div>
+          <div class="node-status"><div class="dot"></div> Global Grid Active</div>
         </div>
-        <div class="actions">
-            <a href="https://oversight.anchorgovernance.tech" target="_blank" class="btn">Regulator Terminal</a>
-            <button class="btn btn-noc" onclick="toggleNOC()">Full NOC Mode</button>
-        </div>
+      </div>
+      <div class="top-right">
+        <a href="https://oversight.anchorgovernance.tech" class="btn">Regulator Hub</a>
+        <button class="btn btn-active" onclick="toggleNOC()">Full NOC Mode</button>
+      </div>
     </header>
 
-    <main>
-        <!-- LEFT: AUDIT STREAM -->
-        <section class="side-panel">
-            <div class="card" style="flex: 1;">
-                <div class="card-label">Live Ledger Stream</div>
-                <div class="ledger-box" id="ledger-stream">
-                    <!-- Dynamic -->
-                </div>
-            </div>
-        </section>
+    <div class="main-grid">
+      <!-- LEFT -->
+      <div class="panel">
+        <div class="card" style="flex: 1; display: flex; flex-direction: column;">
+          <div class="label">Auditor Handshakes</div>
+          <div id="ledger-feed">
+            <!-- Dynamic -->
+          </div>
+        </div>
+      </div>
 
-        <!-- CENTER: THE PULSE -->
-        <section class="pulse-container">
-            <div class="pulse-core">
-                <div class="pulse-ring ring-1"></div>
-                <div class="pulse-ring ring-2"></div>
-                <div class="pulse-ring ring-3"></div>
-                <div class="protocol-sphere">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 4L4 20H7L12 8L17 20H20L12 4Z" fill="#000" />
-                    </svg>
-                </div>
-            </div>
-            <div style="position: absolute; bottom: 0; font-family: var(--mono); font-size: 11px; letter-spacing: 6px; color: var(--cyan); opacity: 0.4;">
-                GOVERNANCE_ACTIVE // ENFORCING
-            </div>
-        </section>
+      <!-- CENTER (GAP FOR GLOBE) -->
+      <div></div>
 
-        <!-- RIGHT: NETWORK HEALTH -->
-        <section class="side-panel">
-            <div class="card">
-                <div class="card-label">Trust Index</div>
-                <div class="tile-val">14,240</div>
-                <div class="tile-sub">SECURE PROOFS ANCHORED</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Mesh Status</div>
-                <div class="tile-val">00</div>
-                <div class="tile-sub">ACTIVE VIOLATIONS DETECTED</div>
-            </div>
-            <div class="card" style="flex: 1;">
-                <div class="card-label">Active Gateways</div>
-                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
-                    <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px;">
-                        <span>RBI_IN</span><span style="color: var(--cyan);">CONNECTED</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px;">
-                        <span>SEC_US</span><span style="color: var(--cyan);">CONNECTED</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px;">
-                        <span>FCA_UK</span><span style="color: var(--txt-dim);">IDLE</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
+      <!-- RIGHT -->
+      <div class="panel">
+        <div class="card">
+          <div class="label">Compliance Engine</div>
+          <div class="val" id="count-audits">14,240</div>
+          <div class="sub">SECURE PROOFS ANCHORED</div>
+        </div>
+        <div class="card">
+          <div class="label">Mesh Integrity</div>
+          <div class="val" style="color: var(--cyan);">99.9%</div>
+          <div class="sub">GLOBAL CONSENSUS RATE</div>
+        </div>
+        <div class="card" style="flex: 1;">
+          <div class="label">Regional Nodes</div>
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;">
+            <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px;"><span>US_EAST_01</span><span style="color:var(--cyan)">LIVE</span></div>
+            <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px;"><span>EU_WEST_02</span><span style="color:var(--cyan)">LIVE</span></div>
+            <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px;"><span>AP_SOUTH_01</span><span style="color:var(--cyan)">LIVE</span></div>
+            <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px;"><span>ME_UAE_01</span><span style="color:var(--cyan)">LIVE</span></div>
+            <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px;"><span>AP_SG_01</span><span style="color:var(--cyan)">LIVE</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <footer>
-        <div class="f-stat">LATENCY: <span>12MS</span></div>
-        <div class="f-stat">NODES: <span>32</span></div>
-        <div class="f-stat">CONSENSUS: <span>99.9%</span></div>
-        <div style="margin-left: auto;">ANCHOR V5.0.4 // AGENTIC GOVERNANCE</div>
+      <div class="stat-bar">
+        <span>LATENCY: <span>14MS</span></span>
+        <span>PEERS: <span>582</span></span>
+        <span>THROUGHPUT: <span>~2.4K TX/S</span></span>
+      </div>
+      <div>CORE_VERSION: v5.0.0 // PROTOCOL_01</div>
     </footer>
+  </div>
 
-    <script>
-        function toggleNOC() {
-            document.body.classList.toggle('noc-active');
-            if(document.body.classList.contains('noc-active')) {
-                document.documentElement.requestFullscreen().catch(() => {});
-            } else {
-                if(document.fullscreenElement) document.exitFullscreen();
-            }
-        }
+  <script>
+    const markerColors = ['#06B6D4', '#C9A84C', '#F1F5F9'];
+    
+    // --- 1. GLOBE INITIALIZATION ---
+    const globe = Globe()
+      (document.getElementById('globe-viz'))
+      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+      .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+      .backgroundColor('#030308')
+      .atmosphereColor('#06B6D4')
+      .atmosphereDaylightOpacity(0.1)
+      .showAtmosphere(true)
+      .pointColor(() => '#06B6D4')
+      .pointRadius(0.15)
+      .pointsData(generatePoints())
+      .arcColor(() => 'rgba(6, 182, 212, 0.4)')
+      .arcDashLength(0.4)
+      .arcDashGap(4)
+      .arcDashAnimateTime(1500)
+      .arcsData(generateArcs());
 
-        function populateLedger() {
-            const stream = document.getElementById('ledger-stream');
-            const types = ["LATTICE_HANDSHAKE", "LEDGER_SYNC", "PROOF_ANCHORED", "POLICY_VERIFIED"];
-            
-            setInterval(() => {
-                const item = document.createElement('div');
-                item.className = 'ledger-item';
-                const type = types[Math.floor(Math.random() * types.length)];
-                const hash = '0x' + Math.random().toString(16).slice(2, 10).toUpperCase();
-                
-                item.innerHTML = `
-                    <span class="l-type">${type}</span>
-                    <span class="l-hash">${hash} >> RELAY_SUCCESS</span>
-                `;
-                
-                stream.prepend(item);
-                if(stream.children.length > 10) stream.removeChild(stream.lastChild);
-            }, 2000);
-        }
+    // Auto-rotation (Hybrid)
+    globe.controls().autoRotate = true;
+    globe.controls().autoRotateSpeed = 0.5;
 
-        populateLedger();
-    </script>
+    function generatePoints() {
+      const gpts = [];
+      const cities = [
+        { lat: 40.71, lng: -74.00 }, // NY
+        { lat: 51.50, lng: -0.12 },  // London
+        { lat: 19.07, lng: 72.87 },  // Mumbai
+        { lat: 1.35, lng: 103.81 },  // Singapore
+        { lat: 35.67, lng: 139.65 }, // Tokyo
+        { lat: 25.20, lng: 55.27 },   // Dubai
+        { lat: -33.86, lng: 151.20 } // Sydney
+      ];
+      return cities.map(c => ({ ...c, size: 0.1 }));
+    }
+
+    function generateArcs() {
+      const arcs = [];
+      for (let i = 0; i < 6; i++) {
+        arcs.push({
+          startLat: 40.71 + (Math.random() - 0.5) * 10,
+          startLng: -74.00 + (Math.random() - 0.5) * 10,
+          endLat: 51.50 + (Math.random() - 0.5) * 80,
+          endLng: -0.12 + (Math.random() - 0.5) * 180,
+        });
+      }
+      return arcs;
+    }
+
+    // --- 2. NOC TOGGLE ---
+    function toggleNOC() {
+      const mode = document.body.classList.toggle('noc-active');
+      if (mode) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.fullscreenElement) document.exitFullscreen();
+      }
+    }
+
+    // Handle ESC key during fullscreen
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        document.body.classList.remove('noc-active');
+      }
+    });
+
+    // --- 3. LIVE FEED SIMULATION ---
+    function updateLedger() {
+      const feed = document.getElementById('ledger-feed');
+      const types = ["LATTICE_SYNC", "PROOF_ANCHORED", "IDENTITY_PROOF", "POLICY_FETCH"];
+      
+      setInterval(() => {
+        const row = document.createElement('div');
+        row.className = 'ledger-row';
+        const type = types[Math.floor(Math.random() * types.length)];
+        const hash = '0x' + Math.random().toString(16).slice(2, 10).toUpperCase();
+        row.innerHTML = `
+          <span class="l-meta">>> ${type}</span>
+          <span class="l-hash">${hash} // VERIFICATION_SUCCESS</span>
+        `;
+        feed.prepend(row);
+        if (feed.children.length > 8) feed.removeChild(feed.lastChild);
+        
+        // Slightly update audit count
+        const count = document.getElementById('count-audits');
+        const val = parseInt(count.innerText.replace(',', '')) + 1;
+        count.innerText = val.toLocaleString();
+      }, 2500);
+    }
+
+    updateLedger();
+  </script>
+
 </body>
 </html>

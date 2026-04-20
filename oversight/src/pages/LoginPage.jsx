@@ -25,6 +25,12 @@ const TOKEN = {
   sans:   "'Inter', sans-serif",
 }
 
+const FALLBACK_JURISDICTIONS = [
+  { id: 'USA', label: 'United States', departments: [{ id: 'SEC', label: 'SEC (Securities & Exchange Commission)' }] },
+  { id: 'INDIA', label: 'India', departments: [{ id: 'RBI', label: 'RBI (Reserve Bank of India)' }] },
+  { id: 'UK', label: 'United Kingdom', departments: [{ id: 'FCA', label: 'FCA (Financial Conduct Authority)' }] }
+];
+
 const iBase = {
   width: '100%',
   background: 'rgba(0,0,0,0.45)',
@@ -75,9 +81,21 @@ export default function LoginPage() {
 
   useEffect(() => {
     fetch(`${API_BASE}/api/auth/jurisdictions`)
-      .then(res => res.json())
-      .then(data => setJurisdictionData(data.jurisdictions || []))
-      .catch(() => {});
+      .then(res => {
+        if (!res.ok) throw new Error('API_REACH_FAILURE');
+        return res.json();
+      })
+      .then(data => {
+        if (data.jurisdictions && data.jurisdictions.length > 0) {
+          setJurisdictionData(data.jurisdictions);
+        } else {
+          setJurisdictionData(FALLBACK_JURISDICTIONS);
+        }
+      })
+      .catch((err) => {
+        console.warn('Oversight Jurisdictions: API unavailable, using fallbacks.', err);
+        setJurisdictionData(FALLBACK_JURISDICTIONS);
+      });
   }, [])
 
   const f = (field) => ({

@@ -419,7 +419,57 @@ export default function AuthPortal({ isInvite = false }) {
                   <option value="IN">India (IN)</option>
                   <option value="US">United States (US)</option>
                   <option value="EU">European Union (EU)</option>
+                  <option value="UK">United Kingdom (UK)</option>
                   <option value="SG">Singapore (SG)</option>
+                  <option value="AE">United Arab Emirates (UAE)</option>
+                  <option value="CA">Canada (CA)</option>
+                  <option value="AU">Australia (AU)</option>
+                  <option value="JP">Japan (JP)</option>
+                  <option value="DE">Germany (DE)</option>
+                  <option value="FR">France (FR)</option>
+                  <option value="BR">Brazil (BR)</option>
+                  <option value="CH">Switzerland (CH)</option>
+                  <option value="HK">Hong Kong (HK)</option>
+                  <option value="KR">South Korea (KR)</option>
+                  <option value="IL">Israel (IL)</option>
+                  <option value="SA">Saudi Arabia (SA)</option>
+                  <option value="QA">Qatar (QA)</option>
+                  <option value="ZA">South Africa (ZA)</option>
+                  <option value="EG">Egypt (EG)</option>
+                  <option value="BR">Brazil (BR)</option>
+                  <option value="MX">Mexico (MX)</option>
+                  <option value="AR">Argentina (AR)</option>
+                  <option value="ID">Indonesia (ID)</option>
+                  <option value="TR">Turkey (TR)</option>
+                  <option value="MY">Malaysia (MY)</option>
+                  <option value="TH">Thailand (TH)</option>
+                  <option value="VN">Vietnam (VN)</option>
+                  <option value="PH">Philippines (PH)</option>
+                  <option value="NZ">New Zealand (NZ)</option>
+                  <option value="NO">Norway (NO)</option>
+                  <option value="SE">Sweden (SE)</option>
+                  <option value="DK">Denmark (DK)</option>
+                  <option value="FI">Finland (FI)</option>
+                  <option value="IE">Ireland (IE)</option>
+                  <option value="ES">Spain (ES)</option>
+                  <option value="IT">Italy (IT)</option>
+                  <option value="NL">Netherlands (NL)</option>
+                  <option value="BE">Belgium (BE)</option>
+                  <option value="AT">Austria (AT)</option>
+                  <option value="PT">Portugal (PT)</option>
+                  <option value="GR">Greece (GR)</option>
+                  <option value="PL">Poland (PL)</option>
+                  <option value="CZ">Czech Republic (CZ)</option>
+                  <option value="HU">Hungary (HU)</option>
+                  <option value="RO">Romania (RO)</option>
+                  <option value="UA">Ukraine (UA)</option>
+                  <option value="CL">Chile (CL)</option>
+                  <option value="CO">Colombia (CO)</option>
+                  <option value="PE">Peru (PE)</option>
+                  <option value="KZ">Kazakhstan (KZ)</option>
+                  <option value="NG">Nigeria (NG)</option>
+                  <option value="KE">Kenya (KE)</option>
+                  <option value="GH">Ghana (GH)</option>
                 </select>
               </Field>
               <div style={{
@@ -427,7 +477,7 @@ export default function AuthPortal({ isInvite = false }) {
                 background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)',
                 fontSize: 12, color: '#fbbf24', lineHeight: 1.6,
               }}>
-                ℹ Registration requests are reviewed by the Root Administrator before activation.
+                ℹ Registration requests are reviewed by the Root Administrator before activation. All regions use localized sovereignty protocols.
               </div>
               <button type="submit" disabled={isLoading} style={{
                 width: '100%', padding: '13px', borderRadius: 8, fontSize: 14,
