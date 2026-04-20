@@ -112,6 +112,7 @@ export default function AuthPortal({ isInvite = false }) {
     setError('');
     setIsLoading(true);
     try {
+      if (loginStep === 'identify') {
         const res = await fetch(endpoints.identify, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
