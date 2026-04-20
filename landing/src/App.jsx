@@ -521,11 +521,17 @@ function Nav({ loaded }) {
           </div>
         )}
 
+        <a href="https://oversight.anchorgovernance.tech" target="_blank" rel="noreferrer"
+          style={{ marginLeft: m ? "auto" : "20px", fontFamily: C.mono, fontSize: "11px", letterSpacing: ".12em", fontWeight: 600, color: "#08080D", border: `1px solid ${C.cyan}`, color: C.cyan, background: "transparent", padding: "8px 16px", textDecoration: "none", flexShrink: 0, transition: "all .2s" }}
+          onMouseEnter={e => { e.currentTarget.style.background = C.cyan; e.currentTarget.style.color = "#08080D"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.cyan; }}
+        >{m ? "Oversight" : "REGULATOR HUB"}</a>
+
         <a href="https://app.anchorgovernance.tech" target="_blank" rel="noreferrer"
-          style={{ marginLeft: m ? "auto" : undefined, fontFamily: C.mono, fontSize: "11px", letterSpacing: ".12em", fontWeight: 600, color: "#08080D", background: `linear-gradient(135deg,${C.gold},${C.goldB})`, padding: "8px 16px", textDecoration: "none", flexShrink: 0, transition: "opacity .2s", boxShadow: "0 4px 24px rgba(201,168,76,.3)" }}
+          style={{ marginLeft: (m && "auto"), fontFamily: C.mono, fontSize: "11px", letterSpacing: ".12em", fontWeight: 600, color: "#08080D", background: `linear-gradient(135deg,${C.gold},${C.goldB})`, padding: "8px 16px", textDecoration: "none", flexShrink: 0, transition: "opacity .2s", boxShadow: "0 4px 24px rgba(201,168,76,.3)" }}
           onMouseEnter={e => e.currentTarget.style.opacity = ".85"}
           onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-        >{m ? "Launch" : "LAUNCH CONSOLE"}</a>
+        >{m ? "Console" : "LAUNCH CONSOLE"}</a>
       </div>
       <div style={{ height: "1.5px", background: `linear-gradient(90deg,transparent,${C.gold},${C.goldB},${C.gold},transparent)`, opacity: .45 }} />
     </nav>
@@ -1362,6 +1368,7 @@ function Footer() {
           <div className="footer-links" style={{ display: "flex", gap: "24px", alignItems: "center" }}>
             {[
               ["Enterprise Console", "https://app.anchorgovernance.tech"],
+              ["Regulator Hub", "https://oversight.anchorgovernance.tech"],
               ["PyPI", "https://pypi.org/project/anchor-audit/"]
             ].map(([l, h]) => (
               <a key={l} href={h} target="_blank" rel="noreferrer"

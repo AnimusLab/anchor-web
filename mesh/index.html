@@ -1,357 +1,300 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Anchor Global Mesh — World Monitor v2.0</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #030306;
-      --card: rgba(10, 10, 18, 0.7);
-      --border: rgba(30, 41, 59, 0.5);
-      --green: #10b981;
-      --green-rgb: 16, 185, 129;
-      --amber: #f59e0b;
-      --amber-rgb: 245, 158, 11;
-      --red: #ef4444;
-      --cyan: #06b6d4;
-      --cyan-rgb: 6, 182, 212;
-      --txt: #f1f5f9;
-      --txtS: #94a3b8;
-      --txtD: #334155;
-      --mono: 'JetBrains Mono', monospace;
-      --sans: 'Inter', sans-serif;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANCHOR MESH // PROTOCOL-01 NOC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Outfit:wght@400;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030305;
+            --panel: #08090C;
+            --border: #161B22;
+            --cyan: #06B6D4;
+            --cyan-glow: rgba(6, 182, 212, 0.3);
+            --gold: #C9A84C;
+            --red: #Ef4444;
+            --green: #10B981;
+            --txt: #E6EDF3;
+            --txt-dim: #7D8590;
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Outfit', sans-serif;
+        }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; cursor: default; }
-    
-    body {
-      background: var(--bg);
-      color: var(--txt);
-      font-family: var(--sans);
-      overflow: hidden;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+        * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; }
 
-    /* BACKGROUND FX */
-    .bg-grid {
-      position: fixed; inset: 0; z-index: -1;
-      background-image: 
-        linear-gradient(var(--border) 1px, transparent 1px), 
-        linear-gradient(90deg, var(--border) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(circle at center, black, transparent 90%);
-      opacity: 0.15;
-    }
-    .vignette {
-      position: fixed; inset: 0; z-index: -1;
-      background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.8) 100%);
-      pointer-events: none;
-    }
+        body {
+            background: var(--bg);
+            color: var(--txt);
+            font-family: var(--sans);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
 
-    /* HEADER */
-    header {
-      padding: 20px 40px;
-      border-bottom: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center;
-      background: rgba(3, 3, 6, 0.8); backdrop-filter: blur(20px);
-      z-index: 100;
-    }
-    .logo-box { display: flex; align-items: center; gap: 16px; }
-    .logo-mark { 
-      width: 32px; height: 32px; 
-      background: linear-gradient(135deg, var(--green), var(--cyan)); 
-      border-radius: 6px; 
-      box-shadow: 0 0 20px rgba(var(--green-rgb), 0.3);
-    }
-    .logo-text { font-weight: 900; font-size: 18px; letter-spacing: -0.01em; text-transform: uppercase; }
-    .logo-text span { color: var(--green); }
+        /* ── FX: SCANLINES & VIGNETTE ── */
+        .overlay-fx {
+            position: fixed; inset: 0; pointer-events: none; z-index: 1000;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 4px, 3px 100%;
+            opacity: 0.15;
+        }
+        .vignette {
+            position: fixed; inset: 0; pointer-events: none; z-index: 1001;
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.8);
+        }
 
-    .header-controls { display: flex; gap: 24px; align-items: center; }
-    .noc-toggle {
-      background: transparent; border: 1px solid var(--border);
-      color: var(--txtS); padding: 6px 12px; border-radius: 4px;
-      font-size: 11px; font-weight: 700; font-family: var(--mono);
-      cursor: pointer; transition: all 0.2s;
-    }
-    .noc-toggle:hover { border-color: var(--green); color: var(--green); }
-    .noc-active .noc-toggle { background: var(--green); color: black; border-color: var(--green); }
+        /* ── HEADER: TACTICAL STATUS ── */
+        header {
+            height: 60px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; padding: 0 30px;
+            background: #060608; z-index: 100;
+        }
+        .brand { display: flex; align-items: center; gap: 15px; }
+        .logo-box { width: 30px; height: 30px; border: 1px solid var(--cyan); background: var(--cyan-glow); transform: rotate(45deg); display: flex; align-items: center; justify-content: center; }
+        .logo-inner { width: 10px; height: 10px; background: var(--cyan); }
+        .brand-text { font-weight: 900; letter-spacing: 0.1em; font-size: 14px; text-transform: uppercase; }
+        .brand-text span { color: var(--cyan); }
 
-    /* MAIN LAYOUT */
-    main { flex: 1; display: grid; grid-template-columns: 350px 1fr 350px; gap: 24px; padding: 24px; overflow: hidden; }
+        .system-triage { display: flex; gap: 30px; margin-left: 60px; font-family: var(--mono); font-size: 10px; color: var(--txt-dim); }
+        .triage-item span { color: var(--green); display: block; font-weight: 700; margin-top: 2px; }
 
-    /* NOC MODE OVERRIDE */
-    .noc-active header { display: none; }
-    .noc-active main { padding: 0; gap: 0; height: 100vh; }
-    .noc-active .side-panel { border-radius: 0; border: none; background: rgba(3,3,6,0.3); }
+        .header-actions { margin-left: auto; display: flex; gap: 20px; align-items: center; }
+        .btn-oversight { 
+            background: transparent; border: 1px solid var(--cyan); color: var(--cyan); 
+            padding: 6px 15px; font-size: 10px; font-weight: 800; text-transform: uppercase;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .btn-oversight:hover { background: var(--cyan); color: #000; box-shadow: 0 0 20px var(--cyan-glow); }
+        .btn-noc { 
+            background: #161B22; border: none; color: #FFF; 
+            padding: 8px 12px; font-size: 9px; font-weight: 800; cursor: pointer;
+        }
 
-    /* SIDE PANELS */
-    .side-panel {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 12px; display: flex; flex-direction: column;
-      overflow: hidden; backdrop-filter: blur(10px);
-    }
-    .panel-header {
-      padding: 16px 20px; border-bottom: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center;
-      background: rgba(255,255,255,0.02);
-    }
-    .panel-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--txtS); }
+        /* ── MAIN GRID ── */
+        main { flex: 1; display: grid; grid-template-columns: 350px 1fr 300px; gap: 1px; background: var(--border); overflow: hidden; }
+        
+        .panel { background: var(--panel); display: flex; flex-direction: column; overflow: hidden; }
+        .panel-head { height: 40px; padding: 0 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; background: #0A0C10; }
+        .panel-label { font-size: 10px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: var(--txt-dim); }
 
-    /* CENTER MAP AREA */
-    .center-visual {
-      position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    }
-    .mesh-map { width: 100%; height: 100%; max-height: 600px; opacity: 0.6; pointer-events: none; }
-    
-    .radar-container {
-      position: absolute; width: 400px; height: 400px; border: 1px solid rgba(var(--green-rgb), 0.1);
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    }
-    .radar-beam {
-      position: absolute; inset: 0; border-radius: 50%;
-      background: conic-gradient(from 0deg, rgba(var(--green-rgb), 1) 0%, transparent 40%);
-      animation: rotate 4s linear infinite;
-      opacity: 0.2;
-    }
-    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        /* LEDGER FEED */
+        .ledger-feed { flex: 1; overflow-y: hidden; position: relative; }
+        .ledger-inner { animation: scroll-v 60s linear infinite; display: flex; flex-direction: column; }
+        @keyframes scroll-v { from { transform: translateY(0); } to { transform: translateY(-33.3%); } }
+        .ledger-row { padding: 12px 20px; border-bottom: 1px solid #111418; font-family: var(--mono); font-size: 9px; display: flex; gap: 15px; }
+        .tr-sig { color: var(--cyan); font-weight: 700; }
+        .tr-node { color: var(--txt-dim); }
+        .tr-meta { color: var(--green); opacity: 0.5; margin-left: auto; }
 
-    /* STAT CARDS */
-    .stat-cluster { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; }
-    .m-stat {
-      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-      padding: 16px; border-radius: 8px;
-    }
-    .m-stat-label { font-size: 9px; font-weight: 800; color: var(--txtD); text-transform: uppercase; margin-bottom: 4px; }
-    .m-stat-val { font-size: 20px; font-weight: 700; font-family: var(--mono); color: var(--green); }
+        /* CENTER: LATTICE & CORE */
+        .lattice-view { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at center, #0B0E14 0%, #030305 100%); }
+        
+        .consensus-core {
+            position: absolute; width: 400px; height: 400px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .core-ring { position: absolute; border-radius: 50%; border: 1px solid var(--cyan-glow); }
+        .ring-1 { width: 100%; height: 100%; animation: spin 20s linear infinite; border-style: dashed; }
+        .ring-2 { width: 80%; height: 80%; animation: spin-rev 15s linear infinite; border-width: 2px; }
+        .ring-3 { width: 60%; height: 60%; border-color: rgba(201, 168, 76, 0.1); }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spin-rev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
 
-    /* FIREHOSE LEDGER */
-    .ledger-container { flex: 1; overflow-y: hidden; position: relative; }
-    .ledger-stream {
-      display: flex; flex-direction: column; gap: 2px;
-      animation: scroll 60s linear infinite;
-    }
-    @keyframes scroll { from { transform: translateY(0); } to { transform: translateY(-50%); } }
-    .ledger-row {
-      font-family: var(--mono); font-size: 10px; padding: 10px 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; gap: 12px;
-      white-space: nowrap; transition: background 0.2s;
-    }
-    .ledger-row:hover { background: rgba(var(--green-rgb), 0.05); }
-    .l-time { color: var(--txtD); }
-    .l-event { color: var(--txtS); }
-    .l-hash { color: var(--green); opacity: 0.6; font-size: 9px; }
+        .atlas-svg { width: 100%; height: 100%; padding: 60px; opacity: 0.4; }
 
-    /* JURISDICTION CARDS */
-    .jx-list { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-    .jx-item { position: relative; }
-    .jx-meta { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 11px; font-weight: 600; }
-    .jx-bar { height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
-    .jx-fill { height: 100%; background: var(--cyan); border-radius: 2px; }
+        /* REGIONAL TELEMETRY */
+        .telemetry-stack { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .tel-item { }
+        .tel-label { font-size: 9px; font-weight: 800; color: var(--txt-dim); margin-bottom: 8px; letter-spacing: 0.1em; }
+        .tel-bar-wrap { height: 6px; background: #161B22; border-radius: 3px; position: relative; overflow: hidden; }
+        .tel-bar-fill { height: 100%; background: var(--cyan); border-radius: 3px; width: 0%; transition: width 1s ease-out; }
+        .tel-meta { display: flex; justify-content: space-between; margin-top: 6px; font-family: var(--mono); font-size: 9px; color: var(--cyan); }
 
-    /* NOC OVERLAY */
-    .overlay {
-      position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 40px; background: rgba(10,10,18,0.6); 
-      padding: 20px 40px; border-radius: 50px; border: 1px solid var(--border);
-      backdrop-filter: blur(10px); z-index: 10;
-    }
-    .o-stat { text-align: center; }
-    .o-label { font-size: 10px; font-weight: 800; color: var(--txtD); text-transform: uppercase; margin-bottom: 4px; }
-    .o-val { font-size: 24px; font-weight: 900; font-family: var(--mono); color: var(--txt); }
+        /* ── NOC OVERLAYS ── */
+        .noc-active header { display: none; }
+        .noc-active main { grid-template-columns: 1fr; background: #000; }
+        .noc-active .panel:not(.center-panel) { display: none; }
+        .noc-active { background: #000; }
+        
+        /* THE WATERMARK */
+        .watermark { 
+            position: fixed; bottom: 40px; right: 40px; z-index: 2000; 
+            display: none; opacity: 0.6; filter: grayscale(1); 
+        }
+        .noc-active .watermark { display: flex; flex-direction: column; align-items: flex-end; }
+        .wm-text { font-size: 20px; font-weight: 900; letter-spacing: 5px; color: #FFF; }
+        .wm-sub { font-family: var(--mono); font-size: 8px; color: var(--txt-dim); letter-spacing: 2px; }
 
-    /* RESPONSIVE */
-    @media (max-width: 1200px) {
-      main { grid-template-columns: 1fr; overflow-y: auto; }
-      .side-panel { height: 400px; }
-    }
-  </style>
+        /* FOOTER HUD */
+        footer { height: 40px; background: #060608; border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 30px; font-family: var(--mono); font-size: 9px; color: var(--txt-dim); }
+        .hud-stat { margin-right: 40px; display: flex; gap: 10px; }
+        .hud-stat span { color: var(--cyan); }
+
+        /* RADAR SWEEP */
+        .radar-box { position: absolute; top: 30px; left: 30px; width: 120px; height: 120px; border: 1px solid var(--border); border-radius: 50%; opacity: 0.5; overflow: hidden; }
+        .radar-line { position: absolute; inset: 0; background: conic-gradient(from 0deg, var(--cyan-glow) 0%, transparent 40%); border-radius: 50%; animation: rotate 4s linear infinite; }
+
+    </style>
 </head>
-<body>
-  <div class="bg-grid"></div>
-  <div class="vignette"></div>
+<body class="noc-mode-container">
+    <div class="overlay-fx"></div>
+    <div class="vignette"></div>
 
-  <header id="main-header">
-    <div class="logo-box">
-      <div class="logo-mark"></div>
-      <div class="logo-text">Anchor <span>Global Mesh</span></div>
+    <div class="watermark">
+        <div class="wm-text">ANCHOR</div>
+        <div class="wm-sub">PROTOCOL NOC-01 // MESH_ACTIVE</div>
     </div>
-    <div class="header-controls">
-      <button class="noc-toggle" onclick="toggleNOC()">[ NOC MODE ]</button>
-      <div style="font-family: var(--mono); font-size: 11px; color: var(--cyan);">v5.5.2_PRODUCTION_STABLE</div>
-    </div>
-  </header>
 
-  <main id="main-view">
-    <!-- LEFT PANEL: THREAT INTEL & LEDGER -->
-    <section class="side-panel">
-      <div class="panel-header">
-        <span class="panel-title">Master Ledger Stream</span>
-        <div style="width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 10px var(--green);"></div>
-      </div>
-      <div class="ledger-container">
-        <div class="ledger-stream" id="ledger-feed">
-          <!-- Populated by JS -->
+    <header>
+        <div class="brand">
+            <div class="logo-box"><div class="logo-inner"></div></div>
+            <div class="brand-text">Anchor <span>Mesh Protocol // 01</span></div>
         </div>
-      </div>
-      <div class="stat-cluster">
-        <div class="m-stat">
-          <div class="m-stat-label">Hashed ID Entires</div>
-          <div class="m-stat-val" id="s-audits">0</div>
+
+        <div class="system-triage">
+            <div class="triage-item">NETWORK LATENCY <span id="lat">12MS</span></div>
+            <div class="triage-item">CONSENSUS STATUS <span id="con">STABLE</span></div>
+            <div class="triage-item">ACTIVE NODES <span id="node-count">32</span></div>
+            <div class="triage-item">THREAT LEVEL <span style="color:var(--green)">NULL</span></div>
         </div>
-        <div class="m-stat">
-          <div class="m-stat-label">Violation Triggers</div>
-          <div class="m-stat-val" id="s-violations" style="color:var(--red)">0</div>
+
+        <div class="header-actions">
+            <a href="https://oversight.anchorgovernance.tech" target="_blank" class="btn-oversight">⚖️ Oversight Terminal</a>
+            <button class="btn-noc" onclick="toggleNOC()">FULL NOC MODE</button>
         </div>
-      </div>
-    </section>
+    </header>
 
-    <!-- CENTER PANEL: GLOBAL VISUALIZER -->
-    <section class="center-visual">
-       <div class="radar-container">
-         <div class="radar-beam"></div>
-         <div style="width: 250px; height: 250px; border: 1px solid rgba(var(--green-rgb), 0.2); border-radius: 50%;"></div>
-       </div>
+    <main>
+        <!-- MASTER LEDGER -->
+        <section class="panel">
+            <div class="panel-head">
+                <span class="panel-label">Master Ledger Stream</span>
+            </div>
+            <div class="ledger-feed">
+                <div class="ledger-inner" id="ledger-rows">
+                    <!-- Dynamic -->
+                </div>
+            </div>
+        </section>
 
-       <!-- STYLIZED WORLD MAP SVG -->
-       <svg class="mesh-map" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
-          <path d="M150 200 L250 220 L300 280 L200 350 Z" fill="rgba(6, 182, 212, 0.1)" stroke="var(--cyan)" stroke-width="0.5" />
-          <circle cx="200" cy="250" r="3" fill="var(--green)">
-            <animate attributeName="r" values="3;8;3" dur="2s" infinite />
-            <animate attributeName="opacity" values="1;0.2;1" dur="2s" infinite />
-          </circle>
-          <circle cx="500" cy="300" r="3" fill="var(--green)">
-            <animate attributeName="r" values="3;6;3" dur="3s" infinite />
-          </circle>
-          <circle cx="750" cy="150" r="3" fill="var(--cyan)">
-            <animate attributeName="opacity" values="1;0;1" dur="1.5s" infinite />
-          </circle>
-          <path d="M200 250 Q 350 200 500 300" stroke="rgba(var(--green-rgb), 0.2)" stroke-width="1" fill="none" stroke-dasharray="5,5">
-             <animate attributeName="stroke-dashoffset" from="100" to="0" dur="5s" infinite />
-          </path>
-       </svg>
+        <!-- LATTICE VIEW -->
+        <section class="panel center-panel lattice-view">
+            <div class="radar-box"><div class="radar-line"></div></div>
+            
+            <div class="consensus-core">
+                <div class="core-ring ring-1"></div>
+                <div class="core-ring ring-2"></div>
+                <div class="core-ring ring-3"></div>
+                <div style="width: 10px; height: 10px; background: var(--cyan); box-shadow: 0 0 30px var(--cyan);"></div>
+            </div>
 
-       <div class="overlay">
-          <div class="o-stat">
-            <div class="o-label">Compliance Index</div>
-            <div class="o-val" id="s-compliance">100%</div>
-          </div>
-          <div style="width:1px; background:var(--border);"></div>
-          <div class="o-stat">
-            <div class="o-label">Mesh Latency</div>
-            <div class="o-val" style="color:var(--cyan)">14ms</div>
-          </div>
-          <div style="width:1px; background:var(--border);"></div>
-          <div class="o-stat">
-            <div class="o-label">Active Nodes</div>
-            <div class="o-val" id="s-nodes">0</div>
-          </div>
-       </div>
-    </section>
+            <svg class="atlas-svg" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+                <!-- Stylized Minimal World -->
+                <path d="M150,250 Q300,150 500,280 T850,220" stroke="var(--border)" fill="none" stroke-width="1" />
+                <circle cx="200" cy="270" r="4" fill="var(--cyan)">
+                    <animate attributeName="opacity" values="1;0;1" dur="2s" infinite />
+                </circle>
+                <circle cx="500" cy="300" r="4" fill="var(--gold)">
+                    <animate attributeName="opacity" values="1;0.5;1" dur="3s" infinite />
+                </circle>
+                <circle cx="800" cy="240" r="4" fill="var(--cyan)" />
+                <path d="M200,270 L500,300 L800,240" stroke="var(--cyan)" stroke-width="0.5" stroke-dasharray="5,5" opacity="0.3">
+                    <animate attributeName="stroke-dashoffset" from="100" to="0" dur="10s" infinite />
+                </path>
+            </svg>
 
-    <!-- RIGHT PANEL: JURISDICTION STATUS -->
-    <section class="side-panel">
-      <div class="panel-header">
-        <span class="panel-title">Jurisdiction Gateways</span>
-      </div>
-      <div class="jx-list">
-        <div class="jx-item">
-          <div class="jx-meta"><span>IN (INDIA / RBI)</span><span style="color:var(--green)">SYNCED</span></div>
-          <div class="jx-bar"><div class="jx-fill" style="width: 100%"></div></div>
-        </div>
-        <div class="jx-item">
-          <div class="jx-meta"><span>US (USA / SEC)</span><span style="color:var(--green)">SYNCED</span></div>
-          <div class="jx-bar"><div class="jx-fill" style="width: 94%; background: var(--green);"></div></div>
-        </div>
-        <div class="jx-item">
-          <div class="jx-meta"><span>UK (UK / FCA)</span><span style="color:var(--cyan)">UPDATING</span></div>
-          <div class="jx-bar"><div class="jx-fill" style="width: 78%; background: var(--cyan);"></div></div>
-        </div>
-        <div class="jx-item">
-          <div class="jx-meta"><span>EU (EU / NIST)</span><span style="color:var(--txtD)">IDLE</span></div>
-          <div class="jx-bar"><div class="jx-fill" style="width: 10%; background: var(--txtD);"></div></div>
-        </div>
-      </div>
-      
-      <div style="padding: 20px; font-family: var(--mono); font-size: 10px; color: var(--txtD); line-height: 1.6; border-top: 1px solid var(--border);">
-        MATHEMATICAL CERTAINTY ENGINE: 99.99%<br>
-        PII_POLICY: STRIPPED_AND_HASHED<br>
-        RELAY_PROTOCOL: SECURE_MESH_V4
-      </div>
-    </section>
-  </main>
+            <div style="position: absolute; bottom: 30px; font-family: var(--mono); font-size: 11px; letter-spacing: 5px; color: var(--cyan); opacity: 0.5;">
+                ENFORCEMENT_MESH_ACTIVE // [ 01-PROT ]
+            </div>
+        </section>
 
-  <script>
-    const API = 'https://animuslab-anchor.hf.space';
-    let nocMode = false;
+        <!-- REGIONAL STATUS -->
+        <section class="panel">
+            <div class="panel-head">
+                <span class="panel-label">Telemetry Status</span>
+            </div>
+            <div class="telemetry-stack">
+                <div class="tel-item">
+                    <div class="tel-label">IN_REGION // RBI_GATEWAY</div>
+                    <div class="tel-bar-wrap"><div class="tel-bar-fill" style="width: 98%"></div></div>
+                    <div class="tel-meta"><span>98.2% SYNC</span><span>0.1ms</span></div>
+                </div>
+                <div class="tel-item">
+                    <div class="tel-label">US_REGION // SEC_GATEWAY</div>
+                    <div class="tel-bar-wrap"><div class="tel-bar-fill" style="width: 92%"></div></div>
+                    <div class="tel-meta"><span>92.5% SYNC</span><span>1.2ms</span></div>
+                </div>
+                <div class="tel-item">
+                    <div class="tel-label">UK_REGION // FCA_GATEWAY</div>
+                    <div class="tel-bar-wrap"><div class="tel-bar-fill" style="width: 85%"></div></div>
+                    <div class="tel-meta"><span>85.0% SYNC</span><span>4.1ms</span></div>
+                </div>
+                <div class="tel-item">
+                    <div class="tel-label">EU_REGION // NIST_GATEWAY</div>
+                    <div class="tel-bar-wrap"><div class="tel-bar-fill" style="width: 12%; background: var(--txt-dim)"></div></div>
+                    <div class="tel-meta" style="color: var(--txt-dim)"><span>INITIALIZING...</span><span>---</span></div>
+                </div>
+            </div>
 
-    function toggleNOC() {
-      nocMode = !nocMode;
-      document.body.classList.toggle('noc-active', nocMode);
-      if (nocMode) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      } else {
-        if (document.fullscreenElement) document.exitFullscreen();
-      }
-    }
+            <div style="margin-top: auto; padding: 20px; font-family: var(--mono); font-size: 9px; line-height: 1.8; color: var(--txt-dim); background: #060608;">
+                PROTOCOL: LATTICE_HANDSHAKE_V3<br>
+                CRYPTO_SUITE: AES_256_GCM<br>
+                RELAY_IDENTITY: ANCHOR_HUB_MAIN_01<br>
+                GOVERNANCE_STATE: ENFORCED
+            </div>
+        </section>
+    </main>
 
-    async function updateStats() {
-      try {
-        const res = await fetch(`${API}/api/public/stats`);
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        
-        animateVal('s-audits', data.total_audits ?? 0);
-        animateVal('s-violations', data.total_violations ?? 0);
-        document.getElementById('s-compliance').textContent = (data.compliance_rate ?? 100) + '%';
-        animateVal('s-nodes', data.active_nodes ?? 0);
-        
-        generateLedger(data.violations || []);
-      } catch (e) { console.error("Sync drop."); }
-    }
+    <footer>
+        <div class="hud-stat">TOTAL_AUDITS <span>14,240</span></div>
+        <div class="hud-stat">VIOLATION_DELTA <span>+0</span></div>
+        <div class="hud-stat">MESH_LOAD <span>4.2%</span></div>
+        <div style="margin-left: auto;">© ANCHOR GOVERNANCE // SYSTEM_STABLE</div>
+    </footer>
 
-    function animateVal(id, target) {
-      const el = document.getElementById(id);
-      const start = parseInt(el.textContent) || 0;
-      if (start === target) return;
-      const duration = 1000;
-      const startTime = performance.now();
+    <script>
+        function toggleNOC() {
+            document.body.classList.toggle('noc-active');
+            if(document.body.classList.contains('noc-active')) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                if(document.fullscreenElement) document.exitFullscreen();
+            }
+        }
 
-      function step(now) {
-        const progress = Math.min((now - startTime) / duration, 1);
-        el.textContent = Math.floor(progress * (target - start) + start);
-        if (progress < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
+        function createLedgerRows() {
+            const container = document.getElementById('ledger-rows');
+            const events = ["MESH_AUTH", "HANDSHAKE", "LEDGER_SYNC", "PROOF_GEN", "BLOCK_VERIFY", "RELAY_HAND"];
+            const nodes = ["IND_NODE_01", "USA_RELAY_04", "UK_SPOKE_02", "EU_MESH_01"];
+            
+            let html = "";
+            for(let i=0; i<60; i++) {
+                const event = events[Math.floor(Math.random() * events.length)];
+                const node = nodes[Math.floor(Math.random() * nodes.length)];
+                const hash = "0x" + Math.random().toString(16).slice(2, 10).toUpperCase();
 
-    function generateLedger(v) {
-      const feed = document.getElementById('ledger-feed');
-      const mockEvents = ["PROOF_OF_GOVERNANCE", "LEDGER_SYNC", "MESH_HANDSHAKE", "NODE_HEARTBEAT", "TX_VERIFICATION"];
-      
-      let html = '';
-      // Fill with 50 rows to enable infinite scroll feel
-      for(let i=0; i<50; i++) {
-        const event = mockEvents[Math.floor(Math.random() * mockEvents.length)];
-        const hash = Math.random().toString(16).slice(2, 10) + "..." + Math.random().toString(16).slice(2, 6);
-        html += `
-          <div class="ledger-row">
-            <span class="l-time">${new Date().toLocaleTimeString()}</span>
-            <span class="l-event">${event}</span>
-            <span class="l-hash">${hash}</span>
-          </div>
-        `;
-      }
-      feed.innerHTML = html;
-    }
+                html += `
+                    <div class="ledger-row">
+                        <span class="tr-node">${node}</span>
+                        <span class="tr-sig">${event}</span>
+                        <span class="tr-meta">${hash}</span>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
 
-    setInterval(updateStats, 10000);
-    updateStats();
-  </script>
+        setInterval(() => {
+            const lat = document.getElementById('lat');
+            lat.innerText = (Math.floor(Math.random() * 15) + 5) + "MS";
+        }, 3000);
+
+        createLedgerRows();
+    </script>
 </body>
 </html>
