@@ -243,6 +243,10 @@ export default function LoginPage() {
                   ))}
                 </select>
               </Field>
+              <button type="submit" disabled={loading} style={{ width: '100%', padding: 13, borderRadius: 8, fontSize: 14, fontWeight: 700, background: TOKEN.amber, color: '#1c1200', border: 'none', cursor: loading ? 'not-allowed' : 'pointer' }}>
+                {loading ? 'Submitting...' : 'Request Access →'}
+              </button>
+            </form>
           )}
 
           <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11, color: TOKEN.txtD, fontFamily: TOKEN.mono }}>
