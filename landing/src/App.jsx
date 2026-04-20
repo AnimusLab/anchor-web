@@ -848,6 +848,15 @@ function Hero() {
               onMouseEnter={e => e.currentTarget.style.opacity = ".85"}
               onMouseLeave={e => e.currentTarget.style.opacity = "1"}
             >Launch Enterprise Console</a>
+
+            <a href="https://oversight.anchorgovernance.tech" target="_blank" rel="noreferrer" style={{
+              fontFamily: C.mono, fontSize: "12px", fontWeight: 700, color: C.cyan, background: "transparent", border: `1px solid ${C.cyan}`,
+              padding: "14px 28px", textDecoration: "none", letterSpacing: ".08em", textTransform: "uppercase",
+              transition: "all .2s", flexShrink: 0,
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.cyan; e.currentTarget.style.color = C.bg; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.cyan; }}
+            >Regulator Terminal</a>
             <a href="https://mesh.anchorgovernance.tech" target="_blank" rel="noreferrer" style={{
               fontFamily: C.mono, fontSize: "12px", fontWeight: 700, color: C.cyan, background: "transparent",
               padding: "14px 24px", textDecoration: "none", letterSpacing: ".08em", textTransform: "uppercase",
