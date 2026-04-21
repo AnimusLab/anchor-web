@@ -97,7 +97,6 @@ def seed_mesh_identities(db):
     org_configs = [
         {"id": "org_sec_master", "prefix": "sec", "name": "Securities & Exchange Commission", "type": "regulator"},
         {"id": "org_rbi_master", "prefix": "rbi", "name": "Reserve Bank of India", "type": "regulator"},
-        {"id": "org_animus_001", "prefix": "animus", "name": "Animus Global Lab", "type": "enterprise"},
     ]
 
     for cfg in org_configs:
@@ -125,14 +124,6 @@ def seed_mesh_identities(db):
     hashed_master = bcrypt.hashpw(ANCHOR_MASTER_KEY.encode(), bcrypt.gensalt()).decode() if ANCHOR_MASTER_KEY else None
 
     users_to_seed = [
-        {
-            "email": "tan@anchorgovernance.tech", 
-            "name": "Tan (Lead Manager)", 
-            "role": "owner", 
-            "org_id": "org_animus_001",
-            "oid": "ANIMUS-MGMT-001",
-            "pass": hashed_master
-        },
         {
             "email": "artisianecho@gmail.com", 
             "name": "Audit Echo", 
