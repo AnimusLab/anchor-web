@@ -27,7 +27,10 @@
       --sans: 'Outfit', sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    button, .btn, a { cursor: pointer; }
+    #globe-viz { cursor: grab; }
+    #globe-viz:active { cursor: grabbing; }
 
     body {
       background: var(--bg);
@@ -233,15 +236,38 @@
   <script>
     const markerColors = ['#06B6D4', '#C9A84C', '#F1F5F9'];
     
-    // 1. GLOBE INITIALIZATION
+    // 1. GLOBE INITIALIZATION (NOC V5.1 PRECISION MESH)
     const globe = Globe()
       (document.getElementById('globe-viz'))
-      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
       .backgroundColor('#030308')
       .atmosphereColor('#06B6D4')
       .showAtmosphere(true)
+      .atmosphereDaylightOpacity(0.12)
+      // Country Detailing (Tactical Polygons)
+      .polygonCapColor(() => 'rgba(6, 182, 212, 0.08)')
+      .polygonStrokeColor(() => 'rgba(6, 182, 212, 0.5)')
+      .polygonSideColor(() => 'rgba(0, 0, 0, 0)')
+      .polygonLabel(({ properties: p }) => `
+        <div style="background: rgba(15,23,42,0.9); border: 1px solid #06B6D4; padding: 12px; border-radius: 8px; backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+          <div style="font-size: 10px; color: #06B6D4; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 800;">SECTOR_ACTIVE</div>
+          <div style="font-size: 16px; font-weight: 700; color: #fff;">${p.NAME}</div>
+          <div style="height: 1px; background: rgba(6,182,212,0.2); margin: 8px 0;"></div>
+          <div style="font-size: 11px; color: #94a3b8;"><span style="color: #10b981;">●</span> COMPLIANCE_NODES: OK</div>
+        </div>
+      `)
       .pointsData(generatePoints())
       .arcsData(generateArcs());
+
+    // Fetch Tactical Geopolitical Data
+    fetch('//unpkg.com/world-atlas/countries-110m.json').then(res => res.json()).then(worldData => {
+      // Convert topojson to geojson if needed, or use a direct geojson source
+      // For globe.gl, a direct geojson features array is preferred
+      fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson')
+        .then(res => res.json())
+        .then(countries => {
+          globe.polygonsData(countries.features);
+        });
+    });
 
     // Auto-rotation (Standard World Monitor)
     const tbControls = globe.controls();

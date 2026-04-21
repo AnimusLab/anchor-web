@@ -202,9 +202,9 @@ def _identify_logic(clearance_id: str, email: str, org_prefix: str, allowed_role
     if not user:
         raise HTTPException(status_code=401, detail="IDENTITY NOT FOUND")
     
-    # Strictly verify Personal Clearance ID (official_id)
+    # Strictly verify Personal Clearance ID (clearance_id)
     # We allow a manual match or email prefix fallback for legacy accounts
-    stored_clearance = user.official_id or user.email.split('@')[0]
+    stored_clearance = user.clearance_id or user.email.split('@')[0]
     if clearance_id.strip().upper() != stored_clearance.strip().upper():
         raise HTTPException(status_code=401, detail="CLEARANCE ID DISCREPANCY")
 
@@ -286,7 +286,7 @@ def provision_auditor(
         display_name=request.display_name,
         org_id=org_id,
         role="regulator",
-        official_id=entity_id,
+        clearance_id=entity_id,
         department=request.department,
         jurisdiction=request.jurisdiction,
         totp_secret=totp_secret,
@@ -902,7 +902,7 @@ def accept_invite(
         id=f"usr_{secrets.token_hex(4)}",
         email=invite.invited_email,
         org_id=invite.org_id,
-        official_id=invite.clearance_id, # Cryptographically pinned Clearance ID
+        clearance_id=invite.clearance_id, # Cryptographically pinned Clearance ID
         display_name=display_name,
         role=invite.role,
         department=invite.target_project, # Temporary mapping of project to dept
@@ -936,6 +936,6 @@ def get_current_user_profile(
         "role":          user.role,
         "status":        user.status,
         "org_id":        user.org_id,
-        "clearance_id":  user.official_id or user.email.split('@')[0],
+        "clearance_id":  user.clearance_id or user.email.split('@')[0],
         "email_verified": user.email_verified,
     }

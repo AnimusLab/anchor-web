@@ -52,7 +52,7 @@ def run_migrations():
         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS org_type VARCHAR DEFAULT 'enterprise';",
         # users table — columns added after initial deploy
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS org_id VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS official_id VARCHAR;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS clearance_id VARCHAR;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS jurisdiction VARCHAR;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR;",
@@ -152,7 +152,7 @@ def seed_mesh_identities(db):
                 display_name=u_cfg["name"],
                 role=u_cfg["role"],
                 org_id=u_cfg["org_id"],
-                official_id=u_cfg["oid"],
+                clearance_id=u_cfg["oid"],
                 totp_secret=test_secret,
                 status="approved",
                 email_verified=True,

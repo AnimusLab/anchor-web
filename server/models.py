@@ -83,7 +83,7 @@ class User(Base):
     hashed_pass  = Column(String, nullable=True)                  # Optional for regulators
     totp_secret  = Column(String, nullable=True)                  # Google Authenticator Secret
     avatar_url   = Column(String, nullable=True)                  # Instagram-like Profile Pix
-    official_id  = Column(String, nullable=True)                  # "SEC-JHONDOC-2604"
+    clearance_id = Column(String, nullable=True)                  # "SEC-JHONDOC-2604"
     department   = Column(String, nullable=True)                  # "Compliance", "Lending AI", etc.
     jurisdiction = Column(String, nullable=True)                  # "US", "IN", "EU"
     status       = Column(String, default="pending")
