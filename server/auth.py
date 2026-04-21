@@ -110,7 +110,7 @@ class LoginRequest(BaseModel):
     password: str
 
 class IdentityChallengeRequest(BaseModel):
-    display_name: str
+    clearance_id: str
     email: str
     org_id: str
 
@@ -196,29 +196,33 @@ def get_jurisdictions():
     except Exception:
         return {"jurisdictions": []}
 
-def _identify_logic(display_name: str, email: str, org_prefix: str, allowed_roles: list, db: Session):
-    """Internal shared logic for identity challenge with strict role scoping."""
+def _identify_logic(clearance_id: str, email: str, org_prefix: str, allowed_roles: list, db: Session):
+    """Internal shared logic for identity challenge with strict triple-factor scoping."""
     user = db.query(User).filter(User.email == email.strip().lower()).first()
     if not user:
         raise HTTPException(status_code=401, detail="IDENTITY NOT FOUND")
     
-    # Optional: Verify display_name match (loose check to prevent strict typos blocking users)
-    if display_name.strip().lower() not in user.display_name.lower():
-        # Log mismatch but don't hard block yet to avoid UX friction if user just wrote 'John' vs 'John Doe'
-        pass
+    # Strictly verify Personal Clearance ID (official_id)
+    # We allow a manual match or email prefix fallback for legacy accounts
+    stored_clearance = user.official_id or user.email.split('@')[0]
+    if clearance_id.strip().upper() != stored_clearance.strip().upper():
+        raise HTTPException(status_code=401, detail="CLEARANCE ID DISCREPANCY")
 
     if user.role not in allowed_roles:
-        raise HTTPException(status_code=401, detail="INSUFFICIENT CLEARANCE")
+        raise HTTPException(status_code=401, detail="INSUFFICIENT CLEARANCE LEVEL")
+    
     org = db.query(Organization).filter(Organization.id == user.org_id).first()
     if not org or (org.entity_prefix != org_prefix.strip().lower() and org.id != org_prefix.strip().lower()):
-        raise HTTPException(status_code=401, detail="ORGANIZATIONAL MISMATCH")
+        raise HTTPException(status_code=401, detail="ORGANIZATIONAL ACCESS DENIED")
+    
     if user.status == "revoked":
         raise HTTPException(status_code=403, detail="ACCESS PERMANENTLY REVOKED")
+    
     intent_exp = datetime.utcnow() + timedelta(minutes=5)
     intent_token = jwt.encode({
         "sub": user.email, "org_id": user.org_id, "role": user.role, "type": "auth_intent", "exp": intent_exp
     }, ANCHOR_MASTER_KEY, algorithm="HS256")
-    return {"status": "CHALLENGE_AUTHORIZED", "intent_token": intent_token, "display_name": user.display_name, "role": user.role}
+    return {"status": "CHALLENGE_AUTHORIZED", "intent_token": intent_token, "display_name": user.display_name, "role": user.role, "org_name": org.display_name}
 
 def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
     """Internal shared logic for TOTP verification with strict role scoping."""
@@ -242,7 +246,8 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
 
 @auth_router.post("/enterprise/identify")
 def enterprise_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
-    return _identify_logic(request.display_name, request.email, request.org_id, ["owner", "admin", "member"], db)
+    """Enterprise-specific identity challenge (Stage 1)."""
+    return _identify_logic(request.clearance_id, request.email, request.org_id, ["owner", "admin", "member", "lead", "developer"], db)
 
 @auth_router.post("/enterprise/verify-totp")
 def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
@@ -250,7 +255,7 @@ def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db))
 
 @auth_router.post("/oversight/identify")
 def oversight_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
-    return _identify_logic(request.display_name, request.email, request.org_id, ["auditor", "regulator"], db)
+    return _identify_logic(request.clearance_id, request.email, request.org_id, ["auditor", "regulator"], db)
 
 @auth_router.post("/admin/provision/auditor")
 def provision_auditor(
@@ -470,6 +475,7 @@ def register_organization(
     email: str = Form(...),
     password: str = Form(...),
     server_region: str = Form("IN"),
+    department: str = Form("Operations"),
     db: Session = Depends(get_db)
 ):
     """
@@ -808,16 +814,16 @@ def list_all_organizations(
 @auth_router.post("/invite")
 def create_invite(
     email: str = Form(...),
-    role: str = Form("member"),
+    clearance_id: str = Form(...),
+    project_name: str = Form(...),
+    role: str = Form("developer"),
     current_admin: dict = Depends(get_current_org_admin),
     db: Session = Depends(get_db)
 ):
-    """Generates a secure invitation for a new team member."""
-    # 1. Check if user already exists
+    """Generates a secure tactical invitation for a new team member."""
     if db.query(User).filter(User.email == email.strip().lower()).first():
          raise HTTPException(status_code=400, detail="USER ALREADY REGISTERED IN THE MESH")
 
-    # 2. Create Invite
     token = str(uuid.uuid4())
     expires = datetime.utcnow() + timedelta(hours=48)
     
@@ -825,6 +831,8 @@ def create_invite(
         id=token,
         org_id=current_admin["org_id"],
         invited_email=email.strip().lower(),
+        clearance_id=clearance_id.strip().upper(),
+        target_project=project_name.strip(),
         role=role,
         status="pending",
         created_at=datetime.utcnow().isoformat(),
@@ -833,22 +841,34 @@ def create_invite(
     db.add(invite)
     db.commit()
 
-    return {
-        "status": "INVITE_CREATED",
-        "token": token,
-        "role": role,
-        "expires_at": invite.expires_at
-    }
+    # Dispatch Onboarding Email
+    org_name = db.query(Organization).filter(Organization.id == invite.org_id).first().display_name
+    invite_link = f"https://enterprise.anchorgovernance.tech/auth?invite=true&token={token}"
+    
+    from mail import send_developer_invite
+    send_developer_invite(
+        to_email=invite.invited_email,
+        display_name=email.split('@')[0], # Placeholder until they set name
+        org_name=org_name,
+        project_name=invite.target_project,
+        clearance_id=invite.clearance_id,
+        org_id=current_admin["org_id"],
+        invite_link=invite_link
+    )
 
+    return {
+        "status": "INVITE_CREATED_AND_DISPATCHED",
+        "clearance_id": invite.clearance_id,
+        "token": token
+    }
 
 @auth_router.get("/invite/verify/{token}")
 def verify_invite(token: str, db: Session = Depends(get_db)):
-    """Validates an invite token and returns org context."""
+    """Validates an invite token and returns tactical identity markers."""
     invite = db.query(OrgInvite).filter(OrgInvite.id == token).first()
     if not invite or invite.status != "pending":
         raise HTTPException(status_code=404, detail="INVALID OR EXPIRED INVITE")
     
-    # Check expiry
     if datetime.fromisoformat(invite.expires_at) < datetime.utcnow():
         invite.status = "expired"
         db.commit()
@@ -856,7 +876,10 @@ def verify_invite(token: str, db: Session = Depends(get_db)):
 
     return {
         "org_name": invite.organization.display_name,
+        "org_id": invite.org_id,
         "email": invite.invited_email,
+        "clearance_id": invite.clearance_id,
+        "project": invite.target_project,
         "role": invite.role
     }
 
@@ -879,10 +902,12 @@ def accept_invite(
         id=f"usr_{secrets.token_hex(4)}",
         email=invite.invited_email,
         org_id=invite.org_id,
+        official_id=invite.clearance_id, # Cryptographically pinned Clearance ID
         display_name=display_name,
         role=invite.role,
+        department=invite.target_project, # Temporary mapping of project to dept
         hashed_pass=hashed,
-        status="active", # Already verified by invite logic
+        status="active",
         email_verified=True,
         created_at=datetime.utcnow().isoformat()
     )
@@ -905,12 +930,12 @@ def get_current_user_profile(
         raise HTTPException(status_code=404, detail="USER NOT FOUND")
 
     return {
-        "sub":           user.email,           # login identity
+        "sub":           user.email,
         "email":         user.email,
         "display_name":  user.display_name,
         "role":          user.role,
         "status":        user.status,
         "org_id":        user.org_id,
+        "clearance_id":  user.official_id or user.email.split('@')[0],
         "email_verified": user.email_verified,
-        "entity_id":     user.email,           # Legacy compat for older dashboard code
     }

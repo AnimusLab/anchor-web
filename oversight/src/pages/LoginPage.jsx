@@ -69,7 +69,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('login') // 'login' | 'register'
   const [form, setForm] = useState({ 
-    entityId: '', email: '', jurisdiction: '', department: '', totp: '', 
+    clearanceId: '', agencyId: '', email: '', jurisdiction: '', department: '', totp: '', 
     displayName: '' 
   })
   const [stage, setStage] = useState('identify')   // 'identify' | 'verify'
@@ -110,7 +110,7 @@ export default function LoginPage() {
 
   const handleIdentify = (e) => {
     e.preventDefault()
-    if (!form.entityId || !form.email) return
+    if (!form.clearanceId || !form.agencyId || !form.email) return
     setError('')
     setStage('verify')
   }
@@ -152,7 +152,8 @@ export default function LoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          entity_id:    form.entityId.trim().toUpperCase(),
+          clearance_id: form.clearanceId.trim().toUpperCase(),
+          agency_id:    form.agencyId.trim().toUpperCase(),
           email:        form.email.trim().toLowerCase(),
           totp_code:    form.totp.trim(),
         }),
@@ -231,24 +232,26 @@ export default function LoginPage() {
             <form onSubmit={stage === 'identify' ? handleIdentify : handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {stage === 'identify' ? (
                 <>
-                  <Field label="Agency / Entity ID"><input required type="text" value={form.entityId} onChange={set('entityId')} onFocus={fo('entityId')} onBlur={bl} placeholder="E.G. SEC-JOHNDOE-2604" style={f('entityId')} /></Field>
+                  <Field label="Mission Clearance ID"><input required type="text" value={form.clearanceId} onChange={set('clearanceId')} onFocus={fo('clearanceId')} onBlur={bl} placeholder="E.G. REG-SEC-X92F" style={f('clearanceId')} /></Field>
+                  <Field label="Agency Hub ID"><input required type="text" value={form.agencyId} onChange={set('agencyId')} onFocus={fo('agencyId')} onBlur={bl} placeholder="SEC, RBI, NIST..." style={f('agencyId')} /></Field>
                   <Field label="Your Official Email"><input required type="email" value={form.email} onChange={set('email')} onFocus={fo('email')} onBlur={bl} placeholder="auditor@regulator.gov" style={f('email')} /></Field>
                 </>
               ) : (
                 <>
                   <div style={{ padding: '14px 18px', borderRadius: 8, background: TOKEN.amberD, border: `1px solid rgba(245,158,11,0.2)` }}>
-                    <div style={{ fontSize: 9, color: TOKEN.amber, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Agency Confirmed</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: TOKEN.txt }}>{form.entityId}</div>
+                    <div style={{ fontSize: 9, color: TOKEN.amber, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Identity Recognized</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: TOKEN.txt }}>{form.clearanceId} // {form.agencyId}</div>
                   </div>
                   <Field label="6-Digit TOTP Code"><input required type="text" maxLength={6} value={form.totp} onChange={set('totp')} onFocus={fo('totp')} onBlur={bl} placeholder="000000" style={{ ...f('totp'), textAlign: 'center', fontSize: 32, letterSpacing: '0.3em' }} /></Field>
                 </>
               )}
-              <button type="submit" style={{ width: '100%', padding: 13, borderRadius: 8, fontSize: 14, fontWeight: 700, background: TOKEN.amber, color: '#1c1200', border: 'none', cursor: 'pointer' }}>{stage === 'identify' ? 'Proceed →' : 'Finalize Clearance →'}</button>
+              <button type="submit" style={{ width: '100%', padding: 13, borderRadius: 8, fontSize: 14, fontWeight: 700, background: TOKEN.amber, color: '#1c1200', border: 'none', cursor: 'pointer' }}>{stage === 'identify' ? 'Review Clearance →' : 'Initialize Session →'}</button>
             </form>
           ) : (
             <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <Field label="Your Full Name"><input required type="text" value={form.displayName} onChange={set('displayName')} placeholder="YOUR FULL NAME" style={f('dn')} /></Field>
               <Field label="Your Official Email"><input required type="email" value={form.email} onChange={set('email')} placeholder="auditor@regulator.gov" style={f('em')} /></Field>
+              <Field label="Requested Agency ID"><input required type="text" value={form.agencyId} onChange={set('agencyId')} placeholder="E.G. SEC, RBI" style={f('ai')} /></Field>
               <Field label="Jurisdiction">
                 <select required value={form.jurisdiction} onChange={set('jurisdiction')} style={{ ...f('jx'), appearance: 'none' }}>
                   <option value="">Select Jurisdiction</option>
@@ -268,7 +271,7 @@ export default function LoginPage() {
           )}
 
           <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11, color: TOKEN.txtD, fontFamily: TOKEN.mono }}>
-            ENFORCEMENT PRIORITY: 01 · All sessions are logged
+            ENFORCEMENT PRIORITY: 01 · SYSTEM_VERSION: v5.1.0-OVERSIGHT
           </div>
         </div>
       </div>

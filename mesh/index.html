@@ -39,7 +39,8 @@
     }
 
     #globe-viz {
-      position: absolute; inset: 0; z-index: 1;
+      position: absolute; inset: 0; z-index: 5;
+      pointer-events: auto;
     }
 
     /* ── GHOST HUD LAYOUT ── */
@@ -50,7 +51,18 @@
       transition: opacity 0.5s ease;
     }
 
-    #hud-overlay * { pointer-events: auto; }
+    #hud-overlay header, 
+    #hud-overlay .main-grid,
+    #hud-overlay footer {
+       pointer-events: none;
+    }
+
+    /* Selectively re-enable pointer events for interactive HUD elements */
+    #hud-overlay button, 
+    #hud-overlay .card,
+    #hud-overlay .stat-box { 
+       pointer-events: auto; 
+    }
 
     header {
       display: flex; justify-content: space-between; align-items: flex-start;
@@ -221,27 +233,28 @@
   <script>
     const markerColors = ['#06B6D4', '#C9A84C', '#F1F5F9'];
     
-    // --- 1. GLOBE INITIALIZATION ---
+    // 1. GLOBE INITIALIZATION
     const globe = Globe()
       (document.getElementById('globe-viz'))
       .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
-      .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
       .backgroundColor('#030308')
       .atmosphereColor('#06B6D4')
-      .atmosphereDaylightOpacity(0.1)
       .showAtmosphere(true)
-      .pointColor(() => '#06B6D4')
-      .pointRadius(0.15)
       .pointsData(generatePoints())
-      .arcColor(() => 'rgba(6, 182, 212, 0.4)')
-      .arcDashLength(0.4)
-      .arcDashGap(4)
-      .arcDashAnimateTime(1500)
       .arcsData(generateArcs());
 
-    // Auto-rotation (Hybrid)
-    globe.controls().autoRotate = true;
-    globe.controls().autoRotateSpeed = 0.5;
+    // Auto-rotation (Standard World Monitor)
+    const tbControls = globe.controls();
+    tbControls.autoRotate = true;
+    tbControls.autoRotateSpeed = 1.2; 
+    tbControls.enableDamping = true;
+    tbControls.dampingFactor = 0.05;
+
+    // Force frame update to ensure rotation persists in standard view
+    (function frame() {
+      tbControls.update();
+      requestAnimationFrame(frame);
+    })();
 
     function generatePoints() {
       const gpts = [];

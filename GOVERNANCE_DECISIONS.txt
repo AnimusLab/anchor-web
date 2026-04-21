@@ -12,11 +12,32 @@ This document tracks high-level decisions regarding the Anchor Governance Engine
 - **Decision**: Remove the "Full Name" field from all Sign-In forms.
 - **Rationale**: The system already has the name associated with the Email/Entity ID. Requiring it again creates data redundancy and potential mismatches.
 
-### [DECISION] Decentralized Regulator Onboarding
+### [DECISION] Pivot to Tactical "Clearance ID" Branding
 - **Status**: ACTIVE
-- **Context**: Onboarding was initially a manual Root-only process.
-- **Decision**: Implement a public-facing "Onboard" section for the Oversight (Regulator) portal.
-- **Rationale**: Allows government officials to submit their own credentials for review, reducing manual overhead for the Master Node administrator.
+- **Context**: "Entity ID" was found to be too broad/vague across different system layers.
+- **Decision**: Rename all individual user identifiers to **"Clearance ID"**.
+- **Rationale**: Distinguishes the person (Clearance ID) from the organization (Org ID) and the project (Project ID), improving audit clarity and tactical branding.
+
+### [DECISION] Triple-Factor Identity Challenge
+- **Status**: ACTIVE
+- **Context**: 2-parameter sign-in (Email + Org) was deemed insufficient for high-security governance.
+- **Decision**: Mandate a 3-parameter handshake for ALL login attempts:
+  1. **Corporate/Official Email** (The Handle)
+  2. **Organization / Agency ID** (The Tenant/Bucket)
+  3. **Personal Clearance ID** (The Specific Individual)
+- **Rationale**: Drastically reduces the surface area for identity spoofing and ensures multi-layered tenant isolation.
+
+### [DECISION] Standardized Onboarding Payloads
+- **Status**: ACTIVE
+- **Context**: Onboarding forms lacked consistency in department/division tracking.
+- **Decision**: Standardize all onboarding to capture: Full Name, Email, Corporate/Agency name, Region, and Department/Division.
+
+### [DECISION] Automated Identity Packet Dispatch
+- **Status**: ACTIVE
+- **Context**: Manual delivery of keys was slowing down the rollout of new hubs.
+- **Decision**: Automated the creation and dispatch of "Identity Packets" via tactical email upon Admin approval.
+- **Payload**: Includes the **Clearance ID**, **Master Logic Key**, and a **TOTP Handshake QR Code**.
+- **Rationale**: Ensures the owner/auditor is the only person who holds the private cryptographic handshake secret.
 
 ### [DECISION] Paused Enterprise Onboarding
 - **Status**: ON HOLD
@@ -34,8 +55,25 @@ This document tracks high-level decisions regarding the Anchor Governance Engine
 - **Decision**: Mandatory "Department" and "Jurisdiction" fields added.
 - **Implementation**: Jurisdictions are stored in a centralized `jurisdictions.json` file for easy updates.
 
-### [DECISION] Request-for-Access Model
-- **Status**: ACTIVE
-- **Context**: Initial implementation auto-provisioned keys on registration.
-- **Decision**: All public registrations result in a `status="pending"` state.
-- **Rationale**: Prevents unauthorized access. Keys/IDs are only delivered via secure email AFTER Root Admin approval.
+### [DECISION] Multi-Owner Governance (Consensus Lock)
+- **Status**: PROPOSED
+- **Context**: Cases where multiple owners make independent, conflicting changes to a single organization.
+- **Decision**: Implement a "Governance Lock" for structural changes.
+  - **Structural Changes**: Master Key rotation, Policy deletion, Owner removal. (Requires N/M approval).
+  - **Operational Tasks**: Ingress auditing, project creation, log viewing. (Independent action).
+- **Rationale**: Ensures that a single rogue owner cannot compromise the entire organization's governance posture without a consensus handshake.
+
+### [DECISION] Tiered Persona Profiles (The 3-Tier Model)
+- **Status**: PROPOSED
+- **Context**: Need for distinct workflows and visual identities for different user types.
+- **Decision**: Implement a 3-tier visual and functional hierarchy:
+  1. **Tier 1: Owners (Gold Profile)**: Full grid control, multi-sig participant.
+  2. **Tier 2: Leads (Silver Profile)**: Management access to specific projects, can invite/review Developers.
+  3. **Tier 3: Developers (Bronze Profile)**: Technical execution only, scoped API keys, no organizational management rights.
+- **Rationale**: Mirroring the real-world structure of corporate AI teams while maintaining the security of the Master Node.
+
+### [DECISION] Organization Hub (GitHub-Style)
+- **Status**: PROPOSED
+- **Context**: Lack of a centralized view for organizational health and member oversight.
+- **Decision**: Implement an "Organization Hub" page as the primary landing for authenticated owners.
+- **Components**: Member Registry (Clearance ID list), Project Matrix, and Sovereign Timeline.

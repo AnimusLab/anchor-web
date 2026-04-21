@@ -51,8 +51,8 @@ OVERSIGHT_JWT_TTL = int(os.getenv("OVERSIGHT_JWT_TTL_HOURS", "8"))  # 8-hour ses
 # ---------------------------------------------------------------------------
 
 class OversightLoginRequest(BaseModel):
-    entity_id:    str
-    jurisdiction: str
+    clearance_id: str   # Individual tactical ID (e.g. REG-SEC-X92F)
+    agency_id:    str   # The Regulatory Agency (e.g. SEC, RBI)
     email:        str
     totp_code:    str   # 6-digit rotating code from Google Authenticator
 
@@ -139,23 +139,16 @@ def get_oversight_admin(
 @oversight_router.post("/login")
 def oversight_login(body: OversightLoginRequest, request: Request):
     """
-    Validates entity_id + email + 6-digit TOTP code.
-    On success: logs the session and returns a signed JWT.
-
-    Security:
-    - entity_id must exist in master_config and be ACTIVE
-    - email SHA-256 must match stored hash
-    - TOTP code validated with ±1 window (30-sec skew tolerance)
-    - All failures return the same 401 to prevent enumeration
+    Validates clearance_id + agency_id + email + 6-digit TOTP code.
+    Multi-parameter identity handshake for regulatory access.
     """
-    # 1. Validate entity_id + jurisdiction + email against master config
+    # 1. Validate identity triple against master config
     auditor = lookup_auditor(
-        body.entity_id.strip().upper(), 
-        body.jurisdiction.strip().upper(), 
+        body.clearance_id.strip().upper(), 
+        body.agency_id.strip().upper(), 
         body.email.strip()
     )
     if not auditor:
-        # Constant-time-safe generic error — don't reveal which field failed
         raise HTTPException(status_code=401, detail="IDENTITY VERIFICATION FAILED")
 
     # 2. Validate TOTP code
@@ -163,10 +156,10 @@ def oversight_login(body: OversightLoginRequest, request: Request):
     if not totp.verify(body.totp_code.strip(), valid_window=1):
         raise HTTPException(status_code=401, detail="IDENTITY VERIFICATION FAILED")
 
-    # 3. Log session start with IP + User-Agent for digital footprint
+    # 3. Log session start with IP + User-Agent
     ip         = request.client.host if request.client else "unknown"
     user_agent = request.headers.get("user-agent", "unknown")
-    session_id = log_session_start(body.entity_id.strip().upper(), ip, user_agent)
+    session_id = log_session_start(body.clearance_id.strip().upper(), ip, user_agent)
 
     # 4. Issue oversight-scoped JWT
     token = _issue_oversight_jwt(

@@ -82,7 +82,7 @@ export default function AuthPortal({ isInvite = false }) {
   const [intentToken, setIntentToken] = useState(null);
   const [focusedField, setFocusedField] = useState(null);
   const [formData, setFormData] = useState({
-    email: '', orgId: '', name: '', totpCode: '',
+    email: '', orgId: '', clearanceId: '', totpCode: '',
     entityPrefix: '', serverRegion: 'IN', jurisdiction: '',
     displayName: '', companyName: '',
   });
@@ -97,7 +97,12 @@ export default function AuthPortal({ isInvite = false }) {
       const res = await fetch(endpoints.verifyInvite(token));
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Invitation invalid or expired');
-      setFormData(prev => ({ ...prev, email: data.email }));
+      setFormData(prev => ({ 
+        ...prev, 
+        email: data.email, 
+        orgId: data.org_id, 
+        clearanceId: data.clearance_id 
+      }));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -116,7 +121,11 @@ export default function AuthPortal({ isInvite = false }) {
         const res = await fetch(endpoints.identify, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email, org_id: formData.orgId })
+          body: JSON.stringify({ 
+            email: formData.email, 
+            org_id: formData.orgId,
+            clearance_id: formData.clearanceId 
+          })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Identity lookup failed');
@@ -157,6 +166,7 @@ export default function AuthPortal({ isInvite = false }) {
       payload.append('email', formData.email);
       payload.append('password', 'DUMMY_UNUSED');
       payload.append('server_region', formData.serverRegion);
+      payload.append('department', formData.department);
       const res = await fetch(endpoints.registerOrg, { method: 'POST', body: payload });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Onboarding failed');
@@ -312,26 +322,25 @@ export default function AuthPortal({ isInvite = false }) {
                     <div style={{ fontSize: 22, fontWeight: 700, color: '#f9fafb', marginBottom: 6 }}>Welcome back</div>
                     <div style={{ fontSize: 14, color: '#6b7280' }}>Enter your identity credentials to proceed.</div>
                   </div>
-                  <Field label="Email Address">
+                  <Field label="Corporate Access Email">
                     <input required type="email" name="email" value={formData.email} onChange={handleInputChange}
                       placeholder="owner@company.ai"
-                      style={{
-                        ...inputStyle,
-                        borderColor: focusedField === 'email' ? '#10b981' : '#1f2937',
-                        boxShadow: focusedField === 'email' ? '0 0 0 3px rgba(16,185,129,0.1)' : 'none',
-                      }}
+                      style={{ ...inputStyle, borderColor: focusedField === 'email' ? '#10b981' : '#1f2937' }}
                       onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
                     />
                   </Field>
-                  <Field label="Organization ID">
+                  <Field label="Organization Hub ID">
                     <input required type="text" name="orgId" value={formData.orgId} onChange={handleInputChange}
                       placeholder="e.g. animuslab"
-                      style={{
-                        ...inputStyle, fontFamily: 'JetBrains Mono, monospace',
-                        borderColor: focusedField === 'orgId' ? '#10b981' : '#1f2937',
-                        boxShadow: focusedField === 'orgId' ? '0 0 0 3px rgba(16,185,129,0.1)' : 'none',
-                      }}
+                      style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace', borderColor: focusedField === 'orgId' ? '#10b981' : '#1f2937' }}
                       onFocus={() => setFocusedField('orgId')} onBlur={() => setFocusedField(null)}
+                    />
+                  </Field>
+                  <Field label="Tactical Clearance ID">
+                    <input required type="text" name="clearanceId" value={formData.clearanceId} onChange={handleInputChange}
+                      placeholder="e.g. DEV-SEC-X92F"
+                      style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace', borderColor: focusedField === 'clearanceId' ? '#10b981' : '#1f2937' }}
+                      onFocus={() => setFocusedField('clearanceId')} onBlur={() => setFocusedField(null)}
                     />
                   </Field>
                 </>
@@ -472,6 +481,14 @@ export default function AuthPortal({ isInvite = false }) {
                   <option value="GH">Ghana (GH)</option>
                 </select>
               </Field>
+              <Field label="Your Department / Division">
+                <input required type="text" name="department" value={formData.department} onChange={handleInputChange}
+                  placeholder="e.g. Risk Ops, Compliance"
+                  style={{ ...inputStyle, borderColor: '#1f2937' }}
+                  onFocus={e => e.target.style.borderColor = '#10b981'}
+                  onBlur={e => e.target.style.borderColor = '#1f2937'}
+                />
+              </Field>
               <div style={{
                 padding: '12px 16px', borderRadius: 8,
                 background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)',
@@ -489,6 +506,9 @@ export default function AuthPortal({ isInvite = false }) {
             </form>
           )}
 
+        </div>
+        <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #1f2937', color: '#4b5563', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}>
+          CORE_IDENTITY_PROTOCOL: v5.1 // TRIPLE_FACTOR_AUTH
         </div>
       </div>
     </div>

@@ -248,3 +248,43 @@ def send_admin_access_code(to_email: str, code: str):
     """
     return _send_email(to_email, subject, html)
 
+
+def send_developer_invite(to_email: str, display_name: str, org_name: str, project_name: str, clearance_id: str, org_id: str, invite_link: str):
+    """Sends a tactical invite to a developer for a specific project."""
+    subject = f"Anchor Sovereign Mesh — Mission Invite: {project_name}"
+    html = f"""
+    <div style="font-family: monospace; background: #06060A; color: #E2E8F0; padding: 40px; max-width: 600px; margin: 0 auto; border: 1px solid #1A1F2E;">
+      <h2 style="color: #60A5FA; letter-spacing: 0.2em; font-size: 14px; border-bottom: 1px solid #1A1F2E; padding-bottom: 15px;">MISSION_INVITE // DEV_ONBOARD</h2>
+      
+      <p style="color: #94A3B8; font-size: 12px; line-height: 1.6;">
+        Welcome <strong>{display_name}</strong>. You have been invited by <strong>{org_name}</strong> to contribute to the <strong>{project_name}</strong> project on the Anchor Mesh.
+      </p>
+
+      <div style="background: #0C0C12; border: 1px solid #1A1F2E; padding: 20px; margin: 20px 0;">
+        <p style="color: #4B5563; font-size: 9px; margin: 0 0 8px; tracking: 0.15em;">IDENTITY_MARKERS</p>
+        <div style="margin-bottom: 15px;">
+            <p style="color: #64748B; font-size: 10px; margin: 0;">CLEARANCE_ID</p>
+            <code style="color: #60A5FA; font-size: 14px;">{clearance_id}</code>
+        </div>
+        <div>
+            <p style="color: #64748B; font-size: 10px; margin: 0;">ORG_ID</p>
+            <code style="color: #94A3B8; font-size: 14px;">{org_id}</code>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <p style="color: #4B5563; font-size: 10px; margin-bottom: 15px;">CLICK BELOW TO INITIALIZE HANDSHAKE</p>
+        <a href="{invite_link}" 
+           style="background: #60A5FA; color: #000; padding: 14px 35px; text-decoration: none; font-weight: bold; font-size: 11px; tracking: 0.2em;">
+           INITIALIZE CLEARANCE →
+        </a>
+      </div>
+      
+      <p style="color: #4B5563; font-size: 9px; line-height: 1.4; text-align: center;">
+        This invite is cryptographically scoped to your email address and will expire in 48 hours.<br>
+        Sign in with your Email, Org ID, and recorded Clearance ID.
+      </p>
+    </div>
+    """
+    return _send_email(to_email, subject, html)
+

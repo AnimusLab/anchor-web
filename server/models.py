@@ -101,6 +101,8 @@ class OrgInvite(Base):
     id             = Column(String, primary_key=True)               # UUID token
     org_id         = Column(String, ForeignKey("organizations.id")) # Link to parent org
     invited_email  = Column(String, nullable=False)
+    clearance_id   = Column(String, nullable=True)                  # The assigned tactical ID
+    target_project = Column(String, nullable=True)                  # Project name/ID
     role           = Column(String, default="member")               # "admin", "lead", "member"
     status         = Column(String, default="pending")               # "pending", "accepted", "expired"
     created_at     = Column(String, nullable=False)
