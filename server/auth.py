@@ -470,7 +470,7 @@ def check_domain_status(domain: str, db: Session = Depends(get_db)):
 
 @auth_router.post("/register/org")
 def register_organization(
-    entity_prefix: str = Form(...),
+    hub_id: str = Form(...),
     display_name: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
@@ -483,12 +483,12 @@ def register_organization(
     This is the top-level 'GitHub Org' creation.
     """
     # 1. Validate Inputs
-    prefix_clean = entity_prefix.strip().lower()
-    _validate_slug(prefix_clean, "Organization Prefix")
+    prefix_clean = hub_id.strip().lower()
+    _validate_slug(prefix_clean, "Organization Hub ID")
     domain = email.split("@")[-1].lower()
     
     # 2. Collision Check (Prefix & Domain)
-    if db.query(Organization).filter(Organization.entity_prefix == prefix_clean).first():
+    if db.query(Organization).filter(Organization.hub_id == prefix_clean).first():
         raise HTTPException(status_code=409, detail=f"PREFIX '{prefix_clean}' IS TAKEN")
     
     if db.query(Organization).filter(Organization.domain == domain).first():
@@ -500,7 +500,7 @@ def register_organization(
     org_id = f"org_{secrets.token_hex(4)}"
     org = Organization(
         id=org_id,
-        entity_prefix=prefix_clean,
+        hub_id=prefix_clean,
         display_name=display_name,
         domain=domain,
         server_region=server_region,
@@ -601,6 +601,14 @@ def list_org_projects(
         for p in projects
     ]
 
+@auth_router.post("/register/auditor")
+def register_auditor(
+    display_name: str = Form(...),
+    email: str = Form(...),
+    jurisdiction: str = Form("US"),
+    department: str = Form("General"),
+    db: Session = Depends(get_db)
+):
     """Regulators request access. Auto-generates entity_id from jurisdiction.
     Sends verification email. Status remains 'pending' until admin approves."""
 

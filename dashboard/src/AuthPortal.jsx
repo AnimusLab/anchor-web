@@ -169,7 +169,10 @@ export default function AuthPortal({ isInvite = false }) {
       payload.append('department', formData.department);
       const res = await fetch(endpoints.registerOrg, { method: 'POST', body: payload });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Onboarding failed');
+      if (!res.ok) {
+        const errorMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail) || 'Onboarding failed';
+        throw new Error(errorMsg);
+      }
       setSuccessData(data);
     } catch (err) {
       setError(err.message);

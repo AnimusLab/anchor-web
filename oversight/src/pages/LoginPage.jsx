@@ -137,7 +137,8 @@ export default function LoginPage() {
       if (res.ok) {
         setSuccess(data.message)
       } else {
-        setError(data.detail || 'Registration failed.')
+        const errorMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail) || 'Registration failed.';
+        setError(errorMsg);
       }
     } catch {
       setError('Connection failed.')
