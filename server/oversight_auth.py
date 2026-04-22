@@ -52,7 +52,7 @@ OVERSIGHT_JWT_TTL = int(os.getenv("OVERSIGHT_JWT_TTL_HOURS", "8"))  # 8-hour ses
 
 class OversightLoginRequest(BaseModel):
     clearance_id: str   # Individual tactical ID (e.g. REG-SEC-X92F)
-    agency_id:    str   # The Regulatory Agency (e.g. SEC, RBI)
+    hub_id:       str   # The Regulatory Agency Hub ID (e.g. SEC, RBI)
     email:        str
     totp_code:    str   # 6-digit rotating code from Google Authenticator
 
@@ -145,7 +145,7 @@ def oversight_login(body: OversightLoginRequest, request: Request):
     # 1. Validate identity triple against master config
     auditor = lookup_auditor(
         body.clearance_id.strip().upper(), 
-        body.agency_id.strip().upper(), 
+        body.hub_id.strip().upper(), 
         body.email.strip()
     )
     if not auditor:

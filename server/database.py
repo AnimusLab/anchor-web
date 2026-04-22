@@ -43,6 +43,7 @@ def run_migrations():
     from sqlalchemy import text
     migrations = [
         # organizations table — columns added after initial deploy
+        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS hub_id VARCHAR;",
         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS region VARCHAR;",
         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS domain VARCHAR;",
         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS master_key_hash VARCHAR;",
@@ -104,7 +105,7 @@ def seed_mesh_identities(db):
         if not existing:
             org = Organization(
                 id=cfg["id"],
-                entity_prefix=cfg["prefix"],
+                hub_id=cfg["prefix"],
                 display_name=cfg["name"],
                 org_type=cfg["type"],
                 domain=f"{cfg['prefix']}.gov" if cfg["type"] == "regulator" else "animuslab.ai",

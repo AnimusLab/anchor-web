@@ -8,7 +8,7 @@ class Organization(Base):
     __tablename__ = "organizations"
 
     id             = Column(String, primary_key=True)               # "org_a1b2..."
-    entity_prefix  = Column(String, unique=True, index=True)        # "animuslab", "sec"
+    hub_id         = Column(String, unique=True, index=True)        # "animuslab", "sec"
     display_name   = Column(String, nullable=False)                 # "Animus Global"
     domain         = Column(String, unique=True, index=True)        # "animuslab.ai"
     region         = Column(String, nullable=True)                  # "India", "USA", "UK"

@@ -202,12 +202,12 @@
       <div class="panel">
         <div class="card">
           <div class="label">Compliance Engine</div>
-          <div class="val" id="count-audits">14,240</div>
+          <div class="val" id="count-audits">0</div>
           <div class="sub">SECURE PROOFS ANCHORED</div>
         </div>
         <div class="card">
           <div class="label">Mesh Integrity</div>
-          <div class="val" style="color: var(--cyan);">99.9%</div>
+          <div class="val" id="stat-integrity" style="color: var(--cyan);">--</div>
           <div class="sub">GLOBAL CONSENSUS RATE</div>
         </div>
         <div class="card" style="flex: 1;">
@@ -225,24 +225,26 @@
 
     <footer>
       <div class="stat-bar">
-        <span>LATENCY: <span>14MS</span></span>
-        <span>PEERS: <span>582</span></span>
-        <span>THROUGHPUT: <span>~2.4K TX/S</span></span>
+        <span>LATENCY: <span id="stat-latency">--</span></span>
+        <span>PEERS: <span id="stat-peers">0</span></span>
+        <span>THROUGHPUT: <span id="stat-throughput">0 TX/S</span></span>
       </div>
-      <div>CORE_VERSION: v5.0.0 // PROTOCOL_01</div>
+      <div>CORE_VERSION: v5.0.2 // WEB_v1 // PROTOCOL_01</div>
     </footer>
   </div>
 
   <script>
     const markerColors = ['#06B6D4', '#C9A84C', '#F1F5F9'];
     
-    // 1. GLOBE INITIALIZATION (NOC V5.1 PRECISION MESH)
+    // 1. GLOBE INITIALIZATION (NOC V5.0.2 PRECISION MESH)
     const globe = Globe()
       (document.getElementById('globe-viz'))
       .backgroundColor('#030308')
+      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+      .baseColor('#040d21')
       .atmosphereColor('#06B6D4')
       .showAtmosphere(true)
-      .atmosphereDaylightOpacity(0.12)
+      .atmosphereDaylightOpacity(0.1)
       // Country Detailing (Tactical Polygons)
       .polygonCapColor(() => 'rgba(6, 182, 212, 0.08)')
       .polygonStrokeColor(() => 'rgba(6, 182, 212, 0.5)')
@@ -258,16 +260,18 @@
       .pointsData(generatePoints())
       .arcsData(generateArcs());
 
-    // Fetch Tactical Geopolitical Data
-    fetch('//unpkg.com/world-atlas/countries-110m.json').then(res => res.json()).then(worldData => {
-      // Convert topojson to geojson if needed, or use a direct geojson source
-      // For globe.gl, a direct geojson features array is preferred
-      fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson')
-        .then(res => res.json())
-        .then(countries => {
-          globe.polygonsData(countries.features);
-        });
-    });
+    // Fetch Tactical Geopolitical Data (Standardised Source)
+    fetch('//unpkg.com/world-atlas/countries-110m.json')
+      .then(res => res.json())
+      .then(worldData => {
+        // Use the topojson directly if possible or the ne_110m GeoJSON from unpkg
+        fetch('//unpkg.com/three-globe/example/datasets/ne_110m_admin_0_countries.geojson')
+          .then(res => res.json())
+          .then(countries => {
+            globe.polygonsData(countries.features);
+          });
+      })
+      .catch(err => console.error("Geopol Data Sync Failed:", err));
 
     // Auto-rotation (Standard World Monitor)
     const tbControls = globe.controls();
@@ -326,31 +330,52 @@
       }
     });
 
-    // --- 3. LIVE FEED SIMULATION ---
+    // --- 3. REAL-TIME STATUS POLLING (v5.1.0) ---
+    const API_BASE = 'https://animuslab-anchor-api.hf.space';
+    
+    async function fetchMeshStatus() {
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/mesh-status`);
+        const data = await res.json();
+        
+        document.getElementById('count-audits').innerText = data.secure_proofs.toLocaleString();
+        document.getElementById('stat-integrity').innerText = data.integrity;
+        document.getElementById('stat-peers').innerText = data.total_peers;
+        
+        // Randomize Latency/Throughput for tactical simulation
+        document.getElementById('stat-latency').innerText = (Math.floor(Math.random() * 10) + 12) + "MS";
+        document.getElementById('stat-throughput').innerText = (Math.random() * 0.5).toFixed(1) + "K TX/S";
+        
+      } catch (e) {
+        console.error("Mesh Status Sync Failed:", e);
+      }
+    }
+
     function updateLedger() {
       const feed = document.getElementById('ledger-feed');
       const types = ["LATTICE_SYNC", "PROOF_ANCHORED", "IDENTITY_PROOF", "POLICY_FETCH"];
       
       setInterval(() => {
-        const row = document.createElement('div');
-        row.className = 'ledger-row';
-        const type = types[Math.floor(Math.random() * types.length)];
-        const hash = '0x' + Math.random().toString(16).slice(2, 10).toUpperCase();
-        row.innerHTML = `
-          <span class="l-meta">>> ${type}</span>
-          <span class="l-hash">${hash} // VERIFICATION_SUCCESS</span>
-        `;
-        feed.prepend(row);
-        if (feed.children.length > 8) feed.removeChild(feed.lastChild);
-        
-        // Slightly update audit count
-        const count = document.getElementById('count-audits');
-        const val = parseInt(count.innerText.replace(',', '')) + 1;
-        count.innerText = val.toLocaleString();
-      }, 2500);
+        // Only show handshakes if there's activity? For now, keep subtle simulation
+        if (Math.random() > 0.7) {
+          const row = document.createElement('div');
+          row.className = 'ledger-row';
+          const type = types[Math.floor(Math.random() * types.length)];
+          const hash = '0x' + Math.random().toString(16).slice(2, 10).toUpperCase();
+          row.innerHTML = `
+            <span class="l-meta">>> ${type}</span>
+            <span class="l-hash">${hash} // VERIFICATION_SUCCESS</span>
+          `;
+          feed.prepend(row);
+          if (feed.children.length > 8) feed.removeChild(feed.lastChild);
+        }
+      }, 3000);
     }
 
+    // Initialize
     updateLedger();
+    fetchMeshStatus();
+    setInterval(fetchMeshStatus, 10000); // Poll every 10s
   </script>
 
 </body>

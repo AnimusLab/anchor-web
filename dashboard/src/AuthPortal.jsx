@@ -123,7 +123,7 @@ export default function AuthPortal({ isInvite = false }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             email: formData.email, 
-            org_id: formData.orgId,
+            hub_id: formData.orgId,
             clearance_id: formData.clearanceId 
           })
         });
@@ -136,7 +136,7 @@ export default function AuthPortal({ isInvite = false }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: formData.email, org_id: formData.orgId,
+            email: formData.email, hub_id: formData.orgId,
             totp_code: formData.totpCode, intent_token: intentToken
           })
         });
@@ -158,9 +158,9 @@ export default function AuthPortal({ isInvite = false }) {
     setIsLoading(true);
     try {
       const payload = new FormData();
-      // Derive prefix: lowercase, no spaces
-      const derivedPrefix = formData.companyName.trim().toLowerCase().replace(/\s+/g, '-');
-      payload.append('entity_prefix', derivedPrefix);
+      // Derive hub_id: lowercase, no spaces
+      const derivedHubId = formData.companyName.trim().toLowerCase().replace(/\s+/g, '-');
+      payload.append('hub_id', derivedHubId);
       payload.append('display_name', formData.displayName);
       payload.append('company_name', formData.companyName);
       payload.append('email', formData.email);
@@ -508,7 +508,7 @@ export default function AuthPortal({ isInvite = false }) {
 
         </div>
         <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #1f2937', color: '#4b5563', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}>
-          CORE_IDENTITY_PROTOCOL: v5.1 // TRIPLE_FACTOR_AUTH
+          CORE_IDENTITY_PROTOCOL: v5.0.2 // WEB_v1 // TRIPLE_FACTOR_AUTH
         </div>
       </div>
     </div>

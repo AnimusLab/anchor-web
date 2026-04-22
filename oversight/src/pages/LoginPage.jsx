@@ -26,9 +26,12 @@ const TOKEN = {
 }
 
 const FALLBACK_JURISDICTIONS = [
-  { id: 'USA', label: 'United States', departments: [{ id: 'SEC', label: 'SEC (Securities & Exchange Commission)' }] },
-  { id: 'INDIA', label: 'India', departments: [{ id: 'RBI', label: 'RBI (Reserve Bank of India)' }] },
-  { id: 'UK', label: 'United Kingdom', departments: [{ id: 'FCA', label: 'FCA (Financial Conduct Authority)' }] }
+  { id: 'USA', label: 'United States' },
+  { id: 'INDIA', label: 'India' },
+  { id: 'UK', label: 'United Kingdom' },
+  { id: 'EU', label: 'European Union' },
+  { id: 'AE', label: 'UAE' },
+  { id: 'SG', label: 'Singapore' }
 ];
 
 const iBase = {
@@ -153,7 +156,7 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           clearance_id: form.clearanceId.trim().toUpperCase(),
-          agency_id:    form.agencyId.trim().toUpperCase(),
+          hub_id:       form.agencyId.trim().toUpperCase(),
           email:        form.email.trim().toLowerCase(),
           totp_code:    form.totp.trim(),
         }),
@@ -233,7 +236,7 @@ export default function LoginPage() {
               {stage === 'identify' ? (
                 <>
                   <Field label="Mission Clearance ID"><input required type="text" value={form.clearanceId} onChange={set('clearanceId')} onFocus={fo('clearanceId')} onBlur={bl} placeholder="E.G. REG-SEC-X92F" style={f('clearanceId')} /></Field>
-                  <Field label="Agency Hub ID"><input required type="text" value={form.agencyId} onChange={set('agencyId')} onFocus={fo('agencyId')} onBlur={bl} placeholder="SEC, RBI, NIST..." style={f('agencyId')} /></Field>
+                  <Field label="Agency Name"><input required type="text" value={form.agencyId} onChange={set('agencyId')} onFocus={fo('agencyId')} onBlur={bl} placeholder="SEC, RBI, NIST..." style={f('agencyId')} /></Field>
                   <Field label="Your Official Email"><input required type="email" value={form.email} onChange={set('email')} onFocus={fo('email')} onBlur={bl} placeholder="auditor@regulator.gov" style={f('email')} /></Field>
                 </>
               ) : (
@@ -251,16 +254,12 @@ export default function LoginPage() {
             <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <Field label="Your Full Name"><input required type="text" value={form.displayName} onChange={set('displayName')} placeholder="YOUR FULL NAME" style={f('dn')} /></Field>
               <Field label="Your Official Email"><input required type="email" value={form.email} onChange={set('email')} placeholder="auditor@regulator.gov" style={f('em')} /></Field>
-              <Field label="Requested Agency ID"><input required type="text" value={form.agencyId} onChange={set('agencyId')} placeholder="E.G. SEC, RBI" style={f('ai')} /></Field>
-              <Field label="Jurisdiction">
+              <Field label="Requested Agency Name"><input required type="text" value={form.agencyId} onChange={set('agencyId')} placeholder="E.G. SEC, RBI" style={f('ai')} /></Field>
+              <Field label="Jurisdiction (Nation State)">
                 <select required value={form.jurisdiction} onChange={set('jurisdiction')} style={{ ...f('jx'), appearance: 'none' }}>
-                  <option value="">Select Jurisdiction</option>
+                  <option value="">Select Nation</option>
                   {jurisdictionData.map(jx => (
-                    <optgroup key={jx.id} label={jx.label}>
-                      {jx.departments.map(dept => (
-                        <option key={dept.id} value={dept.id}>{dept.label}</option>
-                      ))}
-                    </optgroup>
+                    <option key={jx.id} value={jx.id}>{jx.label}</option>
                   ))}
                 </select>
               </Field>
@@ -271,7 +270,7 @@ export default function LoginPage() {
           )}
 
           <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11, color: TOKEN.txtD, fontFamily: TOKEN.mono }}>
-            ENFORCEMENT PRIORITY: 01 · SYSTEM_VERSION: v5.1.0-OVERSIGHT
+            ENFORCEMENT PRIORITY: 01 · SYSTEM_VERSION: v5.0.2-OVERSIGHT // WEB_v1
           </div>
         </div>
       </div>
