@@ -236,21 +236,59 @@
   <script>
     const markerColors = ['#06B6D4', '#C9A84C', '#F1F5F9'];
     
+    // Node cities for the mesh network
+    const cities = [
+      { lat: 40.71, lng: -74.00, label: 'US_EAST_01', region: 'NA' },
+      { lat: 51.50, lng: -0.12, label: 'EU_WEST_02', region: 'EU' },
+      { lat: 19.07, lng: 72.87, label: 'AP_SOUTH_01', region: 'IN' },
+      { lat: 1.35, lng: 103.81, label: 'AP_SG_01', region: 'SG' },
+      { lat: 35.67, lng: 139.65, label: 'AP_EAST_01', region: 'JP' },
+      { lat: 25.20, lng: 55.27, label: 'ME_UAE_01', region: 'ME' },
+      { lat: -33.86, lng: 151.20, label: 'AP_AU_01', region: 'AU' }
+    ];
+
+    // Build arcs between all node pairs for relay visualization
+    function generateArcs() {
+      const arcs = [];
+      for (let i = 0; i < cities.length; i++) {
+        for (let j = i + 1; j < cities.length; j++) {
+          if (Math.random() > 0.4) {
+            arcs.push({
+              startLat: cities[i].lat,
+              startLng: cities[i].lng,
+              endLat: cities[j].lat,
+              endLng: cities[j].lng,
+              color: [`rgba(6, 182, 212, 0.6)`, `rgba(6, 182, 212, 0.05)`]
+            });
+          }
+        }
+      }
+      return arcs;
+    }
+
+    // Ring pulse data (concentric rings around each node)
+    const ringData = cities.map(c => ({
+      lat: c.lat, lng: c.lng, maxR: 3, propagationSpeed: 2, repeatPeriod: 4000
+    }));
+
     // 1. GLOBE INITIALIZATION (NOC V5.0.2 TERMINAL MESH)
     const globe = Globe()
       (document.getElementById('globe-viz'))
       .backgroundColor('#030308')
       .showAtmosphere(true)
       .atmosphereColor('#06B6D4')
-      .atmosphereDaylightOpacity(0.12)
-      .baseColor('#050a18')
+      .atmosphereAltitude(0.25)
+      // Globe surface — dark terminal look via custom image
+      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
       .showGraticules(true)
-      .graticulesLineColor(() => 'rgba(6, 182, 212, 0.08)')
-      // Terminal Hex-Polygon Layer
+      .graticulesLineColor(() => 'rgba(6, 182, 212, 0.06)')
+
+      // Terminal Hex-Polygon Layer (countries)
       .hexPolygonsData([])
       .hexPolygonResolution(3)
-      .hexPolygonMargin(0.2)
-      .hexPolygonColor(() => 'rgba(6, 182, 212, 0.4)')
+      .hexPolygonMargin(0.62)
+      .hexPolygonUseDots(true)
+      .hexPolygonColor(() => 'rgba(6, 182, 212, 0.35)')
       .hexPolygonLabel(({ properties: p }) => `
         <div style="background: rgba(15,23,42,0.95); border: 1px solid #06B6D4; padding: 12px; border-radius: 8px; backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0,0,0,0.6);">
           <div style="font-size: 10px; color: #06B6D4; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 800;">SECTOR_ACTIVE</div>
@@ -259,8 +297,50 @@
           <div style="font-size: 11px; color: #94a3b8;"><span style="color: #10b981;">●</span> COMPLIANCE_NODES: OK</div>
         </div>
       `)
-      .pointsData(generatePoints())
-      .arcsData(generateArcs());
+
+      // Node markers — glowing cyan points at each Spoke city
+      .pointsData(cities)
+      .pointLat('lat')
+      .pointLng('lng')
+      .pointColor(() => '#06B6D4')
+      .pointAltitude(0.01)
+      .pointRadius(0.35)
+      .pointsMerge(true)
+      .pointLabel(d => `
+        <div style="background: rgba(3,3,8,0.92); border: 1px solid #06B6D4; padding: 10px 14px; font-family: 'JetBrains Mono', monospace; backdrop-filter: blur(12px);">
+          <div style="font-size: 9px; color: #06B6D4; letter-spacing: 0.15em; font-weight: 700;">${d.label}</div>
+          <div style="font-size: 10px; color: #94A3B8; margin-top: 4px;">STATUS: <span style="color: #10b981;">● LIVE</span></div>
+        </div>
+      `)
+
+      // Relay arcs — animated dashed lines between nodes
+      .arcsData(generateArcs())
+      .arcColor('color')
+      .arcDashLength(0.4)
+      .arcDashGap(0.2)
+      .arcDashAnimateTime(2500)
+      .arcStroke(0.3)
+
+      // Ring pulses at each node
+      .ringsData(ringData)
+      .ringLat('lat')
+      .ringLng('lng')
+      .ringColor(() => t => `rgba(6, 182, 212, ${1 - t})`)
+      .ringMaxRadius('maxR')
+      .ringPropagationSpeed('propagationSpeed')
+      .ringRepeatPeriod('repeatPeriod');
+
+    // Apply custom globe material for the dark terminal aesthetic
+    const globeMaterial = globe.globeMaterial();
+    globeMaterial.bumpScale = 10;
+    new THREE.TextureLoader().load(
+      '//unpkg.com/three-globe/example/img/earth-water.png',
+      texture => {
+        globeMaterial.specularMap = texture;
+        globeMaterial.specular = new THREE.Color('#06B6D4');
+        globeMaterial.shininess = 8;
+      }
+    );
 
     // Fetch Tactical Geopolitical Data (Standardised Source)
     fetch('//unpkg.com/three-globe/example/datasets/ne_110m_admin_0_countries.geojson')
@@ -282,33 +362,6 @@
       tbControls.update();
       requestAnimationFrame(frame);
     })();
-
-    function generatePoints() {
-      const gpts = [];
-      const cities = [
-        { lat: 40.71, lng: -74.00 }, // NY
-        { lat: 51.50, lng: -0.12 },  // London
-        { lat: 19.07, lng: 72.87 },  // Mumbai
-        { lat: 1.35, lng: 103.81 },  // Singapore
-        { lat: 35.67, lng: 139.65 }, // Tokyo
-        { lat: 25.20, lng: 55.27 },   // Dubai
-        { lat: -33.86, lng: 151.20 } // Sydney
-      ];
-      return cities.map(c => ({ ...c, size: 0.1 }));
-    }
-
-    function generateArcs() {
-      const arcs = [];
-      for (let i = 0; i < 6; i++) {
-        arcs.push({
-          startLat: 40.71 + (Math.random() - 0.5) * 10,
-          startLng: -74.00 + (Math.random() - 0.5) * 10,
-          endLat: 51.50 + (Math.random() - 0.5) * 80,
-          endLng: -0.12 + (Math.random() - 0.5) * 180,
-        });
-      }
-      return arcs;
-    }
 
     // --- 2. NOC TOGGLE ---
     function toggleNOC() {

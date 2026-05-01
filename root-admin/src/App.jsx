@@ -3,7 +3,9 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import { AuthProvider } from './contexts/AuthContext'
 import Dashboard from './pages/Dashboard'
 import ProvisioningPortal from './pages/ProvisioningPortal'
+import AuditorManagement from './pages/AuditorManagement'
 import LiveNOC from './pages/LiveNOC'
+import PendingApprovals from './pages/PendingApprovals'
 import { GlobalTelemetry, FleetInspection, BillingSubscriptions, CryptographicEngine, IdentityResolution, IdentityRecovery, NetworkOverrides } from './pages/StubPages'
 
 // ─── Icons (inline SVG) ───────────────────────────────────────────────────────
@@ -18,6 +20,7 @@ const Icon = {
   recovery: <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd"/></svg>,
   network: <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd"/></svg>,
   noc: <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>,
+  approve: <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>,
 }
 
 const navItems = [
@@ -30,9 +33,16 @@ const navItems = [
     ]
   },
   {
+    section: 'ACCESS MANAGEMENT',
+    items: [
+      { label: 'Pending Approvals', path: '/approvals', icon: Icon.approve },
+    ]
+  },
+  {
     section: 'SAAS CONTROL PLANE',
     items: [
-      { label: 'Fleet Provisioning', path: '/provisioning', icon: Icon.plus },
+      { label: 'Enterprise Nodes', path: '/provisioning', icon: Icon.plus },
+      { label: 'Regulatory Officials', path: '/auditors', icon: Icon.id },
       { label: 'Billing & Subscriptions', path: '/billing', icon: Icon.billing },
     ]
   },
@@ -203,6 +213,8 @@ export default function App() {
         <Route path="/telemetry"         element={<Layout><GlobalTelemetry /></Layout>} />
         <Route path="/fleet"             element={<Layout><FleetInspection /></Layout>} />
         <Route path="/provisioning"      element={<Layout><ProvisioningPortal /></Layout>} />
+        <Route path="/auditors"          element={<Layout><AuditorManagement /></Layout>} />
+        <Route path="/approvals"         element={<Layout><PendingApprovals /></Layout>} />
         <Route path="/billing"           element={<Layout><BillingSubscriptions /></Layout>} />
         <Route path="/identity"          element={<Layout><IdentityResolution /></Layout>} />
         <Route path="/identity-recovery" element={<Layout><IdentityRecovery /></Layout>} />

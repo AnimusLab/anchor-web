@@ -127,7 +127,7 @@ export default function LoginPage() {
       payload.append('display_name', form.displayName);
       payload.append('email', form.email);
       payload.append('jurisdiction', form.jurisdiction);
-      payload.append('department', form.department);
+      payload.append('department', form.agencyId || 'General');
 
       const res = await fetch(`${API_BASE}/api/auth/register/auditor`, {
         method: 'POST',
@@ -140,8 +140,8 @@ export default function LoginPage() {
         const errorMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail) || 'Registration failed.';
         setError(errorMsg);
       }
-    } catch {
-      setError('Connection failed.')
+    } catch (err) {
+      setError('Connection failed: ' + (err.message || 'Server unreachable.'))
     } finally {
       setLoading(false)
     }

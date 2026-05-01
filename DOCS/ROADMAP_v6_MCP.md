@@ -45,3 +45,5 @@ Anchor becomes the **Standard Operating System for AI Compliance**. Companies wo
 
 > [!IMPORTANT]
 > This is slated for **v6.0**. Our current focus (v5.0) is the hardening of the Control Plane (User Dashboard) and the Data Plane (SDK Telemetry).
+
+

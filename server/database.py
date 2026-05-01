@@ -61,6 +61,7 @@ def run_migrations():
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret VARCHAR;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS hashed_pass VARCHAR;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token VARCHAR;",
     ]
 
     # Only run ALTER TABLE on Postgres (SQLite doesn't support IF NOT EXISTS)

@@ -40,7 +40,16 @@ if not ANCHOR_MASTER_KEY:
 
 # Jurisdiction → entity_prefix mapping
 JURISDICTION_PREFIX = {
+    "USA": "reg_sec",
+    "INDIA": "reg_rbi",
+    "UK": "reg_fca",
+    "EU": "reg_eu",
+    "AE": "reg_uae",
+    "SG": "reg_sg",
     "FCA": "fca",
+    "SEC": "sec",
+    "RBI": "rbi",
+    "SEBI": "sebi",
 }
 
 # --- ROOT ACCESS BYPASS STORAGE ---
@@ -675,7 +684,7 @@ def verify_email(token: str = Query(...), db: Session = Depends(get_db)):
 
     if user.email_verified:
         return HTMLResponse(
-            content=_verification_page("ALREADY VERIFIED", f"Email for {user.entity_id} has already been verified. You can log in.", True),
+            content=_verification_page("ALREADY VERIFIED", f"Email for {user.clearance_id or user.id} has already been verified. You can log in.", True),
             status_code=200
         )
 
@@ -688,7 +697,7 @@ def verify_email(token: str = Query(...), db: Session = Depends(get_db)):
         content=_verification_page(
             "EMAIL VERIFIED",
             f"Welcome, {user.display_name}. Your email has been confirmed. "
-            f"You now have temporary access. Log in with your Entity ID ({user.entity_id}) and Secret Key. "
+            f"You now have temporary access. Log in with your Entity ID ({user.clearance_id or user.id}) and Secret Key. "
             f"Full access will be granted after Master Node administrator approval.",
             True
         ),
@@ -727,7 +736,7 @@ def approve_user(
 ):
     """Admin endpoint to approve a pending auditor. 
     Automates credential generation and email dispatch."""
-    user = db.query(User).filter(User.entity_id == target_entity_id).first()
+    user = db.query(User).filter(User.clearance_id == target_entity_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="USER NOT FOUND")
 
@@ -765,7 +774,7 @@ def approve_user(
     send_auditor_provisioned(
         to_email=user.email,
         display_name=user.display_name,
-        entity_id=user.entity_id,
+        entity_id=user.clearance_id or user.id,
         regulator=user.jurisdiction or "Authority",
         qr_base64=qr_base64
     )
@@ -780,7 +789,7 @@ def revoke_user(
     db: Session = Depends(get_db)
 ):
     """Admin endpoint to revoke a user's access."""
-    user = db.query(User).filter(User.entity_id == target_entity_id).first()
+    user = db.query(User).filter(User.clearance_id == target_entity_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="USER NOT FOUND")
 

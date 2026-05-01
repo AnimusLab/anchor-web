@@ -265,3 +265,9 @@ body::before {
 }
 .ra-table tr:last-child td { border-bottom: none; }
 .ra-table tr:hover td { background: var(--bg-card-hover); color: var(--text-primary); }
+
+/* Pulse animation for attention badges */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}

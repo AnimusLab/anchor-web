@@ -88,6 +88,7 @@ class User(Base):
     jurisdiction = Column(String, nullable=True)                  # "US", "IN", "EU"
     status       = Column(String, default="pending")
     email_verified = Column(Boolean, default=False)
+    verification_token = Column(String, nullable=True)             # One-time email verification token
     created_at   = Column(String, nullable=False)
 
     organization = relationship("Organization", back_populates="members")
