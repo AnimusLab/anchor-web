@@ -288,18 +288,17 @@ def provision_auditor(
     reg_org = db.query(Organization).filter(Organization.entity_prefix == request.regulator.lower()).first()
     org_id = reg_org.id if reg_org else None
 
-    # 4. Create User in 'pending' state
+    # 4. Create User in 'approved' state (manually provisioned)
     official = User(
-        id=f"usr_{secrets.token_hex(4)}",
+        id=entity_id, # Clearance ID is the primary ID
         email=request.email.strip().lower(),
         display_name=request.display_name,
         org_id=org_id,
         role="regulator",
-        clearance_id=entity_id,
         department=request.department,
         jurisdiction=request.jurisdiction,
         totp_secret=totp_secret,
-        status="active", # Pre-approved by Root
+        status="approved", 
         email_verified=True,
         created_at=datetime.utcnow().isoformat()
     )
@@ -364,14 +363,14 @@ def provision_enterprise(
     if not owner:
         totp_secret = pyotp.random_base32()
         owner = User(
-            id=f"usr_{secrets.token_hex(4)}",
+            id=entity_id, # Clearance ID is the primary ID
             email=request.email.strip().lower(),
             org_id=org_id,
             display_name=request.display_name,
             role="owner",
             department=request.department,
             totp_secret=totp_secret,
-            status="active",
+            status="approved",
             email_verified=True,
             created_at=datetime.utcnow().isoformat()
         )
@@ -520,12 +519,12 @@ def register_organization(
     
     # 4. Create Owner Account (Pending Approval)
     user = User(
-        id=f"usr_{secrets.token_hex(4)}",
+        id=f"own_{secrets.token_hex(3)}", # Generate owner-style Clearance ID
         email=email.strip().lower(),
         org_id=org_id,
         display_name=display_name,
         role="owner",
-        status="pending", # Decision Log: Initial state is always pending
+        status="pending",
         email_verified=True,
         created_at=datetime.utcnow().isoformat()
     )
@@ -630,14 +629,13 @@ def register_auditor(
     prefix = JURISDICTION_PREFIX.get(jurisdiction.upper(), "reg_other")
     clearance_id = f"{prefix}_{secrets.token_hex(3)}"
 
-    # Create pending user — no credentials yet (admin provisions them on approval)
+    # Create pending user with patterned Clearance ID
     user = User(
-        id=f"usr_{secrets.token_hex(4)}",
+        id=clearance_id, # Clearance ID is the primary ID
         email=email.strip().lower(),
         display_name=display_name,
         department=department,
         jurisdiction=jurisdiction,
-        clearance_id=clearance_id,
         role="regulator",
         status="pending",
         email_verified=False,
@@ -727,16 +725,12 @@ def _verification_page(title: str, message: str, success: bool) -> str:
 
 @auth_router.post("/approve")
 def approve_user(
-    target_entity_id: str = Form(...),
+    target_id: str = Form(..., alias="target_entity_id"),
     current_user: dict = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
-    """Admin endpoint to approve a pending auditor or enterprise owner. 
-    Automates credential generation and email dispatch."""
-    from sqlalchemy import or_
-    user = db.query(User).filter(
-        or_(User.id == target_entity_id, User.clearance_id == target_entity_id)
-    ).first()
+    """Admin endpoint to approve a pending user using their Clearance ID."""
+    user = db.query(User).filter(User.id == target_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="USER NOT FOUND")
 
@@ -784,15 +778,12 @@ def approve_user(
 
 @auth_router.post("/revoke")
 def revoke_user(
-    target_entity_id: str = Form(...),
+    target_id: str = Form(..., alias="target_entity_id"),
     current_user: dict = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
-    """Admin endpoint to revoke a user's access."""
-    from sqlalchemy import or_
-    user = db.query(User).filter(
-        or_(User.id == target_entity_id, User.clearance_id == target_entity_id)
-    ).first()
+    """Admin endpoint to revoke a user's access via Clearance ID."""
+    user = db.query(User).filter(User.id == target_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="USER NOT FOUND")
 
@@ -807,13 +798,10 @@ def get_pending_users(
     db: Session = Depends(get_db)
 ):
     """Admin endpoint to list all pending access requests with full onboarding context."""
-    pending = db.query(User).filter(User.status == "pending").all()
     results = []
     for u in pending:
         entry = {
-            "id": u.id,
-            "entity_id": u.clearance_id or u.id,
-            "clearance_id": u.clearance_id,
+            "id": u.id, # This is the Clearance ID
             "display_name": u.display_name,
             "email": u.email,
             "role": u.role,
@@ -949,13 +937,12 @@ def accept_invite(
     hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     
     user = User(
-        id=f"usr_{secrets.token_hex(4)}",
+        id=invite.clearance_id, # Use the cryptographically pinned Clearance ID as primary ID
         email=invite.invited_email,
         org_id=invite.org_id,
-        clearance_id=invite.clearance_id, # Cryptographically pinned Clearance ID
         display_name=display_name,
         role=invite.role,
-        department=invite.target_project, # Temporary mapping of project to dept
+        department=invite.target_project,
         hashed_pass=hashed,
         status="active",
         email_verified=True,

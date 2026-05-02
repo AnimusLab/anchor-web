@@ -299,14 +299,14 @@ export default function PendingApprovals() {
                         <DetailCell label="Company" value={p.org_name || '—'} />
                         <DetailCell label="Hub ID" value={p.org_hub_id || '—'} mono />
                         <DetailCell label="Region" value={p.org_region || '—'} />
-                        <DetailCell label="User ID" value={p.id} mono />
+                        <DetailCell label="Clearance ID" value={p.id} mono accent />
                       </>
                     ) : (
                       <>
-                        <DetailCell label="Clearance ID" value={p.clearance_id || '—'} mono accent />
+                        <DetailCell label="Clearance ID" value={p.id || '—'} mono accent />
                         <DetailCell label="Jurisdiction" value={p.jurisdiction || '—'} />
                         <DetailCell label="Agency / Dept" value={p.department || '—'} />
-                        <DetailCell label="User ID" value={p.id} mono />
+                        <DetailCell label="Status" value={p.status || 'pending'} />
                       </>
                     )}
                   </div>

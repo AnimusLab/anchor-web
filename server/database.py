@@ -140,12 +140,11 @@ def seed_mesh_identities(db):
         user = db.query(User).filter(User.email == u_cfg["email"]).first()
         if not user:
             user = User(
-                id=f"usr_{secrets.token_hex(4)}",
+                id=u_cfg["oid"], # Clearance ID is the primary ID
                 email=u_cfg["email"],
                 display_name=u_cfg["name"],
                 role=u_cfg["role"],
                 org_id=u_cfg["org_id"],
-                clearance_id=u_cfg["oid"],
                 totp_secret=test_secret,
                 status="approved",
                 email_verified=True,

@@ -136,37 +136,46 @@ def get_oversight_admin(
 # Login
 # ---------------------------------------------------------------------------
 
+from database import get_db
+from models import User
+
 @oversight_router.post("/login")
-def oversight_login(body: OversightLoginRequest, request: Request):
+def oversight_login(body: OversightLoginRequest, db: Session = Depends(get_db), request: Request = None):
     """
-    Validates clearance_id + agency_id + email + 6-digit TOTP code.
-    Multi-parameter identity handshake for regulatory access.
+    Validates Clearance ID + hub_id + email + 6-digit TOTP code.
+    handshake for regulatory access using the SQL backend.
     """
-    # 1. Validate identity triple against master config
-    auditor = lookup_auditor(
-        body.clearance_id.strip().upper(), 
-        body.hub_id.strip().upper(), 
-        body.email.strip()
-    )
-    if not auditor:
+    # 1. Validate identity against SQL database
+    # Clearance ID is now the primary User.id
+    user = db.query(User).filter(
+        User.id == body.clearance_id.strip(),
+        User.email == body.email.strip().lower(),
+        User.role == "regulator",
+        User.status == "approved"
+    ).first()
+
+    if not user:
         raise HTTPException(status_code=401, detail="IDENTITY VERIFICATION FAILED")
 
     # 2. Validate TOTP code
-    totp = pyotp.TOTP(auditor["totp_secret"])
+    if not user.totp_secret:
+        raise HTTPException(status_code=401, detail="MFA NOT PROVISIONED")
+
+    totp = pyotp.TOTP(user.totp_secret)
     if not totp.verify(body.totp_code.strip(), valid_window=1):
         raise HTTPException(status_code=401, detail="IDENTITY VERIFICATION FAILED")
 
-    # 3. Log session start with IP + User-Agent
-    ip         = request.client.host if request.client else "unknown"
-    user_agent = request.headers.get("user-agent", "unknown")
-    session_id = log_session_start(body.clearance_id.strip().upper(), ip, user_agent)
+    # 3. Log session start
+    ip         = request.client.host if (request and request.client) else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown") if request else "unknown"
+    session_id = log_session_start(user.id, ip, user_agent)
 
     # 4. Issue oversight-scoped JWT
     token = _issue_oversight_jwt(
-        entity_id    = auditor["entity_id"],
-        display_name = auditor["display_name"],
-        regulator    = auditor["regulator"],
-        access_level = auditor["access_level"],
+        entity_id    = user.id,
+        display_name = user.display_name,
+        regulator    = user.jurisdiction or "Oversight",
+        access_level = "READ_ONLY", # Default for now
         session_id   = session_id,
     )
 
@@ -220,32 +229,48 @@ def oversight_logout(current_user: dict = Depends(get_oversight_user)):
 @oversight_router.post("/admin/provision")
 def provision_new_auditor(
     body:          ProvisionRequest,
+    db:            Session = Depends(get_db),
     current_admin: dict = Depends(get_oversight_admin),
 ):
     """
-    [Admin only] Provisions a new auditor into master_config.
-    Returns the entity_id + TOTP provisioning URI for QR code display.
-    The TOTP secret is stored encrypted — this is the ONLY time it's shown.
+    [Admin only] Provisions a new auditor directly into the SQL database.
     """
     if body.regulator.upper() not in {
         "SEC", "RBI", "SEBI", "FCA", "CFPB", "EU", "NIST", "FINOS"
     }:
         raise HTTPException(status_code=400, detail="UNKNOWN REGULATOR")
 
-    record = provision_auditor(
-        display_name   = body.display_name,
-        email          = body.email,
-        regulator      = body.regulator,
-        jurisdiction   = body.jurisdiction,
-        access_level   = body.access_level,
-        provisioned_by = current_admin["sub"],
-    )
+    # Generate Clearance ID pattern: {REGULATOR}-{NAME}-{DDMM}
+    import re
+    name_clean = "".join(p for p in body.display_name.upper().split() if p.isalpha())[:12]
+    ddmm = datetime.now(timezone.utc).strftime("%d%m")
+    clearance_id = f"{body.regulator.upper()}-{name_clean}-{ddmm}"
+    
+    # Check for duplicate
+    if db.query(User).filter(User.id == clearance_id).first():
+        clearance_id = f"{clearance_id}-{secrets.token_hex(2)}"
 
-    # Generate the provisioning URI (for QR code in root dashboard)
-    totp        = pyotp.TOTP(record["totp_secret"])
+    totp_secret = pyotp.random_base32()
+    
+    user = User(
+        id=clearance_id,
+        email=body.email.strip().lower(),
+        display_name=body.display_name,
+        role="regulator",
+        jurisdiction=body.jurisdiction,
+        department=body.regulator,
+        totp_secret=totp_secret,
+        status="approved",
+        email_verified=True,
+        created_at=datetime.now(timezone.utc).isoformat()
+    )
+    db.add(user)
+    db.commit()
+
+    # Generate the provisioning URI
     issuer_name = "Anchor Oversight"
-    totp_uri    = totp.provisioning_uri(
-        name   = record["email_hash"][:8],  # Don't embed plain email in URI
+    totp_uri    = pyotp.TOTP(totp_secret).provisioning_uri(
+        name   = body.email.strip().lower(),
         issuer_name = issuer_name,
     )
 

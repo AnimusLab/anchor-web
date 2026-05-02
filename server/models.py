@@ -72,10 +72,10 @@ class LedgerEntry(Base):
 
 # --- 4. USERS & RBAC ---
 class User(Base):
-    """v5.0 Personal Identity — Links to an Organization."""
+    """v5.0 Personal Identity — The 'id' field is the cryptographically pinned Clearance ID."""
     __tablename__ = "users"
 
-    id           = Column(String, primary_key=True)               # "usr_a1b2..."
+    id           = Column(String, primary_key=True)               # "aud_...", "own_...", "usr_..."
     email        = Column(String, unique=True, index=True)        # Personal/Work Email
     org_id       = Column(String, ForeignKey("organizations.id")) # Parent Org
     display_name = Column(String, nullable=False)
@@ -83,7 +83,6 @@ class User(Base):
     hashed_pass  = Column(String, nullable=True)                  # Optional for regulators
     totp_secret  = Column(String, nullable=True)                  # Google Authenticator Secret
     avatar_url   = Column(String, nullable=True)                  # Instagram-like Profile Pix
-    clearance_id = Column(String, nullable=True)                  # "SEC-JHONDOC-2604"
     department   = Column(String, nullable=True)                  # "Compliance", "Lending AI", etc.
     jurisdiction = Column(String, nullable=True)                  # "US", "IN", "EU"
     status       = Column(String, default="pending")
@@ -99,10 +98,10 @@ class OrgInvite(Base):
     """v5.0 Pending invitations for team members."""
     __tablename__ = "org_invites"
 
-    id             = Column(String, primary_key=True)               # UUID token
+    id             = Column(String, primary_key=True)               # UUID token / Invite Code
     org_id         = Column(String, ForeignKey("organizations.id")) # Link to parent org
     invited_email  = Column(String, nullable=False)
-    clearance_id   = Column(String, nullable=True)                  # The assigned tactical ID
+    clearance_id   = Column(String, nullable=False)                 # The ID assigned to the user upon acceptance
     target_project = Column(String, nullable=True)                  # Project name/ID
     role           = Column(String, default="member")               # "admin", "lead", "member"
     status         = Column(String, default="pending")               # "pending", "accepted", "expired"
