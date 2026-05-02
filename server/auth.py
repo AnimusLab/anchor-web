@@ -731,9 +731,12 @@ def approve_user(
     current_user: dict = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
-    """Admin endpoint to approve a pending auditor. 
+    """Admin endpoint to approve a pending auditor or enterprise owner. 
     Automates credential generation and email dispatch."""
-    user = db.query(User).filter(User.clearance_id == target_entity_id).first()
+    from sqlalchemy import or_
+    user = db.query(User).filter(
+        or_(User.id == target_entity_id, User.clearance_id == target_entity_id)
+    ).first()
     if not user:
         raise HTTPException(status_code=404, detail="USER NOT FOUND")
 
@@ -786,7 +789,10 @@ def revoke_user(
     db: Session = Depends(get_db)
 ):
     """Admin endpoint to revoke a user's access."""
-    user = db.query(User).filter(User.clearance_id == target_entity_id).first()
+    from sqlalchemy import or_
+    user = db.query(User).filter(
+        or_(User.id == target_entity_id, User.clearance_id == target_entity_id)
+    ).first()
     if not user:
         raise HTTPException(status_code=404, detail="USER NOT FOUND")
 
@@ -800,10 +806,12 @@ def get_pending_users(
     current_user: dict = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
-    """Admin endpoint to list all pending access requests."""
+    """Admin endpoint to list all pending access requests with full onboarding context."""
     pending = db.query(User).filter(User.status == "pending").all()
-    return [
-        {
+    results = []
+    for u in pending:
+        entry = {
+            "id": u.id,
             "entity_id": u.clearance_id or u.id,
             "clearance_id": u.clearance_id,
             "display_name": u.display_name,
@@ -813,9 +821,19 @@ def get_pending_users(
             "jurisdiction": u.jurisdiction,
             "email_verified": u.email_verified,
             "created_at": u.created_at,
+            "org_name": None,
+            "org_hub_id": None,
+            "org_region": None,
         }
-        for u in pending
-    ]
+        # Attach org details for enterprise users
+        if u.org_id:
+            org = db.query(Organization).filter(Organization.id == u.org_id).first()
+            if org:
+                entry["org_name"] = org.display_name
+                entry["org_hub_id"] = org.hub_id
+                entry["org_region"] = org.server_region
+        results.append(entry)
+    return results
 
 
 @auth_router.get("/admin/orgs")

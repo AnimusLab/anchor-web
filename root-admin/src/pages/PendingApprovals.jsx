@@ -2,6 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { endpoints } from '../lib/api';
 
+function DetailCell({ label, value, mono, accent }) {
+  return (
+    <div style={{ padding: '10px 16px', background: 'var(--bg-card)' }}>
+      <div style={{
+        fontSize: 10, fontWeight: 600, color: 'var(--text-dim)',
+        textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3,
+      }}>{label}</div>
+      <div style={{
+        fontSize: 12, color: accent ? 'var(--cyan-soft)' : 'var(--text-secondary)',
+        fontFamily: mono ? 'JetBrains Mono, monospace' : 'inherit',
+        fontWeight: mono ? 500 : 400,
+      }}>{value}</div>
+    </div>
+  );
+}
 export default function PendingApprovals() {
   const { token } = useAuth();
   const [pending, setPending] = useState([]);
@@ -203,91 +218,101 @@ export default function PendingApprovals() {
             </div>
           </div>
         ) : (
-          <div style={{ overflowY: 'auto', maxHeight: 520 }}>
-            <table className="ra-table">
-              <thead>
-                <tr>
-                  <th>Applicant</th>
-                  <th>Email</th>
-                  <th>Type</th>
-                  <th>Email Status</th>
-                  <th>Submitted</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((p, i) => {
-                  const badge = getRoleBadge(p.role);
-                  const id = p.entity_id || p.clearance_id || p.id;
-                  return (
-                    <tr key={id || i} className="slide-in">
-                      <td>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{p.display_name}</div>
-                        <div style={{
-                          fontSize: 10, color: 'var(--text-dim)',
-                          fontFamily: 'JetBrains Mono, monospace',
-                        }}>
-                          {id || '—'}
-                        </div>
-                      </td>
-                      <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{p.email}</td>
-                      <td>
-                        <span className={`badge ${badge.cls}`}>{badge.label}</span>
-                      </td>
-                      <td>
-                        {p.email_verified ? (
-                          <span className="badge badge-green">VERIFIED</span>
-                        ) : (
-                          <span className="badge badge-red">UNVERIFIED</span>
-                        )}
-                      </td>
-                      <td style={{
-                        fontSize: 12, color: 'var(--text-dim)',
-                        fontFamily: 'JetBrains Mono, monospace',
-                      }}>
+          <div style={{ overflowY: 'auto', maxHeight: 600 }}>
+            {filtered.map((p, i) => {
+              const badge = getRoleBadge(p.role);
+              const approveId = p.id || p.entity_id;
+              const isEnterprise = p.role !== 'regulator';
+
+              return (
+                <div key={approveId || i} className="ra-card slide-in" style={{
+                  margin: '0 16px 12px', padding: 0, overflow: 'hidden',
+                  borderColor: approving === approveId ? 'rgba(16,185,129,0.3)' : undefined,
+                }}>
+                  {/* Main row */}
+                  <div style={{
+                    display: 'grid', gridTemplateColumns: '1fr 1fr auto',
+                    gap: 16, padding: '16px 20px', alignItems: 'center',
+                  }}>
+                    {/* Identity */}
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+                        {p.display_name}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{p.email}</div>
+                    </div>
+
+                    {/* Type badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span className={`badge ${badge.cls}`}>{badge.label}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'JetBrains Mono, monospace' }}>
                         {p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                          <button
-                            onClick={() => handleApprove(id, p.display_name)}
-                            disabled={approving === id}
-                            style={{
-                              padding: '6px 14px', borderRadius: 5, fontSize: 11, fontWeight: 700,
-                              border: '1px solid rgba(16,185,129,0.3)',
-                              background: 'rgba(16,185,129,0.08)',
-                              color: 'var(--green-soft)', cursor: 'pointer',
-                              opacity: approving === id ? 0.4 : 1,
-                              transition: 'all 0.15s',
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.2)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.08)'; }}
-                          >
-                            {approving === id ? 'PROCESSING...' : '✓ APPROVE'}
-                          </button>
-                          <button
-                            onClick={() => handleReject(id, p.display_name)}
-                            disabled={approving === id}
-                            style={{
-                              padding: '6px 14px', borderRadius: 5, fontSize: 11, fontWeight: 700,
-                              border: '1px solid rgba(239,68,68,0.2)',
-                              background: 'transparent',
-                              color: 'var(--text-dim)', cursor: 'pointer',
-                              opacity: approving === id ? 0.4 : 1,
-                              transition: 'all 0.15s',
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--red-soft)'; e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-dim)'; e.currentTarget.style.background = 'transparent'; }}
-                          >
-                            REJECT
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => handleApprove(approveId, p.display_name)}
+                        disabled={approving === approveId}
+                        style={{
+                          padding: '7px 18px', borderRadius: 5, fontSize: 11, fontWeight: 700,
+                          border: '1px solid rgba(16,185,129,0.3)',
+                          background: 'rgba(16,185,129,0.08)',
+                          color: 'var(--green-soft)', cursor: 'pointer',
+                          opacity: approving === approveId ? 0.4 : 1,
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.2)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.08)'; }}
+                      >
+                        {approving === approveId ? 'PROCESSING...' : '✓ APPROVE'}
+                      </button>
+                      <button
+                        onClick={() => handleReject(approveId, p.display_name)}
+                        disabled={approving === approveId}
+                        style={{
+                          padding: '7px 18px', borderRadius: 5, fontSize: 11, fontWeight: 700,
+                          border: '1px solid rgba(239,68,68,0.15)',
+                          background: 'transparent',
+                          color: 'var(--text-dim)', cursor: 'pointer',
+                          opacity: approving === approveId ? 0.4 : 1,
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.color = 'var(--red-soft)'; e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-dim)'; e.currentTarget.style.background = 'transparent'; }}
+                      >
+                        REJECT
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Detail row */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: isEnterprise ? 'repeat(4, 1fr)' : 'repeat(4, 1fr)',
+                    gap: 1, borderTop: '1px solid var(--border)',
+                    background: 'var(--bg-void)',
+                  }}>
+                    {isEnterprise ? (
+                      <>
+                        <DetailCell label="Company" value={p.org_name || '—'} />
+                        <DetailCell label="Hub ID" value={p.org_hub_id || '—'} mono />
+                        <DetailCell label="Region" value={p.org_region || '—'} />
+                        <DetailCell label="User ID" value={p.id} mono />
+                      </>
+                    ) : (
+                      <>
+                        <DetailCell label="Clearance ID" value={p.clearance_id || '—'} mono accent />
+                        <DetailCell label="Jurisdiction" value={p.jurisdiction || '—'} />
+                        <DetailCell label="Agency / Dept" value={p.department || '—'} />
+                        <DetailCell label="User ID" value={p.id} mono />
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
