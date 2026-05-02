@@ -618,40 +618,37 @@ def register_auditor(
     department: str = Form("General"),
     db: Session = Depends(get_db)
 ):
-    """Regulators request access. Auto-generates entity_id from jurisdiction.
-    Sends verification email. Status remains 'pending' until admin approves."""
+    """Regulators request access. Creates a pending user record.
+    Admin reviews in the Pending Approvals queue and provisions credentials on approval."""
 
-    # Generate entity_id from jurisdiction
-    prefix = JURISDICTION_PREFIX.get(jurisdiction, "reg_other")
-    entity_id = f"{prefix}_{secrets.token_hex(3)}"
+    # Check for duplicate email
+    existing = db.query(User).filter(User.email == email.strip().lower()).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="An account with this email already exists.")
 
-    # Generate credentials
-    raw_key = secrets.token_urlsafe(32)
-    hashed = bcrypt.hashpw(raw_key.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-    verification_token = secrets.token_urlsafe(32)
+    # Generate clearance_id from jurisdiction
+    prefix = JURISDICTION_PREFIX.get(jurisdiction.upper(), "reg_other")
+    clearance_id = f"{prefix}_{secrets.token_hex(3)}"
 
-    # 4. Verify/Create Regulator (Pending Approval)
+    # Create pending user — no credentials yet (admin provisions them on approval)
     user = User(
         id=f"usr_{secrets.token_hex(4)}",
         email=email.strip().lower(),
         display_name=display_name,
         department=department,
         jurisdiction=jurisdiction,
+        clearance_id=clearance_id,
         role="regulator",
         status="pending",
         email_verified=False,
-        verification_token=verification_token,
         created_at=datetime.utcnow().isoformat(),
     )
     db.add(user)
     db.commit()
 
-    # Send verification email for email identity proofing (but not keys)
-    send_auditor_verification(email, display_name, "PENDING", "[REDACTED]", verification_token)
-
     return {
         "status": "PENDING_APPROVAL",
-        "message": f"Request submitted for {jurisdiction} ({department}). A verification link has been sent to {email}. Access keys will be delivered after administrative review."
+        "message": f"Request submitted for {jurisdiction} ({department}). Your request is now under administrative review. You will receive credentials via email once approved."
     }
 
 
@@ -807,10 +804,13 @@ def get_pending_users(
     pending = db.query(User).filter(User.status == "pending").all()
     return [
         {
-            "entity_id": u.entity_id,
+            "entity_id": u.clearance_id or u.id,
+            "clearance_id": u.clearance_id,
             "display_name": u.display_name,
             "email": u.email,
             "role": u.role,
+            "department": u.department,
+            "jurisdiction": u.jurisdiction,
             "email_verified": u.email_verified,
             "created_at": u.created_at,
         }

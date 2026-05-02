@@ -12,7 +12,7 @@ from sib_api_v3_sdk.rest import ApiException
 # Configuration from environment
 BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
 FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@anchorgovernance.tech")
-BASE_URL = os.getenv("ANCHOR_BASE_URL", "http://localhost:8000")
+BASE_URL = os.getenv("ANCHOR_BASE_URL", "https://animuslab-anchor-api.hf.space")
 
 # Setup Brevo Client
 if BREVO_API_KEY:
