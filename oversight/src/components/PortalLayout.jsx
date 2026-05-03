@@ -24,7 +24,7 @@ export default function PortalLayout({ children }) {
 
             {/* Top Navigation Bar */}
             <header className="relative z-20 border-b border-[#1E1E2E] bg-[#06060A]/80 backdrop-blur-md">
-                <div className="max-w-[1400px] mx-auto flex h-16 items-center justify-between px-6">
+                <div className="flex h-16 items-center justify-between px-8">
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-3">
                             <div className="w-6 h-6 bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
@@ -49,13 +49,13 @@ export default function PortalLayout({ children }) {
             </header>
 
             {/* Main Content Area */}
-            <main className="relative z-10 max-w-[1400px] mx-auto p-6">
+            <main className="relative z-10 p-8">
                 {children}
             </main>
 
             {/* System Status Footer */}
             <footer className="fixed bottom-0 left-0 w-full z-20 border-t border-[#1E1E2E] bg-[#06060A]/80 backdrop-blur-md">
-                <div className="max-w-[1400px] mx-auto px-6 h-8 flex items-center justify-between text-[8px] uppercase tracking-[0.4em] text-slate-700">
+                <div className="px-8 h-8 flex items-center justify-between text-[8px] uppercase tracking-[0.4em] text-slate-700">
                     <span>Sovereign.Relay.Status: ONLINE</span>
                     <div className="flex gap-4">
                         <span>Jurisdiction: GLOBAL</span>
