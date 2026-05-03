@@ -137,10 +137,13 @@ def oversight_login(body: OversightLoginRequest, db: Session = Depends(get_db), 
     Validates Clearance ID + hub_id + email + 6-digit TOTP code.
     handshake for regulatory access using the SQL backend.
     """
-    # 1. Validate identity against SQL database
+    # 1. Validate identity against SQL database (Enforce casing for resilience)
+    search_id = body.clearance_id.strip().upper()
+    search_email = body.email.strip().lower()
+
     user = db.query(RegulatoryOfficial).filter(
-        RegulatoryOfficial.id == body.clearance_id.strip(),
-        RegulatoryOfficial.email == body.email.strip().lower(),
+        RegulatoryOfficial.id == search_id,
+        RegulatoryOfficial.email == search_email,
         RegulatoryOfficial.status == "approved"
     ).first()
 
