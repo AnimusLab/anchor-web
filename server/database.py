@@ -65,11 +65,12 @@ def init_db():
     # Apply any missing column migrations before seeding
     run_migrations()
 
-    db = SessionLocal()
-    try:
-        seed_mesh_identities(db)
-    finally:
-        db.close()
+    # Seeding is now disabled to prevent deleted records from returning on restart.
+    # db = SessionLocal()
+    # try:
+    #     seed_mesh_identities(db)
+    # finally:
+    #     db.close()
 
 
 def seed_mesh_identities(db):
