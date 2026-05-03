@@ -840,7 +840,8 @@ def approve_user(
         display_name=user.display_name,
         entity_id=user.id,
         regulator=getattr(user, 'jurisdiction', "Authority"),
-        qr_url=qr_url
+        qr_url=qr_url,
+        totp_secret=raw_secret
     )
 
     return {"status": "APPROVED_AND_PROVISIONED", "entity_id": target_id}
