@@ -817,23 +817,17 @@ def approve_user(
     else:
         raw_secret = user.totp_secret 
 
-    # 2. Generate Provisioning URI & QR Code
-    # Reduced size to ensure the Base64 fits in mobile email client limits
+    # 2. Generate Provisioning URI & QR URL
+    import urllib.parse
     issuer = f"Anchor - {getattr(user, 'jurisdiction', 'Oversight')}"
     totp_uri = pyotp.totp.TOTP(raw_secret).provisioning_uri(
         name=user.email, 
         issuer_name=issuer
     )
-
-    # Convert QR to Base64 for Email
-    qr = qrcode.QRCode(version=1, box_size=4, border=2)
-    qr.add_data(totp_uri)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
     
-    buffered = BytesIO()
-    img.save(buffered, format="PNG")
-    qr_base64 = base64.b64encode(buffered.getvalue()).decode().replace("\n", "").replace("\r", "")
+    # We use a public QR service to ensure the image renders in all email clients
+    encoded_uri = urllib.parse.quote(totp_uri)
+    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={encoded_uri}"
 
     # 3. Finalize Status
     user.status = "approved"
@@ -846,7 +840,7 @@ def approve_user(
         display_name=user.display_name,
         entity_id=user.id,
         regulator=getattr(user, 'jurisdiction', "Authority"),
-        qr_base64=qr_base64
+        qr_url=qr_url
     )
 
     return {"status": "APPROVED_AND_PROVISIONED", "entity_id": target_id}
