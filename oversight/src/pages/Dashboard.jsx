@@ -125,112 +125,102 @@ export default function Dashboard() {
 
   return (
     <PortalLayout>
-      <div className="flex flex-col gap-10 animate-in fade-in duration-700">
+      <div className="flex flex-col gap-12 animate-in fade-in duration-1000">
         
         {/* --- SECTION: SYSTEM OVERVIEW --- */}
-        <section>
-          <div className="flex flex-col gap-2 mb-8">
-            <h2 className="text-3xl font-bold text-white tracking-tight">System Overview</h2>
-            <p className="text-slate-500 max-w-2xl leading-relaxed">
-              Regulatory-level view across the federated Anchor governance mesh. Monitor real-time AI decision pulses and enforce jurisdictional compliance protocols.
+        <section className="flex flex-col gap-8">
+          <div className="flex flex-col gap-3">
+            <h2 className="text-4xl font-bold text-white tracking-tight">System Overview</h2>
+            <p className="text-slate-500 max-w-3xl leading-relaxed text-[15px] font-medium">
+              Root-level view across the federated Anchor governance mesh. Monitor real-time AI decision pulses, audit sovereign ledgers, and enforce jurisdictional compliance.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-            <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl relative overflow-hidden group hover:border-emerald-500/20 transition-all shadow-xl">
-              <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-emerald-500/5 blur-3xl rounded-full" />
-              <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-4">Governance Integrity</div>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold text-emerald-400 font-sans tracking-tighter">{complianceScore}%</span>
-                <span className="text-[10px] text-emerald-900 font-bold uppercase tracking-widest">Enforced</span>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {[
+              { label: 'Governance Integrity', val: `${complianceScore}%`, sub: 'Enforced', color: 'emerald', icon: <ShieldCheck /> },
+              { label: 'Decision Pulses', val: totalAudits, sub: 'Across Nodes', color: 'blue', icon: <Activity /> },
+              { label: 'Open Violations', val: totalViolations, sub: 'Action Required', color: totalViolations > 0 ? 'rose' : 'emerald', icon: <ShieldAlert /> },
+              { label: 'Provisioned Nodes', val: companies.length, sub: 'Active Orgs', color: 'amber', icon: <Globe /> }
+            ].map((stat, i) => (
+              <div key={i} className="bg-white/[0.02] border border-white/5 p-8 rounded-[24px] relative overflow-hidden group hover:border-white/10 transition-all shadow-2xl">
+                <div className={`absolute top-[-20%] right-[-10%] w-32 h-32 bg-${stat.color}-500/5 blur-[60px] rounded-full`} />
+                <div className="flex items-start justify-between mb-6 relative z-10">
+                   <div className="text-[11px] text-slate-500 uppercase font-bold tracking-[0.2em]">{stat.label}</div>
+                   <div className={`text-${stat.color}-500 opacity-20 group-hover:opacity-100 transition-opacity`}>{React.cloneElement(stat.icon, { size: 20 })}</div>
+                </div>
+                <div className="flex items-baseline gap-3 relative z-10">
+                  <span className={`text-4xl font-bold text-${stat.color}-400 tracking-tighter`}>{stat.val}</span>
+                  <span className={`text-[10px] text-${stat.color}-900 font-bold uppercase tracking-widest`}>{stat.sub}</span>
+                </div>
+                {stat.label === 'Governance Integrity' && (
+                  <div className="mt-8 h-2 bg-white/5 rounded-full overflow-hidden relative z-10">
+                     <div className="h-full bg-emerald-500 transition-all duration-1000 shadow-[0_0_10px_rgba(16,185,129,0.5)]" style={{ width: `${complianceScore}%` }} />
+                  </div>
+                )}
               </div>
-              <div className="mt-6 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                 <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${complianceScore}%` }} />
-              </div>
-            </div>
-
-            <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl relative overflow-hidden group hover:border-blue-500/20 transition-all shadow-xl">
-              <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-blue-500/5 blur-3xl rounded-full" />
-              <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-4">Decision Pulses</div>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold text-blue-400 font-sans tracking-tighter">{totalAudits}</span>
-                <span className="text-[10px] text-blue-900 font-bold uppercase tracking-widest">Across Nodes</span>
-              </div>
-            </div>
-
-            <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl relative overflow-hidden group hover:border-rose-500/20 transition-all shadow-xl">
-              <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-rose-500/5 blur-3xl rounded-full" />
-              <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-4">Open Violations</div>
-              <div className="flex items-baseline gap-3">
-                <span className={`text-4xl font-bold font-sans tracking-tighter ${totalViolations > 0 ? 'text-rose-500' : 'text-emerald-400'}`}>
-                  {totalViolations}
-                </span>
-                <span className="text-[10px] text-rose-900 font-bold uppercase tracking-widest">Requires Action</span>
-              </div>
-            </div>
-
-            <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl relative overflow-hidden group hover:border-amber-500/20 transition-all shadow-xl">
-              <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-amber-500/5 blur-3xl rounded-full" />
-              <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-4">Provisioned Nodes</div>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold text-amber-400 font-sans tracking-tighter">{companies.length}</span>
-                <span className="text-[10px] text-amber-900 font-bold uppercase tracking-widest">Active Orgs</span>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* QUICK ACTIONS ROW */}
-          <div className="flex flex-col gap-6">
-             <h3 className="text-xs font-bold text-white uppercase tracking-[0.2em]">Quick Actions</h3>
-             <div className="flex gap-4">
-                <button className="px-6 py-4 bg-purple-600 rounded-xl text-white font-bold text-sm shadow-lg shadow-purple-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
-                   <FileText size={18} /> Provision Report
-                </button>
-                <button className="px-6 py-4 bg-cyan-600 rounded-xl text-white font-bold text-sm shadow-lg shadow-cyan-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
-                   <Radio size={18} /> View Live NOC
-                </button>
-                <button className="px-6 py-4 bg-amber-600 rounded-xl text-white font-bold text-sm shadow-lg shadow-amber-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
-                   <ShieldAlert size={18} /> Threat Inspection
-                </button>
-                <button className="px-6 py-4 bg-emerald-600 rounded-xl text-white font-bold text-sm shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
-                   <Lock size={18} /> Secure Relay
-                </button>
+          {/* QUICK ACTIONS ROW - PRECISION ALIGNED */}
+          <div className="flex flex-col gap-5">
+             <div className="flex items-center gap-3">
+                <div className="h-px w-6 bg-purple-500/30" />
+                <h3 className="text-[11px] font-bold text-white uppercase tracking-[0.4em] opacity-60">Quick Actions</h3>
+             </div>
+             <div className="flex gap-5">
+                {[
+                  { label: 'Provision Report', icon: <FileText />, color: 'bg-purple-600', shadow: 'shadow-purple-500/20' },
+                  { label: 'View Live NOC', icon: <Radio />, color: 'bg-cyan-600', shadow: 'shadow-cyan-500/20' },
+                  { label: 'Threat Inspection', icon: <ShieldAlert />, color: 'bg-amber-600', shadow: 'shadow-amber-500/20' },
+                  { label: 'Secure Relay', icon: <Lock />, color: 'bg-emerald-600', shadow: 'shadow-emerald-500/20' }
+                ].map((act, i) => (
+                  <button key={i} className={`px-8 py-5 ${act.color} rounded-2xl text-white font-bold text-sm ${act.shadow} hover:scale-[1.03] active:scale-95 transition-all flex items-center gap-4 shadow-xl`}>
+                    {React.cloneElement(act.icon, { size: 20 })}
+                    <span>{act.label}</span>
+                  </button>
+                ))}
              </div>
           </div>
         </section>
 
-        {/* --- TRIPLE COLUMN OVERSIGHT TERMINAL --- */}
-        <div className="flex gap-8 h-[700px] overflow-hidden">
+        {/* --- TRIPLE COLUMN TERMINAL - RIGID GRID ALIGNMENT --- */}
+        <div className="grid grid-cols-[340px_1fr_400px] gap-10 h-[800px] overflow-hidden pb-10">
           
-          {/* --- COL 1: JURISDICTION ENTITIES --- */}
-          <aside className="w-80 shrink-0 flex flex-col overflow-hidden">
-            <div className="bg-white/[0.02] border border-white/5 rounded-2xl flex flex-col overflow-hidden h-full">
-              <div className="p-5 border-b border-white/5 bg-white/[0.01] flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <Globe size={16} className="text-purple-400" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">Fleet Matrix</span>
+          {/* --- COL 1: FLEET MATRIX --- */}
+          <aside className="flex flex-col overflow-hidden h-full">
+            <div className="bg-white/[0.02] border border-white/5 rounded-[28px] flex flex-col overflow-hidden h-full shadow-2xl">
+              <div className="h-20 px-8 border-b border-white/5 bg-white/[0.01] flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-4">
+                    <Globe size={18} className="text-purple-400" />
+                    <span className="text-xs font-bold text-white uppercase tracking-[0.2em]">Fleet Matrix</span>
                 </div>
-                <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 text-[8px] font-bold uppercase rounded">Live</div>
+                <div className="flex items-center gap-2 bg-emerald-500/10 px-3 py-1 rounded-full">
+                   <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                   <span className="text-emerald-500 text-[9px] font-bold uppercase tracking-widest">Live</span>
+                </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 {companies.length === 0 ? (
-                  <div className="h-full flex items-center justify-center text-[10px] uppercase text-slate-700 tracking-widest">No nodes provisioned yet</div>
+                  <div className="h-full flex items-center justify-center">
+                     <span className="text-[10px] uppercase text-slate-700 tracking-[0.3em] font-bold">No nodes provisioned</span>
+                  </div>
                 ) : companies.map(c => (
                   <button 
                     key={c.id} 
                     onClick={() => setActiveCompany(c)}
-                    className={`w-full group text-left p-5 transition-all rounded-xl relative border ${activeCompany?.id === c.id ? 'bg-purple-600/10 border-purple-500/20' : 'bg-white/[0.01] border-white/5 hover:bg-white/5'}`}
+                    className={`w-full group text-left p-6 transition-all rounded-2xl relative border ${activeCompany?.id === c.id ? 'bg-purple-600/10 border-purple-500/20 shadow-lg shadow-purple-500/5' : 'bg-white/[0.01] border-white/5 hover:bg-white/5 border-transparent'}`}
                   >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex flex-col gap-1">
-                        <div className={`text-[13px] font-bold ${activeCompany?.id === c.id ? 'text-white' : 'text-slate-400'}`}>{c.name}</div>
+                    <div className="flex justify-between items-start mb-5">
+                      <div className="flex flex-col gap-1.5">
+                        <div className={`text-[15px] font-bold leading-tight ${activeCompany?.id === c.id ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>{c.name}</div>
                         <div className="text-[10px] text-slate-600 uppercase font-mono tracking-tighter">REG_ID: {c.id}</div>
                       </div>
-                      {c.violations > 0 && <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />}
+                      {c.violations > 0 && <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_15px_rgba(239,68,68,0.6)] animate-pulse" />}
                     </div>
-                    <div className="flex gap-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-                      <span className="flex items-center gap-1.5"><Eye size={12} /> {c.entries}</span>
-                      {c.violations > 0 && <span className="text-rose-500 flex items-center gap-1.5"><AlertTriangle size={12} /> {c.violations}</span>}
+                    <div className="flex gap-6 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                      <span className="flex items-center gap-2"><Eye size={14} className="opacity-40" /> {c.entries} PULSES</span>
+                      {c.violations > 0 && <span className="text-rose-500 flex items-center gap-2"><AlertTriangle size={14} /> {c.violations} BREACH</span>}
                     </div>
                   </button>
                 ))}
@@ -238,78 +228,84 @@ export default function Dashboard() {
             </div>
           </aside>
 
-          {/* --- COL 2: AI DECISION STREAM (CENTER) --- */}
-          <main className="flex-1 flex flex-col overflow-hidden">
-            <div className="bg-white/[0.02] border border-white/5 rounded-2xl flex flex-col overflow-hidden h-full relative">
-              <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
-                <div className="flex items-center gap-3">
-                    <Terminal size={16} className="text-emerald-400" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">Global Action Ledger</span>
+          {/* --- COL 2: ACTION LEDGER --- */}
+          <main className="flex flex-col overflow-hidden h-full">
+            <div className="bg-white/[0.02] border border-white/5 rounded-[28px] flex flex-col overflow-hidden h-full relative shadow-2xl">
+              <div className="h-20 px-8 border-b border-white/5 flex items-center justify-between bg-white/[0.01] shrink-0">
+                <div className="flex items-center gap-4">
+                    <Terminal size={18} className="text-emerald-400" />
+                    <span className="text-xs font-bold text-white uppercase tracking-[0.2em]">Global Action Ledger</span>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex bg-black/40 border border-white/5 p-1 rounded-lg">
+                <div className="flex items-center gap-6">
+                    <div className="flex bg-black/40 border border-white/5 p-1 rounded-xl">
                       {['ALL', 'COMPLIANT', 'VIOLATIONS'].map(mode => (
                         <button 
                           key={mode} 
                           onClick={() => setFilterMode(mode)}
-                          className={`px-3 py-1.5 text-[9px] font-bold uppercase rounded-md transition-all ${filterMode === mode ? 'bg-emerald-500 text-black' : 'text-slate-600 hover:text-slate-300'}`}
+                          className={`px-5 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${filterMode === mode ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'text-slate-600 hover:text-slate-300'}`}
                         >
                           {mode}
                         </button>
                       ))}
                     </div>
-                    <div className="px-2 py-0.5 bg-purple-500/10 text-purple-500 text-[8px] font-bold uppercase rounded">Encrypted</div>
+                    <div className="h-4 w-px bg-white/10" />
+                    <div className="text-[10px] text-purple-500 font-bold uppercase tracking-widest bg-purple-500/5 px-3 py-1 rounded-full border border-purple-500/10">Encrypted</div>
                 </div>
               </div>
               
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
                 {loading ? (
                   <div className="h-full flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-4 animate-pulse">
-                      <Cpu size={32} className="text-emerald-500/20" />
-                      <span className="text-[10px] text-slate-600 uppercase tracking-[0.5em]">Synchronizing_Mesh...</span>
+                    <div className="flex flex-col items-center gap-5">
+                      <Cpu size={40} className="text-emerald-500 animate-spin opacity-20" />
+                      <span className="text-[11px] text-slate-600 uppercase tracking-[0.6em] font-bold">Synchronizing_Relay</span>
                     </div>
                   </div>
                 ) : filteredLedger.length === 0 ? (
-                  <div className="h-full flex items-center justify-center text-[11px] uppercase text-slate-700 tracking-[0.3em]">No recent activity</div>
+                  <div className="h-full flex items-center justify-center">
+                     <span className="text-[11px] uppercase text-slate-700 tracking-[0.4em] font-bold">No recent governance events</span>
+                  </div>
                 ) : filteredLedger.map((entry, i) => (
-                  <div key={entry.entry_id} className={`group relative p-6 rounded-2xl border transition-all ${!entry.is_compliant ? 'border-rose-500/20 bg-rose-500/[0.03]' : 'border-white/5 bg-white/[0.01] hover:border-emerald-500/20'}`}>
-                    <div className="flex justify-between items-start">
-                      <div className="flex gap-5">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center border shadow-inner ${!entry.is_compliant ? 'border-rose-500/20 bg-rose-500/5' : 'border-emerald-500/10 bg-emerald-500/5'}`}>
-                            {entry.is_compliant ? <ShieldCheck size={22} className="text-emerald-500" /> : <ShieldAlert size={22} className="text-rose-500" />}
+                  <div key={entry.entry_id} className={`group relative p-8 rounded-[24px] border transition-all ${!entry.is_compliant ? 'border-rose-500/20 bg-rose-500/[0.04] shadow-2xl shadow-rose-500/5' : 'border-white/5 bg-white/[0.01] hover:border-emerald-500/20'}`}>
+                    <div className="flex justify-between items-center">
+                      <div className="flex gap-6 items-center">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-inner transition-all ${!entry.is_compliant ? 'border-rose-500/20 bg-rose-500/10' : 'border-emerald-500/10 bg-emerald-500/10 group-hover:bg-emerald-500/20'}`}>
+                            {entry.is_compliant ? <ShieldCheck size={28} className="text-emerald-500" /> : <ShieldAlert size={28} className="text-rose-500" />}
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-3">
-                              <span className={`text-[10px] font-bold uppercase tracking-widest ${!entry.is_compliant ? 'text-rose-500' : 'text-emerald-500'}`}>
-                                  {entry.is_compliant ? 'Validated Decision' : 'Governance Violation'}
+                        <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-4">
+                              <span className={`text-[11px] font-bold uppercase tracking-[0.2em] ${!entry.is_compliant ? 'text-rose-500' : 'text-emerald-500'}`}>
+                                  {entry.is_compliant ? 'Verified Decision' : 'Governance Violation'}
                               </span>
                               <div className="w-1 h-1 rounded-full bg-slate-800" />
-                              <span className="text-[10px] text-slate-600 font-bold uppercase">[{entry.timestamp}]</span>
+                              <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">[{entry.timestamp}]</span>
                             </div>
-                            <div className="text-base font-bold text-white tracking-tight">Model: {entry.project_name} // <span className="text-slate-600 font-mono text-sm uppercase">ID: {entry.entry_id}</span></div>
+                            <div className="text-lg font-bold text-white tracking-tight leading-tight">AI Model: {entry.project_name} <span className="mx-2 text-slate-800 opacity-30">/</span> <span className="text-slate-600 font-mono text-xs font-medium uppercase">REF: {entry.entry_id}</span></div>
                         </div>
                       </div>
                       <button 
                         onClick={() => handleTranslate(entry)}
-                        className="p-3 bg-white/5 rounded-xl text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all shadow-lg border border-white/5"
+                        className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all shadow-xl border border-white/5 group-hover:scale-110 active:scale-90"
                       >
-                        <ChevronRight size={18} />
+                        <ChevronRight size={20} />
                       </button>
                     </div>
                     
                     {!entry.is_compliant && (
-                      <div className="mt-5 flex flex-wrap gap-2">
+                      <div className="mt-6 flex flex-wrap gap-3">
                         {entry.violations?.map((v, idx) => (
-                          <span key={idx} className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[9px] font-bold uppercase rounded-lg">Breach: {v.type || v}</span>
+                          <span key={idx} className="px-4 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[10px] font-bold uppercase rounded-xl">Breach: {v.type || v}</span>
                         ))}
                       </div>
                     )}
 
-                    <div className="mt-5 pt-5 border-t border-white/5 flex justify-between items-center text-[10px] font-bold text-slate-700 uppercase tracking-[0.2em]">
-                      <div>Integrity: {entry.chain_hash?.slice(0, 32)}...</div>
-                      <div className="flex items-center gap-2 bg-emerald-500/5 px-2 py-0.5 rounded text-emerald-900 border border-emerald-500/10">
-                        <Lock size={10} /> SECURE
+                    <div className="mt-6 pt-6 border-t border-white/5 flex justify-between items-center text-[11px] font-bold text-slate-700 uppercase tracking-[0.3em]">
+                      <div className="flex items-center gap-3">
+                         <span className="opacity-40">Integrity_Proof:</span>
+                         <span className="text-slate-500">{entry.chain_hash?.slice(0, 32)}...</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-emerald-500/5 px-3 py-1 rounded-lg text-emerald-900 border border-emerald-500/10">
+                        <Lock size={12} /> SECURE
                       </div>
                     </div>
                   </div>
@@ -318,61 +314,62 @@ export default function Dashboard() {
             </div>
           </main>
 
-          {/* --- COL 3: GOVERNANCE INTELLIGENCE (RIGHT) --- */}
-          <aside className="w-96 shrink-0 flex flex-col gap-6 overflow-hidden">
+          {/* --- COL 3: INTELLIGENCE SUITE --- */}
+          <aside className="flex flex-col gap-10 overflow-hidden h-full">
              
              {/* Decision Search */}
-             <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl shadow-xl">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-3">
-                   <Search size={14} className="text-purple-400" /> Decision Lookup
+             <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[28px] shadow-2xl">
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-4">
+                   <Search size={16} className="text-purple-500" /> Decision Lookup
                 </div>
                 <div className="relative">
                   <input 
                     type="text" 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search Model / Decision ID..."
-                    className="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm text-white placeholder:text-slate-700 outline-none focus:border-purple-500/50 transition-all font-bold"
+                    placeholder="Search Model or Ref ID..."
+                    className="w-full bg-black/40 border border-white/10 p-5 rounded-2xl text-sm text-white placeholder:text-slate-700 outline-none focus:border-purple-500/50 transition-all font-bold shadow-inner"
                   />
                 </div>
              </div>
 
-             {/* Governance Intelligence Summary */}
-             <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl flex-1 flex flex-col shadow-xl">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-3 border-b border-white/5 pb-4">
-                   <BarChart3 size={14} className="text-cyan-400" /> Intelligence Suite
+             {/* Intelligence Summary */}
+             <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[28px] flex-1 flex flex-col shadow-2xl relative overflow-hidden">
+                <div className="absolute top-[-10%] left-[-10%] w-40 h-40 bg-cyan-500/5 blur-[80px] rounded-full" />
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-8 flex items-center gap-4 border-b border-white/5 pb-6 relative z-10">
+                   <BarChart3 size={16} className="text-cyan-400" /> Intelligence Suite
                 </div>
-                <div className="space-y-5">
+                <div className="space-y-6 relative z-10">
                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">AI Scanned</span>
-                      <span className="text-sm font-bold text-emerald-400 font-mono tracking-tighter">{ledger.length}</span>
+                      <span className="text-xs text-slate-500 uppercase font-bold tracking-widest">AI Pulses Scanned</span>
+                      <span className="text-base font-bold text-emerald-400 font-mono tracking-tighter">{ledger.length}</span>
                    </div>
                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Breach Density</span>
-                      <span className="text-sm font-bold text-rose-500 font-mono tracking-tighter">{totalViolations}</span>
+                      <span className="text-xs text-slate-500 uppercase font-bold tracking-widest">Breach Density</span>
+                      <span className="text-base font-bold text-rose-500 font-mono tracking-tighter">{totalViolations}</span>
                    </div>
                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Network Pulse</span>
-                      <div className="flex items-center gap-2">
-                         <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                      <span className="text-xs text-slate-500 uppercase font-bold tracking-widest">Network Pulse</span>
+                      <div className="flex items-center gap-3">
+                         <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
                          <span className="text-sm font-bold text-white font-mono uppercase tracking-tighter">Active</span>
                       </div>
                    </div>
                    
-                   <div className="pt-6 mt-6 border-t border-white/5 space-y-3">
-                      <div className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">Oversight Status</div>
-                      <div className="p-4 bg-black/40 border border-white/5 rounded-xl text-[11px] text-slate-400 leading-relaxed font-bold">
-                         Secure telemetry is being de-quantized across all provisioned spoke nodes. Jurisdictional dialects are synchronized at the edge.
+                   <div className="pt-8 mt-8 border-t border-white/5 space-y-4">
+                      <div className="text-[11px] text-slate-600 uppercase tracking-[0.2em] font-bold">Oversight Status</div>
+                      <div className="p-5 bg-black/40 border border-white/5 rounded-2xl text-[12px] text-slate-400 leading-relaxed font-bold shadow-inner">
+                         Secure telemetry is being de-quantized across all provisioned nodes. Sovereign Relay Alpha is currently maintaining jurisdictional parity.
                       </div>
                    </div>
                 </div>
                 
-                <div className="mt-auto pt-8 space-y-3">
-                   <button className="w-full py-4 bg-purple-600/10 border border-purple-500/30 rounded-xl text-purple-400 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-purple-600 hover:text-white transition-all shadow-lg shadow-purple-500/5">
-                      <Download size={16} /> Export Decision Log
+                <div className="mt-auto pt-10 space-y-4 relative z-10">
+                   <button className="w-full py-5 bg-purple-600/10 border border-purple-500/30 rounded-2xl text-purple-400 text-xs font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-4 hover:bg-purple-600 hover:text-white transition-all shadow-xl shadow-purple-500/5">
+                      <Download size={20} /> Export Audit Log
                    </button>
-                   <button className="w-full py-4 bg-rose-600/10 border border-rose-500/30 rounded-xl text-rose-500 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-rose-600 hover:text-white transition-all shadow-lg shadow-rose-500/5">
-                      <ShieldAlert size={16} /> Issue Enforcement
+                   <button className="w-full py-5 bg-rose-600/10 border border-rose-500/30 rounded-2xl text-rose-500 text-xs font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-4 hover:bg-rose-600 hover:text-white transition-all shadow-xl shadow-rose-500/5">
+                      <ShieldAlert size={20} /> Issue Enforcement
                    </button>
                 </div>
              </div>
@@ -382,68 +379,68 @@ export default function Dashboard() {
 
         {/* --- DECISION ANALYSIS VAULT (OVERLAY) --- */}
         {selectedAudit && (
-          <div className="fixed inset-0 bg-black/98 backdrop-blur-2xl z-[100] flex items-center justify-center p-12 animate-in zoom-in duration-300">
-             <div className="w-full max-w-7xl h-full bg-[#0A0A0F] border border-white/10 rounded-[32px] flex flex-col shadow-2xl relative overflow-hidden">
-                <div className="flex items-center justify-between p-8 border-b border-white/5 bg-white/[0.02]">
-                   <div className="flex items-center gap-5">
-                      <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20">
-                         <Terminal size={24} className="text-emerald-500" />
+          <div className="fixed inset-0 bg-black/98 backdrop-blur-3xl z-[100] flex items-center justify-center p-16 animate-in zoom-in duration-500">
+             <div className="w-full max-w-[1600px] h-full bg-[#0A0A0F] border border-white/10 rounded-[40px] flex flex-col shadow-[0_0_100px_rgba(0,0,0,0.8)] relative overflow-hidden">
+                <div className="flex items-center justify-between p-10 border-b border-white/5 bg-white/[0.02]">
+                   <div className="flex items-center gap-6">
+                      <div className="w-14 h-14 bg-emerald-500/10 rounded-[20px] flex items-center justify-center border border-emerald-500/20 shadow-inner">
+                         <Terminal size={32} className="text-emerald-500" />
                       </div>
                       <div className="flex flex-col">
-                         <span className="text-xl font-bold text-white tracking-tight uppercase">Decision Analysis // Forensic Vault</span>
-                         <span className="text-xs text-slate-600 font-mono uppercase tracking-widest">Model: {selectedAudit.project_name} // Integrity: {selectedAudit.chain_hash}</span>
+                         <span className="text-2xl font-bold text-white tracking-tight uppercase">Decision Analysis // Forensic Vault</span>
+                         <span className="text-[11px] text-slate-600 font-mono uppercase tracking-[0.3em] mt-1 font-bold">Model: {selectedAudit.project_name} // Proof: {selectedAudit.chain_hash}</span>
                       </div>
                    </div>
                    <button 
                      onClick={() => { setSelectedAudit(null); setTranslatedData(null); }} 
-                     className="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-rose-500/20 hover:text-rose-500 transition-all rounded-2xl border border-white/10"
+                     className="w-14 h-14 flex items-center justify-center bg-white/5 hover:bg-rose-500/20 hover:text-rose-500 transition-all rounded-[20px] border border-white/10 shadow-xl"
                    >
-                     <LogOut size={24} />
+                     <LogOut size={28} />
                    </button>
                 </div>
 
-                <div className="flex-1 flex overflow-hidden p-8 gap-8">
-                   <div className="flex-1 flex flex-col bg-black/40 border border-white/5 rounded-3xl overflow-hidden shadow-inner">
-                      <div className="p-4 border-b border-white/5 flex gap-3 bg-white/[0.01]">
+                <div className="flex-1 flex overflow-hidden p-10 gap-10">
+                   <div className="flex-1 flex flex-col bg-black/40 border border-white/5 rounded-[32px] overflow-hidden shadow-inner">
+                      <div className="h-16 px-6 border-b border-white/5 flex gap-4 bg-white/[0.01] items-center">
                          {['SEC', 'RBI', 'EU-AI', 'NIST'].map(d => (
                            <button 
                              key={d} 
                              onClick={() => setDialect(d)}
-                             className={`px-6 py-2 rounded-xl text-[11px] font-bold uppercase transition-all ${dialect === d ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30' : 'text-slate-600 hover:text-white hover:bg-white/5'}`}
+                             className={`px-8 py-2.5 rounded-xl text-xs font-bold uppercase transition-all ${dialect === d ? 'bg-purple-600 text-white shadow-2xl shadow-purple-500/40' : 'text-slate-600 hover:text-white hover:bg-white/5'}`}
                            >
                              {d}
                            </button>
                          ))}
                       </div>
-                      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                         <div className="text-[10px] text-slate-600 uppercase tracking-widest mb-6 flex items-center gap-3 font-bold">
-                            <MessageSquare size={14} className="text-purple-400" /> Regulatory Translation // {dialect} Dialect
+                      <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                         <div className="text-[11px] text-slate-600 uppercase tracking-[0.3em] mb-8 flex items-center gap-4 font-bold">
+                            <MessageSquare size={16} className="text-purple-500" /> Regulatory Translation // {dialect} Dialect
                          </div>
-                         <pre className="text-[13px] font-mono text-white leading-relaxed whitespace-pre-wrap font-bold bg-white/[0.01] p-6 rounded-2xl border border-white/5">
+                         <pre className="text-[14px] font-mono text-white leading-relaxed whitespace-pre-wrap font-bold bg-white/[0.01] p-8 rounded-[24px] border border-white/5 shadow-inner">
                             {translatedData ? JSON.stringify(translatedData.translation, null, 2) : (
-                              <div className="flex items-center gap-4 animate-pulse">
-                                 <div className="w-2 h-2 bg-purple-500 rounded-full" />
-                                 <span className="tracking-[0.2em] uppercase text-purple-400">De-quantizing AI Intent...</span>
+                              <div className="flex items-center gap-5 animate-pulse py-10">
+                                 <div className="w-3 h-3 bg-purple-500 rounded-full" />
+                                 <span className="tracking-[0.4em] uppercase text-purple-400 font-bold">De-quantizing AI Intent...</span>
                               </div>
                             )}
                          </pre>
                       </div>
                    </div>
 
-                   <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-black/60 rounded-3xl border border-white/5 shadow-2xl">
-                      <div className="text-[10px] text-slate-600 uppercase tracking-widest mb-6 flex items-center gap-3 font-bold">
-                         <Database size={14} className="text-emerald-400" /> Raw Decision Payload
+                   <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-black/60 rounded-[32px] border border-white/5 shadow-2xl">
+                      <div className="text-[11px] text-slate-600 uppercase tracking-[0.3em] mb-8 flex items-center gap-4 font-bold">
+                         <Database size={16} className="text-emerald-400" /> Raw Decision Payload
                       </div>
-                      <pre className="text-[12px] font-mono leading-relaxed bg-black/40 p-8 rounded-2xl border border-white/5 shadow-inner" dangerouslySetInnerHTML={highlight(translatedData?.raw_payload || selectedAudit.raw_payload)} />
+                      <pre className="text-[13px] font-mono leading-relaxed bg-black/40 p-10 rounded-[24px] border border-white/5 shadow-inner" dangerouslySetInnerHTML={highlight(translatedData?.raw_payload || selectedAudit.raw_payload)} />
                    </div>
                 </div>
 
-                <div className="p-6 border-t border-white/5 bg-white/[0.02] flex justify-between items-center px-10">
-                   <div className="flex gap-10 text-[10px] text-slate-600 font-bold uppercase tracking-widest">
-                      <span className="flex items-center gap-2"><ShieldCheck size={14} className="text-emerald-500" /> Audit Trail Verified</span>
-                      <span className="flex items-center gap-2"><Globe size={14} className="text-blue-500" /> Node: India Relay Alpha</span>
+                <div className="p-8 border-t border-white/5 bg-white/[0.02] flex justify-between items-center px-12">
+                   <div className="flex gap-12 text-[11px] text-slate-600 font-bold uppercase tracking-[0.3em]">
+                      <span className="flex items-center gap-3"><ShieldCheck size={16} className="text-emerald-500" /> Audit Trail Verified</span>
+                      <span className="flex items-center gap-3"><Globe size={16} className="text-blue-500" /> Secure Node: Relay_Alpha_In</span>
                    </div>
-                   <div className="text-purple-900 font-bold uppercase tracking-[0.4em] text-xs">Authorized Master Access Only</div>
+                   <div className="text-purple-900 font-bold uppercase tracking-[0.5em] text-xs">Authorized Master Access Only</div>
                 </div>
              </div>
           </div>
