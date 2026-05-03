@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 /* ─────────────────────────────────────────────────────────────
    Anchor Oversight — Regulatory Login Portal
@@ -70,6 +71,7 @@ function Dot({ color = TOKEN.amber, label }) {
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [activeTab, setActiveTab] = useState('login') // 'login' | 'register'
   const [form, setForm] = useState({ 
     clearanceId: '', agencyId: '', email: '', jurisdiction: '', department: '', totp: '', 
@@ -164,9 +166,14 @@ export default function LoginPage() {
       })
       const data = await res.json()
       if (res.ok && data.access_token) {
+        // Update global auth state (Required for ProtectedRoutes)
+        login(data.access_token, data)
+        
+        // Backup persistence
         localStorage.setItem('anchor_token', data.access_token)
         localStorage.setItem('anchor_entity', data.entity_id)
         localStorage.setItem('anchor_regulator', data.regulator)
+        
         navigate('/dashboard')
       } else {
         setError(data.detail || 'Verification failed.')
