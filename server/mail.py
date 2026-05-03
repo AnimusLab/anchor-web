@@ -181,7 +181,7 @@ def send_auditor_provisioned(to_email: str, display_name: str, entity_id: str, r
 
       <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0; text-align: center;">
         <p style="color: #484F58; font-size: 10px; margin: 0 0 15px; tracking: 0.2em;">AUTHENTICATOR_HANDSHAKE (SCAN NOW)</p>
-        <img src="data:image/png;base64,{qr_base64}" width="180" height="180" style="filter: contrast(1.1);" />
+        <img src="data:image/png;base64,{qr_base64}" width="160" height="160" style="filter: contrast(1.1); display: block; margin: 0 auto; border: 1px solid #161B22;" />
         <p style="color: #484F58; font-size: 9px; margin-top: 15px;">SCAN WITH GOOGLE AUTHENTICATOR OR AUTHY</p>
       </div>
 

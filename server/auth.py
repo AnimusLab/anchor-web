@@ -699,9 +699,8 @@ def register_auditor(
     if existing:
         raise HTTPException(status_code=409, detail="An account with this email already exists.")
 
-    # Generate clearance_id from jurisdiction
-    # Generate patterned ID
-    clearance_id = _generate_regulator_id(jurisdiction, display_name)
+    # Generate patterned ID: Agency_Initials_Date (e.g., RBI_Tan_03-05-26)
+    clearance_id = _generate_regulator_id(department, display_name)
 
     # Create pending official in siloed table
     user = RegulatoryOfficial(
@@ -819,6 +818,7 @@ def approve_user(
         raw_secret = user.totp_secret 
 
     # 2. Generate Provisioning URI & QR Code
+    # Reduced size to ensure the Base64 fits in mobile email client limits
     issuer = f"Anchor - {getattr(user, 'jurisdiction', 'Oversight')}"
     totp_uri = pyotp.totp.TOTP(raw_secret).provisioning_uri(
         name=user.email, 
@@ -826,14 +826,14 @@ def approve_user(
     )
 
     # Convert QR to Base64 for Email
-    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr = qrcode.QRCode(version=1, box_size=4, border=2)
     qr.add_data(totp_uri)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
     
     buffered = BytesIO()
     img.save(buffered, format="PNG")
-    qr_base64 = base64.b64encode(buffered.getvalue()).decode()
+    qr_base64 = base64.b64encode(buffered.getvalue()).decode().replace("\n", "").replace("\r", "")
 
     # 3. Finalize Status
     user.status = "approved"
