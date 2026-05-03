@@ -21,7 +21,11 @@ import {
   ExternalLink,
   ShieldQuestion,
   Eye,
-  MessageSquare
+  MessageSquare,
+  FileText,
+  Radio,
+  Lock,
+  Cpu
 } from 'lucide-react';
 
 const highlight = (obj) => {
@@ -121,240 +125,255 @@ export default function Dashboard() {
 
   return (
     <PortalLayout>
-      <div className="flex flex-col gap-6 animate-in fade-in duration-700">
+      <div className="flex flex-col gap-10 animate-in fade-in duration-700">
         
-        {/* --- TOP HUD: GOVERNANCE STATS --- */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-[#0C0C18] border border-emerald-500/10 p-5 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
-            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-all">
-              <ShieldCheck size={48} className="text-emerald-500" />
+        {/* --- SECTION: SYSTEM OVERVIEW --- */}
+        <section>
+          <div className="flex flex-col gap-2 mb-8">
+            <h2 className="text-3xl font-bold text-white tracking-tight">System Overview</h2>
+            <p className="text-slate-500 max-w-2xl leading-relaxed">
+              Regulatory-level view across the federated Anchor governance mesh. Monitor real-time AI decision pulses and enforce jurisdictional compliance protocols.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl relative overflow-hidden group hover:border-emerald-500/20 transition-all shadow-xl">
+              <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-emerald-500/5 blur-3xl rounded-full" />
+              <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-4">Governance Integrity</div>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-bold text-emerald-400 font-sans tracking-tighter">{complianceScore}%</span>
+                <span className="text-[10px] text-emerald-900 font-bold uppercase tracking-widest">Enforced</span>
+              </div>
+              <div className="mt-6 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                 <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${complianceScore}%` }} />
+              </div>
             </div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] mb-1">Governance Integrity</div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-emerald-400 font-mono">{complianceScore}%</span>
-              <span className="text-[10px] text-emerald-900 font-bold uppercase tracking-widest">Enforced</span>
+
+            <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl relative overflow-hidden group hover:border-blue-500/20 transition-all shadow-xl">
+              <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-blue-500/5 blur-3xl rounded-full" />
+              <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-4">Decision Pulses</div>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-bold text-blue-400 font-sans tracking-tighter">{totalAudits}</span>
+                <span className="text-[10px] text-blue-900 font-bold uppercase tracking-widest">Across Nodes</span>
+              </div>
             </div>
-            <div className="mt-4 h-1 bg-slate-900 overflow-hidden">
-               <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${complianceScore}%` }} />
+
+            <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl relative overflow-hidden group hover:border-rose-500/20 transition-all shadow-xl">
+              <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-rose-500/5 blur-3xl rounded-full" />
+              <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-4">Open Violations</div>
+              <div className="flex items-baseline gap-3">
+                <span className={`text-4xl font-bold font-sans tracking-tighter ${totalViolations > 0 ? 'text-rose-500' : 'text-emerald-400'}`}>
+                  {totalViolations}
+                </span>
+                <span className="text-[10px] text-rose-900 font-bold uppercase tracking-widest">Requires Action</span>
+              </div>
+            </div>
+
+            <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl relative overflow-hidden group hover:border-amber-500/20 transition-all shadow-xl">
+              <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-amber-500/5 blur-3xl rounded-full" />
+              <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-4">Provisioned Nodes</div>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-bold text-amber-400 font-sans tracking-tighter">{companies.length}</span>
+                <span className="text-[10px] text-amber-900 font-bold uppercase tracking-widest">Active Orgs</span>
+              </div>
             </div>
           </div>
 
-          <div className="bg-[#0C0C18] border border-emerald-500/10 p-5 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
-            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-all">
-              <Activity size={48} className="text-blue-500" />
-            </div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] mb-1">Decision Pulses</div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-blue-400 font-mono">{totalAudits}</span>
-              <span className="text-[10px] text-blue-900 font-bold uppercase tracking-widest">Recorded</span>
-            </div>
+          {/* QUICK ACTIONS ROW */}
+          <div className="flex flex-col gap-6">
+             <h3 className="text-xs font-bold text-white uppercase tracking-[0.2em]">Quick Actions</h3>
+             <div className="flex gap-4">
+                <button className="px-6 py-4 bg-purple-600 rounded-xl text-white font-bold text-sm shadow-lg shadow-purple-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
+                   <FileText size={18} /> Provision Report
+                </button>
+                <button className="px-6 py-4 bg-cyan-600 rounded-xl text-white font-bold text-sm shadow-lg shadow-cyan-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
+                   <Radio size={18} /> View Live NOC
+                </button>
+                <button className="px-6 py-4 bg-amber-600 rounded-xl text-white font-bold text-sm shadow-lg shadow-amber-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
+                   <ShieldAlert size={18} /> Threat Inspection
+                </button>
+                <button className="px-6 py-4 bg-emerald-600 rounded-xl text-white font-bold text-sm shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
+                   <Lock size={18} /> Secure Relay
+                </button>
+             </div>
           </div>
-
-          <div className="bg-[#0C0C18] border border-emerald-500/10 p-5 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
-            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-all">
-              <ShieldAlert size={48} className="text-rose-500" />
-            </div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] mb-1">Breach Density</div>
-            <div className="flex items-baseline gap-2">
-              <span className={`text-3xl font-bold font-mono ${totalViolations > 0 ? 'text-rose-500' : 'text-emerald-400'}`}>
-                {totalViolations > 0 ? 'CRITICAL' : 'MINIMAL'}
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-[#0C0C18] border border-emerald-500/10 p-5 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
-            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-all">
-              <Globe size={48} className="text-amber-500" />
-            </div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] mb-1">Network Sync</div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-amber-400 font-mono">STABLE</span>
-              <span className="text-[10px] text-amber-900 font-bold uppercase tracking-widest">Sovereign_Relay</span>
-            </div>
-          </div>
-        </div>
+        </section>
 
         {/* --- TRIPLE COLUMN OVERSIGHT TERMINAL --- */}
-        <div className="flex gap-6 h-[calc(100vh-220px)] overflow-hidden">
+        <div className="flex gap-8 h-[700px] overflow-hidden">
           
           {/* --- COL 1: JURISDICTION ENTITIES --- */}
-          <aside className="w-80 shrink-0 bg-[#0C0C18] border border-emerald-500/10 flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-emerald-500/10 bg-emerald-500/5 flex items-center justify-between">
-               <div className="flex items-center gap-2">
-                  <Globe size={14} className="text-emerald-500" />
-                  <span className="text-[11px] font-bold tracking-widest uppercase text-emerald-400">Jurisdiction Mesh</span>
-               </div>
-               <span className="text-[9px] font-mono text-slate-600">{companies.length} ENTITIES</span>
-            </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
-              {companies.map(c => (
-                <button 
-                  key={c.id} 
-                  onClick={() => setActiveCompany(c)}
-                  className={`w-full group text-left p-4 transition-all relative border ${activeCompany?.id === c.id ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-transparent border-transparent hover:bg-emerald-500/5'}`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex flex-col gap-1">
-                      <div className={`text-[12px] font-bold ${activeCompany?.id === c.id ? 'text-emerald-400' : 'text-slate-400'}`}>{c.name}</div>
-                      <div className="text-[9px] font-mono text-slate-600 uppercase tracking-tighter">REG_ID: {c.id}</div>
+          <aside className="w-80 shrink-0 flex flex-col overflow-hidden">
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl flex flex-col overflow-hidden h-full">
+              <div className="p-5 border-b border-white/5 bg-white/[0.01] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Globe size={16} className="text-purple-400" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">Fleet Matrix</span>
+                </div>
+                <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 text-[8px] font-bold uppercase rounded">Live</div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                {companies.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-[10px] uppercase text-slate-700 tracking-widest">No nodes provisioned yet</div>
+                ) : companies.map(c => (
+                  <button 
+                    key={c.id} 
+                    onClick={() => setActiveCompany(c)}
+                    className={`w-full group text-left p-5 transition-all rounded-xl relative border ${activeCompany?.id === c.id ? 'bg-purple-600/10 border-purple-500/20' : 'bg-white/[0.01] border-white/5 hover:bg-white/5'}`}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex flex-col gap-1">
+                        <div className={`text-[13px] font-bold ${activeCompany?.id === c.id ? 'text-white' : 'text-slate-400'}`}>{c.name}</div>
+                        <div className="text-[10px] text-slate-600 uppercase font-mono tracking-tighter">REG_ID: {c.id}</div>
+                      </div>
+                      {c.violations > 0 && <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />}
                     </div>
-                    {c.violations > 0 && <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />}
-                  </div>
-                  <div className="mt-3 flex gap-4 text-[9px] font-mono text-slate-600">
-                     <span className="flex items-center gap-1"><Eye size={10} /> {c.entries} DECISIONS</span>
-                     {c.violations > 0 && <span className="text-rose-900 font-bold flex items-center gap-1"><AlertTriangle size={10} /> {c.violations} BREACHES</span>}
-                  </div>
-                  {activeCompany?.id === c.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />}
-                </button>
-              ))}
+                    <div className="flex gap-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                      <span className="flex items-center gap-1.5"><Eye size={12} /> {c.entries}</span>
+                      {c.violations > 0 && <span className="text-rose-500 flex items-center gap-1.5"><AlertTriangle size={12} /> {c.violations}</span>}
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </aside>
 
           {/* --- COL 2: AI DECISION STREAM (CENTER) --- */}
-          <main className="flex-1 bg-[#0C0C18] border border-emerald-500/10 flex flex-col overflow-hidden relative shadow-inner">
-            <div className="p-4 border-b border-emerald-500/10 flex items-center justify-between bg-[#0D0D14]">
-               <div className="flex items-center gap-3">
-                  <Terminal size={14} className="text-emerald-500" />
-                  <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-emerald-400">AI_Decision_Stream // {activeCompany?.name}</span>
-               </div>
-               <div className="flex items-center gap-3">
-                  <div className="flex bg-black/40 border border-emerald-500/20 p-1">
-                    {['ALL', 'COMPLIANT', 'VIOLATIONS'].map(mode => (
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl flex flex-col overflow-hidden h-full relative">
+              <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+                <div className="flex items-center gap-3">
+                    <Terminal size={16} className="text-emerald-400" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">Global Action Ledger</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="flex bg-black/40 border border-white/5 p-1 rounded-lg">
+                      {['ALL', 'COMPLIANT', 'VIOLATIONS'].map(mode => (
+                        <button 
+                          key={mode} 
+                          onClick={() => setFilterMode(mode)}
+                          className={`px-3 py-1.5 text-[9px] font-bold uppercase rounded-md transition-all ${filterMode === mode ? 'bg-emerald-500 text-black' : 'text-slate-600 hover:text-slate-300'}`}
+                        >
+                          {mode}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="px-2 py-0.5 bg-purple-500/10 text-purple-500 text-[8px] font-bold uppercase rounded">Encrypted</div>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
+                {loading ? (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4 animate-pulse">
+                      <Cpu size={32} className="text-emerald-500/20" />
+                      <span className="text-[10px] text-slate-600 uppercase tracking-[0.5em]">Synchronizing_Mesh...</span>
+                    </div>
+                  </div>
+                ) : filteredLedger.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-[11px] uppercase text-slate-700 tracking-[0.3em]">No recent activity</div>
+                ) : filteredLedger.map((entry, i) => (
+                  <div key={entry.entry_id} className={`group relative p-6 rounded-2xl border transition-all ${!entry.is_compliant ? 'border-rose-500/20 bg-rose-500/[0.03]' : 'border-white/5 bg-white/[0.01] hover:border-emerald-500/20'}`}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex gap-5">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center border shadow-inner ${!entry.is_compliant ? 'border-rose-500/20 bg-rose-500/5' : 'border-emerald-500/10 bg-emerald-500/5'}`}>
+                            {entry.is_compliant ? <ShieldCheck size={22} className="text-emerald-500" /> : <ShieldAlert size={22} className="text-rose-500" />}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-3">
+                              <span className={`text-[10px] font-bold uppercase tracking-widest ${!entry.is_compliant ? 'text-rose-500' : 'text-emerald-500'}`}>
+                                  {entry.is_compliant ? 'Validated Decision' : 'Governance Violation'}
+                              </span>
+                              <div className="w-1 h-1 rounded-full bg-slate-800" />
+                              <span className="text-[10px] text-slate-600 font-bold uppercase">[{entry.timestamp}]</span>
+                            </div>
+                            <div className="text-base font-bold text-white tracking-tight">Model: {entry.project_name} // <span className="text-slate-600 font-mono text-sm uppercase">ID: {entry.entry_id}</span></div>
+                        </div>
+                      </div>
                       <button 
-                        key={mode} 
-                        onClick={() => setFilterMode(mode)}
-                        className={`px-3 py-1 text-[8px] font-bold uppercase transition-all ${filterMode === mode ? 'bg-emerald-500 text-black' : 'text-slate-600 hover:text-slate-400'}`}
+                        onClick={() => handleTranslate(entry)}
+                        className="p-3 bg-white/5 rounded-xl text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all shadow-lg border border-white/5"
                       >
-                        {mode}
+                        <ChevronRight size={18} />
                       </button>
-                    ))}
-                  </div>
-               </div>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
-              {loading ? (
-                <div className="h-full flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-2 border-emerald-500/10 border-t-emerald-500 rounded-full animate-spin" />
-                    <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">Synchronizing_With_Remote_Ledger...</span>
-                  </div>
-                </div>
-              ) : filteredLedger.length === 0 ? (
-                <div className="h-full flex items-center justify-center">
-                   <div className="text-center opacity-30">
-                      <ShieldQuestion size={48} className="mx-auto mb-4" />
-                      <div className="text-[10px] font-mono tracking-[0.5em] uppercase">No_Auditable_Decisions_Found</div>
-                   </div>
-                </div>
-              ) : filteredLedger.map((entry, i) => (
-                <div key={entry.entry_id} className={`group relative p-5 border transition-all ${!entry.is_compliant ? 'border-rose-500/20 bg-rose-500/[0.03]' : 'border-emerald-500/5 bg-[#0D0D14] hover:border-emerald-500/20'}`}>
-                  <div className="flex justify-between items-start">
-                    <div className="flex gap-4">
-                       <div className={`w-10 h-10 flex items-center justify-center border ${!entry.is_compliant ? 'border-rose-500/20 bg-rose-500/5' : 'border-emerald-500/10 bg-emerald-500/5'}`}>
-                          {entry.is_compliant ? <ShieldCheck size={18} className="text-emerald-500" /> : <ShieldAlert size={18} className="text-rose-500" />}
-                       </div>
-                       <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-3">
-                             <span className={`text-[10px] font-bold tracking-widest uppercase ${!entry.is_compliant ? 'text-rose-500' : 'text-emerald-500'}`}>
-                                {entry.is_compliant ? 'Validated Decision' : 'Governance Violation'}
-                             </span>
-                             <span className="text-[10px] text-slate-600 font-mono">[{entry.timestamp}]</span>
-                          </div>
-                          <div className="text-[13px] font-bold text-slate-300">AI Model: {entry.project_name} // <span className="text-slate-600">REF: {entry.entry_id}</span></div>
-                       </div>
                     </div>
-                    <button 
-                      onClick={() => handleTranslate(entry)}
-                      className="group-hover:translate-x-0 translate-x-2 opacity-0 group-hover:opacity-100 transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-emerald-400 hover:text-emerald-300"
-                    >
-                      Audit_Decision <ChevronRight size={14} />
-                    </button>
-                  </div>
-                  
-                  {!entry.is_compliant && (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                       {entry.violations?.map((v, idx) => (
-                         <span key={idx} className="px-2 py-0.5 bg-rose-500/10 border border-rose-500/30 text-rose-500 text-[9px] font-bold uppercase">Breach: {v.type || v}</span>
-                       ))}
-                    </div>
-                  )}
+                    
+                    {!entry.is_compliant && (
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        {entry.violations?.map((v, idx) => (
+                          <span key={idx} className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[9px] font-bold uppercase rounded-lg">Breach: {v.type || v}</span>
+                        ))}
+                      </div>
+                    )}
 
-                  <div className="mt-4 pt-4 border-t border-white/[0.02] flex justify-between items-center text-[9px] font-mono text-slate-700 uppercase tracking-widest">
-                     <div>Integrity_Proof: {entry.chain_hash?.slice(0, 32)}...</div>
-                     <div className="flex items-center gap-1 text-emerald-900"><ShieldCheck size={10} /> Tamper-Evident</div>
+                    <div className="mt-5 pt-5 border-t border-white/5 flex justify-between items-center text-[10px] font-bold text-slate-700 uppercase tracking-[0.2em]">
+                      <div>Integrity: {entry.chain_hash?.slice(0, 32)}...</div>
+                      <div className="flex items-center gap-2 bg-emerald-500/5 px-2 py-0.5 rounded text-emerald-900 border border-emerald-500/10">
+                        <Lock size={10} /> SECURE
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </main>
 
           {/* --- COL 3: GOVERNANCE INTELLIGENCE (RIGHT) --- */}
-          <aside className="w-80 shrink-0 flex flex-col gap-4 overflow-hidden">
+          <aside className="w-96 shrink-0 flex flex-col gap-6 overflow-hidden">
              
              {/* Decision Search */}
-             <div className="bg-[#0C0C18] border border-emerald-500/10 p-4">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                   <Search size={12} /> Decision Lookup
+             <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl shadow-xl">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-3">
+                   <Search size={14} className="text-purple-400" /> Decision Lookup
                 </div>
                 <div className="relative">
                   <input 
                     type="text" 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search AI / Project..."
-                    className="w-full bg-black/40 border border-emerald-500/20 p-3 text-[11px] text-emerald-400 placeholder:text-slate-700 outline-none focus:border-emerald-500/50 transition-all"
+                    placeholder="Search Model / Decision ID..."
+                    className="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm text-white placeholder:text-slate-700 outline-none focus:border-purple-500/50 transition-all font-bold"
                   />
                 </div>
              </div>
 
              {/* Governance Intelligence Summary */}
-             <div className="bg-[#0C0C18] border border-emerald-500/10 p-4 flex-1 flex flex-col">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2 border-b border-white/5 pb-2">
-                   <BarChart3 size={12} /> Governance Intel
+             <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl flex-1 flex flex-col shadow-xl">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-3 border-b border-white/5 pb-4">
+                   <BarChart3 size={14} className="text-cyan-400" /> Intelligence Suite
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-5">
                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-slate-600 uppercase">AI Decisions Scanned</span>
-                      <span className="text-[11px] font-mono text-emerald-400">{ledger.length}</span>
+                      <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">AI Scanned</span>
+                      <span className="text-sm font-bold text-emerald-400 font-mono tracking-tighter">{ledger.length}</span>
                    </div>
                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-slate-600 uppercase">Critical Governance Breaches</span>
-                      <span className="text-[11px] font-mono text-rose-500">{totalViolations}</span>
+                      <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Breach Density</span>
+                      <span className="text-sm font-bold text-rose-500 font-mono tracking-tighter">{totalViolations}</span>
                    </div>
                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-slate-600 uppercase">Last Network Pulse</span>
-                      <span className="text-[11px] font-mono text-slate-400">JUST NOW</span>
+                      <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Network Pulse</span>
+                      <div className="flex items-center gap-2">
+                         <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                         <span className="text-sm font-bold text-white font-mono uppercase tracking-tighter">Active</span>
+                      </div>
                    </div>
                    
-                   <div className="pt-4 mt-4 border-t border-white/5 space-y-2">
-                      <div className="text-[9px] text-slate-600 uppercase tracking-widest font-bold">Oversight Status</div>
-                      <div className="p-3 bg-black/40 border border-emerald-500/5 text-[9px] text-emerald-900 leading-relaxed">
-                         Active monitoring of the federated mesh is enabled. AI decision pulses are being dequantized and checked against jurisdiction-specific regulatory dialects.
+                   <div className="pt-6 mt-6 border-t border-white/5 space-y-3">
+                      <div className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">Oversight Status</div>
+                      <div className="p-4 bg-black/40 border border-white/5 rounded-xl text-[11px] text-slate-400 leading-relaxed font-bold">
+                         Secure telemetry is being de-quantized across all provisioned spoke nodes. Jurisdictional dialects are synchronized at the edge.
                       </div>
                    </div>
                 </div>
                 
-                <div className="mt-auto pt-6 space-y-2">
-                   <button className="w-full p-3 border border-emerald-500/20 bg-emerald-500/5 text-emerald-400 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-500 hover:text-black transition-all">
-                      <Download size={14} /> Export_Decision_Log
+                <div className="mt-auto pt-8 space-y-3">
+                   <button className="w-full py-4 bg-purple-600/10 border border-purple-500/30 rounded-xl text-purple-400 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-purple-600 hover:text-white transition-all shadow-lg shadow-purple-500/5">
+                      <Download size={16} /> Export Decision Log
                    </button>
-                   <button className="w-full p-3 border border-rose-500/20 text-rose-500 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-rose-500/20 transition-all">
-                      <ShieldAlert size={14} /> Issue_Governance_Warning
+                   <button className="w-full py-4 bg-rose-600/10 border border-rose-500/30 rounded-xl text-rose-500 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-rose-600 hover:text-white transition-all shadow-lg shadow-rose-500/5">
+                      <ShieldAlert size={16} /> Issue Enforcement
                    </button>
-                </div>
-             </div>
-
-             {/* Mesh Health Monitor */}
-             <div className="bg-[#0C0C18] border border-emerald-500/10 p-4">
-                <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center justify-between">
-                   <span>Global Decision Pulse</span>
-                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                </div>
-                <div className="h-16 flex items-end gap-1 px-1">
-                   {[40, 70, 45, 90, 65, 30, 80, 50, 60, 40, 75, 45, 95, 60, 30].map((h, i) => (
-                     <div key={i} className="flex-1 bg-emerald-500/20 hover:bg-emerald-500/50 transition-all" style={{ height: `${h}%` }} />
-                   ))}
                 </div>
              </div>
 
@@ -363,67 +382,68 @@ export default function Dashboard() {
 
         {/* --- DECISION ANALYSIS VAULT (OVERLAY) --- */}
         {selectedAudit && (
-          <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-8 animate-in zoom-in duration-300">
-             <div className="w-full max-w-7xl h-[90vh] bg-[#0A0A0F] border border-emerald-500/20 flex flex-col shadow-[0_0_50px_rgba(16,185,129,0.1)] relative">
-                <div className="flex items-center justify-between p-6 border-b border-emerald-500/10 bg-emerald-500/5">
-                   <div className="flex items-center gap-4">
-                      <Terminal size={20} className="text-emerald-500" />
+          <div className="fixed inset-0 bg-black/98 backdrop-blur-2xl z-[100] flex items-center justify-center p-12 animate-in zoom-in duration-300">
+             <div className="w-full max-w-7xl h-full bg-[#0A0A0F] border border-white/10 rounded-[32px] flex flex-col shadow-2xl relative overflow-hidden">
+                <div className="flex items-center justify-between p-8 border-b border-white/5 bg-white/[0.02]">
+                   <div className="flex items-center gap-5">
+                      <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20">
+                         <Terminal size={24} className="text-emerald-500" />
+                      </div>
                       <div className="flex flex-col">
-                         <span className="text-sm font-bold tracking-[0.2em] text-emerald-400 uppercase">Decision_Analysis // Forensic_Audit</span>
-                         <span className="text-[10px] text-slate-600 font-mono">MODEL: {selectedAudit.project_name} // INTEGRITY_PROOF: {selectedAudit.chain_hash}</span>
+                         <span className="text-xl font-bold text-white tracking-tight uppercase">Decision Analysis // Forensic Vault</span>
+                         <span className="text-xs text-slate-600 font-mono uppercase tracking-widest">Model: {selectedAudit.project_name} // Integrity: {selectedAudit.chain_hash}</span>
                       </div>
                    </div>
                    <button 
                      onClick={() => { setSelectedAudit(null); setTranslatedData(null); }} 
-                     className="w-10 h-10 flex items-center justify-center hover:bg-rose-500/20 hover:text-rose-500 transition-all rounded"
+                     className="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-rose-500/20 hover:text-rose-500 transition-all rounded-2xl border border-white/10"
                    >
-                     <LogOut size={20} />
+                     <LogOut size={24} />
                    </button>
                 </div>
 
-                <div className="flex-1 flex overflow-hidden">
-                   <div className="flex-1 flex flex-col border-r border-emerald-500/10 overflow-hidden">
-                      <div className="p-4 border-b border-white/5 flex gap-4 bg-black/20">
+                <div className="flex-1 flex overflow-hidden p-8 gap-8">
+                   <div className="flex-1 flex flex-col bg-black/40 border border-white/5 rounded-3xl overflow-hidden shadow-inner">
+                      <div className="p-4 border-b border-white/5 flex gap-3 bg-white/[0.01]">
                          {['SEC', 'RBI', 'EU-AI', 'NIST'].map(d => (
                            <button 
                              key={d} 
                              onClick={() => setDialect(d)}
-                             className={`px-4 py-1.5 text-[10px] font-bold uppercase transition-all ${dialect === d ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'text-slate-600 hover:text-slate-400'}`}
+                             className={`px-6 py-2 rounded-xl text-[11px] font-bold uppercase transition-all ${dialect === d ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30' : 'text-slate-600 hover:text-white hover:bg-white/5'}`}
                            >
                              {d}
                            </button>
                          ))}
                       </div>
-                      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-black/40">
-                         <div className="text-[10px] text-slate-600 uppercase tracking-widest mb-6 flex items-center gap-2">
-                            <MessageSquare size={12} /> Regulatory Translation // {dialect} Dialect
+                      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                         <div className="text-[10px] text-slate-600 uppercase tracking-widest mb-6 flex items-center gap-3 font-bold">
+                            <MessageSquare size={14} className="text-purple-400" /> Regulatory Translation // {dialect} Dialect
                          </div>
-                         <pre className="text-[12px] font-mono text-emerald-100 leading-relaxed whitespace-pre-wrap">
+                         <pre className="text-[13px] font-mono text-white leading-relaxed whitespace-pre-wrap font-bold bg-white/[0.01] p-6 rounded-2xl border border-white/5">
                             {translatedData ? JSON.stringify(translatedData.translation, null, 2) : (
-                              <div className="flex items-center gap-3 animate-pulse">
-                                 <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                                 <span className="tracking-[0.2em] uppercase">De-quantizing_AI_Intent...</span>
+                              <div className="flex items-center gap-4 animate-pulse">
+                                 <div className="w-2 h-2 bg-purple-500 rounded-full" />
+                                 <span className="tracking-[0.2em] uppercase text-purple-400">De-quantizing AI Intent...</span>
                               </div>
                             )}
                          </pre>
                       </div>
                    </div>
 
-                   <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-[#050508]">
-                      <div className="text-[10px] text-slate-600 uppercase tracking-widest mb-6 flex items-center gap-2">
-                         <Database size={12} /> Raw Decision Payload
+                   <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-black/60 rounded-3xl border border-white/5 shadow-2xl">
+                      <div className="text-[10px] text-slate-600 uppercase tracking-widest mb-6 flex items-center gap-3 font-bold">
+                         <Database size={14} className="text-emerald-400" /> Raw Decision Payload
                       </div>
-                      <pre className="text-[11px] font-mono leading-relaxed bg-black/20 p-6 border border-white/5 shadow-inner" dangerouslySetInnerHTML={highlight(translatedData?.raw_payload || selectedAudit.raw_payload)} />
+                      <pre className="text-[12px] font-mono leading-relaxed bg-black/40 p-8 rounded-2xl border border-white/5 shadow-inner" dangerouslySetInnerHTML={highlight(translatedData?.raw_payload || selectedAudit.raw_payload)} />
                    </div>
                 </div>
 
-                <div className="p-5 border-t border-emerald-500/10 bg-emerald-500/[0.02] flex justify-between items-center text-[10px] font-mono">
-                   <div className="flex gap-8 text-slate-600">
-                      <span className="flex items-center gap-2"><ShieldCheck size={12} /> AUDIT_TRAIL_VERIFIED: TRUE</span>
-                      <span className="flex items-center gap-2"><Globe size={12} /> JURISDICTION: {user?.regulator || "GLOBAL"}</span>
-                      <span className="flex items-center gap-2"><ShieldQuestion size={12} /> COMPLIANCE_SCORE: 1.0</span>
+                <div className="p-6 border-t border-white/5 bg-white/[0.02] flex justify-between items-center px-10">
+                   <div className="flex gap-10 text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+                      <span className="flex items-center gap-2"><ShieldCheck size={14} className="text-emerald-500" /> Audit Trail Verified</span>
+                      <span className="flex items-center gap-2"><Globe size={14} className="text-blue-500" /> Node: India Relay Alpha</span>
                    </div>
-                   <div className="text-emerald-900 font-bold uppercase tracking-[0.4em]">AUTHORIZED_GOVERNANCE_TERMINAL</div>
+                   <div className="text-purple-900 font-bold uppercase tracking-[0.4em] text-xs">Authorized Master Access Only</div>
                 </div>
              </div>
           </div>
