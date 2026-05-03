@@ -7,8 +7,8 @@ class Organization(Base):
     """v5.0 Top-level entity representing a company/regulator agency."""
     __tablename__ = "organizations"
 
-    id             = Column(String, primary_key=True)               # "org_a1b2..."
-    hub_id         = Column(String, unique=True, index=True)        # "animuslab", "sec"
+    id             = Column(String, primary_key=True)               # "ALab_03-05-26"
+    hub_id         = Column(String, unique=True, index=True)        # "alab", "sec"
     display_name   = Column(String, nullable=False)                 # "Animus Global"
     domain         = Column(String, unique=True, index=True)        # "animuslab.ai"
     region         = Column(String, nullable=True)                  # "India", "USA", "UK"
@@ -20,7 +20,8 @@ class Organization(Base):
     created_at     = Column(String, nullable=False)                 # ISO-8601
 
     projects = relationship("Fleet", back_populates="organization")
-    members  = relationship("User", back_populates="organization")
+    enterprise_members = relationship("EnterpriseUser", back_populates="organization")
+    regulatory_members = relationship("RegulatoryOfficial", back_populates="organization")
 
 # --- 2. PROJECT (Execution Unit - formerly Fleet) ---
 class Fleet(Base):
@@ -70,41 +71,56 @@ class LedgerEntry(Base):
     fleet = relationship("Fleet", back_populates="ledger_entries")
     receipts = relationship("LedgerEntry", backref="parent", remote_side=[id])
 
-# --- 4. USERS & RBAC ---
-class User(Base):
-    """v5.0 Personal Identity — The 'id' field is the cryptographically pinned Clearance ID."""
-    __tablename__ = "users"
+# --- 4. ENTERPRISE USERS (Silo 1) ---
+class EnterpriseUser(Base):
+    """Sovereign Identities for Corporate Personnel."""
+    __tablename__ = "enterprise_users"
 
-    id           = Column(String, primary_key=True)               # "aud_...", "own_...", "usr_..."
-    email        = Column(String, unique=True, index=True)        # Personal/Work Email
-    org_id       = Column(String, ForeignKey("organizations.id")) # Parent Org
+    id           = Column(String, primary_key=True)               # "AL_Tan_03-05-26"
+    email        = Column(String, unique=True, index=True)        
+    org_id       = Column(String, ForeignKey("organizations.id")) 
     display_name = Column(String, nullable=False)
-    role         = Column(String, nullable=False)                 # "owner", "admin", "lead", "member", "regulator"
-    hashed_pass  = Column(String, nullable=True)                  # Optional for regulators
-    totp_secret  = Column(String, nullable=True)                  # Google Authenticator Secret
-    avatar_url   = Column(String, nullable=True)                  # Instagram-like Profile Pix
-    department   = Column(String, nullable=True)                  # "Compliance", "Lending AI", etc.
-    jurisdiction = Column(String, nullable=True)                  # "US", "IN", "EU"
+    role         = Column(String, nullable=False)                 # "owner", "admin", "member"
+    hashed_pass  = Column(String, nullable=True)                  
+    totp_secret  = Column(String, nullable=True)                  
+    department   = Column(String, nullable=True)                  
     status       = Column(String, default="pending")
     email_verified = Column(Boolean, default=False)
-    verification_token = Column(String, nullable=True)             # One-time email verification token
     created_at   = Column(String, nullable=False)
 
-    organization = relationship("Organization", back_populates="members")
+    organization = relationship("Organization", back_populates="enterprise_members")
 
+# --- 5. REGULATORY OFFICIALS (Silo 2) ---
+class RegulatoryOfficial(Base):
+    """Sovereign Identities for Agency Auditors."""
+    __tablename__ = "regulatory_officials"
 
-# --- 5. INVITES ---
+    id           = Column(String, primary_key=True)               # "SEC_Tan_03-05-26"
+    email        = Column(String, unique=True, index=True)        
+    org_id       = Column(String, ForeignKey("organizations.id")) 
+    display_name = Column(String, nullable=False)
+    role         = Column(String, default="regulator")
+    totp_secret  = Column(String, nullable=True)                  
+    department   = Column(String, nullable=True)                  # "Compliance", "Enforcement"
+    jurisdiction = Column(String, nullable=True)                  # "US", "IN", "EU"
+    status       = Column(String, default="approved")
+    email_verified = Column(Boolean, default=True)
+    created_at   = Column(String, nullable=False)
+
+    organization = relationship("Organization", back_populates="regulatory_members")
+
+# --- 6. INVITES ---
 class OrgInvite(Base):
-    """v5.0 Pending invitations for team members."""
+    """Pending invitations for Enterprise Users."""
     __tablename__ = "org_invites"
 
-    id             = Column(String, primary_key=True)               # UUID token / Invite Code
-    org_id         = Column(String, ForeignKey("organizations.id")) # Link to parent org
+    id             = Column(String, primary_key=True)               
+    org_id         = Column(String, ForeignKey("organizations.id")) 
     invited_email  = Column(String, nullable=False)
-    clearance_id   = Column(String, nullable=False)                 # The ID assigned to the user upon acceptance
-    target_project = Column(String, nullable=True)                  # Project name/ID
-    role           = Column(String, default="member")               # "admin", "lead", "member"
-    status         = Column(String, default="pending")               # "pending", "accepted", "expired"
+    clearance_id   = Column(String, nullable=False)                 
+    target_project = Column(String, nullable=True)                  
+    role           = Column(String, default="member")               
+    status         = Column(String, default="pending")               
     created_at     = Column(String, nullable=False)
     expires_at     = Column(String, nullable=False)
 

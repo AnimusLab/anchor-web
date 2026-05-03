@@ -42,26 +42,7 @@ def run_migrations():
     Uses IF NOT EXISTS so it is safe to run on every startup."""
     from sqlalchemy import text
     migrations = [
-        # organizations table — columns added after initial deploy
-        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS hub_id VARCHAR;",
-        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS region VARCHAR;",
-        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS domain VARCHAR;",
-        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS master_key_hash VARCHAR;",
-        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS server_region VARCHAR DEFAULT 'IN';",
-        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS hr_contact VARCHAR;",
-        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'active';",
-        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS org_type VARCHAR DEFAULT 'enterprise';",
-        # users table — columns added after initial deploy
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS org_id VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS clearance_id VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS jurisdiction VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'pending';",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS hashed_pass VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token VARCHAR;",
+        # Any necessary manual migrations that create_all doesn't handle (usually none for a fresh reset)
     ]
 
     # Only run ALTER TABLE on Postgres (SQLite doesn't support IF NOT EXISTS)
@@ -93,12 +74,13 @@ def init_db():
 
 def seed_mesh_identities(db):
     """Genesis Seeder — Injects regulatory bodies and primary identities."""
-    from models import User, Organization
+    from models import EnterpriseUser, RegulatoryOfficial, Organization
 
     # 1. Seed Organizations
     org_configs = [
-        {"id": "org_sec_master", "prefix": "sec", "name": "Securities & Exchange Commission", "type": "regulator"},
-        {"id": "org_rbi_master", "prefix": "rbi", "name": "Reserve Bank of India", "type": "regulator"},
+        {"id": "SEC_26-10-04", "prefix": "sec", "name": "Securities & Exchange Commission", "type": "regulator"},
+        {"id": "RBI_26-10-04", "prefix": "rbi", "name": "Reserve Bank of India", "type": "regulator"},
+        {"id": "ALab_26-10-04", "prefix": "alab", "name": "Animus Global", "type": "enterprise"},
     ]
 
     for cfg in org_configs:
@@ -118,45 +100,33 @@ def seed_mesh_identities(db):
     db.commit()
 
     # 2. Seed Primary Identities (Passwordless Role Models)
-    # Fixed TOTP Secret: "JBSWY3DPEHPK3PXP" (Enter this in Authenticator for testing)
     test_secret = "JBSWY3DPEHPK3PXP" 
     
-    # Root admin password is the ANCHOR_MASTER_KEY from .env
     ANCHOR_MASTER_KEY = os.getenv("ANCHOR_MASTER_KEY")
     hashed_master = bcrypt.hashpw(ANCHOR_MASTER_KEY.encode(), bcrypt.gensalt()).decode() if ANCHOR_MASTER_KEY else None
 
-    users_to_seed = [
-        {
-            "email": "artisianecho@gmail.com", 
-            "name": "Audit Echo", 
-            "role": "regulator", 
-            "org_id": "org_sec_master",
-            "oid": "SEC-AUDITOR-99",
-            "pass": hashed_master
-        }
-    ]
-
-    for u_cfg in users_to_seed:
-        user = db.query(User).filter(User.email == u_cfg["email"]).first()
-        if not user:
-            user = User(
-                id=u_cfg["oid"], # Clearance ID is the primary ID
-                email=u_cfg["email"],
-                display_name=u_cfg["name"],
-                role=u_cfg["role"],
-                org_id=u_cfg["org_id"],
-                totp_secret=test_secret,
-                status="approved",
-                email_verified=True,
-                created_at=datetime.utcnow().isoformat()
-            )
-            db.add(user)
-        
-        # Always ensure the password/hash is synchronized with the latest .env
-        if u_cfg["pass"]:
-            user.hashed_pass = u_cfg["pass"]
+    # Seed an auditor
+    auditor_email = "artisianecho@gmail.com"
+    auditor = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.email == auditor_email).first()
+    if not auditor:
+        auditor = RegulatoryOfficial(
+            id="SEC_AE_26-10-04",
+            email=auditor_email,
+            display_name="Audit Echo",
+            role="regulator",
+            org_id="SEC_26-10-04",
+            totp_secret=test_secret,
+            status="approved",
+            email_verified=True,
+            created_at=datetime.utcnow().isoformat()
+        )
+        db.add(auditor)
+    
+    if hashed_master:
+        # Regulatory officials don't usually use passwords, but we'll sync if needed
+        pass 
             
-        print(f"[SYSTEM] Identity Synchronized: {u_cfg['email']} ({u_cfg['role']})")
+    print(f"[SYSTEM] Identity Synchronized: {auditor_email} (regulator)")
     
     db.commit()
     print("[BOOT] Sovereign Mesh — Genesis Seeding Complete.")

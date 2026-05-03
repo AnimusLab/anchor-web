@@ -24,15 +24,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
-from master_config import (
-    lookup_auditor,
-    log_session_start,
-    log_session_end,
-    provision_auditor,
-    list_auditors,
-    revoke_auditor,
-    get_auditor,
-)
+from mail import send_auditor_provisioned
 from mail import send_auditor_provisioned
 
 # ---------------------------------------------------------------------------
@@ -137,7 +129,7 @@ def get_oversight_admin(
 # ---------------------------------------------------------------------------
 
 from database import get_db
-from models import User
+from models import RegulatoryOfficial, Organization
 
 @oversight_router.post("/login")
 def oversight_login(body: OversightLoginRequest, db: Session = Depends(get_db), request: Request = None):
@@ -146,12 +138,10 @@ def oversight_login(body: OversightLoginRequest, db: Session = Depends(get_db), 
     handshake for regulatory access using the SQL backend.
     """
     # 1. Validate identity against SQL database
-    # Clearance ID is now the primary User.id
-    user = db.query(User).filter(
-        User.id == body.clearance_id.strip(),
-        User.email == body.email.strip().lower(),
-        User.role == "regulator",
-        User.status == "approved"
+    user = db.query(RegulatoryOfficial).filter(
+        RegulatoryOfficial.id == body.clearance_id.strip(),
+        RegulatoryOfficial.email == body.email.strip().lower(),
+        RegulatoryOfficial.status == "approved"
     ).first()
 
     if not user:
@@ -166,9 +156,9 @@ def oversight_login(body: OversightLoginRequest, db: Session = Depends(get_db), 
         raise HTTPException(status_code=401, detail="IDENTITY VERIFICATION FAILED")
 
     # 3. Log session start
-    ip         = request.client.host if (request and request.client) else "unknown"
-    user_agent = request.headers.get("user-agent", "unknown") if request else "unknown"
-    session_id = log_session_start(user.id, ip, user_agent)
+    # [v5.1 Reset: Session logging moved to shared audit trail]
+    session_id = secrets.token_hex(8) 
+
 
     # 4. Issue oversight-scoped JWT
     token = _issue_oversight_jwt(
@@ -183,10 +173,9 @@ def oversight_login(body: OversightLoginRequest, db: Session = Depends(get_db), 
         "status":       "AUTHENTICATED",
         "access_token": token,
         "token_type":   "bearer",
-        "entity_id":    auditor["entity_id"],
-        "display_name": auditor["display_name"],
-        "regulator":    auditor["regulator"],
-        "access_level": auditor["access_level"],
+        "entity_id":    user.id,
+        "display_name": user.display_name,
+        "regulator":    user.department,
         "session_id":   session_id,
         "expires_in":   OVERSIGHT_JWT_TTL * 3600,
     }
@@ -215,11 +204,8 @@ def oversight_me(current_user: dict = Depends(get_oversight_user)):
 
 @oversight_router.post("/logout")
 def oversight_logout(current_user: dict = Depends(get_oversight_user)):
-    """Logs session end to the digital footprint trail."""
-    session_id = current_user.get("session_id")
-    if session_id:
-        log_session_end(session_id)
-    return {"status": "SESSION_TERMINATED", "session_id": session_id}
+    """Logs session end."""
+    return {"status": "SESSION_TERMINATED"}
 
 
 # ---------------------------------------------------------------------------
@@ -240,19 +226,18 @@ def provision_new_auditor(
     }:
         raise HTTPException(status_code=400, detail="UNKNOWN REGULATOR")
 
-    # Generate Clearance ID pattern: {REGULATOR}-{NAME}-{DDMM}
-    import re
-    name_clean = "".join(p for p in body.display_name.upper().split() if p.isalpha())[:12]
-    ddmm = datetime.now(timezone.utc).strftime("%d%m")
-    clearance_id = f"{body.regulator.upper()}-{name_clean}-{ddmm}"
+    # Generate Clearance ID pattern: SEC_Tan_26-10-04
+    user_initials = "".join(word[0].capitalize() for word in body.display_name.split() if word)[:3]
+    date_str = datetime.now(timezone.utc).strftime("%d-%m-%y")
+    clearance_id = f"{body.regulator.upper()}_{user_initials}_{date_str}"
     
     # Check for duplicate
-    if db.query(User).filter(User.id == clearance_id).first():
-        clearance_id = f"{clearance_id}-{secrets.token_hex(2)}"
+    if db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == clearance_id).first():
+        clearance_id = f"{clearance_id}_{secrets.token_hex(2)}"
 
     totp_secret = pyotp.random_base32()
     
-    user = User(
+    user = RegulatoryOfficial(
         id=clearance_id,
         email=body.email.strip().lower(),
         display_name=body.display_name,
@@ -275,40 +260,40 @@ def provision_new_auditor(
     )
 
     # 3. Dispatch welcome email (Entity ID + Instructions)
-    # Note: TOTP secret is NOT in this email for security.
     send_auditor_provisioned(
-        to_email     = body.email,
-        display_name = body.display_name,
-        entity_id    = record["entity_id"],
-        regulator    = record["regulator"]
+        to_email     = user.email,
+        display_name = user.display_name,
+        entity_id    = user.id,
+        regulator    = user.department
     )
 
     return {
         "status":      "PROVISIONED",
-        "entity_id":   record["entity_id"],
-        "display_name": record["display_name"],
-        "regulator":   record["regulator"],
-        "access_level": record["access_level"],
-        "totp_uri":    totp_uri,       # Render as QR code in root dashboard
-        "totp_secret": record["totp_secret"],  # Show once — admin screenshots/sends securely
-        "provisioned_at": record["provisioned_at"],
+        "entity_id":   user.id,
+        "display_name": user.display_name,
+        "regulator":   user.department,
+        "totp_uri":    totp_uri,       
+        "totp_secret": totp_secret,  
         "note": "TOTP secret is shown once. Screenshot the QR code and send via secure channel.",
     }
 
 
 @oversight_router.get("/admin/auditors")
-def list_all_auditors(current_admin: dict = Depends(get_oversight_admin)):
-    """[Admin only] Lists all provisioned auditors (without TOTP secrets)."""
-    return list_auditors()
+def list_all_auditors(db: Session = Depends(get_db), current_admin: dict = Depends(get_oversight_admin)):
+    """[Admin only] Lists all provisioned auditors."""
+    return db.query(RegulatoryOfficial).all()
 
 
 @oversight_router.post("/admin/revoke")
 def revoke_auditor_access(
     body:          RevokeRequest,
+    db:            Session = Depends(get_db),
     current_admin: dict = Depends(get_oversight_admin),
 ):
     """[Admin only] Revokes an auditor's access immediately."""
-    ok = revoke_auditor(body.entity_id)
-    if not ok:
+    user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == body.entity_id).first()
+    if not user:
         raise HTTPException(status_code=404, detail="AUDITOR NOT FOUND")
+    user.status = "revoked"
+    db.commit()
     return {"status": "REVOKED", "entity_id": body.entity_id}
