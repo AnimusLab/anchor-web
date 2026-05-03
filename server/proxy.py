@@ -32,7 +32,7 @@ if not ANCHOR_MASTER_KEY:
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
 from database import get_db, init_db
-from models import Fleet, WebhookSubscription, LedgerEntry, User
+from models import Fleet, WebhookSubscription, LedgerEntry, EnterpriseUser, RegulatoryOfficial, Organization
 from security import encrypt_secret, decrypt_secret
 from dispatch_manager import dispatch_webhook
 from auth import auth_router, get_current_user, get_current_admin_user
