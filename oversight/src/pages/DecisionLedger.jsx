@@ -1,0 +1,157 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import PortalLayout from '../components/PortalLayout';
+import { useAuth } from '../contexts/AuthContext';
+import { endpoints } from '../lib/api';
+
+const DIALECTS = ['RBI','SEC','EU-AI','NIST'];
+
+export default function DecisionLedger() {
+  const { token } = useAuth();
+  const [ledger, setLedger]       = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [search, setSearch]       = useState('');
+  const [filter, setFilter]       = useState('ALL');
+  const [dialect, setDialect]     = useState('RBI');
+  const [vault, setVault]         = useState(null);
+  const [translated, setTranslated] = useState(null);
+
+  useEffect(() => {
+    fetch(`${endpoints.baseUrl}/api/ledger`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json()).then(setLedger).finally(() => setLoading(false));
+  }, [token]);
+
+  const openVault = async (entry) => {
+    setVault(entry); setTranslated(null);
+    try {
+      const r = await fetch(`${endpoints.baseUrl}/api/audit/${entry.entity_id || 'unknown'}/entry/${entry.entry_id}?dialect=${dialect}`, { headers: { Authorization: `Bearer ${token}` } });
+      setTranslated(await r.json());
+    } catch(e) {}
+  };
+
+  const rows = useMemo(() => ledger.filter(e => {
+    const q = search.toLowerCase();
+    const mq = e.project_name?.toLowerCase().includes(q) || e.entry_id?.toLowerCase().includes(q);
+    const mf = filter === 'ALL' || (filter === 'COMPLIANT' && e.is_compliant) || (filter === 'VIOLATIONS' && !e.is_compliant);
+    return mq && mf;
+  }), [ledger, search, filter]);
+
+  return (
+    <PortalLayout>
+      <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Decision Ledger</div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Complete record of every AI governance decision across your jurisdiction.</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>DIALECT</span>
+            <select value={dialect} onChange={e => setDialect(e.target.value)} className="ra-select" style={{ width: 'auto', padding: '7px 12px', fontSize: 13 }}>
+              {DIALECTS.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Search + Filter */}
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <svg viewBox="0 0 20 20" fill="currentColor" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: 'var(--text-muted)', pointerEvents: 'none' }}>
+              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd"/>
+            </svg>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by company name, AI model, or decision ID..." className="ra-input" style={{ paddingLeft: 40, fontSize: 14, height: 44 }} />
+          </div>
+          {['ALL','COMPLIANT','VIOLATIONS'].map(m => (
+            <button key={m} onClick={() => setFilter(m)} style={{ padding: '8px 16px', borderRadius: 6, fontSize: 12, fontWeight: 600, border: '1px solid', cursor: 'pointer', transition: 'all 0.15s', background: filter === m ? 'var(--accent-glow)' : 'transparent', color: filter === m ? '#a78bfa' : 'var(--text-muted)', borderColor: filter === m ? 'var(--accent)' : 'var(--border)' }}>{m}</button>
+          ))}
+        </div>
+
+        {/* Stats row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+          {[
+            { label: 'Total Decisions', value: ledger.length, color: 'var(--cyan)' },
+            { label: 'Compliant',       value: ledger.filter(e=>e.is_compliant).length, color: 'var(--green)' },
+            { label: 'Violations',      value: ledger.filter(e=>!e.is_compliant).length, color: 'var(--red)' },
+          ].map((s,i) => (
+            <div key={i} className="ra-card" style={{ padding: '16px 20px' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, fontWeight: 600 }}>{s.label}</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Table */}
+        <div className="ra-card" style={{ overflow: 'hidden' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>All Decisions</span>
+            <span className="badge badge-purple">{rows.length} RECORDS</span>
+          </div>
+          {loading ? (
+            <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-dim)', fontSize: 13 }}>Loading decisions...</div>
+          ) : (
+            <div style={{ overflowY: 'auto', maxHeight: '60vh' }}>
+              <table className="ra-table">
+                <thead>
+                  <tr><th>Company / AI Model</th><th>Decision ID</th><th>Status</th><th>Violations</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                  {rows.length === 0 ? (
+                    <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '40px 0' }}>No decisions found</td></tr>
+                  ) : rows.map((e, i) => (
+                    <tr key={i}>
+                      <td style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{e.project_name}</td>
+                      <td className="mono" style={{ fontSize: 11, color: 'var(--text-dim)' }}>{e.entry_id?.slice(0,16)}…</td>
+                      <td><span className={`badge ${e.is_compliant ? 'badge-green' : 'badge-red'}`}>{e.is_compliant ? 'VERIFIED' : 'BREACH'}</span></td>
+                      <td style={{ fontSize: 12, color: e.violations?.length > 0 ? 'var(--red-soft)' : 'var(--text-dim)' }}>{e.violations?.length || 0}</td>
+                      <td>
+                        <button onClick={() => openVault(e)} style={{ padding: '5px 12px', borderRadius: 4, border: '1px solid var(--border-lit)', background: 'transparent', color: 'var(--accent-soft)', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+                          onMouseEnter={el => el.currentTarget.style.background = 'var(--accent-dim)'}
+                          onMouseLeave={el => el.currentTarget.style.background = 'transparent'}>
+                          Inspect →
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Vault overlay */}
+      {vault && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+          <div style={{ width: '100%', maxWidth: 1100, height: '100%', background: 'var(--bg-card)', border: '1px solid var(--border-lit)', borderRadius: 8, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)' }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Forensic Vault — {vault.project_name}</div>
+                <div className="mono" style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>ID: {vault.entry_id}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span className={`badge ${vault.is_compliant ? 'badge-green' : 'badge-red'}`}>{vault.is_compliant ? 'VERIFIED' : 'BREACH'}</span>
+                <select value={dialect} onChange={e => { setDialect(e.target.value); openVault(vault); }} className="ra-select" style={{ width: 'auto', padding: '5px 10px', fontSize: 12 }}>
+                  {DIALECTS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+                <button onClick={() => { setVault(null); setTranslated(null); }} style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border-lit)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Close</button>
+              </div>
+            </div>
+            <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border)', overflow: 'hidden' }}>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)', fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{dialect} Translation</div>
+                <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+                  {translated ? <pre style={{ fontSize: 12, fontFamily: 'JetBrains Mono', color: 'var(--cyan-soft)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{JSON.stringify(translated.translation, null, 2)}</pre>
+                    : <div style={{ color: 'var(--text-dim)', fontSize: 13, paddingTop: 20 }}>Translating...</div>}
+                </div>
+              </div>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)', fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Raw Payload</div>
+                <pre style={{ flex: 1, overflowY: 'auto', padding: 20, fontFamily: 'JetBrains Mono', fontSize: 12, lineHeight: 1.7, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                  {JSON.stringify(translated?.raw_payload || vault.raw_payload, null, 2)}
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </PortalLayout>
+  );
+}

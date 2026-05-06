@@ -213,3 +213,25 @@ body::before {
 .entity-card:hover { border-color: var(--border-lit); background: var(--bg-card-hover); transform: translateY(-1px); }
 .entity-card.selected { border-color: var(--accent); background: var(--accent-dim); }
 
+/* Select / dropdown — dark theme */
+.ra-select {
+  width: 100%;
+  background: var(--bg-void);
+  border: 1px solid var(--border-lit);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  appearance: none;
+  transition: border-color 0.15s;
+  cursor: pointer;
+}
+.ra-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+
+/* Force dark background on native dropdown list */
+.ra-select option {
+  background-color: #0d0d14;
+  color: #f1f1f5;
+}
