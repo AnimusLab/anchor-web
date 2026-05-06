@@ -182,3 +182,34 @@ body::before {
 }
 
 .mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Live ticker */
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-track { display: flex; animation: tickerScroll 40s linear infinite; white-space: nowrap; }
+.ticker-track:hover { animation-play-state: paused; }
+
+/* Marketplace entity card */
+.entity-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s, background 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.entity-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.entity-card.clean::before  { background: linear-gradient(90deg, var(--green), transparent); }
+.entity-card.breach::before { background: linear-gradient(90deg, var(--red), transparent); }
+.entity-card:hover { border-color: var(--border-lit); background: var(--bg-card-hover); transform: translateY(-1px); }
+.entity-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+
