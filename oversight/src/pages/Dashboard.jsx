@@ -3,42 +3,60 @@ import PortalLayout from '../components/PortalLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { endpoints } from '../lib/api';
 
+// ── Stat card (exact root-admin StatCard copy) ─────────────────────────────
+function StatCard({ label, value, sub, color, colorClass }) {
+  return (
+    <div className={`stat-card ${colorClass}`}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 32, fontWeight: 700, color, lineHeight: 1, marginBottom: 6 }}>
+        {value}
+      </div>
+      <div style={{ fontSize: 12, color: 'var(--text-dim)', fontFamily: 'JetBrains Mono, monospace' }}>
+        {sub}
+      </div>
+    </div>
+  );
+}
+
+// ── JSON syntax highlighter ────────────────────────────────────────────────
 const highlight = (obj) => {
   if (!obj) return { __html: '' };
   const s = JSON.stringify(obj, null, 2).replace(
     /(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
     m => {
-      let cls = 'text-emerald-400';
-      if (/^"/.test(m)) cls = /:$/.test(m) ? 'text-slate-500' : 'text-emerald-400';
-      else if (/true/.test(m)) cls = 'text-emerald-500';
-      else if (/false|null/.test(m)) cls = 'text-rose-500';
-      else cls = 'text-slate-600';
-      return `<span class="${cls}">${m}</span>`;
+      let cls = 'color: var(--green-soft)';
+      if (/^"/.test(m)) cls = /:$/.test(m) ? 'color: var(--text-muted)' : 'color: var(--cyan-soft)';
+      else if (/true/.test(m))  cls = 'color: var(--green)';
+      else if (/false|null/.test(m)) cls = 'color: var(--red-soft)';
+      else cls = 'color: var(--text-dim)';
+      return `<span style="${cls}">${m}</span>`;
     }
   );
   return { __html: s };
 };
 
 export default function Dashboard() {
-  const { user, token, logout } = useAuth();
-  const [companies, setCompanies]     = useState([]);
+  const { token, logout } = useAuth();
+  const [companies, setCompanies]       = useState([]);
   const [activeCompany, setActiveCompany] = useState(null);
-  const [ledger, setLedger]           = useState([]);
-  const [loading, setLoading]         = useState(false);
+  const [ledger, setLedger]             = useState([]);
+  const [loading, setLoading]           = useState(false);
   const [selectedAudit, setSelectedAudit] = useState(null);
-  const [dialect, setDialect]         = useState('SEC');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterMode, setFilterMode]   = useState('ALL');
+  const [dialect, setDialect]           = useState('SEC');
+  const [searchQuery, setSearchQuery]   = useState('');
+  const [filterMode, setFilterMode]     = useState('ALL');
   const [translatedData, setTranslatedData] = useState(null);
 
-  /* ── fetch entity list ── */
+  /* fetch all entities */
   useEffect(() => {
     const run = async () => {
       try {
         const res = await fetch(`${endpoints.baseUrl}/api/ledger`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (res.status === 401) logout();
+        if (res.status === 401) { logout(); return; }
         const data = await res.json();
         const map = {};
         data.forEach(e => {
@@ -55,7 +73,7 @@ export default function Dashboard() {
     run();
   }, [token]);
 
-  /* ── fetch ledger for selected entity ── */
+  /* fetch ledger for selected entity */
   useEffect(() => {
     if (!activeCompany) return;
     setLoading(true);
@@ -67,8 +85,8 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, [activeCompany, token]);
 
-  /* ── translate / inspect a decision ── */
-  const handleTranslate = async (entry) => {
+  /* open forensic vault */
+  const handleInspect = async (entry) => {
     setSelectedAudit(entry);
     setTranslatedData(null);
     try {
@@ -84,7 +102,10 @@ export default function Dashboard() {
     ledger.filter(e => {
       const q = searchQuery.toLowerCase();
       const matchSearch = e.project_name?.toLowerCase().includes(q) || e.entry_id?.toLowerCase().includes(q);
-      const matchFilter = filterMode === 'ALL' || (filterMode === 'COMPLIANT' && e.is_compliant) || (filterMode === 'VIOLATIONS' && !e.is_compliant);
+      const matchFilter =
+        filterMode === 'ALL' ||
+        (filterMode === 'COMPLIANT'  && e.is_compliant) ||
+        (filterMode === 'VIOLATIONS' && !e.is_compliant);
       return matchSearch && matchFilter;
     }),
   [ledger, searchQuery, filterMode]);
@@ -93,136 +114,166 @@ export default function Dashboard() {
   const totalViolations = ledger.filter(l => !l.is_compliant).length;
   const complianceScore = totalAudits > 0 ? Math.round(((totalAudits - totalViolations) / totalAudits) * 100) : 100;
 
+  const metrics = [
+    { label: 'Total Audits',      value: totalAudits,       sub: 'Across all nodes',      color: 'var(--cyan)',        colorClass: 'cyan'   },
+    { label: 'Provisioned Nodes', value: companies.length,  sub: 'Active enterprises',    color: 'var(--accent-soft)', colorClass: 'accent' },
+    { label: 'Mesh Integrity',    value: `${complianceScore}%`, sub: 'Governance coverage', color: 'var(--green)',     colorClass: 'green'  },
+    { label: 'Open Violations',   value: totalViolations,   sub: 'Require remediation',
+      color: totalViolations > 0 ? 'var(--red)' : 'var(--green)',
+      colorClass: totalViolations > 0 ? 'red' : 'green' },
+  ];
+
   /* ════════════════════════════════════════════════════════════════════════ */
   return (
     <PortalLayout>
-      <div className="flex flex-col gap-8">
+      <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-        {/* ── Page title ── */}
-        <div className="flex justify-between items-end border-b border-white/[0.04] pb-6">
-          <div className="flex flex-col gap-3">
-            <h2 className="text-2xl font-bold text-white tracking-tight">System Overview</h2>
-            <p className="text-[11px] text-slate-500 font-mono">Root-level view across the entire Anchor governance mesh.</p>
+        {/* ── Authority header ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
+              System Overview
+            </div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+              Root-level view across the entire Anchor governance mesh.
+            </div>
           </div>
-          <div className="text-[9px] text-slate-600 font-mono tracking-widest uppercase">
-            Jurisdiction: {user?.regulator || 'GLOBAL'}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 14px',
+            background: 'rgba(16,185,129,0.08)',
+            borderRadius: 6,
+            border: '1px solid rgba(16,185,129,0.2)',
+          }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 6px var(--green)' }} />
+            <span style={{ fontSize: 13, color: 'var(--green-soft)', fontWeight: 600 }}>GRID SECURE</span>
           </div>
         </div>
 
         {/* ── Stat cards ── */}
-        <div className="grid grid-cols-4 gap-4">
-          {[
-            { label: 'Total Audits',       value: totalAudits,       sub: 'Across all nodes',      flag: false },
-            { label: 'Provisioned Nodes',  value: companies.length,  sub: 'Active enterprises',    flag: false },
-            { label: 'Mesh Integrity',     value: `${complianceScore}%`, sub: 'Governance coverage', high: true },
-            { label: 'Open Violations',    value: totalViolations,   sub: 'Require remediation',   warn: totalViolations > 0 },
-          ].map((m, i) => (
-            <div key={i} className="p-6 border border-white/[0.04] bg-[#080B10] hover:bg-white/[0.02] transition-all relative group">
-              <div className="text-[9px] text-slate-500 uppercase tracking-widest mb-4 font-bold font-mono">{m.label}</div>
-              <div className={`text-3xl font-bold tracking-tighter mb-2 ${m.high ? 'text-emerald-500' : m.warn ? 'text-amber-500' : 'text-white'}`}>
-                {m.value}
-              </div>
-              <div className="text-[8px] text-slate-600 font-mono tracking-widest uppercase">{m.sub}</div>
-            </div>
-          ))}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          {metrics.map((m, i) => <StatCard key={i} {...m} />)}
         </div>
 
-        {/* ── Main workspace: Fleet + Ledger ── */}
-        <div className="grid grid-cols-2 gap-4 h-[420px]">
+        {/* ── Main grid: Fleet + Ledger ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
 
           {/* Fleet Matrix */}
-          <div className="border border-white/[0.04] bg-[#080B10] flex flex-col overflow-hidden">
-            <div className="h-11 px-5 border-b border-white/[0.04] flex items-center justify-between bg-white/[0.01] shrink-0">
-              <span className="text-[9px] font-bold text-slate-300 tracking-[0.2em] uppercase font-mono">Fleet Matrix</span>
-              <span className="text-[8px] px-2 py-0.5 bg-emerald-500/10 text-emerald-500 font-bold tracking-widest uppercase">Live</span>
+          <div className="ra-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{
+              padding: '16px 20px', borderBottom: '1px solid var(--border)',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Fleet Matrix</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>All provisioned enterprise nodes</div>
+              </div>
+              <span className="badge badge-cyan">LIVE</span>
             </div>
-
-            {/* Table header */}
-            <div className="grid grid-cols-3 px-5 py-3 border-b border-white/[0.04]">
-              <span className="text-[8px] text-slate-600 uppercase tracking-widest font-bold font-mono">Entity</span>
-              <span className="text-[8px] text-slate-600 uppercase tracking-widest font-bold font-mono text-center">Status</span>
-              <span className="text-[8px] text-slate-600 uppercase tracking-widest font-bold font-mono text-right">Audit Cycles</span>
-            </div>
-
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
-              {companies.length === 0 ? (
-                <div className="h-full flex items-center justify-center">
-                  <span className="text-[9px] text-slate-700 font-mono uppercase tracking-widest">No nodes provisioned yet</span>
-                </div>
-              ) : companies.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => setActiveCompany(c)}
-                  className={`w-full grid grid-cols-3 px-5 py-3.5 border-b border-white/[0.03] text-left transition-all group/row hover:bg-white/[0.02] ${activeCompany?.id === c.id ? 'bg-white/[0.03]' : ''}`}
-                >
-                  <span className="text-[11px] text-slate-400 group-hover/row:text-white font-mono uppercase tracking-wide truncate transition-colors">{c.name}</span>
-                  <span className="text-center">
-                    <span className={`px-2 py-0.5 text-[8px] font-bold tracking-widest uppercase ${c.violations > 0 ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                      {c.violations > 0 ? 'BREACH' : 'COMPLIANT'}
-                    </span>
-                  </span>
-                  <span className="text-[10px] text-slate-600 font-mono text-right italic">{c.entries} PULSES</span>
-                </button>
-              ))}
+            <div style={{ overflowY: 'auto' }}>
+              <table className="ra-table">
+                <thead>
+                  <tr>
+                    <th>Entity</th>
+                    <th>Status</th>
+                    <th>Audit Cycles</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {companies.length > 0 ? companies.map((c, i) => (
+                    <tr key={i} onClick={() => setActiveCompany(c)} style={{ cursor: 'pointer' }}>
+                      <td style={{ color: activeCompany?.id === c.id ? 'var(--accent-soft)' : 'var(--text-primary)', fontWeight: 500 }}>
+                        {c.name}
+                      </td>
+                      <td>
+                        <span className={`badge ${c.violations > 0 ? 'badge-red' : 'badge-green'}`}>
+                          {c.violations > 0 ? 'BREACH' : 'COMPLIANT'}
+                        </span>
+                      </td>
+                      <td className="mono" style={{ fontSize: 12 }}>{c.entries}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '40px 0', fontSize: 13 }}>
+                        No nodes provisioned yet
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
           {/* Global Action Ledger */}
-          <div className="border border-white/[0.04] bg-[#080B10] flex flex-col overflow-hidden">
-            <div className="h-11 px-5 border-b border-white/[0.04] flex items-center justify-between bg-white/[0.01] shrink-0">
-              <span className="text-[9px] font-bold text-slate-300 tracking-[0.2em] uppercase font-mono">Global Action Ledger</span>
-              <div className="flex items-center gap-3">
-                {/* filter pills */}
-                <div className="flex gap-1">
-                  {['ALL','COMPLIANT','VIOLATIONS'].map(m => (
-                    <button
-                      key={m}
-                      onClick={() => setFilterMode(m)}
-                      className={`px-2 py-0.5 text-[8px] font-bold tracking-widest uppercase transition-all ${filterMode === m ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-600 hover:text-slate-400'}`}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-                <span className="text-[8px] px-2 py-0.5 bg-purple-500/10 text-purple-400 font-bold tracking-widest uppercase">Encrypted</span>
+          <div className="ra-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{
+              padding: '16px 20px', borderBottom: '1px solid var(--border)',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Global Action Ledger</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Recent governance events</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {['ALL','COMPLIANT','VIOLATIONS'].map(m => (
+                  <button
+                    key={m}
+                    onClick={() => setFilterMode(m)}
+                    style={{
+                      fontSize: 10, fontWeight: 600, padding: '3px 8px',
+                      borderRadius: 99, border: '1px solid',
+                      cursor: 'pointer', transition: 'all 0.15s',
+                      background: filterMode === m ? 'rgba(124,58,237,0.15)' : 'transparent',
+                      color: filterMode === m ? '#a78bfa' : 'var(--text-dim)',
+                      borderColor: filterMode === m ? 'rgba(124,58,237,0.3)' : 'var(--border)',
+                    }}
+                  >
+                    {m}
+                  </button>
+                ))}
+                <span className="badge badge-purple">ENCRYPTED</span>
               </div>
             </div>
 
             {/* Search */}
-            <div className="px-4 py-3 border-b border-white/[0.04]">
+            <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
               <input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search model or decision ID..."
-                className="w-full bg-black/40 border border-white/5 px-3 py-2 text-[11px] text-white placeholder:text-slate-700 outline-none focus:border-emerald-500/40 transition-all font-mono"
+                className="ra-input"
+                style={{ fontSize: 13 }}
               />
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {loading ? (
-                <div className="h-full flex items-center justify-center">
-                  <span className="text-[9px] text-slate-700 font-mono uppercase tracking-widest animate-pulse">Synchronizing relay...</span>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', fontSize: 13 }}>
+                  Synchronizing relay...
                 </div>
               ) : filteredLedger.length === 0 ? (
-                <div className="h-full flex items-center justify-center">
-                  <span className="text-[9px] text-slate-700 font-mono uppercase tracking-widest">No recent activity</span>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', fontSize: 13 }}>
+                  No recent activity
                 </div>
-              ) : filteredLedger.map(entry => (
+              ) : filteredLedger.map((entry, i) => (
                 <div
-                  key={entry.entry_id}
-                  className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all group/entry cursor-pointer"
-                  onClick={() => handleTranslate(entry)}
+                  key={i}
+                  className={`log-entry slide-in ${!entry.is_compliant ? 'violation' : 'clean'}`}
+                  onClick={() => handleInspect(entry)}
+                  style={{ cursor: 'pointer' }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${entry.is_compliant ? 'bg-emerald-500' : 'bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]'}`} />
-                    <div className="flex flex-col">
-                      <span className="text-[11px] text-slate-400 group-hover/entry:text-white font-mono uppercase tracking-wide transition-colors">{entry.project_name}</span>
-                      <span className="text-[9px] text-slate-600 font-mono">Ref: {entry.entry_id}</span>
-                    </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span className={`badge ${entry.is_compliant ? 'badge-green' : 'badge-red'}`}>
+                      {entry.is_compliant ? 'COMPLIANT' : 'VIOLATION'}
+                    </span>
+                    <span className="mono" style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                      {entry.entry_id?.slice(0, 8)}
+                    </span>
                   </div>
-                  <span className={`text-[8px] px-2 py-0.5 font-bold tracking-widest uppercase ${entry.is_compliant ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                    {entry.is_compliant ? 'COMPLIANT' : 'BREACH'}
-                  </span>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{entry.project_name}</span>
+                    {' — '}audit pulse dispatched
+                  </div>
                 </div>
               ))}
             </div>
@@ -230,20 +281,30 @@ export default function Dashboard() {
         </div>
 
         {/* ── Quick Actions ── */}
-        <div>
-          <div className="text-[9px] text-slate-600 uppercase tracking-[0.3em] font-bold font-mono mb-4">Quick Actions</div>
-          <div className="flex gap-3">
+        <div className="ra-card" style={{ padding: '20px 24px' }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>
+            Quick Actions
+          </div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             {[
-              { label: 'Provision Auditor',   color: 'bg-purple-600  hover:bg-purple-500' },
-              { label: 'Provision Enterprise', color: 'bg-cyan-600    hover:bg-cyan-500' },
-              { label: 'View Live NOC',        color: 'bg-amber-600   hover:bg-amber-500' },
-              { label: 'Fleet Inspection',     color: 'bg-emerald-600 hover:bg-emerald-500' },
-            ].map((btn, i) => (
+              { label: 'Provision Auditor',    accent: 'var(--accent)' },
+              { label: 'Provision Enterprise', accent: 'var(--cyan)' },
+              { label: 'View Live NOC',         accent: 'var(--amber)' },
+              { label: 'Fleet Inspection',      accent: 'var(--green)' },
+            ].map((a, i) => (
               <button
                 key={i}
-                className={`px-5 py-2.5 ${btn.color} text-white text-[11px] font-bold tracking-[0.1em] uppercase transition-all shadow-lg active:scale-95`}
+                style={{
+                  padding: '9px 18px', borderRadius: 6,
+                  fontSize: 13, fontWeight: 600,
+                  color: '#fff', background: a.accent,
+                  border: 'none', cursor: 'pointer',
+                  opacity: 0.9, transition: 'opacity 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '0.9'}
               >
-                {btn.label}
+                {a.label}
               </button>
             ))}
           </div>
@@ -253,84 +314,120 @@ export default function Dashboard() {
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* FORENSIC VAULT OVERLAY */}
-      {/* ════════════════════════════════════════════════════════════════════ */}
       {selectedAudit && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-md z-[100] flex items-center justify-center p-10">
-          <div className="w-full max-w-6xl h-full bg-[#080B10] border border-white/[0.06] flex flex-col overflow-hidden shadow-2xl">
-
+        <div style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.92)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 100,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 40,
+        }}>
+          <div style={{
+            width: '100%', maxWidth: 1100,
+            height: '100%',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-lit)',
+            borderRadius: 8,
+            display: 'flex', flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 40px 80px rgba(0,0,0,0.6)',
+          }}>
             {/* Vault header */}
-            <div className="h-14 px-8 border-b border-white/[0.06] flex items-center justify-between bg-white/[0.01] shrink-0">
-              <div className="flex items-center gap-4">
-                <span className="text-[10px] font-bold text-slate-300 tracking-[0.3em] uppercase font-mono">
-                  Forensic Vault // {selectedAudit.project_name}
-                </span>
-                <span className="text-[8px] text-slate-600 font-mono">Ref: {selectedAudit.entry_id}</span>
-              </div>
-              <div className="flex items-center gap-6">
-                {/* Dialect selector */}
-                <div className="flex gap-1">
-                  {['SEC','RBI','EU-AI','NIST'].map(d => (
-                    <button
-                      key={d}
-                      onClick={() => setDialect(d)}
-                      className={`px-3 py-1 text-[9px] font-bold tracking-widest uppercase transition-all ${dialect === d ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-600 hover:text-slate-300'}`}
-                    >
-                      {d}
-                    </button>
-                  ))}
+            <div style={{
+              padding: '16px 24px', borderBottom: '1px solid var(--border)',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              background: 'var(--bg-surface)',
+            }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Forensic Vault — {selectedAudit.project_name}
                 </div>
+                <div className="mono" style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
+                  Ref: {selectedAudit.entry_id}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {['SEC','RBI','EU-AI','NIST'].map(d => (
+                  <button
+                    key={d}
+                    onClick={() => setDialect(d)}
+                    style={{
+                      fontSize: 11, fontWeight: 600, padding: '5px 12px',
+                      borderRadius: 6, border: '1px solid',
+                      cursor: 'pointer', transition: 'all 0.15s',
+                      background: dialect === d ? 'var(--accent-glow)' : 'transparent',
+                      color: dialect === d ? '#a78bfa' : 'var(--text-muted)',
+                      borderColor: dialect === d ? 'var(--accent)' : 'var(--border)',
+                    }}
+                  >{d}</button>
+                ))}
                 <button
                   onClick={() => { setSelectedAudit(null); setTranslatedData(null); }}
-                  className="text-[9px] text-slate-500 hover:text-rose-500 font-bold tracking-widest uppercase font-mono transition-colors"
+                  style={{
+                    marginLeft: 8, padding: '6px 14px',
+                    borderRadius: 6, border: '1px solid var(--border-lit)',
+                    background: 'transparent', color: 'var(--text-secondary)',
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.color = 'var(--red-soft)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-lit)'; }}
                 >
-                  CLOSE
+                  Close
                 </button>
               </div>
             </div>
 
             {/* Vault body */}
-            <div className="flex-1 flex overflow-hidden">
-
-              {/* Left: Regulatory Translation */}
-              <div className="flex-1 flex flex-col border-r border-white/[0.04] overflow-hidden">
-                <div className="h-9 px-6 border-b border-white/[0.04] flex items-center bg-white/[0.01] shrink-0">
-                  <span className="text-[8px] text-slate-600 uppercase tracking-widest font-bold font-mono">
-                    Regulatory Translation // {dialect} Dialect
+            <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+              {/* Left: Translation */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border)', overflow: 'hidden' }}>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    {dialect} Regulatory Translation
                   </span>
                 </div>
-                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
                   {translatedData ? (
-                    <pre className="text-[12px] font-mono text-emerald-400 leading-relaxed whitespace-pre-wrap">
+                    <pre style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: 'var(--cyan-soft)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
                       {JSON.stringify(translatedData.translation, null, 2)}
                     </pre>
                   ) : (
-                    <div className="flex items-center gap-3 animate-pulse py-4">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                      <span className="text-[10px] text-slate-600 font-mono uppercase tracking-widest">De-quantizing AI intent...</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 0', color: 'var(--text-dim)', fontSize: 13 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', animation: 'pulse 1.5s infinite' }} />
+                      Decrypting AI intent dialect...
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Right: Raw Payload */}
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="h-9 px-6 border-b border-white/[0.04] flex items-center bg-white/[0.01] shrink-0">
-                  <span className="text-[8px] text-slate-600 uppercase tracking-widest font-bold font-mono">Raw Decision Payload</span>
+              {/* Right: Raw payload */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Raw Decision Payload
+                  </span>
                 </div>
                 <div
-                  className="flex-1 overflow-y-auto p-6 custom-scrollbar font-mono text-[11px] leading-relaxed"
+                  style={{ flex: 1, overflowY: 'auto', padding: 20, fontFamily: 'JetBrains Mono, monospace', fontSize: 12, lineHeight: 1.7 }}
                   dangerouslySetInnerHTML={highlight(translatedData?.raw_payload || selectedAudit.raw_payload)}
                 />
               </div>
             </div>
 
             {/* Vault footer */}
-            <div className="h-10 px-8 border-t border-white/[0.04] flex items-center justify-between bg-white/[0.01] shrink-0">
-              <div className="flex gap-8 text-[8px] text-slate-600 font-mono uppercase tracking-widest">
-                <span>Integrity: {selectedAudit.chain_hash?.slice(0,20)}...</span>
-                <span>Node: Relay_Alpha</span>
-              </div>
-              <span className="text-[8px] text-slate-700 font-mono uppercase tracking-widest">Authorized Access Only</span>
+            <div style={{
+              padding: '10px 24px', borderTop: '1px solid var(--border)',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              background: 'var(--bg-surface)',
+            }}>
+              <span className="mono" style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                Integrity: {selectedAudit.chain_hash?.slice(0, 24)}…
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                Authorized Access Only
+              </span>
             </div>
           </div>
         </div>

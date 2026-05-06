@@ -1,99 +1,163 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
-const NAV = [
-  { label: 'Overview',     href: '#' , active: true  },
-  { label: 'Forensic Hub', href: '#' , active: false },
-  { label: 'Enforcement',  href: '#' , active: false },
-  { label: 'System Config',href: '#' , active: false },
+// ── Inline SVG icons (same as root-admin) ──────────────────────────────────
+const Icon = {
+  grid:     <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>,
+  shield:   <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>,
+  alert:    <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/></svg>,
+  settings: <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd"/></svg>,
+  logout:   <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd"/></svg>,
+};
+
+const navSections = [
+  {
+    section: 'OVERSIGHT & ANALYTICS',
+    items: [
+      { label: 'Overview',     icon: Icon.grid,     active: true },
+      { label: 'Forensic Hub', icon: Icon.shield,   active: false },
+      { label: 'Enforcement',  icon: Icon.alert,    active: false },
+    ]
+  },
+  {
+    section: 'JURISDICTION CONTROL',
+    items: [
+      { label: 'System Config', icon: Icon.settings, active: false },
+    ]
+  },
 ];
 
 export default function PortalLayout({ children }) {
   const { user, logout } = useAuth();
 
   return (
-    <div className="min-h-screen bg-[#05070A] text-[#E2E8F0] flex overflow-hidden font-sans">
+    <div style={{ height: '100vh', display: 'flex', overflow: 'hidden' }}>
 
-      {/* ── LEFT SIDEBAR ── */}
-      <aside className="w-[220px] shrink-0 bg-[#080B10] border-r border-white/[0.04] flex flex-col">
-
-        {/* Brand */}
-        <div className="px-6 py-8 border-b border-white/[0.04]">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-7 h-7 bg-emerald-500 rounded-sm flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 20 20" fill="white" className="w-4 h-4">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
-              </svg>
-            </div>
-            <div>
-              <div className="text-[13px] font-bold text-white leading-none">Anchor Oversight</div>
-              <div className="text-[9px] text-emerald-500 tracking-[0.15em] font-mono mt-0.5">MASTER ACCESS</div>
-            </div>
+      {/* ── SIDEBAR (exact root-admin copy) ── */}
+      <aside style={{
+        width: 220, minWidth: 220,
+        background: 'var(--bg-sidebar)',
+        borderRight: '1px solid var(--border)',
+        display: 'flex', flexDirection: 'column',
+        overflowY: 'auto', zIndex: 10,
+      }}>
+        {/* Logo */}
+        <div style={{
+          padding: '20px 16px 16px',
+          borderBottom: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <div style={{
+            width: 30, height: 30,
+            background: 'var(--accent)',
+            borderRadius: 6,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <svg viewBox="0 0 20 20" fill="white" style={{ width: 16, height: 16 }}>
+              <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd"/>
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>Anchor Oversight</div>
+            <div style={{ fontSize: 10, color: 'var(--accent-soft)', letterSpacing: '0.05em', fontWeight: 500 }}>MASTER ACCESS</div>
           </div>
         </div>
 
-        {/* Clearance */}
-        <div className="px-6 py-4 border-b border-white/[0.04]">
-          <div className="text-[8px] text-slate-600 uppercase tracking-widest font-bold mb-1">Clearance Level</div>
-          <div className="text-[10px] text-emerald-400 font-mono tracking-wider truncate">{user?.regulator || 'LEVEL_ROOT_CLEARANCE'}</div>
+        {/* Authority Badge */}
+        <div style={{
+          margin: '12px 12px 0',
+          padding: '8px 12px',
+          background: 'rgba(124,58,237,0.08)',
+          borderRadius: 6,
+          border: '1px solid rgba(124,58,237,0.2)',
+        }}>
+          <div style={{ fontSize: 10, color: '#a78bfa', marginBottom: 2, fontWeight: 600 }}>
+            PRIVILEGE: ROOT
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, monospace' }}>
+            {user?.regulator || 'LEVEL_ROOT_CLEARANCE'}
+          </div>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4">
-          <div className="text-[8px] text-slate-600 uppercase tracking-[0.3em] font-bold mb-3 px-3">Main Control</div>
-          <div className="space-y-0.5">
-            {NAV.map((item, i) => (
-              <a
-                key={i}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 text-[12px] font-bold tracking-wide transition-all ${
-                  item.active
-                    ? 'bg-white/[0.04] text-white border-l-2 border-emerald-500'
-                    : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.02]'
-                }`}
-              >
-                {item.label}
-              </a>
-            ))}
-          </div>
+        <nav style={{ flex: 1, padding: '4px 8px 20px' }}>
+          {navSections.map(group => (
+            <div key={group.section}>
+              <div className="section-label">{group.section}</div>
+              {group.items.map(item => (
+                <div
+                  key={item.label}
+                  className={`nav-link ${item.active ? 'active' : ''}`}
+                >
+                  {item.icon}
+                  {item.label}
+                </div>
+              ))}
+            </div>
+          ))}
         </nav>
 
         {/* Footer */}
-        <div className="px-3 py-4 border-t border-white/[0.04]">
-          <button
+        <div style={{
+          padding: '12px 16px',
+          borderTop: '1px solid var(--border)',
+        }}>
+          <div
+            className="nav-link"
             onClick={logout}
-            className="w-full flex items-center gap-2 px-3 py-2.5 text-[11px] font-bold text-slate-600 hover:text-rose-500 hover:bg-rose-500/5 transition-all tracking-wider"
+            style={{ color: 'var(--text-muted)' }}
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
+            {Icon.logout}
             Terminate Session
-          </button>
-          <div className="mt-4 text-[8px] text-slate-700 font-mono tracking-widest">
-            Anchor v5.8 // Hub
+          </div>
+          <div style={{
+            marginTop: 12,
+            fontSize: 11, color: 'var(--text-dim)',
+            fontFamily: 'JetBrains Mono, monospace',
+          }}>
+            Anchor v5.8 — Hub
           </div>
         </div>
       </aside>
 
-      {/* ── MAIN AREA ── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* ── MAIN ── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* Top bar */}
-        <header className="h-14 bg-[#05070A] border-b border-white/[0.04] flex items-center justify-between px-8 shrink-0">
-          <div className="flex items-center gap-3">
-            <span className="text-[11px] font-bold text-slate-300 tracking-[0.2em] uppercase">Overview</span>
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
-              <span className="text-[9px] text-emerald-500 font-mono tracking-wider">GRID SECURE</span>
+        <header style={{
+          height: 56,
+          background: 'var(--bg-sidebar)',
+          borderBottom: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 24px',
+          flexShrink: 0, zIndex: 5,
+        }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Overview</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{
+                width: 7, height: 7, borderRadius: '50%',
+                background: 'var(--green)',
+                boxShadow: '0 0 6px var(--green)',
+              }} />
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Grid Secure</span>
             </div>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-[11px] font-bold">
-            {user?.regulator?.slice(0, 1).toUpperCase() || 'R'}
+            <div style={{ width: 1, height: 16, background: 'var(--border-lit)' }} />
+            <div style={{
+              width: 30, height: 30, borderRadius: '50%',
+              background: 'var(--accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 700, color: '#fff',
+            }}>
+              {user?.regulator?.slice(0, 1).toUpperCase() || 'R'}
+            </div>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-void)' }}>
           {children}
         </main>
       </div>
