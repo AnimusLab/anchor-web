@@ -1,15 +1,16 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import LoginPage        from './pages/LoginPage'
-import Dashboard        from './pages/Dashboard'
-import DecisionLedger   from './pages/DecisionLedger'
-import ChainVerifier    from './pages/ChainVerifier'
-import LiveTicker       from './pages/LiveTicker'
-import IssueNotice      from './pages/IssueNotice'
-import MyProfile        from './pages/MyProfile'
-import ComplianceTrend  from './pages/ComplianceTrend'
-import GlobalSearch     from './pages/GlobalSearch'
+import LoginPage           from './pages/LoginPage'
+import Dashboard           from './pages/Dashboard'
+import DecisionLedger      from './pages/DecisionLedger'
+import ChainVerifier       from './pages/ChainVerifier'
+import LiveTicker          from './pages/LiveTicker'
+import IssueNotice         from './pages/IssueNotice'
+import MyProfile           from './pages/MyProfile'
+import ComplianceTrend     from './pages/ComplianceTrend'
+import GlobalSearch        from './pages/GlobalSearch'
+import JurisdictionSummary from './pages/JurisdictionSummary'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth()
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/live-ticker"     element={<P><LiveTicker /></P>} />
         <Route path="/trend"           element={<P><ComplianceTrend /></P>} />
         <Route path="/search"          element={<P><GlobalSearch /></P>} />
+        <Route path="/jurisdiction"    element={<P><JurisdictionSummary /></P>} />
         <Route path="/enforce"         element={<P><IssueNotice /></P>} />
         <Route path="/profile"         element={<P><MyProfile /></P>} />
         <Route path="*"                element={<Navigate to="/login" replace />} />
