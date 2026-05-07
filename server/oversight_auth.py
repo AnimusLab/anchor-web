@@ -300,3 +300,91 @@ def revoke_auditor_access(
     user.status = "revoked"
     db.commit()
     return {"status": "REVOKED", "entity_id": body.entity_id}
+
+
+# ---------------------------------------------------------------------------
+# Enforcement Notices
+# ---------------------------------------------------------------------------
+
+class EnforcementNoticeRequest(BaseModel):
+    company:       str
+    rule_violated: str
+    severity:      str = "HIGH"   # LOW | MEDIUM | HIGH | CRITICAL
+    description:   str
+    deadline:      Optional[str] = None
+
+
+from models import EnforcementNotice
+
+@oversight_router.post("/enforcement")
+def file_enforcement_notice(
+    body:         EnforcementNoticeRequest,
+    db:           Session = Depends(get_db),
+    current_user: dict    = Depends(get_oversight_user),
+):
+    """
+    [Auditor] Files a formal enforcement notice against an AI entity.
+    Persists to the enforcement_notices table with the auditor's identity from JWT.
+    """
+    notice_id = f"ENF-{current_user['regulator'].upper()}-{secrets.token_hex(4).upper()}"
+    now       = datetime.now(timezone.utc).isoformat()
+
+    notice = EnforcementNotice(
+        id            = notice_id,
+        auditor_id    = current_user["sub"],
+        auditor_name  = current_user["name"],
+        regulator     = current_user["regulator"],
+        company       = body.company.strip(),
+        rule_violated = body.rule_violated.strip(),
+        severity      = body.severity.upper(),
+        description   = body.description.strip(),
+        deadline      = body.deadline,
+        status        = "OPEN",
+        filed_at      = now,
+    )
+    db.add(notice)
+    db.commit()
+
+    return {
+        "status":      "FILED",
+        "notice_id":   notice_id,
+        "company":     notice.company,
+        "severity":    notice.severity,
+        "filed_at":    now,
+        "message":     f"Enforcement notice {notice_id} filed against {notice.company}. Status: OPEN.",
+    }
+
+
+@oversight_router.get("/enforcement")
+def list_my_notices(
+    db:           Session = Depends(get_db),
+    current_user: dict    = Depends(get_oversight_user),
+):
+    """[Auditor] Returns all enforcement notices filed by this auditor."""
+    notices = db.query(EnforcementNotice).filter(
+        EnforcementNotice.auditor_id == current_user["sub"]
+    ).order_by(EnforcementNotice.filed_at.desc()).all()
+
+    return [
+        {
+            "notice_id":    n.id,
+            "company":      n.company,
+            "rule_violated":n.rule_violated,
+            "severity":     n.severity,
+            "status":       n.status,
+            "deadline":     n.deadline,
+            "filed_at":     n.filed_at,
+            "description":  n.description,
+        }
+        for n in notices
+    ]
+
+
+@oversight_router.get("/enforcement/all")
+def list_all_notices(
+    db:            Session = Depends(get_db),
+    current_admin: dict    = Depends(get_oversight_admin),
+):
+    """[Admin only] Returns all enforcement notices across all auditors."""
+    notices = db.query(EnforcementNotice).order_by(EnforcementNotice.filed_at.desc()).all()
+    return notices

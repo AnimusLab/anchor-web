@@ -126,3 +126,20 @@ class OrgInvite(Base):
 
     organization = relationship("Organization")
 
+
+# --- 7. ENFORCEMENT NOTICES (Regulatory Actions) ---
+class EnforcementNotice(Base):
+    """Formal compliance notices filed by regulatory auditors against AI entities."""
+    __tablename__ = "enforcement_notices"
+
+    id            = Column(String, primary_key=True)               # "ENF-SEC-abc123"
+    auditor_id    = Column(String, ForeignKey("regulatory_officials.id"), nullable=False)
+    auditor_name  = Column(String, nullable=False)                  # Display name snapshot
+    regulator     = Column(String, nullable=False)                  # "SEC", "RBI", etc.
+    company       = Column(String, nullable=False)                  # Target entity name
+    rule_violated = Column(String, nullable=False)                  # "RBI/AI-GOV-2024-07"
+    severity      = Column(String, nullable=False)                  # "LOW","MEDIUM","HIGH","CRITICAL"
+    description   = Column(Text, nullable=False)                    # Full violation description
+    deadline      = Column(String, nullable=True)                   # ISO date for compliance deadline
+    status        = Column(String, default="OPEN")                  # "OPEN","ACKNOWLEDGED","RESOLVED"
+    filed_at      = Column(String, nullable=False)                  # ISO-8601 timestamp

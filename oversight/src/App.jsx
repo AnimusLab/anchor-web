@@ -8,6 +8,7 @@ import ChainVerifier    from './pages/ChainVerifier'
 import LiveTicker       from './pages/LiveTicker'
 import IssueNotice      from './pages/IssueNotice'
 import MyProfile        from './pages/MyProfile'
+import ComplianceTrend  from './pages/ComplianceTrend'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth()
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/ledger"          element={<P><DecisionLedger /></P>} />
         <Route path="/chain"           element={<P><ChainVerifier /></P>} />
         <Route path="/live-ticker"     element={<P><LiveTicker /></P>} />
+        <Route path="/trend"           element={<P><ComplianceTrend /></P>} />
         <Route path="/enforce"         element={<P><IssueNotice /></P>} />
         <Route path="/profile"         element={<P><MyProfile /></P>} />
         <Route path="*"                element={<Navigate to="/login" replace />} />
