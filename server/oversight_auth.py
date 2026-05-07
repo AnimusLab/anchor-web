@@ -23,8 +23,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from sqlalchemy.orm import Session
 
-from mail import send_auditor_provisioned
+from database import get_db
+from models import EnforcementNotice, AuditTrailEntry, LedgerEntry, Fleet, Organization
 from mail import send_auditor_provisioned
 
 # ---------------------------------------------------------------------------
@@ -36,6 +38,13 @@ security         = HTTPBearer(auto_error=False)
 
 ANCHOR_MASTER_KEY = os.getenv("ANCHOR_MASTER_KEY", "")
 OVERSIGHT_JWT_TTL = int(os.getenv("OVERSIGHT_JWT_TTL_HOURS", "8"))  # 8-hour session
+
+NATO_PHONETIC = [
+    "ALFA", "BRAVO", "CHARLIE", "DELTA", "ECHO", "FOXTROT", "GOLF", "HOTEL", 
+    "INDIA", "JULIETT", "KILO", "LIMA", "MIKE", "NOVEMBER", "OSCAR", "PAPA", 
+    "QUEBEC", "ROMEO", "SIERRA", "TANGO", "UNIFORM", "VICTOR", "WHISKEY", 
+    "XRAY", "YANKEE", "ZULU"
+]
 
 
 # ---------------------------------------------------------------------------
@@ -130,6 +139,28 @@ def get_oversight_admin(
 
 from database import get_db
 from models import RegulatoryOfficial, Organization
+
+@oversight_router.post("/identify")
+def oversight_identify(body: dict, db: Session = Depends(get_db)):
+    """Validates ID + Email and returns user info for the identification stage."""
+    search_id = body.get("clearance_id", "").strip().upper()
+    search_email = body.get("email", "").strip().lower()
+
+    user = db.query(RegulatoryOfficial).filter(
+        RegulatoryOfficial.id == search_id,
+        RegulatoryOfficial.email == search_email,
+        RegulatoryOfficial.status == "approved"
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="IDENTITY NOT RECOGNIZED")
+
+    return {
+        "status": "RECOGNIZED",
+        "display_name": user.display_name,
+        "regulator": user.department
+    }
+
 
 @oversight_router.post("/login")
 def oversight_login(body: OversightLoginRequest, db: Session = Depends(get_db), request: Request = None):
@@ -229,10 +260,10 @@ def provision_new_auditor(
     }:
         raise HTTPException(status_code=400, detail="UNKNOWN REGULATOR")
 
-    # Generate Clearance ID pattern: SEC_Tan_26-10-04
-    user_initials = "".join(word[0].capitalize() for word in body.display_name.split() if word)[:3]
-    date_str = datetime.now(timezone.utc).strftime("%d-%m-%y")
-    clearance_id = f"{body.regulator.upper()}_{user_initials}_{date_str}"
+    # Generate Clearance ID pattern: SEC-ALFA-9 (NATO Phonetic)
+    word = secrets.choice(NATO_PHONETIC)
+    digit = secrets.randbelow(10)
+    clearance_id = f"{body.regulator.upper()}-{word}-{digit}"
     
     # Check for duplicate
     if db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == clearance_id).first():
@@ -438,7 +469,6 @@ def get_jurisdiction_summary(
     [Auditor] Returns compliance statistics grouped by jurisdiction/region.
     Joins: LedgerEntry → Fleet (entities) → Organization.
     """
-    from models import LedgerEntry, Fleet, Organization
 
     try:
         # Correct join direction: start from LedgerEntry, walk up to org
@@ -521,8 +551,6 @@ def get_jurisdiction_summary(
 # ---------------------------------------------------------------------------
 # Audit Trail
 # ---------------------------------------------------------------------------
-
-from models import AuditTrailEntry
 
 class AuditLogRequest(BaseModel):
     action:      str            # VAULT_VIEW | CHAIN_VERIFY | EXPORT | NOTICE_FILED | LOGIN | SEARCH

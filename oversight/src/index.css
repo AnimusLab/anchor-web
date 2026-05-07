@@ -235,3 +235,47 @@ body::before {
   background-color: #0d0d14;
   color: #f1f1f5;
 }
+
+/* ── Print Styles ───────────────────────────────────────────────────────── */
+@media print {
+  body { 
+    background: #fff !important; 
+    color: #000 !important; 
+    overflow: visible !important;
+  }
+  
+  body::before, 
+  .ra-sidebar, 
+  .ra-header, 
+  .ra-button, 
+  button, 
+  .no-print { 
+    display: none !important; 
+  }
+
+  #root, .portal-main, .portal-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .print-only { 
+    display: block !important; 
+    visibility: visible !important;
+  }
+
+  .ra-card { 
+    border: 1px solid #000 !important; 
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .badge {
+    border: 1px solid #000 !important;
+    background: transparent !important;
+    color: #000 !important;
+  }
+}
+
+.print-only { display: none; }

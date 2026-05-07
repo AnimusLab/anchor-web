@@ -17,6 +17,58 @@ const STATUS_STYLE = {
   RESOLVED:     { badge: 'badge-green',  next: null           },
 };
 
+// ── Printable Notice View ────────────────────────────────────────────────
+function PrintableNotice({ notice }) {
+  return (
+    <div className="print-only" style={{ padding: '40pt', fontFamily: 'serif', color: '#000', lineHeight: 1.5 }}>
+      <div style={{ textAlign: 'center', borderBottom: '2pt solid #000', paddingBottom: '20pt', marginBottom: '30pt' }}>
+        <h1 style={{ fontSize: '24pt', fontWeight: 'bold', margin: 0 }}>ANCHOR GOVERNANCE ENGINE</h1>
+        <h2 style={{ fontSize: '14pt', letterSpacing: '0.2em', margin: '5pt 0' }}>OFFICIAL ENFORCEMENT NOTICE</h2>
+        <div style={{ fontSize: '10pt', color: '#666' }}>ID: {notice.notice_id} // ISSUED BY {notice.regulator || 'GOVERNMENT OFFICIAL'}</div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30pt' }}>
+        <div>
+          <div style={{ fontWeight: 'bold', fontSize: '10pt', textTransform: 'uppercase' }}>Subject Entity:</div>
+          <div style={{ fontSize: '14pt', fontWeight: 'bold' }}>{notice.company}</div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontWeight: 'bold', fontSize: '10pt', textTransform: 'uppercase' }}>Date Issued:</div>
+          <div style={{ fontSize: '12pt' }}>{notice.filed_at?.slice(0, 10)}</div>
+        </div>
+      </div>
+
+      <div style={{ background: '#f8f8f8', border: '1pt solid #ddd', padding: '15pt', marginBottom: '20pt' }}>
+        <div style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '10pt', marginBottom: '5pt' }}>Violation Summary:</div>
+        <div style={{ fontSize: '12pt', fontWeight: 'bold', color: '#b91c1c' }}>{notice.rule_violated}</div>
+      </div>
+
+      <div style={{ marginBottom: '40pt' }}>
+        <div style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '10pt', marginBottom: '10pt' }}>Description of Breach:</div>
+        <div style={{ fontSize: '11pt', whiteSpace: 'pre-wrap', borderLeft: '3pt solid #ddd', paddingLeft: '15pt' }}>
+          {notice.description}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20pt', marginBottom: '40pt' }}>
+        <div style={{ border: '1pt solid #000', padding: '10pt' }}>
+          <div style={{ fontWeight: 'bold', fontSize: '10pt', textTransform: 'uppercase' }}>Severity Level:</div>
+          <div style={{ fontSize: '12pt', fontWeight: 'bold' }}>{notice.severity}</div>
+        </div>
+        <div style={{ border: '1pt solid #000', padding: '10pt' }}>
+          <div style={{ fontWeight: 'bold', fontSize: '10pt', textTransform: 'uppercase' }}>Response Deadline:</div>
+          <div style={{ fontSize: '12pt', fontWeight: 'bold' }}>{notice.deadline || 'IMMEDIATE'}</div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: '60pt', borderTop: '1pt solid #000', paddingTop: '10pt', fontSize: '9pt', color: '#444' }}>
+        <p>This document is cryptographically anchored to the Sovereign Relay Mesh. Authenticity can be verified at oversight.anchorgovernance.tech using Notice ID {notice.notice_id}.</p>
+        <p style={{ marginTop: '10pt', fontWeight: 'bold' }}>Digital Signature: 0x{notice.notice_id?.slice(0, 8)}...HUB_VALIDATED</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Filed Notice Card ─────────────────────────────────────────────────────
 function NoticeCard({ notice, token, onUpdate }) {
   const [updating, setUpdating] = useState(false);
@@ -98,17 +150,33 @@ function NoticeCard({ notice, token, onUpdate }) {
             ))}
           </div>
 
-          {nextStatus && (
-            <button onClick={advance} disabled={updating} style={{
-              padding: '9px 18px', borderRadius: 6, border: 'none',
-              background: nextStatus === 'RESOLVED' ? 'var(--green)' : 'var(--accent)',
-              color: '#fff', fontSize: 13, fontWeight: 600,
-              cursor: updating ? 'not-allowed' : 'pointer', opacity: updating ? 0.7 : 1,
-              alignSelf: 'flex-start',
-            }}>
-              {updating ? 'Updating...' : `Mark as ${nextStatus} →`}
+          <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+            {nextStatus && (
+              <button onClick={advance} disabled={updating} style={{
+                padding: '9px 18px', borderRadius: 6, border: 'none',
+                background: nextStatus === 'RESOLVED' ? 'var(--green)' : 'var(--accent)',
+                color: '#fff', fontSize: 13, fontWeight: 600,
+                cursor: updating ? 'not-allowed' : 'pointer', opacity: updating ? 0.7 : 1,
+              }}>
+                {updating ? 'Updating...' : `Mark as ${nextStatus} →`}
+              </button>
+            )}
+            
+            <button 
+              onClick={() => window.print()} 
+              className="no-print"
+              style={{
+                padding: '9px 18px', borderRadius: 6, border: '1px solid var(--border-lit)',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              ⎙ Print Official Notice
             </button>
-          )}
+          </div>
+
+          <PrintableNotice notice={notice} />
         </div>
       )}
     </div>
@@ -309,9 +377,13 @@ export default function IssueNotice() {
   const [tab, setTab] = useState('tracker'); // 'tracker' | 'new'
 
   useEffect(() => {
-    fetch(`${endpoints.baseUrl}/api/oversight/enforcement`, { headers: { Authorization: `Bearer ${token}` } })
+    const endpoint = user?.access_level === 'ADMIN' 
+      ? `${endpoints.baseUrl}/api/oversight/enforcement/all`
+      : `${endpoints.baseUrl}/api/oversight/enforcement`;
+
+    fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json()).then(setNotices).catch(console.error).finally(() => setLoading(false));
-  }, [token]);
+  }, [token, user?.access_level]);
 
   const handleFiled = (data) => {
     setFiledBanner(data);
@@ -339,8 +411,13 @@ export default function IssueNotice() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Enforcement Tracker</div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>File and track enforcement notices against AI entities in your jurisdiction.</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 12 }}>
+              Enforcement Tracker
+              {user?.access_level === 'ADMIN' && <span className="badge badge-purple" style={{ fontSize: 9 }}>GLOBAL SUPER-VIEW</span>}
+            </div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+              {user?.access_level === 'ADMIN' ? 'Monitoring all notices filed across the mesh.' : 'File and track enforcement notices against AI entities in your jurisdiction.'}
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             {['tracker','new'].map(t => (

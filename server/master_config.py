@@ -42,6 +42,13 @@ from typing import Optional
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
+NATO_PHONETIC = [
+    "ALFA", "BRAVO", "CHARLIE", "DELTA", "ECHO", "FOXTROT", "GOLF", "HOTEL", 
+    "INDIA", "JULIETT", "KILO", "LIMA", "MIKE", "NOVEMBER", "OSCAR", "PAPA", 
+    "QUEBEC", "ROMEO", "SIERRA", "TANGO", "UNIFORM", "VICTOR", "WHISKEY", 
+    "XRAY", "YANKEE", "ZULU"
+]
+
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
@@ -126,14 +133,13 @@ REGULATORS = {"SEC", "RBI", "SEBI", "FCA", "CFPB", "EU", "NIST", "FINOS"}
 def generate_entity_id(display_name: str, regulator: str, config: dict) -> str:
     """
     Generates a human-readable, collision-safe entity ID.
-    Format: {REGULATOR}-{FIRSTNAMELASTNAME}-{DDMM}
-    e.g.  SEC-JOHNDOE-2604
+    Format: {REGULATOR}-{NATO}-{DIGIT}
+    e.g.  SEC-ALFA-9
     """
     reg    = regulator.upper().replace(" ", "")
-    parts  = display_name.strip().upper().split()
-    name   = "".join(p for p in parts if p.isalpha())[:12]  # max 12 chars
-    ddmm   = datetime.now(timezone.utc).strftime("%d%m")
-    base   = f"{reg}-{name}-{ddmm}"
+    word   = secrets.choice(NATO_PHONETIC)
+    digit  = secrets.randbelow(10)
+    base   = f"{reg}-{word}-{digit}"
 
     existing_ids = set(config.get("auditors", {}).keys())
     candidate    = base

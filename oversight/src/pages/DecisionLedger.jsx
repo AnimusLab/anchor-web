@@ -18,6 +18,20 @@ export default function DecisionLedger() {
   const [translated, setTranslated] = useState(null);
   const [dateFrom, setDateFrom]     = useState('');
   const [dateTo, setDateTo]         = useState('');
+  const [watchlist, setWatchlist]   = useState(() => JSON.parse(localStorage.getItem('anchor_watchlist') || '[]'));
+
+  useEffect(() => {
+    localStorage.setItem('anchor_watchlist', JSON.stringify(watchlist));
+  }, [watchlist]);
+
+  const toggleWatch = (entityId, name) => {
+    setWatchlist(prev => 
+      prev.some(e => e.id === entityId)
+        ? prev.filter(e => e.id !== entityId)
+        : [...prev, { id: entityId, name, lastSeen: new Date().toISOString() }]
+    );
+    log('WATCHLIST_TOGGLE', { target_id: entityId, target_name: name });
+  };
 
   useEffect(() => {
     fetch(`${endpoints.baseUrl}/api/ledger`, { headers: { Authorization: `Bearer ${token}` } })
@@ -128,14 +142,27 @@ export default function DecisionLedger() {
             <div style={{ overflowY: 'auto', maxHeight: '60vh' }}>
               <table className="ra-table">
                 <thead>
-                  <tr><th>Company / AI Model</th><th>Decision ID</th><th>Status</th><th>Violations</th><th>Action</th></tr>
+                  <tr><th>Entity</th><th>Decision ID</th><th>Status</th><th>Violations</th><th>Action</th></tr>
                 </thead>
                 <tbody>
                   {rows.length === 0 ? (
                     <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '40px 0' }}>No decisions found</td></tr>
                   ) : rows.map((e, i) => (
                     <tr key={i}>
-                      <td style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{e.project_name}</td>
+                      <td style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <button 
+                            onClick={(evt) => { evt.stopPropagation(); toggleWatch(e.entity_id || e.project_name, e.project_name); }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: watchlist.some(w => w.id === (e.entity_id || e.project_name)) ? 'var(--amber)' : 'var(--text-dim)', transition: 'color 0.2s' }}
+                            title="Toggle Watchlist Pin"
+                          >
+                            <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 14, height: 14 }}>
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          </button>
+                          {e.project_name}
+                        </div>
+                      </td>
                       <td className="mono" style={{ fontSize: 11, color: 'var(--text-dim)' }}>{e.entry_id?.slice(0,16)}…</td>
                       <td><span className={`badge ${e.is_compliant ? 'badge-green' : 'badge-red'}`}>{e.is_compliant ? 'VERIFIED' : 'BREACH'}</span></td>
                       <td style={{ fontSize: 12, color: e.violations?.length > 0 ? 'var(--red-soft)' : 'var(--text-dim)' }}>{e.violations?.length || 0}</td>

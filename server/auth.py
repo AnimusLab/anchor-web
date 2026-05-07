@@ -58,6 +58,15 @@ admin_access_codes = {}
 
 PUBLIC_DOMAINS = {
     "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", 
+    "me.com", "live.com", "msn.com", "aol.com", "protonmail.com", "zoho.com"
+}
+
+NATO_PHONETIC = [
+    "ALFA", "BRAVO", "CHARLIE", "DELTA", "ECHO", "FOXTROT", "GOLF", "HOTEL", 
+    "INDIA", "JULIETT", "KILO", "LIMA", "MIKE", "NOVEMBER", "OSCAR", "PAPA", 
+    "QUEBEC", "ROMEO", "SIERRA", "TANGO", "UNIFORM", "VICTOR", "WHISKEY", 
+    "XRAY", "YANKEE", "ZULU"
+]
     "protonmail.com", "mail.com", "zoho.com", "yandex.com", "aol.com", "me.com"
 }
 # =============================================================================
@@ -115,23 +124,18 @@ def _generate_org_id(name: str):
     return f"{prefix}_{date_str}"
 
 def _generate_clearance_id(org_name: str, user_name: str):
-    """AL_Tan_26-10-04"""
-    # Org prefix: first 2 chars upper
-    clean_org = "".join(c for c in org_name if c.isalnum())
-    org_pref = clean_org[:2].upper()
-    
-    # User initials: first char of each word
-    user_initials = "".join(word[0].capitalize() for word in user_name.split() if word)[:3]
-    date_str = datetime.utcnow().strftime("%d-%m-%y")
-    
-    return f"{org_pref}_{user_initials}_{date_str}"
+    """ALAB-701 (Flight Tag)"""
+    clean_org = "".join(c for c in org_name if c.isalnum()).upper()
+    prefix = clean_org[:4] if len(clean_org) >= 4 else clean_org
+    suffix = secrets.token_hex(2).upper()[:3]
+    return f"{prefix}-{suffix}"
 
 def _generate_regulator_id(bureau: str, user_name: str):
-    """SEC_Tan_26-10-04"""
+    """SEC-ALFA-9 (NATO Phonetic)"""
     prefix = bureau.strip().upper()
-    user_initials = "".join(word[0].capitalize() for word in user_name.split() if word)[:3]
-    date_str = datetime.utcnow().strftime("%d-%m-%y")
-    return f"{prefix}_{user_initials}_{date_str}"
+    word = secrets.choice(NATO_PHONETIC)
+    digit = secrets.randbelow(10)
+    return f"{prefix}-{word}-{digit}"
 
 def _validate_slug(slug: str, type_name: str = "ID"):
     """Validates an entity_prefix or project_name."""

@@ -50,7 +50,7 @@ const NAV = [
 ];
 
 export default function PortalLayout({ children }) {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
   const [avatar, setAvatar] = useState(null);
@@ -72,6 +72,47 @@ export default function PortalLayout({ children }) {
     window.addEventListener('anchor_avatar_update', local);
     return () => { window.removeEventListener('storage', handler); window.removeEventListener('anchor_avatar_update', local); };
   }, []);
+
+  // Watchlist Violation Check
+  const [hasNewBreach, setHasNewBreach] = useState(false);
+
+  useEffect(() => {
+    const checkBreaches = async () => {
+      const watchlist = JSON.parse(localStorage.getItem('anchor_watchlist') || '[]');
+      if (watchlist.length === 0) { setHasNewBreach(false); return; }
+
+      try {
+        const res = await fetch(`${endpoints.baseUrl}/api/ledger`, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        
+        const breachFound = data.some(entry => {
+          if (entry.is_compliant) return false;
+          const watched = watchlist.find(w => w.id === (entry.entity_id || entry.project_name));
+          if (!watched) return false;
+          // Check if breach is newer than our last acknowledged check
+          return new Date(entry.timestamp) > new Date(watched.lastSeen);
+        });
+        
+        setHasNewBreach(breachFound);
+      } catch (e) { console.error("Watchlist check failed", e); }
+    };
+
+    if (token) {
+      checkBreaches();
+      const interval = setInterval(checkBreaches, 60000); // Check every minute
+      return () => clearInterval(interval);
+    }
+  }, [token, location.pathname]); // Re-check on path change to clear badge if ledger is visited
+
+  // Clear breach indicator when entering ledger
+  useEffect(() => {
+    if (location.pathname === '/ledger') {
+      const watchlist = JSON.parse(localStorage.getItem('anchor_watchlist') || '[]');
+      const updated = watchlist.map(w => ({ ...w, lastSeen: new Date().toISOString() }));
+      localStorage.setItem('anchor_watchlist', JSON.stringify(updated));
+      setHasNewBreach(false);
+    }
+  }, [location.pathname]);
 
   const pageLabel = NAV.flatMap(g => g.items).find(i => i.path === location.pathname)?.label || 'Overview';
 
@@ -112,9 +153,20 @@ export default function PortalLayout({ children }) {
                   key={item.path}
                   className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
                   onClick={() => navigate(item.path)}
+                  style={item.path === '/ledger' && hasNewBreach ? {
+                    boxShadow: '0 0 15px rgba(239, 68, 68, 0.4)',
+                    border: '1px solid var(--red)',
+                    animation: 'pulse 1.5s infinite'
+                  } : {}}
                 >
                   {item.icon}
                   {item.label}
+                  {item.path === '/ledger' && hasNewBreach && (
+                    <span style={{ 
+                      marginLeft: 'auto', width: 8, height: 8, borderRadius: '50%', 
+                      background: 'var(--red)', boxShadow: '0 0 8px var(--red)' 
+                    }} />
+                  )}
                 </div>
               ))}
             </div>

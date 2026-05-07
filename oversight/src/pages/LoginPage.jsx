@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { endpoints } from '../lib/api'
+import AuditorBadge from '../components/AuditorBadge'
 
-/* ─────────────────────────────────────────────────────────────
-   Anchor Oversight — Regulatory Login Portal
-   Updated to use /api/oversight/login (single-step TOTP flow)
-   Backend: oversight_auth.py → OversightLoginRequest
-   ───────────────────────────────────────────────────────────── */
-
-const API_BASE = import.meta.env.VITE_API_URL || 'https://animuslab-anchor-api.hf.space'
 
 const TOKEN = {
   bg:     '#070710',
@@ -74,8 +69,12 @@ export default function LoginPage() {
   const { login } = useAuth()
   const [activeTab, setActiveTab] = useState('login') // 'login' | 'register'
   const [form, setForm] = useState({ 
-    clearanceId: '', agencyId: '', email: '', jurisdiction: '', department: '', totp: '', 
-    displayName: '' 
+    clearanceId: '', 
+    agencyId: '', 
+    email: '', 
+    totp: '',
+    displayName: '', 
+    jurisdiction: 'US' 
   })
   const [stage, setStage] = useState('identify')   // 'identify' | 'verify'
   const [loading, setLoading] = useState(false)
@@ -85,7 +84,7 @@ export default function LoginPage() {
   const [jurisdictionData, setJurisdictionData] = useState([])
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/auth/jurisdictions`)
+    fetch(`${endpoints.baseUrl}/api/auth/jurisdictions`)
       .then(res => {
         if (!res.ok) throw new Error('API_REACH_FAILURE');
         return res.json();
@@ -113,11 +112,32 @@ export default function LoginPage() {
   const fo = (k) => () => setFocused(k)
   const bl =  () => setFocused(null)
 
-  const handleIdentify = (e) => {
+  const handleIdentify = async (e) => {
     e.preventDefault()
     if (!form.clearanceId || !form.agencyId || !form.email) return
+    setLoading(true)
     setError('')
-    setStage('verify')
+    try {
+      const res = await fetch(`${endpoints.baseUrl}/api/oversight/identify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clearance_id: form.clearanceId.trim().toUpperCase(),
+          email:        form.email.trim().toLowerCase(),
+        })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setForm(prev => ({ ...prev, displayName: data.display_name }))
+        setStage('verify')
+      } else {
+        setError(data.detail || 'Identity not found.')
+      }
+    } catch (err) {
+      setError('Handshake failed.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleRegister = async (e) => {
@@ -131,7 +151,7 @@ export default function LoginPage() {
       payload.append('jurisdiction', form.jurisdiction);
       payload.append('department', form.agencyId || 'General');
 
-      const res = await fetch(`${API_BASE}/api/auth/register/auditor`, {
+      const res = await fetch(`${endpoints.baseUrl}/api/auth/register/auditor`, {
         method: 'POST',
         body: payload
       })
@@ -154,7 +174,7 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`${API_BASE}/api/oversight/login`, {
+      const res = await fetch(`${endpoints.baseUrl}/api/oversight/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -196,7 +216,7 @@ export default function LoginPage() {
   if (success) {
     return (
       <div style={{ minHeight: '100vh', background: TOKEN.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <div style={{ width: '100%', maxWidth: 440, background: TOKEN.card, border: `1px solid ${TOKEN.green}`, borderRadius: 12, padding: 40, textAlign: 'center' }}>
+        <div style={{ position: 'relative', zIndex: 2, background: 'rgba(7,7,16,0.8)', padding: 40, borderRadius: 20, border: `1px solid ${TOKEN.acc}`, width: '100%', maxWidth: 440, backdropFilter: 'blur(10px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>✓</div>
           <div style={{ fontSize: 20, fontWeight: 800, color: TOKEN.txt, marginBottom: 8 }}>Request Submitted</div>
           <p style={{ fontSize: 13, color: TOKEN.txtS, lineHeight: 1.6 }}>{success}</p>
@@ -237,7 +257,15 @@ export default function LoginPage() {
       </div>
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
-        <div style={{ width: '100%', maxWidth: 440 }}>
+        {/* High-Tech 3D Auditor Lanyard */}
+        <AuditorBadge 
+          active={stage === 'verify'} 
+          name={form.displayName || "Auditor"} 
+          agency={form.agencyId || "SEC"} 
+          clearanceId={form.clearanceId} 
+        />
+        
+        <div style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 5 }}>
           
           <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.03)', border: `1px solid ${TOKEN.border}`, borderRadius: 10, padding: 4, marginBottom: 32 }}>
             {['login', 'register'].map(tab => (
@@ -251,7 +279,7 @@ export default function LoginPage() {
             <form onSubmit={stage === 'identify' ? handleIdentify : handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {stage === 'identify' ? (
                 <>
-                  <Field label="Mission Clearance ID"><input required type="text" value={form.clearanceId} onChange={set('clearanceId')} onFocus={fo('clearanceId')} onBlur={bl} placeholder="E.G. REG-SEC-X92F" style={f('clearanceId')} /></Field>
+                  <Field label="Mission Clearance ID"><input required type="text" value={form.clearanceId} onChange={set('clearanceId')} onFocus={fo('clearanceId')} onBlur={bl} placeholder="E.G. SEC-ALFA-9" style={f('clearanceId')} /></Field>
                   <Field label="Agency Name"><input required type="text" value={form.agencyId} onChange={set('agencyId')} onFocus={fo('agencyId')} onBlur={bl} placeholder="SEC, RBI, NIST..." style={f('agencyId')} /></Field>
                   <Field label="Your Official Email"><input required type="email" value={form.email} onChange={set('email')} onFocus={fo('email')} onBlur={bl} placeholder="auditor@regulator.gov" style={f('email')} /></Field>
                 </>

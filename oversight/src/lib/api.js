@@ -1,7 +1,8 @@
 // src/lib/api.js — Oversight portal API client
-export const API_BASE = import.meta.env.VITE_API_URL || 'https://animuslab-anchor.hf.space'
+export const API_BASE = import.meta.env.VITE_API_URL || ''
 
 export const endpoints = {
+  baseUrl: API_BASE,
   // Isolated Auth
   identify: `${API_BASE}/api/auth/oversight/identify`,
   verifyTotp: `${API_BASE}/api/auth/oversight/verify-totp`,
