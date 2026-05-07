@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PortalLayout from '../components/PortalLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { endpoints } from '../lib/api';
@@ -34,6 +35,7 @@ const DIALECTS = ['RBI', 'SEC', 'EU-AI', 'NIST'];
 
 export default function Dashboard() {
   const { token, logout } = useAuth();
+  const navigate = useNavigate();
   const [companies, setCompanies]       = useState([]);
   const [active, setActive]             = useState(null);
   const [ledger, setLedger]             = useState([]);
@@ -267,9 +269,10 @@ export default function Dashboard() {
           <div style={{ fontSize: 15, fontWeight: 600, color: V.primary, marginBottom: 16 }}>Quick Actions</div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             {[
-              { label: 'Verify Chain Integrity', bg: 'var(--accent)', action: verifyChain },
-              { label: 'Export Decision Report',  bg: 'var(--cyan)',   action: () => {} },
-              { label: 'Issue Enforcement Notice',bg: 'var(--amber)',  action: () => {} },
+              { label: 'Verify Chain Integrity',  bg: 'var(--accent)', action: verifyChain },
+              { label: 'View Decision Ledger',     bg: 'var(--cyan)',   action: () => navigate('/ledger') },
+              { label: 'Issue Enforcement Notice', bg: 'var(--amber)',  action: () => navigate('/enforce') },
+              { label: 'Live Gov Ticker',          bg: 'var(--green)',  action: () => navigate('/live-ticker') },
             ].map((a, i) => (
               <button key={i} onClick={a.action} style={{ padding: '9px 18px', borderRadius: 6, fontSize: 13, fontWeight: 600, color: '#fff', background: a.bg, border: 'none', cursor: 'pointer', opacity: 0.9, transition: 'opacity 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.opacity = '1'} onMouseLeave={e => e.currentTarget.style.opacity = '0.9'}>
