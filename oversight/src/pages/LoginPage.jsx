@@ -229,7 +229,6 @@ export default function LoginPage() {
   return (
     <div style={{ minHeight: '100vh', background: TOKEN.bg, display: 'flex', fontFamily: TOKEN.sans, overflow: 'hidden' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes scanH { from{transform:translateY(-100%);opacity:0} 50%{opacity:0.25} to{transform:translateY(100vh);opacity:0} }
         .scan-beam { animation: scanH 6s linear infinite; position:absolute; left:0; right:0; top:0; height:2px; }
