@@ -166,14 +166,22 @@ export default function LoginPage() {
       })
       const data = await res.json()
       if (res.ok && data.access_token) {
-        // Update global auth state (Required for ProtectedRoutes)
-        login(data.access_token, data)
-        
+        // Normalize to consistent user object (API uses display_name/entity_id, profile reads name/sub)
+        const userData = {
+          ...data,
+          name:      data.display_name,   // JWT claim: "name"
+          sub:       data.entity_id,      // JWT claim: "sub" = clearance ID
+          regulator: data.regulator,      // department e.g. "RBI"
+          access_level: data.access_level || 'READ_ONLY',
+          session_id:   data.session_id,
+        }
+        login(data.access_token, userData)
+
         // Backup persistence
         localStorage.setItem('anchor_token', data.access_token)
         localStorage.setItem('anchor_entity', data.entity_id)
         localStorage.setItem('anchor_regulator', data.regulator)
-        
+
         navigate('/dashboard')
       } else {
         setError(data.detail || 'Verification failed.')
