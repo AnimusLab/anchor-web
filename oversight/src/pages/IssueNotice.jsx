@@ -115,83 +115,186 @@ function NoticeCard({ notice, token, onUpdate }) {
   );
 }
 
-// ── New Notice Form ────────────────────────────────────────────────────────
+// ── Smart Notice Form — entity picker → violation picker → submit ──────────
 function NewNoticeForm({ token, user, onFiled }) {
-  const [form, setForm] = useState({ company: '', rule_violated: '', severity: 'HIGH', description: '', deadline: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const [ledger, setLedger]         = useState([]);
+  const [loadingLedger, setLL]      = useState(true);
+  const [selectedEntity, setEntity] = useState(null);
+  const [selectedViols, setViols]   = useState([]);   // array of violation entry objects
+  const [severity, setSeverity]     = useState('HIGH');
+  const [deadline, setDeadline]     = useState('');
+  const [extraNote, setNote]        = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError]           = useState('');
+
+  // Load ledger once
+  useEffect(() => {
+    fetch(`${endpoints.baseUrl}/api/ledger`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json()).then(setLedger).catch(console.error).finally(() => setLL(false));
+  }, [token]);
+
+  // Build entity list from ledger
+  const entities = Array.from(
+    new Map(ledger.map(e => [e.entity_id, { id: e.entity_id, name: e.project_name || e.entity_id }])).values()
+  );
+
+  // All violations for selected entity
+  const entityViolations = selectedEntity
+    ? ledger.filter(e => e.entity_id === selectedEntity.id && !e.is_compliant)
+    : [];
+
+  const toggleViol = (entry) => {
+    setViols(prev =>
+      prev.some(v => v.entry_id === entry.entry_id)
+        ? prev.filter(v => v.entry_id !== entry.entry_id)
+        : [...prev, entry]
+    );
+  };
+
+  // Auto-build rule string and description from selected violations
+  const ruleList = [...new Set(
+    selectedViols.flatMap(v => v.violations?.map(x => x.rule_id).filter(Boolean) || [])
+  )].join(', ') || (selectedViols.length ? 'POLICY-BREACH' : '');
+
+  const autoDesc = selectedViols.length
+    ? `${selectedViols.length} violation(s) detected against ${selectedEntity?.name}:\n` +
+      selectedViols.map((v, i) => `${i+1}. Entry ${v.entry_id?.slice(0,12)}… — ${v.violations?.[0]?.rule_id || 'breach'}`).join('\n') +
+      (extraNote ? `\n\nAdditional notes:\n${extraNote}` : '')
+    : '';
+
+  const canSubmit = selectedEntity && selectedViols.length > 0;
 
   const submit = async (e) => {
     e.preventDefault();
-    setLoading(true); setError('');
+    if (!canSubmit) return;
+    setSubmitting(true); setError('');
     try {
       const res = await fetch(`${endpoints.baseUrl}/api/oversight/enforcement`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ ...form, deadline: form.deadline || null }),
+        body: JSON.stringify({
+          company:       selectedEntity.name,
+          rule_violated: ruleList || 'POLICY-BREACH',
+          severity,
+          description:   autoDesc,
+          deadline:      deadline || null,
+        }),
       });
       const data = await res.json();
       if (res.ok) {
         onFiled(data);
-        setForm({ company: '', rule_violated: '', severity: 'HIGH', description: '', deadline: '' });
+        setEntity(null); setViols([]); setDeadline(''); setNote('');
       } else {
         setError(data.detail || 'Failed to file notice.');
       }
     } catch { setError('Connection failed.'); }
-    finally { setLoading(false); }
+    finally { setSubmitting(false); }
   };
 
   return (
-    <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       {error && <div style={{ padding: '10px 14px', borderRadius: 6, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--red-soft)', fontSize: 12 }}>✗ {error}</div>}
 
+      {/* Step 1 — Pick entity */}
       <div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Company / AI Entity</div>
-        <input required value={form.company} onChange={e => set('company', e.target.value)} placeholder="e.g. OpenAI GPT-4 Production" className="ra-input" style={{ fontSize: 13 }}/>
-      </div>
-
-      <div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Rule / Policy Violated</div>
-        <input required value={form.rule_violated} onChange={e => set('rule_violated', e.target.value)} placeholder="e.g. RBI/AI-GOV-2024-07" className="ra-input" style={{ fontSize: 13 }}/>
-      </div>
-
-      <div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Severity</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6 }}>
-          {Object.entries(SEVERITY_CONFIG).map(([key, cfg]) => (
-            <button key={key} type="button" onClick={() => set('severity', key)} style={{
-              padding: '8px 0', borderRadius: 6, border: '1px solid', cursor: 'pointer',
-              fontSize: 11, fontWeight: 700, textAlign: 'center',
-              background: form.severity === key ? `${cfg.color}18` : 'transparent',
-              borderColor: form.severity === key ? cfg.color : 'var(--border)',
-              color: form.severity === key ? cfg.color : 'var(--text-muted)',
-            }}>{key}</button>
-          ))}
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ width: 18, height: 18, borderRadius: '50%', background: selectedEntity ? 'var(--green)' : 'var(--accent)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', fontWeight: 700 }}>{selectedEntity ? '✓' : '1'}</span>
+          Select AI Entity
         </div>
+        {loadingLedger ? (
+          <div style={{ fontSize: 13, color: 'var(--text-dim)', padding: 10 }}>Loading entities...</div>
+        ) : (
+          <select value={selectedEntity?.id || ''} onChange={e => { setEntity(entities.find(x => x.id === e.target.value) || null); setViols([]); }} className="ra-select">
+            <option value="">— Choose an AI entity from the ledger —</option>
+            {entities.map(e => (
+              <option key={e.id} value={e.id}>{e.name} ({e.id})</option>
+            ))}
+          </select>
+        )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      {/* Step 2 — Pick violations */}
+      {selectedEntity && (
         <div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Deadline <span style={{ fontWeight: 400, color: 'var(--text-dim)' }}>(optional)</span></div>
-          <input type="date" value={form.deadline} onChange={e => set('deadline', e.target.value)} className="ra-input" style={{ fontSize: 13 }}/>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ width: 18, height: 18, borderRadius: '50%', background: selectedViols.length > 0 ? 'var(--green)' : 'var(--accent)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', fontWeight: 700 }}>{selectedViols.length > 0 ? '✓' : '2'}</span>
+            Select Violations to Cover
+            <span style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 400 }}>({entityViolations.length} found)</span>
+            {entityViolations.length > 0 && (
+              <button type="button" onClick={() => setViols(entityViolations)} style={{ marginLeft: 'auto', padding: '3px 10px', borderRadius: 4, border: '1px solid var(--border-lit)', background: 'transparent', color: 'var(--accent-soft)', fontSize: 11, cursor: 'pointer' }}>
+                Select All
+              </button>
+            )}
+          </div>
+
+          {entityViolations.length === 0 ? (
+            <div style={{ padding: '12px 16px', borderRadius: 6, background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', fontSize: 13, color: 'var(--text-secondary)' }}>
+              ✓ No violations found for this entity — it appears compliant.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 240, overflowY: 'auto' }}>
+              {entityViolations.map((v, i) => {
+                const checked = selectedViols.some(s => s.entry_id === v.entry_id);
+                const ruleIds = v.violations?.map(x => x.rule_id).filter(Boolean).join(', ') || 'BREACH';
+                return (
+                  <label key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 14px', borderRadius: 6, border: `1px solid ${checked ? 'var(--red)' : 'var(--border)'}`, background: checked ? 'rgba(239,68,68,0.05)' : 'var(--bg-void)', cursor: 'pointer', transition: 'all 0.15s' }}>
+                    <input type="checkbox" checked={checked} onChange={() => toggleViol(v)} style={{ marginTop: 2, accentColor: 'var(--red)', flexShrink: 0 }}/>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 3 }}>
+                        <span className="badge badge-red" style={{ fontSize: 9 }}>VIOLATION</span>
+                        <span className="mono" style={{ fontSize: 11, color: 'var(--text-dim)' }}>{v.entry_id?.slice(0,16)}…</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-dim)', marginLeft: 'auto' }}>{v.timestamp?.slice(0,10)}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--red-soft)', fontFamily: 'JetBrains Mono, monospace' }}>{ruleIds}</div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
-      <div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Description</div>
-        <textarea required value={form.description} onChange={e => set('description', e.target.value)}
-          placeholder="Describe the compliance breach in detail..." rows={4}
-          style={{ width: '100%', background: 'var(--bg-void)', border: '1px solid var(--border-lit)', borderRadius: 6, padding: '10px 14px', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif', outline: 'none', resize: 'vertical' }}/>
-      </div>
+      {/* Step 3 — Configure notice */}
+      {selectedViols.length > 0 && (
+        <>
+          {/* Auto-generated summary */}
+          <div style={{ padding: '12px 14px', borderRadius: 6, background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.2)' }}>
+            <div style={{ fontSize: 11, color: 'var(--accent-soft)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 6 }}>Auto-Generated Notice Summary</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Rules: <span style={{ color: 'var(--red-soft)', fontFamily: 'JetBrains Mono, monospace' }}>{ruleList || 'POLICY-BREACH'}</span></div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Covering {selectedViols.length} violation(s) against {selectedEntity?.name}</div>
+          </div>
 
-      <button type="submit" disabled={loading} style={{
-        padding: '11px', borderRadius: 6, border: 'none',
-        background: SEVERITY_CONFIG[form.severity]?.color || 'var(--amber)',
-        color: '#fff', fontSize: 13, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1,
-      }}>
-        {loading ? 'Filing...' : `File ${form.severity} Notice →`}
-      </button>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 18, height: 18, borderRadius: '50%', background: 'var(--accent)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', fontWeight: 700 }}>3</span>
+              Severity
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6 }}>
+              {Object.entries(SEVERITY_CONFIG).map(([key, cfg]) => (
+                <button key={key} type="button" onClick={() => setSeverity(key)} style={{ padding: '8px 0', borderRadius: 6, border: '1px solid', cursor: 'pointer', fontSize: 11, fontWeight: 700, background: severity === key ? `${cfg.color}18` : 'transparent', borderColor: severity === key ? cfg.color : 'var(--border)', color: severity === key ? cfg.color : 'var(--text-muted)' }}>{key}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Deadline <span style={{ fontWeight: 400, color: 'var(--text-dim)' }}>(optional)</span></div>
+              <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="ra-input" style={{ fontSize: 13 }}/>
+            </div>
+          </div>
+
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Additional Notes <span style={{ fontWeight: 400 }}>(optional)</span></div>
+            <textarea value={extraNote} onChange={e => setNote(e.target.value)} placeholder="Any extra context beyond the auto-generated summary..." rows={3}
+              style={{ width: '100%', background: 'var(--bg-void)', border: '1px solid var(--border-lit)', borderRadius: 6, padding: '10px 14px', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif', outline: 'none', resize: 'vertical' }}/>
+          </div>
+
+          <button type="submit" disabled={submitting} style={{ padding: '11px', borderRadius: 6, border: 'none', background: SEVERITY_CONFIG[severity]?.color || 'var(--amber)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
+            {submitting ? 'Filing...' : `File ${severity} Notice — ${selectedViols.length} violation(s) →`}
+          </button>
+        </>
+      )}
     </form>
   );
 }

@@ -439,23 +439,35 @@ def get_jurisdiction_summary(
     Joins: LedgerEntry → Fleet (entities) → Organization.
     """
     from models import LedgerEntry, Fleet, Organization
-    from sqlalchemy import func
 
-    # Join ledger → entity → org to get region per entry
-    rows = (
-        db.query(
-            Organization.region,
-            Organization.display_name,
-            Organization.id.label("org_id"),
-            Fleet.entity_id,
-            Fleet.name.label("entity_name"),
-            LedgerEntry.id.label("entry_id"),
-            LedgerEntry.type.label("entry_type"),
+    try:
+        # Correct join direction: start from LedgerEntry, walk up to org
+        rows = (
+            db.query(
+                Organization.region,
+                Organization.display_name,
+                Organization.id.label("org_id"),
+                Fleet.entity_id,
+                Fleet.name.label("entity_name"),
+                LedgerEntry.id.label("entry_id"),
+                LedgerEntry.type.label("entry_type"),
+            )
+            .select_from(LedgerEntry)
+            .outerjoin(Fleet,        Fleet.entity_id   == LedgerEntry.entity_id)
+            .outerjoin(Organization, Organization.id   == Fleet.org_id)
+            .all()
         )
-        .join(Fleet,       Fleet.org_id      == Organization.id)
-        .join(LedgerEntry, LedgerEntry.entity_id == Fleet.entity_id)
-        .all()
-    )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"DB query failed: {exc}")
+
+    if not rows:
+        return {
+            "summary": {
+                "total_decisions": 0, "total_violations": 0,
+                "global_compliance_pct": 100.0, "total_entities": 0, "total_regions": 0,
+            },
+            "by_region": [],
+        }
 
     # Aggregate by region
     regions: dict = {}
@@ -463,56 +475,46 @@ def get_jurisdiction_summary(
         region = r.region or "Unknown"
         if region not in regions:
             regions[region] = {
-                "region":      region,
-                "total":       0,
-                "violations":  0,
-                "entities":    set(),
-                "orgs":        set(),
-                "worst_entity": None,
-                "_entity_viols": {},
+                "region": region, "total": 0, "violations": 0,
+                "entities": set(), "orgs": set(), "_entity_viols": {},
             }
-        regions[region]["total"]    += 1
-        regions[region]["entities"].add(r.entity_id)
-        regions[region]["orgs"].add(r.org_id)
-
+        regions[region]["total"] += 1
+        if r.entity_id:
+            regions[region]["entities"].add(r.entity_id)
+        if r.org_id:
+            regions[region]["orgs"].add(r.org_id)
         if r.entry_type == "runtime_violation":
             regions[region]["violations"] += 1
-            ev = regions[region]["_entity_viols"]
-            ev[r.entity_name or r.entity_id] = ev.get(r.entity_name or r.entity_id, 0) + 1
+            key = r.entity_name or r.entity_id or "unknown"
+            ev  = regions[region]["_entity_viols"]
+            ev[key] = ev.get(key, 0) + 1
 
-    # Serialise
     result = []
     for region, d in sorted(regions.items()):
-        total  = d["total"]
-        viols  = d["violations"]
-        pct    = round(((total - viols) / total) * 100, 1) if total > 0 else 100.0
-        ev     = d["_entity_viols"]
-        worst  = max(ev, key=ev.get) if ev else None
+        total = d["total"]; viols = d["violations"]
+        pct   = round(((total - viols) / total) * 100, 1) if total > 0 else 100.0
+        ev    = d["_entity_viols"]
+        worst = max(ev, key=ev.get) if ev else None
         result.append({
-            "region":            region,
-            "total_decisions":   total,
-            "violations":        viols,
-            "compliance_pct":    pct,
-            "entity_count":      len(d["entities"]),
-            "org_count":         len(d["orgs"]),
-            "worst_entity":      worst,
-            "worst_entity_viols": ev.get(worst, 0) if worst else 0,
+            "region": region, "total_decisions": total, "violations": viols,
+            "compliance_pct": pct, "entity_count": len(d["entities"]),
+            "org_count": len(d["orgs"]),
+            "worst_entity": worst, "worst_entity_viols": ev.get(worst, 0) if worst else 0,
         })
 
-    # Global totals
-    grand_total  = sum(d["total"] for d in regions.values())
+    grand_total  = sum(d["total"]      for d in regions.values())
     grand_viols  = sum(d["violations"] for d in regions.values())
-    grand_entities = len({r.entity_id for r in rows})
+    grand_ents   = len({r.entity_id for r in rows if r.entity_id})
 
     return {
         "summary": {
             "total_decisions":  grand_total,
             "total_violations": grand_viols,
             "global_compliance_pct": round(((grand_total - grand_viols) / grand_total) * 100, 1) if grand_total else 100.0,
-            "total_entities":   grand_entities,
+            "total_entities":   grand_ents,
             "total_regions":    len(regions),
         },
-        "by_region": sorted(result, key=lambda x: x["compliance_pct"]),  # worst first
+        "by_region": sorted(result, key=lambda x: x["compliance_pct"]),
     }
 
 
