@@ -9,6 +9,7 @@ import LiveTicker       from './pages/LiveTicker'
 import IssueNotice      from './pages/IssueNotice'
 import MyProfile        from './pages/MyProfile'
 import ComplianceTrend  from './pages/ComplianceTrend'
+import GlobalSearch     from './pages/GlobalSearch'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth()
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/chain"           element={<P><ChainVerifier /></P>} />
         <Route path="/live-ticker"     element={<P><LiveTicker /></P>} />
         <Route path="/trend"           element={<P><ComplianceTrend /></P>} />
+        <Route path="/search"          element={<P><GlobalSearch /></P>} />
         <Route path="/enforce"         element={<P><IssueNotice /></P>} />
         <Route path="/profile"         element={<P><MyProfile /></P>} />
         <Route path="*"                element={<Navigate to="/login" replace />} />

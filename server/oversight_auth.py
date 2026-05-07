@@ -388,3 +388,38 @@ def list_all_notices(
     """[Admin only] Returns all enforcement notices across all auditors."""
     notices = db.query(EnforcementNotice).order_by(EnforcementNotice.filed_at.desc()).all()
     return notices
+
+
+class NoticeStatusUpdate(BaseModel):
+    status: str  # OPEN | ACKNOWLEDGED | RESOLVED
+
+
+@oversight_router.patch("/enforcement/{notice_id}")
+def update_notice_status(
+    notice_id:    str,
+    body:         NoticeStatusUpdate,
+    db:           Session = Depends(get_db),
+    current_user: dict    = Depends(get_oversight_user),
+):
+    """
+    [Auditor] Update the status of a previously filed enforcement notice.
+    Only the auditor who filed the notice may update it.
+    """
+    valid_statuses = {"OPEN", "ACKNOWLEDGED", "RESOLVED"}
+    if body.status.upper() not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+
+    notice = db.query(EnforcementNotice).filter(EnforcementNotice.id == notice_id).first()
+    if not notice:
+        raise HTTPException(status_code=404, detail="NOTICE NOT FOUND")
+    if notice.auditor_id != current_user["sub"]:
+        raise HTTPException(status_code=403, detail="NOT YOUR NOTICE")
+
+    notice.status = body.status.upper()
+    db.commit()
+
+    return {
+        "status":    "UPDATED",
+        "notice_id": notice_id,
+        "new_status": notice.status,
+    }
