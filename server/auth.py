@@ -67,8 +67,6 @@ NATO_PHONETIC = [
     "QUEBEC", "ROMEO", "SIERRA", "TANGO", "UNIFORM", "VICTOR", "WHISKEY", 
     "XRAY", "YANKEE", "ZULU"
 ]
-    "protonmail.com", "mail.com", "zoho.com", "yandex.com", "aol.com", "me.com"
-}
 # =============================================================================
 # JWT Middleware & Dependencies
 # =============================================================================

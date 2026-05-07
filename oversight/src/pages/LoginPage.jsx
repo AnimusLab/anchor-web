@@ -112,6 +112,12 @@ export default function LoginPage() {
   const fo = (k) => () => setFocused(k)
   const bl =  () => setFocused(null)
 
+  const safeJson = async (res) => {
+    const text = await res.text();
+    try { return JSON.parse(text); }
+    catch { return { detail: text || `Error ${res.status}: ${res.statusText}` }; }
+  };
+
   const handleIdentify = async (e) => {
     e.preventDefault()
     if (!form.clearanceId || !form.agencyId || !form.email) return
@@ -126,7 +132,7 @@ export default function LoginPage() {
           email:        form.email.trim().toLowerCase(),
         })
       })
-      const data = await res.json()
+      const data = await safeJson(res);
       if (res.ok) {
         setForm(prev => ({ ...prev, displayName: data.display_name }))
         setStage('verify')
@@ -134,7 +140,7 @@ export default function LoginPage() {
         setError(data.detail || 'Identity not found.')
       }
     } catch (err) {
-      setError('Handshake failed.')
+      setError('Handshake failed: ' + (err.message || 'Connection error'))
     } finally {
       setLoading(false)
     }
@@ -155,7 +161,7 @@ export default function LoginPage() {
         method: 'POST',
         body: payload
       })
-      const data = await res.json()
+      const data = await safeJson(res);
       if (res.ok) {
         setSuccess(data.message)
       } else {
@@ -184,7 +190,7 @@ export default function LoginPage() {
           totp_code:    form.totp.trim(),
         }),
       })
-      const data = await res.json()
+      const data = await safeJson(res);
       if (res.ok && data.access_token) {
         // Normalize to consistent user object (API uses display_name/entity_id, profile reads name/sub)
         const userData = {

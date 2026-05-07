@@ -91,11 +91,17 @@ export default function AuthPortal({ isInvite = false }) {
     if (isInvite && token) verifyInviteToken();
   }, [isInvite, token]);
 
+  const safeJson = async (res) => {
+    const text = await res.text();
+    try { return JSON.parse(text); }
+    catch { return { detail: text || `Error ${res.status}: ${res.statusText}` }; }
+  };
+
   const verifyInviteToken = async () => {
     setIsLoading(true);
     try {
       const res = await fetch(endpoints.verifyInvite(token));
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.detail || 'Invitation invalid or expired');
       setFormData(prev => ({ 
         ...prev, 
@@ -127,7 +133,7 @@ export default function AuthPortal({ isInvite = false }) {
             clearance_id: formData.clearanceId 
           })
         });
-        const data = await res.json();
+        const data = await safeJson(res);
         if (!res.ok) throw new Error(data.detail || 'Identity lookup failed');
         setIntentToken(data.intent_token);
         setLoginStep('verify');
@@ -140,7 +146,7 @@ export default function AuthPortal({ isInvite = false }) {
             totp_code: formData.totpCode, intent_token: intentToken
           })
         });
-        const data = await res.json();
+        const data = await safeJson(res);
         if (!res.ok) throw new Error(data.detail || 'Invalid verification code');
         const role = await completeRelayLogin(data.access_token);
         if (role) navigate('/dashboard');
@@ -168,7 +174,7 @@ export default function AuthPortal({ isInvite = false }) {
       payload.append('server_region', formData.serverRegion);
       payload.append('department', formData.department);
       const res = await fetch(endpoints.registerOrg, { method: 'POST', body: payload });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) {
         const errorMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail) || 'Onboarding failed';
         throw new Error(errorMsg);
