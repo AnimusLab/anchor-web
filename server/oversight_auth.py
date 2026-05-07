@@ -514,3 +514,72 @@ def get_jurisdiction_summary(
         },
         "by_region": sorted(result, key=lambda x: x["compliance_pct"]),  # worst first
     }
+
+
+# ---------------------------------------------------------------------------
+# Audit Trail
+# ---------------------------------------------------------------------------
+
+from models import AuditTrailEntry
+
+class AuditLogRequest(BaseModel):
+    action:      str            # VAULT_VIEW | CHAIN_VERIFY | EXPORT | NOTICE_FILED | LOGIN | SEARCH
+    target_id:   Optional[str] = None
+    target_name: Optional[str] = None
+    detail:      Optional[str] = None   # JSON string with extra context
+
+
+@oversight_router.post("/audit-trail")
+def log_audit_action(
+    body:         AuditLogRequest,
+    request:      Request,
+    db:           Session = Depends(get_db),
+    current_user: dict    = Depends(get_oversight_user),
+):
+    """
+    [Auditor] Logs a regulatory action to the immutable audit trail.
+    Called by the frontend on every significant action.
+    """
+    entry = AuditTrailEntry(
+        id           = f"AT-{current_user['regulator'].upper()}-{secrets.token_hex(4).upper()}",
+        auditor_id   = current_user["sub"],
+        auditor_name = current_user["name"],
+        regulator    = current_user["regulator"],
+        action       = body.action.upper(),
+        target_id    = body.target_id,
+        target_name  = body.target_name,
+        detail       = body.detail,
+        ip_address   = request.client.host if request.client else None,
+        timestamp    = datetime.now(timezone.utc).isoformat(),
+    )
+    db.add(entry)
+    db.commit()
+    return {"logged": True, "trail_id": entry.id}
+
+
+@oversight_router.get("/audit-trail")
+def get_my_audit_trail(
+    limit:        int    = 100,
+    db:           Session = Depends(get_db),
+    current_user: dict    = Depends(get_oversight_user),
+):
+    """[Auditor] Returns the audit trail for this auditor (most recent first)."""
+    entries = (
+        db.query(AuditTrailEntry)
+        .filter(AuditTrailEntry.auditor_id == current_user["sub"])
+        .order_by(AuditTrailEntry.timestamp.desc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "trail_id":    e.id,
+            "action":      e.action,
+            "target_id":   e.target_id,
+            "target_name": e.target_name,
+            "detail":      e.detail,
+            "timestamp":   e.timestamp,
+            "ip_address":  e.ip_address,
+        }
+        for e in entries
+    ]

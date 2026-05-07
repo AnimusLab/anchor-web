@@ -2,11 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import PortalLayout from '../components/PortalLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { endpoints } from '../lib/api';
+import { useAuditLog } from '../hooks/useAuditLog';
 
 const DIALECTS = ['RBI','SEC','EU-AI','NIST'];
 
 export default function DecisionLedger() {
   const { token } = useAuth();
+  const log = useAuditLog();
   const [ledger, setLedger]       = useState([]);
   const [loading, setLoading]       = useState(true);
   const [search, setSearch]         = useState('');
@@ -24,6 +26,7 @@ export default function DecisionLedger() {
 
   const openVault = async (entry) => {
     setVault(entry); setTranslated(null);
+    log('VAULT_VIEW', { target_id: entry.entry_id, target_name: entry.project_name, detail: entry.is_compliant ? 'COMPLIANT' : 'VIOLATION' });
     try {
       const r = await fetch(`${endpoints.baseUrl}/api/audit/${entry.entity_id || 'unknown'}/entry/${entry.entry_id}?dialect=${dialect}`, { headers: { Authorization: `Bearer ${token}` } });
       setTranslated(await r.json());
@@ -57,6 +60,7 @@ export default function DecisionLedger() {
     const a    = document.createElement('a');
     a.href = url; a.download = `anchor_decisions_${new Date().toISOString().slice(0,10)}.csv`;
     a.click(); URL.revokeObjectURL(url);
+    log('EXPORT', { target_name: 'Decision Ledger CSV', detail: `${rows.length} rows exported` });
   };
 
   return (

@@ -143,3 +143,21 @@ class EnforcementNotice(Base):
     deadline      = Column(String, nullable=True)                   # ISO date for compliance deadline
     status        = Column(String, default="OPEN")                  # "OPEN","ACKNOWLEDGED","RESOLVED"
     filed_at      = Column(String, nullable=False)                  # ISO-8601 timestamp
+
+
+# --- 8. AUDIT TRAIL (Regulator Action Log) ---
+class AuditTrailEntry(Base):
+    """Immutable log of every action taken by a regulatory official."""
+    __tablename__ = "audit_trail"
+
+    id          = Column(String, primary_key=True)               # "AT-RBI-abc123"
+    auditor_id  = Column(String, ForeignKey("regulatory_officials.id"), nullable=False)
+    auditor_name= Column(String, nullable=False)
+    regulator   = Column(String, nullable=False)
+    action      = Column(String, nullable=False)                  # "VAULT_VIEW","CHAIN_VERIFY","EXPORT","LOGIN","NOTICE_FILED"
+    target_id   = Column(String, nullable=True)                   # entity_id, entry_id, or notice_id
+    target_name = Column(String, nullable=True)                   # human-readable label
+    detail      = Column(Text, nullable=True)                     # optional JSON metadata
+    ip_address  = Column(String, nullable=True)
+    timestamp   = Column(String, nullable=False)                  # ISO-8601
+

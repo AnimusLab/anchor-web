@@ -11,6 +11,7 @@ import MyProfile           from './pages/MyProfile'
 import ComplianceTrend     from './pages/ComplianceTrend'
 import GlobalSearch        from './pages/GlobalSearch'
 import JurisdictionSummary from './pages/JurisdictionSummary'
+import AuditTrail          from './pages/AuditTrail'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth()
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/search"          element={<P><GlobalSearch /></P>} />
         <Route path="/jurisdiction"    element={<P><JurisdictionSummary /></P>} />
         <Route path="/enforce"         element={<P><IssueNotice /></P>} />
+        <Route path="/audit-trail"     element={<P><AuditTrail /></P>} />
         <Route path="/profile"         element={<P><MyProfile /></P>} />
         <Route path="*"                element={<Navigate to="/login" replace />} />
       </Routes>
