@@ -8,12 +8,14 @@ const DIALECTS = ['RBI','SEC','EU-AI','NIST'];
 export default function DecisionLedger() {
   const { token } = useAuth();
   const [ledger, setLedger]       = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [search, setSearch]       = useState('');
-  const [filter, setFilter]       = useState('ALL');
-  const [dialect, setDialect]     = useState('RBI');
-  const [vault, setVault]         = useState(null);
+  const [loading, setLoading]       = useState(true);
+  const [search, setSearch]         = useState('');
+  const [filter, setFilter]         = useState('ALL');
+  const [dialect, setDialect]       = useState('RBI');
+  const [vault, setVault]           = useState(null);
   const [translated, setTranslated] = useState(null);
+  const [dateFrom, setDateFrom]     = useState('');
+  const [dateTo, setDateTo]         = useState('');
 
   useEffect(() => {
     fetch(`${endpoints.baseUrl}/api/ledger`, { headers: { Authorization: `Bearer ${token}` } })
@@ -32,8 +34,30 @@ export default function DecisionLedger() {
     const q = search.toLowerCase();
     const mq = e.project_name?.toLowerCase().includes(q) || e.entry_id?.toLowerCase().includes(q);
     const mf = filter === 'ALL' || (filter === 'COMPLIANT' && e.is_compliant) || (filter === 'VIOLATIONS' && !e.is_compliant);
-    return mq && mf;
-  }), [ledger, search, filter]);
+    const ts = (e.timestamp || '').slice(0, 10);
+    const mFrom = !dateFrom || ts >= dateFrom;
+    const mTo   = !dateTo   || ts <= dateTo;
+    return mq && mf && mFrom && mTo;
+  }), [ledger, search, filter, dateFrom, dateTo]);
+
+  const exportCSV = () => {
+    const headers = ['Decision ID','Company / AI Model','Status','Violations','Timestamp'];
+    const csvRows = [headers.join(',')];
+    rows.forEach(e => {
+      csvRows.push([
+        e.entry_id || '',
+        `"${(e.project_name || '').replace(/"/g, '""')}"`,
+        e.is_compliant ? 'COMPLIANT' : 'VIOLATION',
+        e.violations?.length || 0,
+        e.timestamp || '',
+      ].join(','));
+    });
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `anchor_decisions_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
 
   return (
     <PortalLayout>
@@ -51,17 +75,27 @@ export default function DecisionLedger() {
           </div>
         </div>
 
-        {/* Search + Filter */}
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
+        {/* Search + Filter + Date Range + Export */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
             <svg viewBox="0 0 20 20" fill="currentColor" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: 'var(--text-muted)', pointerEvents: 'none' }}>
               <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd"/>
             </svg>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by company name, AI model, or decision ID..." className="ra-input" style={{ paddingLeft: 40, fontSize: 14, height: 44 }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by company or decision ID..." className="ra-input" style={{ paddingLeft: 40, fontSize: 13, height: 42 }} />
           </div>
+          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="ra-input" style={{ width: 150, fontSize: 13, height: 42 }} title="From date"/>
+          <span style={{ color: 'var(--text-dim)', fontSize: 12 }}>→</span>
+          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="ra-input" style={{ width: 150, fontSize: 13, height: 42 }} title="To date"/>
+          {(dateFrom || dateTo) && (
+            <button onClick={() => { setDateFrom(''); setDateTo(''); }} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}>✕ Clear</button>
+          )}
           {['ALL','COMPLIANT','VIOLATIONS'].map(m => (
-            <button key={m} onClick={() => setFilter(m)} style={{ padding: '8px 16px', borderRadius: 6, fontSize: 12, fontWeight: 600, border: '1px solid', cursor: 'pointer', transition: 'all 0.15s', background: filter === m ? 'var(--accent-glow)' : 'transparent', color: filter === m ? '#a78bfa' : 'var(--text-muted)', borderColor: filter === m ? 'var(--accent)' : 'var(--border)' }}>{m}</button>
+            <button key={m} onClick={() => setFilter(m)} style={{ padding: '8px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, border: '1px solid', cursor: 'pointer', transition: 'all 0.15s', background: filter === m ? 'var(--accent-glow)' : 'transparent', color: filter === m ? '#a78bfa' : 'var(--text-muted)', borderColor: filter === m ? 'var(--accent)' : 'var(--border)' }}>{m}</button>
           ))}
+          <button onClick={exportCSV} disabled={rows.length === 0} style={{ padding: '8px 16px', borderRadius: 6, background: 'var(--green)', border: 'none', color: '#fff', fontSize: 12, fontWeight: 600, cursor: rows.length > 0 ? 'pointer' : 'not-allowed', opacity: rows.length > 0 ? 1 : 0.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 14, height: 14 }}><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd"/></svg>
+            Export CSV
+          </button>
         </div>
 
         {/* Stats row */}
