@@ -160,7 +160,7 @@ def send_approval_notification(to_email: str, display_name: str, entity_id: str)
     return _send_email(to_email, subject, html)
 
 
-def send_auditor_provisioned(to_email: str, display_name: str, entity_id: str, regulator: str, qr_url: str, totp_secret: str):
+def send_auditor_provisioned(to_email: str, display_name: str, entity_id: str, hub_id: str, regulator: str, qr_url: str, totp_secret: str):
     """
     Sends the auditor their provisioned access packet.
     Includes the Entity ID, Regulator context, and the TOTP QR code + Manual Fallback.
@@ -175,7 +175,12 @@ def send_auditor_provisioned(to_email: str, display_name: str, entity_id: str, r
       </p>
 
       <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
-        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">ENTITY_ID</p>
+        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">AGENCY_HUB_ID (USE FOR LOGIN)</p>
+        <code style="color: #10B981; font-size: 16px;">{hub_id}</code>
+      </div>
+
+      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
+        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">MISSION_CLEARANCE_ID</p>
         <code style="color: #10B981; font-size: 16px;">{entity_id}</code>
       </div>
 
@@ -184,13 +189,11 @@ def send_auditor_provisioned(to_email: str, display_name: str, entity_id: str, r
         <a href="{qr_url}" target="_blank">
             <img src="{qr_url}" width="160" height="160" style="display: block; margin: 0 auto; border: 1px solid #161B22;" />
         </a>
-        <p style="color: #484F58; font-size: 9px; margin-top: 15px;">SCAN WITH GOOGLE AUTHENTICATOR OR AUTHY</p>
       </div>
 
       <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
         <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">MANUAL_SETUP_CODE (IF QR BLOCKED)</p>
         <code style="color: #F59E0B; font-size: 14px; letter-spacing: 0.1em;">{totp_secret}</code>
-        <p style="color: #484F58; font-size: 9px; margin-top: 10px;">If the image above is broken, choose "Enter a setup key" in your app and use this code.</p>
       </div>
 
       <div style="text-align: center; margin-top: 30px;">
@@ -200,7 +203,7 @@ def send_auditor_provisioned(to_email: str, display_name: str, entity_id: str, r
     """
     return _send_email(to_email, subject, html)
 
-def send_enterprise_provisioned(to_email: str, display_name: str, company: str, region: str, entity_id: str, master_key: str, qr_url: str):
+def send_enterprise_provisioned(to_email: str, display_name: str, company: str, region: str, entity_id: str, hub_id: str, master_key: str, qr_url: str):
     """
     Sends an Enterprise Owner their regional master packet.
     Includes the Master Key for project integration and the TOTP QR code for login.
@@ -213,6 +216,16 @@ def send_enterprise_provisioned(to_email: str, display_name: str, company: str, 
       <p style="color: #94A3B8; font-size: 12px; line-height: 1.6;">
         Welcome <strong>{display_name}</strong>. You are now the authorizing owner for <strong>{company} ({region})</strong>.
       </p>
+
+      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
+        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">ORGANIZATION_HUB_ID (REQUIRED FOR LOGIN)</p>
+        <code style="color: #10B981; font-size: 16px;">{hub_id}</code>
+      </div>
+
+      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
+        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">TACTICAL_CLEARANCE_ID</p>
+        <code style="color: #10B981; font-size: 16px;">{entity_id}</code>
+      </div>
 
       <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
         <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">REGIONAL_MASTER_KEY (FOR PROJECT INTEGRATION)</p>
@@ -228,8 +241,6 @@ def send_enterprise_provisioned(to_email: str, display_name: str, company: str, 
       <div style="text-align: center; margin-top: 30px;">
         <a href="https://enterprise.anchorgovernance.tech" style="background: #F59E0B; color: #000; padding: 12px 25px; text-decoration: none; font-weight: bold; font-size: 11px; tracking: 0.2em;">OPEN ENTERPRISE DASHBOARD →</a>
       </div>
-      
-      <p style="color: #484F58; font-size: 9px; margin-top: 20px; text-align: center;">ENTITY_ID: {entity_id}</p>
     </div>
     """
     return _send_email(to_email, subject, html)

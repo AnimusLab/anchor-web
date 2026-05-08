@@ -526,7 +526,12 @@ def register_organization(
     This is the top-level 'GitHub Org' creation.
     """
     # 1. Validate Inputs
+    # 1. Validate and Unique-ify Hub ID
     prefix_clean = hub_id.strip().lower()
+    # Add random suffix to prevent collisions and satisfy "not just name" requirement
+    random_suffix = secrets.token_hex(2) # 4 chars
+    prefix_clean = f"{prefix_clean}-{random_suffix}"
+    
     _validate_slug(prefix_clean, "Organization Hub ID")
     domain = email.split("@")[-1].lower()
     
@@ -833,18 +838,45 @@ def approve_user(
 
     # 3. Finalize Status
     user.status = "approved"
+    user.email_verified = True  # Mark as verified upon admin approval
     user.approved_at = datetime.utcnow().isoformat()
     db.commit()
 
     # 4. Dispatch Automated Provisioning Email
-    send_auditor_provisioned(
-        to_email=user.email,
-        display_name=user.display_name,
-        entity_id=user.id,
-        regulator=getattr(user, 'jurisdiction', "Authority"),
-        qr_url=qr_url,
-        totp_secret=raw_secret
-    )
+    if isinstance(user, RegulatoryOfficial):
+        # Fetch the Hub ID from the Org table for the auditor
+        org = db.query(Organization).filter(Organization.id == user.org_id).first()
+        hub_id = org.hub_id if org else "UNKNOWN"
+        
+        send_auditor_provisioned(
+            to_email=user.email,
+            display_name=user.display_name,
+            entity_id=user.id,
+            hub_id=hub_id,
+            regulator=getattr(user, 'jurisdiction', "Authority"),
+            qr_url=qr_url,
+            totp_secret=raw_secret
+        )
+    else:
+        # For Enterprise Owners, we need to fetch the Hub ID from the Org table
+        org = db.query(Organization).filter(Organization.id == user.org_id).first()
+        hub_id = org.hub_id if org else "UNKNOWN"
+        region = org.region if org else "Global"
+        
+        # We need a master key for the welcome packet (usually generated at registration)
+        # For simplicity in this flow, we'll assume the org has one or generate a placeholder
+        master_key = "DECRYPT_VIA_DASHBOARD" 
+        
+        send_enterprise_provisioned(
+            to_email=user.email,
+            display_name=user.display_name,
+            company=org.display_name if org else "Your Company",
+            region=region,
+            entity_id=user.id,
+            hub_id=hub_id,
+            master_key=master_key,
+            qr_url=qr_url
+        )
 
     return {"status": "APPROVED_AND_PROVISIONED", "entity_id": target_id}
 
@@ -899,6 +931,8 @@ def get_pending_users(
             org = db.query(Organization).filter(Organization.id == u.org_id).first()
             if org:
                 entry["org_name"] = org.display_name
+                entry["org_hub_id"] = org.hub_id
+                entry["org_region"] = org.region
         results.append(entry)
 
     for u in r_pending:

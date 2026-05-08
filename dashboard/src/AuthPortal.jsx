@@ -164,8 +164,9 @@ export default function AuthPortal({ isInvite = false }) {
     setIsLoading(true);
     try {
       const payload = new FormData();
-      // Derive hub_id: lowercase, no spaces
-      const derivedHubId = formData.companyName.trim().toLowerCase().replace(/\s+/g, '-');
+      // Derive hub_id: slugified company name + random tactical suffix
+      const randomSuffix = Math.random().toString(16).substring(2, 6);
+      const derivedHubId = `${formData.companyName.trim().toLowerCase().replace(/\s+/g, '-')}-${randomSuffix}`;
       payload.append('hub_id', derivedHubId);
       payload.append('display_name', formData.displayName);
       payload.append('company_name', formData.companyName);
