@@ -706,13 +706,35 @@ def register_auditor(
     if existing:
         raise HTTPException(status_code=409, detail="An account with this email already exists.")
 
-    # Generate patterned ID: Agency_Initials_Date (e.g., RBI_Tan_03-05-26)
+    # 2. Agency (Organization) Detection/Creation
+    hub_id_clean = department.strip().lower()
+    org = db.query(Organization).filter(Organization.hub_id.ilike(f"{hub_id_clean}%")).first()
+    
+    if not org:
+        # Create the Regulatory Agency on the fly to eliminate friction
+        org_id = _generate_org_id(department)
+        # Add random suffix to hub_id for uniqueness
+        random_suffix = secrets.token_hex(2)
+        unique_hub_id = f"{hub_id_clean}-{random_suffix}"
+        
+        org = Organization(
+            id=org_id,
+            hub_id=unique_hub_id,
+            display_name=department.upper(),
+            domain=email.split("@")[-1].lower(),
+            server_region="IN", # Defaulting to IN for current deployment
+            created_at=datetime.utcnow().isoformat()
+        )
+        db.add(org)
+    
+    # 3. Generate patterned ID: Agency_Initials_Date (e.g., RBI_Tan_03-05-26)
     clearance_id = _generate_regulator_id(department, display_name)
 
-    # Create pending official in siloed table
+    # 4. Create pending official linked to the Agency
     user = RegulatoryOfficial(
         id=clearance_id, 
         email=email.strip().lower(),
+        org_id=org.id, # Link established!
         display_name=display_name,
         department=department,
         jurisdiction=jurisdiction,
