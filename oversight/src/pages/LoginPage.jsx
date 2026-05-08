@@ -304,6 +304,7 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* ── Main content area with Grid ── */}
       <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' }}>
         {/* Background Grid */}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.08, backgroundImage: `linear-gradient(${TOKEN.border} 1px, transparent 1px), linear-gradient(90deg, ${TOKEN.border} 1px, transparent 1px)`, backgroundSize: '50px 50px' }} />
@@ -311,55 +312,68 @@ export default function LoginPage() {
         {/* Left Side: Handshake Form */}
         <div style={{ flex: 1.2, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative', zIndex: 10 }}>
           <div style={{ width: '100%', maxWidth: 440 }}>
-          
-          <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.03)', border: `1px solid ${TOKEN.border}`, borderRadius: 10, padding: 4, marginBottom: 32 }}>
-            {['login', 'register'].map(tab => (
-              <button key={tab} onClick={() => { setActiveTab(tab); setStage('identify'); setError(''); }} style={{ flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', background: activeTab === tab ? TOKEN.amber : 'transparent', color: activeTab === tab ? '#1c1200' : TOKEN.txtS }}>{tab === 'login' ? '🔐 Sign In' : '🛡️ Onboard'}</button>
-            ))}
+            <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.03)', border: `1px solid ${TOKEN.border}`, borderRadius: 10, padding: 4, marginBottom: 32 }}>
+              {['login', 'register'].map(tab => (
+                <button key={tab} onClick={() => { setActiveTab(tab); setStage('identify'); setError(''); }} style={{ flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', background: activeTab === tab ? TOKEN.amber : 'transparent', color: activeTab === tab ? '#1c1200' : TOKEN.txtS }}>{tab === 'login' ? '🔐 Sign In' : '🛡️ Onboard'}</button>
+              ))}
+            </div>
+
+            {error && <div style={{ padding: '12px 16px', borderRadius: 8, marginBottom: 20, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', fontSize: 13 }}>✗ {error}</div>}
+
+            {activeTab === 'login' ? (
+              <form onSubmit={stage === 'identify' ? handleIdentify : handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {stage === 'identify' ? (
+                  <>
+                    <Field label="Mission Clearance ID"><input required type="text" value={form.clearanceId} onChange={set('clearanceId')} onFocus={fo('clearanceId')} onBlur={bl} placeholder="E.G. SEC-ALFA-9" style={f('clearanceId')} /></Field>
+                    <Field label="Agency Hub ID"><input required type="text" value={form.agencyId} onChange={set('agencyId')} onFocus={fo('agencyId')} onBlur={bl} placeholder="SEC, RBI, NIST..." style={f('agencyId')} /></Field>
+                    <Field label="Your Official Email"><input required type="email" value={form.email} onChange={set('email')} onFocus={fo('email')} onBlur={bl} placeholder="auditor@regulator.gov" style={f('email')} /></Field>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ padding: '14px 18px', borderRadius: 8, background: TOKEN.amberD, border: `1px solid rgba(245,158,11,0.2)` }}>
+                      <div style={{ fontSize: 9, color: TOKEN.amber, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Identity Recognized</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: TOKEN.txt }}>{form.clearanceId} // {form.agencyId}</div>
+                    </div>
+                    <Field label="6-Digit TOTP Code"><input required type="text" maxLength={6} value={form.totp} onChange={set('totp')} onFocus={fo('totp')} onBlur={bl} placeholder="000000" style={{ ...f('totp'), textAlign: 'center', fontSize: 32, letterSpacing: '0.3em' }} /></Field>
+                  </>
+                )}
+                <button type="submit" style={{ width: '100%', padding: 13, borderRadius: 8, fontSize: 14, fontWeight: 700, background: TOKEN.amber, color: '#1c1200', border: 'none', cursor: 'pointer' }}>{stage === 'identify' ? 'Review Clearance →' : 'Initialize Session →'}</button>
+              </form>
+            ) : (
+              <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <Field label="Your Full Name"><input required type="text" value={form.displayName} onChange={set('displayName')} placeholder="YOUR FULL NAME" style={f('dn')} /></Field>
+                <Field label="Your Official Email"><input required type="email" value={form.email} onChange={set('email')} placeholder="auditor@regulator.gov" style={f('em')} /></Field>
+                <Field label="Requested Agency Hub ID"><input required type="text" value={form.agencyId} onChange={set('agencyId')} placeholder="E.G. SEC, RBI" style={f('ai')} /></Field>
+                <Field label="Jurisdiction (Nation State)">
+                  <select required value={form.jurisdiction} onChange={set('jurisdiction')} style={{ ...f('jx'), appearance: 'none' }}>
+                    <option value="">Select Nation</option>
+                    {jurisdictionData.map(jx => (
+                      <option key={jx.id} value={jx.id}>{jx.label}</option>
+                    ))}
+                  </select>
+                </Field>
+                <button type="submit" disabled={loading} style={{ width: '100%', padding: 13, borderRadius: 8, fontSize: 14, fontWeight: 700, background: TOKEN.amber, color: '#1c1200', border: 'none', cursor: loading ? 'not-allowed' : 'pointer' }}>
+                  {loading ? 'Submitting...' : 'Request Access →'}
+                </button>
+              </form>
+            )}
+
+            <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11, color: TOKEN.txtD, fontFamily: TOKEN.mono }}>
+              ENFORCEMENT PRIORITY: 01 · SYSTEM_VERSION: v5.0.2-OVERSIGHT // WEB_v1
+            </div>
           </div>
+        </div>
 
-          {error && <div style={{ padding: '12px 16px', borderRadius: 8, marginBottom: 20, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', fontSize: 13 }}>✗ {error}</div>}
-
-          {activeTab === 'login' ? (
-            <form onSubmit={stage === 'identify' ? handleIdentify : handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {stage === 'identify' ? (
-                <>
-                  <Field label="Mission Clearance ID"><input required type="text" value={form.clearanceId} onChange={set('clearanceId')} onFocus={fo('clearanceId')} onBlur={bl} placeholder="E.G. SEC-ALFA-9" style={f('clearanceId')} /></Field>
-                  <Field label="Agency Hub ID"><input required type="text" value={form.agencyId} onChange={set('agencyId')} onFocus={fo('agencyId')} onBlur={bl} placeholder="SEC, RBI, NIST..." style={f('agencyId')} /></Field>
-                  <Field label="Your Official Email"><input required type="email" value={form.email} onChange={set('email')} onFocus={fo('email')} onBlur={bl} placeholder="auditor@regulator.gov" style={f('email')} /></Field>
-                </>
-              ) : (
-                <>
-                  <div style={{ padding: '14px 18px', borderRadius: 8, background: TOKEN.amberD, border: `1px solid rgba(245,158,11,0.2)` }}>
-                    <div style={{ fontSize: 9, color: TOKEN.amber, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Identity Recognized</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: TOKEN.txt }}>{form.clearanceId} // {form.agencyId}</div>
-                  </div>
-                  <Field label="6-Digit TOTP Code"><input required type="text" maxLength={6} value={form.totp} onChange={set('totp')} onFocus={fo('totp')} onBlur={bl} placeholder="000000" style={{ ...f('totp'), textAlign: 'center', fontSize: 32, letterSpacing: '0.3em' }} /></Field>
-                </>
-              )}
-              <button type="submit" style={{ width: '100%', padding: 13, borderRadius: 8, fontSize: 14, fontWeight: 700, background: TOKEN.amber, color: '#1c1200', border: 'none', cursor: 'pointer' }}>{stage === 'identify' ? 'Review Clearance →' : 'Initialize Session →'}</button>
-            </form>
-          ) : (
-            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <Field label="Your Full Name"><input required type="text" value={form.displayName} onChange={set('displayName')} placeholder="YOUR FULL NAME" style={f('dn')} /></Field>
-              <Field label="Your Official Email"><input required type="email" value={form.email} onChange={set('email')} placeholder="auditor@regulator.gov" style={f('em')} /></Field>
-              <Field label="Requested Agency Hub ID"><input required type="text" value={form.agencyId} onChange={set('agencyId')} placeholder="E.G. SEC, RBI" style={f('ai')} /></Field>
-              <Field label="Jurisdiction (Nation State)">
-                <select required value={form.jurisdiction} onChange={set('jurisdiction')} style={{ ...f('jx'), appearance: 'none' }}>
-                  <option value="">Select Nation</option>
-                  {jurisdictionData.map(jx => (
-                    <option key={jx.id} value={jx.id}>{jx.label}</option>
-                  ))}
-                </select>
-              </Field>
-              <button type="submit" disabled={loading} style={{ width: '100%', padding: 13, borderRadius: 8, fontSize: 14, fontWeight: 700, background: TOKEN.amber, color: '#1c1200', border: 'none', cursor: loading ? 'not-allowed' : 'pointer' }}>
-                {loading ? 'Submitting...' : 'Request Access →'}
-              </button>
-            </form>
-          )}
-
-          <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11, color: TOKEN.txtD, fontFamily: TOKEN.mono }}>
-            ENFORCEMENT PRIORITY: 01 · SYSTEM_VERSION: v5.0.2-OVERSIGHT // WEB_v1
+        {/* Right Side: Identity Zone */}
+        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', borderLeft: `1px solid rgba(255,255,255,0.02)` }}>
+          <AuditorBadge 
+            active={true} 
+            name={form.displayName || "Auditor"} 
+            agency={form.agencyId || "SEC"} 
+            clearanceId={form.clearanceId || "ID_PENDING"} 
+          />
+          <div style={{ position: 'absolute', bottom: 40, textAlign: 'center', pointerEvents: 'none' }}>
+            <div style={{ fontSize: 9, color: TOKEN.txtD, letterSpacing: '0.4em', fontWeight: 800 }}>IDENTITY_ZONE // 3D_SCAN_ACTIVE</div>
           </div>
         </div>
       </div>
