@@ -134,7 +134,12 @@ export default function LoginPage() {
       })
       const data = await safeJson(res);
       if (res.ok) {
-        setForm(prev => ({ ...prev, displayName: data.display_name }))
+        setForm(prev => ({ 
+          ...prev, 
+          displayName: data.display_name,
+          agencyId: data.agency_hub_id || prev.agencyId,
+          email: data.email || prev.email
+        }))
         setStage('verify')
       } else {
         setError(data.detail || 'Identity not found.')
@@ -145,6 +150,33 @@ export default function LoginPage() {
       setLoading(false)
     }
   }
+
+  // --- Auto-fill logic ---
+  useEffect(() => {
+    const id = form.clearanceId.trim().toUpperCase()
+    // Trigger lookup when ID matches tactical pattern (e.g. SEC-ALFA-9)
+    if (/^[A-Z]+-[A-Z]+-[A-Z0-9]+$/.test(id) && stage === 'identify') {
+      const timer = setTimeout(async () => {
+        try {
+          const res = await fetch(`${endpoints.baseUrl}/api/oversight/identify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clearance_id: id })
+          })
+          if (res.ok) {
+            const data = await res.json()
+            setForm(prev => ({ 
+              ...prev, 
+              agencyId: data.agency_hub_id || prev.agencyId,
+              email: data.email || prev.email,
+              displayName: data.display_name
+            }))
+          }
+        } catch (e) { /* silent fail for auto-fill */ }
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [form.clearanceId, stage])
 
   const handleRegister = async (e) => {
     e.preventDefault()
@@ -285,7 +317,7 @@ export default function LoginPage() {
               {stage === 'identify' ? (
                 <>
                   <Field label="Mission Clearance ID"><input required type="text" value={form.clearanceId} onChange={set('clearanceId')} onFocus={fo('clearanceId')} onBlur={bl} placeholder="E.G. SEC-ALFA-9" style={f('clearanceId')} /></Field>
-                  <Field label="Agency Name"><input required type="text" value={form.agencyId} onChange={set('agencyId')} onFocus={fo('agencyId')} onBlur={bl} placeholder="SEC, RBI, NIST..." style={f('agencyId')} /></Field>
+                  <Field label="Agency Hub ID"><input required type="text" value={form.agencyId} onChange={set('agencyId')} onFocus={fo('agencyId')} onBlur={bl} placeholder="SEC, RBI, NIST..." style={f('agencyId')} /></Field>
                   <Field label="Your Official Email"><input required type="email" value={form.email} onChange={set('email')} onFocus={fo('email')} onBlur={bl} placeholder="auditor@regulator.gov" style={f('email')} /></Field>
                 </>
               ) : (
@@ -303,7 +335,7 @@ export default function LoginPage() {
             <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <Field label="Your Full Name"><input required type="text" value={form.displayName} onChange={set('displayName')} placeholder="YOUR FULL NAME" style={f('dn')} /></Field>
               <Field label="Your Official Email"><input required type="email" value={form.email} onChange={set('email')} placeholder="auditor@regulator.gov" style={f('em')} /></Field>
-              <Field label="Requested Agency Name"><input required type="text" value={form.agencyId} onChange={set('agencyId')} placeholder="E.G. SEC, RBI" style={f('ai')} /></Field>
+              <Field label="Requested Agency Hub ID"><input required type="text" value={form.agencyId} onChange={set('agencyId')} placeholder="E.G. SEC, RBI" style={f('ai')} /></Field>
               <Field label="Jurisdiction (Nation State)">
                 <select required value={form.jurisdiction} onChange={set('jurisdiction')} style={{ ...f('jx'), appearance: 'none' }}>
                   <option value="">Select Nation</option>

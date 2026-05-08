@@ -142,22 +142,34 @@ from models import RegulatoryOfficial, Organization
 
 @oversight_router.post("/identify")
 def oversight_identify(body: dict, db: Session = Depends(get_db)):
-    """Validates ID + Email and returns user info for the identification stage."""
+    """Validates ID (and optionally Email) and returns user info for the identification stage."""
     search_id = body.get("clearance_id", "").strip().upper()
     search_email = body.get("email", "").strip().lower()
 
-    user = db.query(RegulatoryOfficial).filter(
+    query = db.query(RegulatoryOfficial).filter(
         RegulatoryOfficial.id == search_id,
-        RegulatoryOfficial.email == search_email,
         RegulatoryOfficial.status == "approved"
-    ).first()
+    )
+    
+    # If email is provided, enforce it (standard identification)
+    # If not, this is an auto-fill request
+    if search_email:
+        query = query.filter(RegulatoryOfficial.email == search_email)
+    
+    user = query.first()
 
     if not user:
         raise HTTPException(status_code=401, detail="IDENTITY NOT RECOGNIZED")
 
+    # Fetch Hub ID from the Org table
+    org = db.query(Organization).filter(Organization.id == user.org_id).first()
+    hub_id = org.hub_id if org else "UNKNOWN"
+
     return {
         "status": "RECOGNIZED",
         "display_name": user.display_name,
+        "email": user.email, # Returned for auto-fill UX
+        "agency_hub_id": hub_id,
         "regulator": user.department
     }
 
