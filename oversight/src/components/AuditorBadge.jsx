@@ -126,9 +126,9 @@ function Lanyard({ name, agency, clearanceId }) {
     const canvas = document.createElement('canvas');
     canvas.width = 64; canvas.height = 64;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#10B981';
+    ctx.fillStyle = '#10B981'; // Emerald glow
     ctx.fillRect(0, 0, 64, 64);
-    ctx.strokeStyle = '#000';
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
     ctx.lineWidth = 8;
     ctx.strokeRect(0, 0, 64, 64);
     return new THREE.CanvasTexture(canvas);
@@ -215,7 +215,7 @@ function Lanyard({ name, agency, clearanceId }) {
         <meshLineMaterial 
           transparent 
           lineWidth={0.15} 
-          color="white" 
+          color="#10B981" 
           map={lanyardTexture} 
           repeat={[-20, 1]} 
           depthTest={false}

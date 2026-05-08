@@ -276,7 +276,16 @@ export default function AuthPortal({ isInvite = false }) {
         </div>
 
         {/* Status */}
-        <div>
+        <div style={{ marginTop: 'auto' }}>
+          <div style={{ padding: 20, background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 12, marginBottom: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981' }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981', letterSpacing: '0.1em' }}>ONBOARDING PROTOCOL</span>
+            </div>
+            <p style={{ fontSize: 11, color: '#6b7280', margin: 0, lineHeight: 1.6 }}>
+              Enterprise registration requires 48 hours for administrative clearance review. Sovereign Relay nodes are provisioned upon approval.
+            </p>
+          </div>
           <StatusDot online={true} />
           <div style={{ marginTop: 12, fontSize: 11, color: '#374151', fontFamily: 'JetBrains Mono, monospace' }}>
             mesh.anchorgovernance.tech
@@ -284,15 +293,15 @@ export default function AuthPortal({ isInvite = false }) {
         </div>
       </div>
 
-      {/* ── Right form panel ── */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative' }}>
-        <EnterpriseBadge 
-          active={true}
-          name={formData.displayName || "Owner"}
-          company={formData.companyName || "Anchor Fleet"}
-          hubId={formData.orgId || "ID_PENDING"}
-        />
-        <div style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 10 }}>
+      {/* ── Main content area with Grid ── */}
+      <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' }}>
+        {/* Background Grid */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.05, backgroundImage: `linear-gradient(#1f2937 1px, transparent 1px), linear-gradient(90deg, #1f2937 1px, transparent 1px)`, backgroundSize: '52px 52px' }} />
+
+        {/* Left Side: Handshake Form */}
+        <div style={{ flex: 1.2, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative', zIndex: 10 }}>
+          <div style={{ width: '100%', maxWidth: 440 }}>
+            {/* ... form content continues below ... */}
 
           {/* Tab switcher */}
           <div style={{

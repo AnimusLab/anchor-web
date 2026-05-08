@@ -276,7 +276,7 @@ export default function LoginPage() {
         <div className="scan-beam" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.35), transparent)' }} />
       </div>
 
-      <div style={{ width: 400, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '48px 40px', borderRight: `1px solid ${TOKEN.border}`, position: 'relative', zIndex: 1 }}>
+      <div style={{ width: 400, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '48px 40px', borderRight: `1px solid ${TOKEN.border}`, position: 'relative', zIndex: 10, background: 'rgba(7,7,16,0.6)', backdropFilter: 'blur(20px)' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48 }}>
             <div style={{ width: 36, height: 36, background: TOKEN.amber, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -288,21 +288,29 @@ export default function LoginPage() {
             </div>
           </div>
           <h1 style={{ fontSize: 30, fontWeight: 800, color: TOKEN.txt, lineHeight: 1.15, marginBottom: 16 }}>Cryptographic <span style={{ color: TOKEN.amber }}>Audit Ledger</span> Access</h1>
-          <p style={{ fontSize: 13, color: TOKEN.txtS, lineHeight: 1.75 }}>Authorized regulators access tamper-evident AI governance records via secure relay.</p>
+          <p style={{ fontSize: 13, color: TOKEN.txtS, lineHeight: 1.75, marginBottom: 32 }}>Authorized regulators access tamper-evident AI governance records via secure relay.</p>
+          
+          <Dot color={TOKEN.amber} label="REGULATORY RELAY ACTIVE" />
         </div>
-        <Dot color={TOKEN.amber} label="REGULATORY RELAY ACTIVE" />
+
+        <div style={{ padding: 20, background: 'rgba(245,158,11,0.05)', border: `1px solid rgba(245,158,11,0.2)`, borderRadius: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: TOKEN.amber, boxShadow: `0 0 10px ${TOKEN.amber}` }} />
+              <span style={{ fontSize: 11, fontWeight: 800, color: TOKEN.amber, letterSpacing: '0.1em' }}>CLEARANCE PROTOCOL</span>
+          </div>
+          <p style={{ fontSize: 11, color: TOKEN.txtS, margin: 0, lineHeight: 1.6 }}>
+            Mission identity verification requires 48 hours for administrative clearance review. Access is cryptographically scoped per session.
+          </p>
+        </div>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
-        {/* High-Tech 3D Auditor Lanyard */}
-        <AuditorBadge 
-          active={true} 
-          name={form.displayName || "Auditor"} 
-          agency={form.agencyId || "SEC"} 
-          clearanceId={form.clearanceId || "ID_PENDING"} 
-        />
-        
-        <div style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 5 }}>
+      <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' }}>
+        {/* Background Grid */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.08, backgroundImage: `linear-gradient(${TOKEN.border} 1px, transparent 1px), linear-gradient(90deg, ${TOKEN.border} 1px, transparent 1px)`, backgroundSize: '50px 50px' }} />
+
+        {/* Left Side: Handshake Form */}
+        <div style={{ flex: 1.2, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative', zIndex: 10 }}>
+          <div style={{ width: '100%', maxWidth: 440 }}>
           
           <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.03)', border: `1px solid ${TOKEN.border}`, borderRadius: 10, padding: 4, marginBottom: 32 }}>
             {['login', 'register'].map(tab => (
