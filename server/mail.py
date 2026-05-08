@@ -160,89 +160,95 @@ def send_approval_notification(to_email: str, display_name: str, entity_id: str)
     return _send_email(to_email, subject, html)
 
 
-def send_auditor_provisioned(to_email: str, display_name: str, entity_id: str, hub_id: str, regulator: str, qr_url: str, totp_secret: str):
-    """
-    Sends the auditor their provisioned access packet.
-    Includes the Entity ID, Regulator context, and the TOTP QR code + Manual Fallback.
-    """
-    subject = f"Anchor Oversight — Access Provisioned [{entity_id}]"
-    html = f"""
-    <div style="font-family: monospace; background: #06060A; color: #E2E8F0; padding: 40px; max-width: 600px; margin: 0 auto; border: 1px solid #161B22;">
-      <h2 style="color: #10B981; letter-spacing: 0.2em; font-size: 14px; border-bottom: 1px solid #161B22; padding-bottom: 15px;">AUTHORITY_PROVISIONED // LEVEL_1</h2>
+def _badge_template(display_name: str, org_label: str, hub_id: str, clearance_id: str, qr_url: str, manual_key: str, color: str, portal_url: str):
+    """Shared tactical lanyard badge template for credential dispatch."""
+    return f"""
+    <div style="font-family: 'JetBrains Mono', Courier New, monospace; background: #000; padding: 40px 0; text-align: center;">
+      <!-- Lanyard Band -->
+      <div style="width: 4px; height: 60px; background: {color}; margin: 0 auto; box-shadow: 0 0 15px {color};"></div>
       
-      <p style="color: #94A3B8; font-size: 12px; line-height: 1.6;">
-        Welcome <strong>{display_name}</strong>. You have been authorized as a regulatory official for <strong>{regulator}</strong>.
-      </p>
-
-      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
-        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">AGENCY_HUB_ID (USE FOR LOGIN)</p>
-        <code style="color: #10B981; font-size: 16px;">{hub_id}</code>
+      <!-- The Badge -->
+      <div style="width: 320px; background: #08080C; margin: 0 auto; border: 2px solid {color}; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.8); position: relative;">
+        
+        <!-- Top Slot -->
+        <div style="width: 60px; height: 10px; background: #161B22; margin: 15px auto; border-radius: 5px;"></div>
+        
+        <!-- Header -->
+        <div style="background: {color}; padding: 15px; color: #000; font-weight: 900; letter-spacing: 0.2em; font-size: 18px;">
+            {hub_id.upper()}
+        </div>
+        
+        <div style="padding: 20px;">
+            <p style="color: #64748B; font-size: 10px; letter-spacing: 0.1em; margin: 0 0 15px;">IDENTITY VERIFIED // AUTHORIZED</p>
+            
+            <!-- Photo/Icon placeholder -->
+            <div style="width: 120px; height: 140px; background: #0C0C14; border: 1px solid rgba(255,255,255,0.05); margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 60px; height: 60px; border-radius: 50%; background: {color}; opacity: 0.2;"></div>
+            </div>
+            
+            <h2 style="color: #FFF; font-size: 18px; margin: 0 0 5px;">{display_name.upper()}</h2>
+            <p style="color: #484F58; font-size: 9px; margin: 0 0 25px;">{org_label.upper()}</p>
+            
+            <!-- QR Section -->
+            <div style="background: #000; padding: 15px; border: 1px solid #161B22; border-radius: 10px; margin-bottom: 20px;">
+                <p style="color: #484F58; font-size: 8px; margin: 0 0 10px; letter-spacing: 0.1em;">AUTHENTICATOR HANDSHAKE</p>
+                <img src="{qr_url}" width="140" height="140" style="display: block; margin: 0 auto;" />
+            </div>
+            
+            <!-- Clearance ID -->
+            <div style="margin-bottom: 20px;">
+                <p style="color: #484F58; font-size: 8px; margin: 0 0 3px; letter-spacing: 0.1em;">MISSION CLEARANCE ID</p>
+                <code style="color: {color}; font-size: 14px; font-weight: bold;">{clearance_id}</code>
+            </div>
+            
+            <!-- Manual Key -->
+            <div style="background: rgba(0,0,0,0.5); padding: 10px; border: 1px dashed #161B22;">
+                <p style="color: #484F58; font-size: 8px; margin: 0 0 5px;">MANUAL AUTH KEY</p>
+                <code style="color: #F59E0B; font-size: 11px; word-break: break-all;">{manual_key}</code>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="padding: 15px; border-top: 1px solid #161B22; color: #334155; font-size: 8px;">
+            ANCHOR GOVERNANCE MESH // v5.1 Protocol
+        </div>
       </div>
-
-      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
-        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">MISSION_CLEARANCE_ID</p>
-        <code style="color: #10B981; font-size: 16px;">{entity_id}</code>
-      </div>
-
-      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0; text-align: center;">
-        <p style="color: #484F58; font-size: 10px; margin: 0 0 15px; tracking: 0.2em;">AUTHENTICATOR_HANDSHAKE (SCAN NOW)</p>
-        <a href="{qr_url}" target="_blank">
-            <img src="{qr_url}" width="160" height="160" style="display: block; margin: 0 auto; border: 1px solid #161B22;" />
-        </a>
-      </div>
-
-      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
-        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">MANUAL_SETUP_CODE (IF QR BLOCKED)</p>
-        <code style="color: #F59E0B; font-size: 14px; letter-spacing: 0.1em;">{totp_secret}</code>
-      </div>
-
-      <div style="text-align: center; margin-top: 30px;">
-        <a href="https://oversight.anchorgovernance.tech" style="background: #10B981; color: #000; padding: 12px 25px; text-decoration: none; font-weight: bold; font-size: 11px; tracking: 0.2em;">OPEN TERMINAL →</a>
+      
+      <!-- Action Button -->
+      <div style="margin-top: 40px;">
+        <a href="{portal_url}" style="background: {color}; color: #000; padding: 12px 30px; text-decoration: none; font-weight: bold; font-size: 11px; border-radius: 5px;">OPEN SECURE PORTAL →</a>
       </div>
     </div>
     """
+
+def send_auditor_provisioned(to_email: str, display_name: str, entity_id: str, hub_id: str, regulator: str, qr_url: str, totp_secret: str):
+    """Sends the auditor their Lanyard ID Badge packet."""
+    subject = f"Anchor Oversight — Access Provisioned [{entity_id}]"
+    html = _badge_template(
+        display_name=display_name,
+        org_label=regulator,
+        hub_id=hub_id,
+        clearance_id=entity_id,
+        qr_url=qr_url,
+        manual_key=totp_secret,
+        color="#10B981", # Amber for oversight
+        portal_url="https://oversight.anchorgovernance.tech"
+    )
     return _send_email(to_email, subject, html)
 
 def send_enterprise_provisioned(to_email: str, display_name: str, company: str, region: str, entity_id: str, hub_id: str, master_key: str, qr_url: str):
-    """
-    Sends an Enterprise Owner their regional master packet.
-    Includes the Master Key for project integration and the TOTP QR code for login.
-    """
+    """Sends an Enterprise Owner their Lanyard ID Badge packet."""
     subject = f"Anchor Enterprise — Regional Master Node Provisioned [{region}]"
-    html = f"""
-    <div style="font-family: monospace; background: #06060A; color: #E2E8F0; padding: 40px; max-width: 600px; margin: 0 auto; border: 1px solid #161B22;">
-      <h2 style="color: #F59E0B; letter-spacing: 0.2em; font-size: 14px; border-bottom: 1px solid #161B22; padding-bottom: 15px;">REGIONAL_MASTER_PROVISIONED // {region}</h2>
-      
-      <p style="color: #94A3B8; font-size: 12px; line-height: 1.6;">
-        Welcome <strong>{display_name}</strong>. You are now the authorizing owner for <strong>{company} ({region})</strong>.
-      </p>
-
-      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
-        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">ORGANIZATION_HUB_ID (REQUIRED FOR LOGIN)</p>
-        <code style="color: #10B981; font-size: 16px;">{hub_id}</code>
-      </div>
-
-      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
-        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">TACTICAL_CLEARANCE_ID</p>
-        <code style="color: #10B981; font-size: 16px;">{entity_id}</code>
-      </div>
-
-      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0;">
-        <p style="color: #484F58; font-size: 10px; margin: 0 0 5px; tracking: 0.2em;">REGIONAL_MASTER_KEY (FOR PROJECT INTEGRATION)</p>
-        <code style="color: #F59E0B; font-size: 14px; word-break: break-all;">{master_key}</code>
-        <p style="color: #484F58; font-size: 9px; margin-top: 10px;">IMPORTANT: Include this key in your AI project configuration to connect to the grid.</p>
-      </div>
-
-      <div style="background: #0C0C12; border: 1px solid #161B22; padding: 20px; margin: 20px 0; text-align: center;">
-        <p style="color: #484F58; font-size: 10px; margin: 0 0 15px; tracking: 0.2em;">AUTHENTICATOR_HANDSHAKE (SCAN NOW)</p>
-        <img src="{qr_url}" width="160" height="160" style="display: block; margin: 0 auto; border: 1px solid #161B22;" />
-      </div>
-
-      <div style="text-align: center; margin-top: 30px;">
-        <a href="https://enterprise.anchorgovernance.tech" style="background: #F59E0B; color: #000; padding: 12px 25px; text-decoration: none; font-weight: bold; font-size: 11px; tracking: 0.2em;">OPEN ENTERPRISE DASHBOARD →</a>
-      </div>
-    </div>
-    """
+    html = _badge_template(
+        display_name=display_name,
+        org_label=f"{company} ({region})",
+        hub_id=hub_id,
+        clearance_id=entity_id,
+        qr_url=qr_url,
+        manual_key=master_key,
+        color="#F59E0B", # Cyan for enterprise
+        portal_url="https://enterprise.anchorgovernance.tech"
+    )
     return _send_email(to_email, subject, html)
 
 

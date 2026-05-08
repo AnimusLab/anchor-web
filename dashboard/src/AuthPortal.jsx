@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { endpoints } from './lib/api';
+import EnterpriseBadge from './components/EnterpriseBadge';
 
 /* Animated grid background */
 function GridBg() {
@@ -284,11 +285,14 @@ export default function AuthPortal({ isInvite = false }) {
       </div>
 
       {/* ── Right form panel ── */}
-      <div style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '40px 24px', position: 'relative', zIndex: 1,
-      }}>
-        <div style={{ width: '100%', maxWidth: 440 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative' }}>
+        <EnterpriseBadge 
+          active={true}
+          name={formData.displayName || "Owner"}
+          company={formData.companyName || "Anchor Fleet"}
+          hubId={formData.orgId || "ID_PENDING"}
+        />
+        <div style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 10 }}>
 
           {/* Tab switcher */}
           <div style={{

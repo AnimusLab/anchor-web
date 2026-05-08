@@ -296,10 +296,10 @@ export default function LoginPage() {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
         {/* High-Tech 3D Auditor Lanyard */}
         <AuditorBadge 
-          active={stage === 'verify'} 
+          active={true} 
           name={form.displayName || "Auditor"} 
           agency={form.agencyId || "SEC"} 
-          clearanceId={form.clearanceId} 
+          clearanceId={form.clearanceId || "ID_PENDING"} 
         />
         
         <div style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 5 }}>

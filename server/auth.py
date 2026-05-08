@@ -885,10 +885,6 @@ def approve_user(
         hub_id = org.hub_id if org else "UNKNOWN"
         region = org.region if org else "Global"
         
-        # We need a master key for the welcome packet (usually generated at registration)
-        # For simplicity in this flow, we'll assume the org has one or generate a placeholder
-        master_key = "DECRYPT_VIA_DASHBOARD" 
-        
         send_enterprise_provisioned(
             to_email=user.email,
             display_name=user.display_name,
@@ -896,7 +892,7 @@ def approve_user(
             region=region,
             entity_id=user.id,
             hub_id=hub_id,
-            master_key=master_key,
+            master_key=raw_secret, # Pass TOTP Secret as the primary login key
             qr_url=qr_url
         )
 
