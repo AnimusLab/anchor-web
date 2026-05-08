@@ -309,14 +309,6 @@ export default function LoginPage() {
         {/* Background Grid */}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.15, backgroundImage: `linear-gradient(${TOKEN.border} 1px, transparent 1px), linear-gradient(90deg, ${TOKEN.border} 1px, transparent 1px)`, backgroundSize: '50px 50px' }} />
 
-        {/* Global Identity Layer (Behind Form) */}
-        <AuditorBadge 
-          active={true} 
-          name={form.displayName || "Auditor"} 
-          agency={form.agencyId || "PENDING"} 
-          clearanceId={form.clearanceId || "ID_PENDING"} 
-        />
-
         {/* Left Side: Handshake Form */}
         <div style={{ flex: 1.2, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative', zIndex: 10 }}>
           <div style={{ width: '100%', maxWidth: 440 }}>
@@ -372,8 +364,14 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Side: Identity Zone (Interaction only) */}
-        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', borderLeft: `1px solid rgba(255,255,255,0.02)`, pointerEvents: 'none' }}>
+        {/* Right Side: Identity Zone */}
+        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', borderLeft: `1px solid rgba(255,255,255,0.02)`, zIndex: 1 }}>
+          <AuditorBadge 
+            active={true} 
+            name={form.displayName || "Auditor"} 
+            agency={form.agencyId || "PENDING"} 
+            clearanceId={form.clearanceId || "ID_PENDING"} 
+          />
           <div style={{ position: 'absolute', bottom: 40, textAlign: 'center', pointerEvents: 'none' }}>
             <div style={{ fontSize: 9, color: TOKEN.txtD, letterSpacing: '0.4em', fontWeight: 800 }}>IDENTITY_ZONE // 3D_SCAN_ACTIVE</div>
           </div>

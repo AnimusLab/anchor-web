@@ -298,14 +298,6 @@ export default function AuthPortal({ isInvite = false }) {
         {/* Background Grid */}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.05, backgroundImage: `linear-gradient(#1f2937 1px, transparent 1px), linear-gradient(90deg, #1f2937 1px, transparent 1px)`, backgroundSize: '52px 52px' }} />
 
-        {/* Global Identity Layer (Behind Form) */}
-        <EnterpriseBadge 
-          active={true}
-          name={formData.displayName || "Owner"}
-          company={formData.companyName || "PENDING"}
-          hubId={formData.orgId || "ID_PENDING"}
-        />
-
         {/* Left Side: Handshake Form */}
         <div style={{ flex: 1.2, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative', zIndex: 10 }}>
           <div style={{ width: '100%', maxWidth: 440 }}>
@@ -541,8 +533,14 @@ export default function AuthPortal({ isInvite = false }) {
           </div>
         </div>
 
-        {/* Right Side: Identity Zone (Interaction only) */}
-        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid rgba(255,255,255,0.02)', pointerEvents: 'none' }}>
+        {/* Right Side: Identity Zone */}
+        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid rgba(255,255,255,0.02)', zIndex: 1 }}>
+          <EnterpriseBadge 
+            active={true}
+            name={formData.displayName || "Owner"}
+            company={formData.companyName || "PENDING"}
+            hubId={formData.orgId || "ID_PENDING"}
+          />
           <div style={{ position: 'absolute', bottom: 40, textAlign: 'center', pointerEvents: 'none' }}>
             <div style={{ fontSize: 9, color: '#374151', letterSpacing: '0.4em', fontWeight: 800 }}>IDENTITY_ZONE // 3D_SCAN_ACTIVE</div>
           </div>
