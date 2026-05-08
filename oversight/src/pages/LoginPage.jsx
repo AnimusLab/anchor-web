@@ -307,7 +307,15 @@ export default function LoginPage() {
       {/* ── Main content area with Grid ── */}
       <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' }}>
         {/* Background Grid */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.08, backgroundImage: `linear-gradient(${TOKEN.border} 1px, transparent 1px), linear-gradient(90deg, ${TOKEN.border} 1px, transparent 1px)`, backgroundSize: '50px 50px' }} />
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.15, backgroundImage: `linear-gradient(${TOKEN.border} 1px, transparent 1px), linear-gradient(90deg, ${TOKEN.border} 1px, transparent 1px)`, backgroundSize: '50px 50px' }} />
+
+        {/* Global Identity Layer (Behind Form) */}
+        <AuditorBadge 
+          active={true} 
+          name={form.displayName || "Auditor"} 
+          agency={form.agencyId || "PENDING"} 
+          clearanceId={form.clearanceId || "ID_PENDING"} 
+        />
 
         {/* Left Side: Handshake Form */}
         <div style={{ flex: 1.2, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative', zIndex: 10 }}>
@@ -364,14 +372,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Side: Identity Zone */}
-        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', borderLeft: `1px solid rgba(255,255,255,0.02)` }}>
-          <AuditorBadge 
-            active={true} 
-            name={form.displayName || "Auditor"} 
-            agency={form.agencyId || "SEC"} 
-            clearanceId={form.clearanceId || "ID_PENDING"} 
-          />
+        {/* Right Side: Identity Zone (Interaction only) */}
+        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', borderLeft: `1px solid rgba(255,255,255,0.02)`, pointerEvents: 'none' }}>
           <div style={{ position: 'absolute', bottom: 40, textAlign: 'center', pointerEvents: 'none' }}>
             <div style={{ fontSize: 9, color: TOKEN.txtD, letterSpacing: '0.4em', fontWeight: 800 }}>IDENTITY_ZONE // 3D_SCAN_ACTIVE</div>
           </div>

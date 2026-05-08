@@ -84,12 +84,13 @@ function createBadgeTexture(name, agency, clearanceId) {
   return texture;
 }
 
-export default function AuditorBadge({ name = "Unknown", agency = "SEC", clearanceId = "PENDING-00", active = true }) {
+export default function AuditorBadge({ name = "Unknown", agency = "PENDING", clearanceId = "ID_PENDING", active = true }) {
   if (!active) return null;
 
   return (
-    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}>
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
       <Canvas
+        style={{ pointerEvents: 'auto' }}
         camera={{ position: [0, 0, 15], fov: 25 }}
         gl={{ alpha: true, antialias: true }}
         dpr={[1, 2]}
@@ -138,7 +139,7 @@ function Lanyard({ name, agency, clearanceId }) {
     new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()
   ]));
 
-  const segmentProps = { type: 'dynamic', canSleep: true, colliders: false, angularDamping: 2, linearDamping: 2 };
+  const segmentProps = { type: 'dynamic', canSleep: false, colliders: false, angularDamping: 2, linearDamping: 2 };
 
   // Physics Joints
   useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 0.8]);
