@@ -88,9 +88,9 @@ export default function AuditorBadge({ name = "Unknown", agency = "PENDING", cle
   if (!active) return null;
 
   return (
-    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1 }}>
       <Canvas
-        style={{ pointerEvents: 'auto' }}
+        style={{ pointerEvents: 'auto', width: '100%', height: '100%' }}
         camera={{ position: [0, 0, 15], fov: 25 }}
         gl={{ alpha: true, antialias: true }}
         dpr={[1, 2]}
@@ -167,7 +167,7 @@ function Lanyard({ name, agency, clearanceId }) {
 
   return (
     <>
-      <group position={[0, 4, 0]}>
+      <group position={[viewport.width / 4, 4, 0]}>
         <RigidBody ref={fixed} type="fixed" />
         <RigidBody position={[0.2, 0, 0]} ref={j1} {...segmentProps}>
           <BallCollider args={[0.05]} />
