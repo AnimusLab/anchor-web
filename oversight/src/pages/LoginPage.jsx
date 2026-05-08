@@ -158,7 +158,7 @@ export default function LoginPage() {
     if (/^[A-Z]+-[A-Z]+-[A-Z0-9]+$/.test(id) && stage === 'identify') {
       const timer = setTimeout(async () => {
         try {
-          const res = await fetch(`${endpoints.baseUrl}/api/oversight/identify`, {
+          const res = await fetch(`${endpoints.baseUrl}/api/auth/identify-first`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ clearance_id: id })
@@ -167,9 +167,9 @@ export default function LoginPage() {
             const data = await res.json()
             setForm(prev => ({ 
               ...prev, 
-              agencyId: data.agency_hub_id || prev.agencyId,
+              agencyId: data.hub_id || prev.agencyId,
               email: data.email || prev.email,
-              displayName: data.display_name
+              displayName: data.display_name || prev.display_name
             }))
           }
         } catch (e) { /* silent fail for auto-fill */ }

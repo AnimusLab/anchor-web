@@ -38,11 +38,14 @@ def get_db():
 
 def run_migrations():
     """Idempotent schema migration — safely adds any columns that exist in the
-    SQLAlchemy models but are absent from the live database table.
-    Uses IF NOT EXISTS so it is safe to run on every startup."""
+    SQLAlchemy models but are absent from the live database table."""
     from sqlalchemy import text
     migrations = [
-        # Any necessary manual migrations that create_all doesn't handle (usually none for a fresh reset)
+        "ALTER TABLE organizations ADD COLUMN hub_id VARCHAR",
+        "ALTER TABLE organizations ADD COLUMN region VARCHAR",
+        "ALTER TABLE regulatory_officials ADD COLUMN org_id VARCHAR",
+        "ALTER TABLE regulatory_officials ADD COLUMN department VARCHAR",
+        "ALTER TABLE regulatory_officials ADD COLUMN jurisdiction VARCHAR",
     ]
 
     # Only run ALTER TABLE on Postgres (SQLite doesn't support IF NOT EXISTS)

@@ -5,7 +5,7 @@ import hashlib
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, Form, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Form, Query, Body, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
@@ -16,7 +16,7 @@ import qrcode
 import base64
 from io import BytesIO
 from database import get_db, SessionLocal
-from models import EnterpriseUser, RegulatoryOfficial, Fleet, Organization, OrgInvite
+from models import User, EnterpriseUser, RegulatoryOfficial, Fleet, Organization, OrgInvite
 from security import encrypt_secret
 from mail import (
     send_enterprise_credentials, 
@@ -108,6 +108,16 @@ def get_current_admin_user(user: dict = Depends(get_current_user)):
 def _generate_key():
     """Generates a cryptographically secure 256-bit secret key."""
     return secrets.token_urlsafe(32)
+
+def _issue_jwt(user):
+    """Generates a scoped JWT for a user or official."""
+    exp = datetime.utcnow() + timedelta(days=1)
+    return jwt.encode({
+        "sub": user.email, 
+        "role": user.role, 
+        "org_id": user.org_id, 
+        "exp": exp
+    }, ANCHOR_MASTER_KEY, algorithm="HS256")
 
 # =============================================================================
 # ID Generation Patterns (Unified & Pattern-Based)
@@ -289,6 +299,36 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
     exp = datetime.utcnow() + timedelta(days=1)
     token = jwt.encode({"sub": user.email, "role": user.role, "org_id": user.org_id, "exp": exp}, ANCHOR_MASTER_KEY, algorithm="HS256")
     return {"access_token": token, "token_type": "bearer", "user": {"id": user.id, "email": user.email, "role": user.role, "org_id": user.org_id}}
+
+@auth_router.post("/identify-first")
+def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depends(get_db)):
+    """
+    STRICT LOOKUP: Given a Clearance ID, find the associated email and hub_id.
+    Used for 'Identity First' auto-fill on the sign-in page.
+    """
+    cid = clearance_id.strip().upper()
+    
+    # 1. Search Enterprise silo
+    user = db.query(EnterpriseUser).filter(EnterpriseUser.id == cid).first()
+    if user:
+        org = db.query(Organization).filter(Organization.id == user.org_id).first()
+        return {
+            "email": user.email,
+            "hub_id": org.hub_id if org else user.org_id,
+            "display_name": user.display_name
+        }
+        
+    # 2. Search Regulatory silo
+    official = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == cid).first()
+    if official:
+        org = db.query(Organization).filter(Organization.id == official.org_id).first()
+        return {
+            "email": official.email,
+            "hub_id": org.hub_id if org else official.id.split('-')[0].lower(),
+            "display_name": official.display_name
+        }
+        
+    raise HTTPException(status_code=404, detail="CLEARANCE_ID_NOT_FOUND")
 
 @auth_router.post("/enterprise/identify")
 def enterprise_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
@@ -713,8 +753,8 @@ def register_auditor(
     if not org:
         # Create the Regulatory Agency on the fly to eliminate friction
         org_id = _generate_org_id(department)
-        # Add random suffix to hub_id for uniqueness
-        random_suffix = secrets.token_hex(2)
+        # Tactical suffix (shorter for readability)
+        random_suffix = secrets.token_hex(2)[:3]
         unique_hub_id = f"{hub_id_clean}-{random_suffix}"
         
         org = Organization(
@@ -722,10 +762,11 @@ def register_auditor(
             hub_id=unique_hub_id,
             display_name=department.upper(),
             domain=email.split("@")[-1].lower(),
-            server_region="IN", # Defaulting to IN for current deployment
+            server_region="IN", 
             created_at=datetime.utcnow().isoformat()
         )
         db.add(org)
+        db.flush() # Ensure ID is available for relationship
     
     # 3. Generate patterned ID: Agency_Initials_Date (e.g., RBI_Tan_03-05-26)
     clearance_id = _generate_regulator_id(department, display_name)
