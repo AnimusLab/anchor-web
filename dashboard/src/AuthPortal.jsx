@@ -175,13 +175,23 @@ export default function AuthPortal({ isInvite = false }) {
           });
           if (res.ok) {
             const data = await res.json();
-            setFormData(prev => ({
-              ...prev,
-              email: data.email || prev.email,
-              orgId: data.hub_id || prev.orgId,
-              displayName: data.display_name || (data.hub_id === 'anchor-root' ? 'ROOT ADMIN' : prev.displayName),
-              companyName: data.org_name || (data.hub_id === 'anchor-root' ? 'ANCHOR CORE' : prev.companyName)
-            }));
+            setFormData(prev => {
+              const dName = data.display_name || (data.hub_id === 'anchor-root' ? 'ROOT ADMIN' : prev.displayName);
+              let cName = data.org_name || (data.hub_id === 'anchor-root' ? 'ANCHOR CORE' : prev.companyName);
+              
+              // Prevent duplication if user named org after themselves
+              if (cName.toUpperCase() === dName.toUpperCase()) {
+                cName = data.hub_id === 'anchor-root' ? 'ANCHOR CORE' : 'AUTHORIZED HUB';
+              }
+              
+              return {
+                ...prev,
+                email: data.email || prev.email,
+                orgId: data.hub_id || prev.orgId,
+                displayName: dName,
+                companyName: cName
+              };
+            });
           }
         } catch (e) { /* silent fail */ }
       }, 600);

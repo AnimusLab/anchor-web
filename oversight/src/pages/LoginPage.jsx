@@ -166,13 +166,22 @@ export default function LoginPage() {
           })
           if (res.ok) {
             const data = await res.json()
-            setForm(prev => ({ 
-              ...prev, 
-              agencyId: data.hub_id || prev.agencyId,
-              email: data.email || prev.email,
-              displayName: data.display_name || "AUTHORIZED AUDITOR",
-              agencyName: data.org_name || "REGULATORY BUREAU"
-            }))
+            setForm(prev => {
+              const dName = data.display_name || "AUTHORIZED AUDITOR";
+              let aName = data.org_name || "REGULATORY BUREAU";
+              
+              if (aName.toUpperCase() === dName.toUpperCase()) {
+                aName = "VERIFIED AGENCY";
+              }
+              
+              return {
+                ...prev,
+                agencyId: data.hub_id || prev.agencyId,
+                email: data.email || prev.email,
+                displayName: dName,
+                agencyName: aName
+              };
+            })
           }
         } catch (e) { /* silent fail for auto-fill */ }
       }, 600)
