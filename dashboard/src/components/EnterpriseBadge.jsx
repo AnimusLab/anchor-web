@@ -11,7 +11,7 @@ extend({ MeshLineGeometry, MeshLineMaterial });
 /**
  * Generates a high-fidelity dynamic texture for the Enterprise Badge.
  */
-function createBadgeTexture(name, company, hubId) {
+function createBadgeTexture(name, company, clearanceId) {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
   canvas.height = 1536;
@@ -61,12 +61,12 @@ function createBadgeTexture(name, company, hubId) {
   ctx.font = 'bold 80px monospace';
   ctx.fillText(name.toUpperCase(), 512, 1050);
 
-  // 7. Hub ID
+  // 7. Tactical Clearance ID
   ctx.fillStyle = primaryColor;
   ctx.font = 'bold 110px Courier New, monospace';
   ctx.shadowColor = 'rgba(6, 182, 212, 0.5)';
   ctx.shadowBlur = 20;
-  ctx.fillText(hubId, 512, 1200);
+  ctx.fillText(clearanceId.toUpperCase(), 512, 1200);
   ctx.shadowBlur = 0;
 
   // 8. Footer
@@ -79,7 +79,7 @@ function createBadgeTexture(name, company, hubId) {
   return texture;
 }
 
-export default function EnterpriseBadge({ name = "Unknown", company = "PENDING", hubId = "ID_PENDING", active = true }) {
+export default function EnterpriseBadge({ name = "Unknown", company = "PENDING", clearanceId = "ID_PENDING", active = true }) {
   if (!active) return null;
 
   return (
@@ -89,7 +89,7 @@ export default function EnterpriseBadge({ name = "Unknown", company = "PENDING",
         <pointLight position={[10, 10, 10]} intensity={1} />
         <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
         <Physics gravity={[0, -20, 0]}>
-          <Lanyard name={name} company={company} hubId={hubId} />
+          <Lanyard name={name} company={company} clearanceId={clearanceId} />
         </Physics>
         <Environment preset="city" />
         <ContactShadows opacity={0.4} scale={10} blur={2} far={4.5} />
@@ -98,7 +98,7 @@ export default function EnterpriseBadge({ name = "Unknown", company = "PENDING",
   );
 }
 
-function Lanyard({ name, company, hubId }) {
+function Lanyard({ name, company, clearanceId }) {
   const { viewport } = useThree();
   const fixed = useRef();
   const j1 = useRef();
@@ -109,7 +109,7 @@ function Lanyard({ name, company, hubId }) {
 
   const [dragged, setDragged] = useState(false);
 
-  const texture = useMemo(() => createBadgeTexture(name, company, hubId), [name, company, hubId]);
+  const texture = useMemo(() => createBadgeTexture(name, company, clearanceId), [name, company, clearanceId]);
   const lanyardTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 64; canvas.height = 64;

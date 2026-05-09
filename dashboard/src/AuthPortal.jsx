@@ -332,7 +332,7 @@ export default function AuthPortal({ isInvite = false }) {
           active={true}
           name={formData.displayName || "Owner"}
           company={formData.companyName || "PENDING"}
-          hubId={formData.orgId || "ID_PENDING"}
+          clearanceId={formData.clearanceId || "ID_PENDING"}
         />
 
         {/* Left Side: Handshake Form */}

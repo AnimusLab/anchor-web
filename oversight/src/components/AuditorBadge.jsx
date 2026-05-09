@@ -71,7 +71,7 @@ function createBadgeTexture(name, agency, clearanceId) {
   ctx.font = 'bold 110px Courier New, monospace';
   ctx.shadowColor = 'rgba(16, 185, 129, 0.5)';
   ctx.shadowBlur = 20;
-  ctx.fillText(clearanceId, 512, 1200);
+  ctx.fillText(clearanceId.toUpperCase(), 512, 1200);
   ctx.shadowBlur = 0;
 
   // 8. Footer
