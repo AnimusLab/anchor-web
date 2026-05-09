@@ -581,10 +581,12 @@ def register_organization(
     """
     # 1. Validate Inputs
     # 1. Validate and Unique-ify Hub ID
+    # Use the provided hub_id directly if it already has a tactical suffix, 
+    # otherwise append a short 2-char entropy block.
     prefix_clean = hub_id.strip().lower()
-    # Add random suffix to prevent collisions and satisfy "not just name" requirement
-    random_suffix = secrets.token_hex(2) # 4 chars
-    prefix_clean = f"{prefix_clean}-{random_suffix}"
+    if '-' not in prefix_clean:
+        random_suffix = secrets.token_hex(1) # 2 chars
+        prefix_clean = f"{prefix_clean}-{random_suffix}"
     
     _validate_slug(prefix_clean, "Organization Hub ID")
     domain = email.split("@")[-1].lower()

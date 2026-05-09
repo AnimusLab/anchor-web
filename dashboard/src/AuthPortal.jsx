@@ -162,7 +162,7 @@ export default function AuthPortal({ isInvite = false }) {
   // --- Identity First Auto-Fill ---
   useEffect(() => {
     const id = formData.clearanceId.trim().toUpperCase();
-    if (id.length >= 6 && activeTab === 'login' && loginStep === 'identify') {
+    if (id.length >= 5 && activeTab === 'login' && loginStep === 'identify') {
       const timer = setTimeout(async () => {
         try {
           const res = await fetch(`${endpoints.baseUrl || ''}/api/auth/identify-first`, {
@@ -182,6 +182,9 @@ export default function AuthPortal({ isInvite = false }) {
         } catch (e) { /* silent fail */ }
       }, 600);
       return () => clearTimeout(timer);
+    } else if (id.length === 0) {
+      // Clear fields if ID is deleted to prevent stale browser fills
+      setFormData(prev => ({ ...prev, email: '', orgId: '' }));
     }
   }, [formData.clearanceId, activeTab, loginStep]);
 
@@ -192,7 +195,7 @@ export default function AuthPortal({ isInvite = false }) {
     try {
       const payload = new FormData();
       // Derive hub_id: slugified company name + random tactical suffix (shorter)
-      const randomSuffix = Math.random().toString(16).substring(2, 5);
+      const randomSuffix = Math.random().toString(16).substring(2, 4);
       const derivedHubId = `${formData.companyName.trim().toLowerCase().replace(/\s+/g, '-')}-${randomSuffix}`;
       payload.append('hub_id', derivedHubId);
       payload.append('display_name', formData.displayName);
@@ -378,21 +381,21 @@ export default function AuthPortal({ isInvite = false }) {
                       <div style={{ fontSize: 14, color: '#6b7280' }}>Enter your identity credentials to proceed.</div>
                     </div>
                     <Field label="Tactical Clearance ID">
-                      <input required autoFocus type="text" name="clearanceId" value={formData.clearanceId} onChange={handleInputChange}
+                      <input required autoFocus autoComplete="off" type="text" name="clearanceId" value={formData.clearanceId} onChange={handleInputChange}
                         placeholder="e.g. DEV-SEC-X92F"
                         style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace', borderColor: focusedField === 'clearanceId' ? '#10b981' : '#1f2937' }}
                         onFocus={() => setFocusedField('clearanceId')} onBlur={() => setFocusedField(null)}
                       />
                     </Field>
                     <Field label="Corporate Access Email">
-                      <input required type="email" name="email" value={formData.email} onChange={handleInputChange}
+                      <input required autoComplete="off" type="email" name="email" value={formData.email} onChange={handleInputChange}
                         placeholder="owner@company.ai"
                         style={{ ...inputStyle, borderColor: focusedField === 'email' ? '#10b981' : '#1f2937' }}
                         onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
                       />
                     </Field>
                     <Field label="Organization Hub ID">
-                      <input required type="text" name="orgId" value={formData.orgId} onChange={handleInputChange}
+                      <input required autoComplete="off" type="text" name="orgId" value={formData.orgId} onChange={handleInputChange}
                         placeholder="e.g. animuslab"
                         style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace', borderColor: focusedField === 'orgId' ? '#10b981' : '#1f2937' }}
                         onFocus={() => setFocusedField('orgId')} onBlur={() => setFocusedField(null)}

@@ -155,7 +155,7 @@ export default function LoginPage() {
   useEffect(() => {
     const id = form.clearanceId.trim().toUpperCase()
     // Trigger lookup when ID matches tactical pattern (e.g. SEC-ALFA-9)
-    if (/^[A-Z]+-[A-Z]+-[A-Z0-9]+$/.test(id) && stage === 'identify') {
+    if (id.length >= 5 && stage === 'identify') {
       const timer = setTimeout(async () => {
         try {
           const res = await fetch(`${endpoints.baseUrl}/api/auth/identify-first`, {
@@ -169,12 +169,14 @@ export default function LoginPage() {
               ...prev, 
               agencyId: data.hub_id || prev.agencyId,
               email: data.email || prev.email,
-              displayName: data.display_name || prev.display_name
+              displayName: data.display_name || prev.displayName
             }))
           }
         } catch (e) { /* silent fail for auto-fill */ }
-      }, 500)
+      }, 600)
       return () => clearTimeout(timer)
+    } else if (id.length === 0) {
+       setForm(prev => ({ ...prev, email: '', agencyId: '' }));
     }
   }, [form.clearanceId, stage])
 
@@ -332,9 +334,9 @@ export default function LoginPage() {
               <form onSubmit={stage === 'identify' ? handleIdentify : handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {stage === 'identify' ? (
                   <>
-                    <Field label="Mission Clearance ID"><input required type="text" value={form.clearanceId} onChange={set('clearanceId')} onFocus={fo('clearanceId')} onBlur={bl} placeholder="E.G. SEC-ALFA-9" style={f('clearanceId')} /></Field>
-                    <Field label="Agency Hub ID"><input required type="text" value={form.agencyId} onChange={set('agencyId')} onFocus={fo('agencyId')} onBlur={bl} placeholder="SEC, RBI, NIST..." style={f('agencyId')} /></Field>
-                    <Field label="Your Official Email"><input required type="email" value={form.email} onChange={set('email')} onFocus={fo('email')} onBlur={bl} placeholder="auditor@regulator.gov" style={f('email')} /></Field>
+                    <Field label="Tactical Clearance ID"><input required autoComplete="off" type="text" value={form.clearanceId} onChange={set('clearanceId')} onFocus={fo('clearanceId')} onBlur={bl} placeholder="E.G. SEC-ALFA-9" style={f('clearanceId')} /></Field>
+                    <Field label="Agency Hub ID"><input required autoComplete="off" type="text" value={form.agencyId} onChange={set('agencyId')} onFocus={fo('agencyId')} onBlur={bl} placeholder="SEC, RBI, NIST..." style={f('agencyId')} /></Field>
+                    <Field label="Your Official Email"><input required autoComplete="off" type="email" value={form.email} onChange={set('email')} onFocus={fo('email')} onBlur={bl} placeholder="auditor@regulator.gov" style={f('email')} /></Field>
                   </>
                 ) : (
                   <>
