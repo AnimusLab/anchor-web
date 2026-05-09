@@ -179,8 +179,8 @@ export default function AuthPortal({ isInvite = false }) {
               ...prev,
               email: data.email || prev.email,
               orgId: data.hub_id || prev.orgId,
-              displayName: data.display_name || "AUDIT_ECHO", // Fallback for root
-              companyName: data.org_name || (data.hub_id === 'anchor-root' ? 'Anchor Core' : prev.companyName)
+              displayName: data.display_name || (data.hub_id === 'anchor-root' ? 'ROOT ADMIN' : prev.displayName),
+              companyName: data.org_name || (data.hub_id === 'anchor-root' ? 'ANCHOR CORE' : prev.companyName)
             }));
           }
         } catch (e) { /* silent fail */ }

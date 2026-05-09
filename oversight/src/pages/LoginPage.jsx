@@ -170,8 +170,8 @@ export default function LoginPage() {
               ...prev, 
               agencyId: data.hub_id || prev.agencyId,
               email: data.email || prev.email,
-              displayName: data.display_name || prev.displayName || "AUDITOR",
-              agencyName: data.org_name || prev.agencyName || "VERIFIED_AGENCY"
+              displayName: data.display_name || "AUTHORIZED AUDITOR",
+              agencyName: data.org_name || "REGULATORY BUREAU"
             }))
           }
         } catch (e) { /* silent fail for auto-fill */ }
