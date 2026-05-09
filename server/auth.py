@@ -16,7 +16,7 @@ import qrcode
 import base64
 from io import BytesIO
 from database import get_db, SessionLocal
-from models import User, EnterpriseUser, RegulatoryOfficial, Fleet, Organization, OrgInvite
+from models import EnterpriseUser, RegulatoryOfficial, Fleet, Organization, OrgInvite
 from security import encrypt_secret
 from mail import (
     send_enterprise_credentials, 
@@ -254,7 +254,15 @@ def get_jurisdictions():
 
 def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: list, db: Session):
     """Internal shared logic for identity challenge with strict triple-factor scoping."""
-    user = db.query(User).filter(User.email == email.strip().lower()).first()
+    email_clean = email.strip().lower()
+    
+    # 1. Search Enterprise silo
+    user = db.query(EnterpriseUser).filter(EnterpriseUser.email == email_clean).first()
+    
+    # 2. Search Regulatory silo if not found
+    if not user:
+        user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.email == email_clean).first()
+
     if not user:
         raise HTTPException(status_code=401, detail="IDENTITY NOT FOUND")
     
@@ -290,7 +298,13 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
              raise HTTPException(status_code=401, detail="ROLE MISMATCH")
     except Exception:
         raise HTTPException(status_code=401, detail="INVALID HANDSHAKE")
-    user = db.query(User).filter(User.email == request.email).first()
+    # 1. Search Enterprise silo
+    user = db.query(EnterpriseUser).filter(EnterpriseUser.email == request.email).first()
+    
+    # 2. Search Regulatory silo
+    if not user:
+        user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.email == request.email).first()
+
     if not user or not user.totp_secret:
         raise HTTPException(status_code=401, detail="SECURITY NOT PROVISIONED")
     totp = pyotp.TOTP(user.totp_secret)
@@ -623,9 +637,20 @@ def register_organization(
     }
 
 @auth_router.post("/login")
-def login(email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    """Unified login - checks Enterprise silo first, then Regulatory."""
-    email_clean = email.strip().lower()
+def login(
+    request_data: LoginRequest = None,
+    email: str = Form(None), 
+    password: str = Form(None), 
+    db: Session = Depends(get_db)
+):
+    """Unified login - checks Enterprise silo first, then Regulatory. Supports JSON & Form."""
+    final_email = request_data.email if request_data else email
+    final_pass = request_data.password if request_data else password
+    
+    if not final_email or not final_pass:
+        raise HTTPException(status_code=400, detail="MISSING CREDENTIALS")
+        
+    email_clean = final_email.strip().lower()
     
     # 1. Check Enterprise User
     user = db.query(EnterpriseUser).filter(EnterpriseUser.email == email_clean).first()
@@ -638,8 +663,8 @@ def login(email: str = Form(...), password: str = Form(...), db: Session = Depen
         raise HTTPException(status_code=401, detail="INVALID CREDENTIALS")
 
     # 3. Verify Password (if set - regulatory accounts might be TOTP-only)
-    if user.hashed_pass:
-        if not bcrypt.checkpw(password.encode(), user.hashed_pass.encode()):
+    if hasattr(user, 'hashed_pass') and user.hashed_pass:
+        if not bcrypt.checkpw(final_pass.encode(), user.hashed_pass.encode()):
             raise HTTPException(status_code=401, detail="INVALID CREDENTIALS")
     
     # 4. Issue Session Token
