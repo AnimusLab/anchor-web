@@ -266,9 +266,9 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
     if not user:
         raise HTTPException(status_code=401, detail="IDENTITY NOT FOUND")
     
-    # Strictly verify Personal Clearance ID (clearance_id)
+    # Strictly verify Personal Clearance ID (user.id)
     # We allow a manual match or email prefix fallback for legacy accounts
-    stored_clearance = user.clearance_id or user.email.split('@')[0]
+    stored_clearance = user.id or user.email.split('@')[0]
     if clearance_id.strip().upper() != stored_clearance.strip().upper():
         raise HTTPException(status_code=401, detail="CLEARANCE ID DISCREPANCY")
 
