@@ -74,6 +74,7 @@ export default function LoginPage() {
     email: '', 
     totp: '',
     displayName: '', 
+    agencyName: '',
     jurisdiction: 'US' 
   })
   const [stage, setStage] = useState('identify')   // 'identify' | 'verify'
@@ -169,7 +170,8 @@ export default function LoginPage() {
               ...prev, 
               agencyId: data.hub_id || prev.agencyId,
               email: data.email || prev.email,
-              displayName: data.display_name || prev.displayName
+              displayName: data.display_name || prev.displayName,
+              agencyName: data.org_name || prev.agencyName
             }))
           }
         } catch (e) { /* silent fail for auto-fill */ }
@@ -314,8 +316,8 @@ export default function LoginPage() {
         {/* Global Identity Layer (Behind Form, Full Width) */}
         <AuditorBadge 
           active={true} 
-          name={form.displayName || "Auditor"} 
-          agency={form.agencyId || "PENDING"} 
+          name={form.displayName || "AUDITOR"} 
+          agency={form.agencyName || "PENDING"} 
           clearanceId={form.clearanceId || "ID_PENDING"} 
         />
 

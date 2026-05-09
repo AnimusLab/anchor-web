@@ -329,7 +329,8 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
         return {
             "email": user.email,
             "hub_id": org.hub_id if org else user.org_id,
-            "display_name": user.display_name
+            "display_name": user.display_name,
+            "org_name": org.display_name if org else "PENDING"
         }
         
     # 2. Search Regulatory silo
@@ -339,7 +340,8 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
         return {
             "email": official.email,
             "hub_id": org.hub_id if org else official.id.split('-')[0].lower(),
-            "display_name": official.display_name
+            "display_name": official.display_name,
+            "org_name": org.display_name if org else "PENDING"
         }
         
     raise HTTPException(status_code=404, detail="CLEARANCE_ID_NOT_FOUND")
