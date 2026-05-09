@@ -2,7 +2,9 @@ export const API_BASE = import.meta.env.VITE_API_URL || 'https://animuslab-ancho
 export const WS_BASE = API_BASE.replace('https', 'wss').replace('http', 'ws');
 
 export const endpoints = {
+    baseUrl: API_BASE,
     // Auth
+    identifyFirst: `${API_BASE}/api/auth/identify-first`,
     login: `${API_BASE}/api/auth/login`,
     registerOrg: `${API_BASE}/api/auth/register/org`,
     checkDomain: (domain) => `${API_BASE}/api/auth/check-domain/${domain}`,

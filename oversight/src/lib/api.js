@@ -3,6 +3,7 @@ export const API_BASE = import.meta.env.VITE_API_URL || ''
 
 export const endpoints = {
   baseUrl: API_BASE,
+  identifyFirst: `${API_BASE}/api/auth/identify-first`,
   // Isolated Auth
   identify: `${API_BASE}/api/auth/oversight/identify`,
   verifyTotp: `${API_BASE}/api/auth/oversight/verify-totp`,

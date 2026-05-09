@@ -168,7 +168,7 @@ export default function AuthPortal({ isInvite = false }) {
     if (id.length >= 5 && activeTab === 'login' && loginStep === 'identify') {
       const timer = setTimeout(async () => {
         try {
-          const res = await fetch(`${endpoints.baseUrl || ''}/api/auth/identify-first`, {
+          const res = await fetch(endpoints.identifyFirst, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ clearance_id: id })
