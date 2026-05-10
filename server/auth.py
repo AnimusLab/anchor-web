@@ -366,10 +366,17 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
     """Internal shared logic for identity challenge with strict triple-factor scoping."""
     email_clean = email.strip().lower()
     
-    # 1. Search Enterprise silo
-    user = db.query(EnterpriseUser).filter(EnterpriseUser.email == email_clean).first()
-    
-    # 2. Search Regulatory silo if not found
+    # 1. Search Enterprise silo with Self-Healing Trigger
+    try:
+        user = db.query(EnterpriseUser).filter(EnterpriseUser.email == email_clean).first()
+    except Exception as e:
+        if "relation" in str(e).lower() or "no such table" in str(e).lower():
+            from database import init_db
+            init_db()
+            user = db.query(EnterpriseUser).filter(EnterpriseUser.email == email_clean).first()
+        else:
+            raise e
+            
     if not user:
         user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.email == email_clean).first()
 
@@ -433,7 +440,16 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
     cid = clearance_id.strip().upper()
     
     # 1. Search Enterprise silo
-    user = db.query(EnterpriseUser).filter(EnterpriseUser.id == cid).first()
+    try:
+        user = db.query(EnterpriseUser).filter(EnterpriseUser.id == cid).first()
+    except Exception as e:
+        if "relation" in str(e).lower() or "no such table" in str(e).lower():
+            from database import init_db
+            init_db()
+            user = db.query(EnterpriseUser).filter(EnterpriseUser.id == cid).first()
+        else:
+            raise e
+
     if user:
         org = db.query(Organization).filter(Organization.id == user.org_id).first()
         return {
@@ -780,4 +796,15 @@ def get_current_user_profile(
         "department":    getattr(user, 'department', 'OPS'),
         "region":        getattr(org, 'region', 'GLOBAL'),
         "regional_key":  getattr(org, 'regional_key', None)
+@auth_router.get("/debug/db")
+def debug_db_schema(db: Session = Depends(get_db)):
+    """Oversight Tool: Verifies that all required tables exist in the live database."""
+    from sqlalchemy import inspect
+    inspector = inspect(db.get_bind())
+    tables = inspector.get_table_names()
+    return {
+        "status": "OPERATIONAL",
+        "database": str(db.get_bind().url).split("@")[-1], # Show host only
+        "tables": tables,
+        "required_tables_present": all(t in tables for t in ["organizations", "enterprise_users", "regulatory_officials"])
     }
