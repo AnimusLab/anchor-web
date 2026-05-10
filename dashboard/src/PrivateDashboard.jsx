@@ -71,7 +71,7 @@ export default function PrivateDashboard() {
             <h1 className="text-sm font-bold tracking-[0.3em] uppercase text-cyan-500">
               {isOwner ? 'Ops_Center' : 'Lattice_Deck'} // {user?.region || 'GLOBAL'}
             </h1>
-            <span className="text-[9px] text-slate-500 uppercase tracking-widest">{user?.org_id} // {user?.department}</span>
+            <span className="text-[9px] text-slate-500 uppercase tracking-widest">{user?.hub_id || 'PENDING'} // {user?.department}</span>
           </div>
         </div>
         <div className="flex items-center gap-12">

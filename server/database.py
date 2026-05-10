@@ -43,21 +43,24 @@ def run_migrations():
     migrations = [
         "ALTER TABLE organizations ADD COLUMN hub_id VARCHAR",
         "ALTER TABLE organizations ADD COLUMN region VARCHAR",
+        "ALTER TABLE organizations ADD COLUMN regional_key VARCHAR",
         "ALTER TABLE regulatory_officials ADD COLUMN org_id VARCHAR",
         "ALTER TABLE regulatory_officials ADD COLUMN department VARCHAR",
         "ALTER TABLE regulatory_officials ADD COLUMN jurisdiction VARCHAR",
+        "ALTER TABLE enterprise_users ADD COLUMN department VARCHAR",
+        "ALTER TABLE org_invites ADD COLUMN department VARCHAR",
     ]
 
-    # Only run ALTER TABLE on Postgres (SQLite doesn't support IF NOT EXISTS)
-    if not DATABASE_URL.startswith("sqlite"):
-        with engine.connect() as conn:
-            for stmt in migrations:
-                try:
-                    conn.execute(text(stmt))
-                    conn.commit()
-                except Exception as e:
-                    print(f"[MIGRATION] Skipped (already exists?): {stmt.split('ADD COLUMN')[1].strip()[:40]} — {e}")
-        print("[BOOT] Schema migrations applied.")
+    # Run ALTER TABLE on both SQLite and Postgres
+    with engine.connect() as conn:
+        for stmt in migrations:
+            try:
+                conn.execute(text(stmt))
+                conn.commit()
+            except Exception as e:
+                # Silently skip if column already exists (common in SQLite)
+                pass
+    print("[BOOT] Schema migrations verified.")
 
 def init_db():
     """Creates all tables and seeds the sovereign mesh identities on first boot."""

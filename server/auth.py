@@ -244,6 +244,9 @@ def login(
         "exp": exp
     }, ANCHOR_MASTER_KEY, algorithm="HS256")
     
+    org = db.query(Organization).filter(Organization.id == user.org_id).first()
+    hub_id = org.hub_id if org else (user.org_id if hasattr(user, 'org_id') else "PENDING")
+
     return {
         "access_token": token,
         "token_type":   "bearer",
@@ -252,7 +255,7 @@ def login(
             "email": user.email,
             "display_name": user.display_name,
             "role": user.role,
-            "org_id": user.org_id,
+            "hub_id": hub_id,
             "department": getattr(user, 'department', 'OPS')
         }
     }
@@ -435,11 +438,11 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
         org = db.query(Organization).filter(Organization.id == user.org_id).first()
         return {
             "email": user.email,
-            "hub_id": org.hub_id if org else user.org_id,
+            "hub_id": (org.hub_id if org else user.org_id) or "PENDING",
             "display_name": user.display_name,
             "org_name": org.display_name if org else "PENDING",
-            "region": org.region if org else "GLOBAL",
-            "department": user.department or "OPS"
+            "region": getattr(org, 'region', 'GLOBAL') if org else "GLOBAL",
+            "department": getattr(user, 'department', 'OPS')
         }
         
     # 2. Search Regulatory silo
@@ -448,11 +451,11 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
         org = db.query(Organization).filter(Organization.id == official.org_id).first()
         return {
             "email": official.email,
-            "hub_id": org.hub_id if org else official.id.split('-')[0].lower(),
+            "hub_id": (org.hub_id if org else official.id.split('-')[0].lower()) or "PENDING",
             "display_name": official.display_name,
             "org_name": org.display_name if org else "PENDING",
-            "region": org.region if org else "GLOBAL",
-            "department": official.department or "AUDIT"
+            "region": getattr(org, 'region', 'GLOBAL') if org else "GLOBAL",
+            "department": getattr(official, 'department', 'AUDIT')
         }
         
     raise HTTPException(status_code=404, detail="CLEARANCE_ID_NOT_FOUND")
@@ -751,535 +754,6 @@ def register_organization(
         "message": "Onboarding request submitted. The Root Administrator will review your corporate identity before provisioning your Master Node."
     }
 
-@auth_router.post("/login")
-def login(
-    request_data: LoginRequest = None,
-    email: str = Form(None), 
-    password: str = Form(None), 
-    db: Session = Depends(get_db)
-):
-    """Unified login - checks Enterprise silo first, then Regulatory. Supports JSON & Form."""
-    final_email = request_data.email if request_data else email
-    final_pass = request_data.password if request_data else password
-    
-    if not final_email or not final_pass:
-        raise HTTPException(status_code=400, detail="MISSING CREDENTIALS")
-        
-    email_clean = final_email.strip().lower()
-    
-    # 1. Check Enterprise User
-    user = db.query(EnterpriseUser).filter(EnterpriseUser.email == email_clean).first()
-    
-    # 2. Check Regulatory Official if not found in Enterprise
-    if not user:
-        user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.email == email_clean).first()
-    
-    if not user:
-        raise HTTPException(status_code=401, detail="INVALID CREDENTIALS")
-
-    # 3. Verify Password (if set - regulatory accounts might be TOTP-only)
-    if hasattr(user, 'hashed_pass') and user.hashed_pass:
-        if not bcrypt.checkpw(final_pass.encode(), user.hashed_pass.encode()):
-            raise HTTPException(status_code=401, detail="INVALID CREDENTIALS")
-    
-    # 4. Issue Session Token
-    token = _issue_jwt(user)
-    
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user": {
-            "email": user.email,
-            "display_name": user.display_name,
-            "role": user.role,
-            "org_id": user.org_id,
-            "status": user.status
-        }
-    }
-
-
-@auth_router.post("/projects/create")
-def create_project(
-    project_name: str = Form(...),
-    tier: str = Form("enterprise"),
-    current_admin: dict = Depends(get_current_org_admin),
-    db: Session = Depends(get_db)
-):
-    """
-    [Admin Only] Self-service project provisioning. 
-    Generates a unique prefixed entity_id and secret keys.
-    """
-    # 1. Validate Project Name
-    prj_slug = project_name.strip().lower().replace(" ", "-")
-    _validate_slug(prj_slug, "Project Name")
-    
-    # 2. Generate Global Entity ID (Prefix-Project)
-    org_slug = current_admin["org_slug"]
-    full_entity_id = f"{org_slug}-{prj_slug}"
-    
-    # Check for collision
-    if db.query(Fleet).filter(Fleet.entity_id == full_entity_id).first():
-        raise HTTPException(status_code=409, detail=f"PROJECT '{full_entity_id}' ALREADY EXISTS")
-
-    # 3. Generate Sensitive Credentials (Shown ONCE)
-    raw_secret_key = _generate_key()
-    hashed_secret  = bcrypt.hashpw(raw_secret_key.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-    
-    mat = "0x" + secrets.token_hex(32)
-    mat_hash = hashlib.sha256(mat.encode()).hexdigest()
-
-    # 4. Save Project (Fleet)
-    project = Fleet(
-        entity_id=full_entity_id,
-        org_id=current_admin["org_id"],
-        name=project_name,
-        tier=tier,
-        key_hash=mat_hash,
-        secret_hash=hashed_secret,
-        created_at=datetime.utcnow().isoformat(),
-        provisioned_by=current_admin["sub"]
-    )
-    db.add(project)
-    db.commit()
-
-    return {
-        "status":        "PROVISIONED",
-        "entity_id":     full_entity_id,
-        "secret_key":    raw_secret_key, # SHOWN ONCE
-        "sdk_mat":       mat,            # SHOWN ONCE
-        "server_region": current_admin.get("region", "IN"),
-        "provisioned_by": current_admin["sub"]
-    }
-
-
-@auth_router.get("/projects")
-def list_org_projects(
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Lists all projects within the user's organisation."""
-    projects = db.query(Fleet).filter(Fleet.org_id == current_user["org_id"]).all()
-    return [
-        {
-            "entity_id": p.entity_id,
-            "name": p.name,
-            "tier": p.tier,
-            "created_at": p.created_at,
-            "provisioned_by": p.provisioned_by
-        }
-        for p in projects
-    ]
-
-@auth_router.post("/register/auditor")
-def register_auditor(
-    display_name: str = Form(...),
-    email: str = Form(...),
-    jurisdiction: str = Form("US"),
-    department: str = Form("General"),
-    db: Session = Depends(get_db)
-):
-    """Regulators request access. Creates a pending user record.
-    Admin reviews in the Pending Approvals queue and provisions credentials on approval."""
-
-    # Check for duplicate email
-    existing = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.email == email.strip().lower()).first()
-    if existing:
-        raise HTTPException(status_code=409, detail="An account with this email already exists.")
-
-    # 2. Agency (Organization) Detection/Creation
-    hub_id_clean = department.strip().lower()
-    org = db.query(Organization).filter(Organization.hub_id.ilike(f"{hub_id_clean}%")).first()
-    
-    if not org:
-        # Create the Regulatory Agency on the fly to eliminate friction
-        org_id = _generate_org_id(department)
-        # Tactical suffix (shorter for readability)
-        random_suffix = secrets.token_hex(2)[:3]
-        unique_hub_id = f"{hub_id_clean}-{random_suffix}"
-        
-        org = Organization(
-            id=org_id,
-            hub_id=unique_hub_id,
-            display_name=department.upper(),
-            domain=email.split("@")[-1].lower(),
-            server_region="IN", 
-            created_at=datetime.utcnow().isoformat()
-        )
-        db.add(org)
-        db.flush() # Ensure ID is available for relationship
-    
-    # 3. Generate patterned ID: Agency_Initials_Date (e.g., RBI_Tan_03-05-26)
-    clearance_id = _generate_regulator_id(department, display_name)
-
-    # 4. Create pending official linked to the Agency
-    user = RegulatoryOfficial(
-        id=clearance_id, 
-        email=email.strip().lower(),
-        org_id=org.id, # Link established!
-        display_name=display_name,
-        department=department,
-        jurisdiction=jurisdiction,
-        status="pending",
-        email_verified=False,
-        created_at=datetime.utcnow().isoformat()
-    )
-    db.add(user)
-    db.commit()
-
-    return {
-        "status": "PENDING_APPROVAL",
-        "message": f"Request submitted for {jurisdiction} ({department}). Your request is now under administrative review. You will receive credentials via email once approved."
-    }
-
-
-@auth_router.get("/mesh-status")
-def get_mesh_status(db: Session = Depends(get_db)):
-    """Public stats for the Mesh Dashboard (v5.1 Protocol)."""
-    org_count  = db.query(Organization).count()
-    user_count = db.query(EnterpriseUser).count()
-    return {
-        "status": "ACTIVE",
-        "total_nodes": org_count,
-        "total_peers": user_count,
-        "secure_proofs": 0, # Placeholder for v5.1 reset state
-        "integrity": "99.9%",
-        "version": "v5.0.2"
-    }
-
-
-@auth_router.get("/verify-email")
-def verify_email(token: str = Query(...), db: Session = Depends(get_db)):
-    """Verifies an auditor's email via the one-time token link.
-    Grants temporary first-session access while keeping status 'pending'."""
-
-    user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.verification_token == token).first()
-    if not user:
-        return HTMLResponse(
-            content=_verification_page("INVALID TOKEN", "This verification link is invalid or has expired.", False),
-            status_code=400
-        )
-
-    if user.email_verified:
-        return HTMLResponse(
-            content=_verification_page("ALREADY VERIFIED", f"Email for {user.id} has already been verified. You can log in.", True),
-            status_code=200
-        )
-
-    # Mark as verified — grants temp first-session access
-    user.email_verified = True
-    user.verification_token = None  # Burn the token
-    db.commit()
-
-    return HTMLResponse(
-        content=_verification_page(
-            "EMAIL VERIFIED",
-            f"Welcome, {user.display_name}. Your email has been confirmed. "
-            f"You now have temporary access. Log in with your Entity ID ({user.id}) and Secret Key. "
-            f"Full access will be granted after Master Node administrator approval.",
-            True
-        ),
-        status_code=200
-    )
-
-
-def _verification_page(title: str, message: str, success: bool) -> str:
-    """Renders a styled HTML verification result page."""
-    color = "#10B981" if success else "#EF4444"
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <head><title>Anchor — Email Verification</title></head>
-    <body style="background:#08080D; color:#E2E8F0; font-family:monospace; display:flex; 
-                 align-items:center; justify-content:center; min-height:100vh; margin:0;">
-        <div style="background:#0D0D14; border:1px solid #1E293B; padding:48px; max-width:500px; text-align:center;">
-            <h1 style="color:{color}; letter-spacing:0.15em; font-size:18px;">{title}</h1>
-            <p style="color:#94A3B8; font-size:13px; line-height:1.7;">{message}</p>
-            <a href="/" style="display:inline-block; margin-top:24px; padding:12px 28px; 
-                               background:{color}; color:#08080D; text-decoration:none; 
-                               font-weight:bold; letter-spacing:0.1em; font-size:11px;">
-                GO TO ANCHOR
-            </a>
-        </div>
-    </body>
-    </html>
-    """
-
-
-@auth_router.post("/approve")
-def approve_user(
-    target_id: str = Form(..., alias="target_entity_id"),
-    current_user: dict = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
-):
-    """Admin endpoint to approve a pending user using their Clearance ID."""
-    # Search in both silos
-    user = db.query(EnterpriseUser).filter(EnterpriseUser.id == target_id).first()
-    if not user:
-        user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == target_id).first()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="USER NOT FOUND")
-
-    # 1. Generate TOTP Secret if not present
-    if not user.totp_secret:
-        raw_secret = pyotp.random_base32()
-        user.totp_secret = raw_secret # In prod, this should be encrypted
-    else:
-        raw_secret = user.totp_secret 
-
-    # 2. Generate Provisioning URI & QR URL
-    import urllib.parse
-    issuer = f"Anchor - {getattr(user, 'jurisdiction', 'Oversight')}"
-    totp_uri = pyotp.totp.TOTP(raw_secret).provisioning_uri(
-        name=user.email, 
-        issuer_name=issuer
-    )
-    
-    # We use a public QR service to ensure the image renders in all email clients
-    encoded_uri = urllib.parse.quote(totp_uri)
-    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={encoded_uri}"
-
-    # 3. Finalize Status
-    user.status = "approved"
-    user.email_verified = True  # Mark as verified upon admin approval
-    user.approved_at = datetime.utcnow().isoformat()
-    db.commit()
-
-    # 4. Dispatch Automated Provisioning Email
-    if isinstance(user, RegulatoryOfficial):
-        # Fetch the Hub ID from the Org table for the auditor
-        org = db.query(Organization).filter(Organization.id == user.org_id).first()
-        hub_id = org.hub_id if org else "UNKNOWN"
-        
-        send_auditor_provisioned(
-            to_email=user.email,
-            display_name=user.display_name,
-            entity_id=user.id,
-            hub_id=hub_id,
-            regulator=getattr(user, 'jurisdiction', "Authority"),
-            qr_url=qr_url,
-            totp_secret=raw_secret
-        )
-    else:
-        # For Enterprise Owners, we need to fetch the Hub ID from the Org table
-        org = db.query(Organization).filter(Organization.id == user.org_id).first()
-        hub_id = org.hub_id if org else "UNKNOWN"
-        region = org.region if org else "Global"
-        
-        send_enterprise_provisioned(
-            to_email=user.email,
-            display_name=user.display_name,
-            company=org.display_name if org else "Your Company",
-            region=region,
-            entity_id=user.id,
-            hub_id=hub_id,
-            master_key=raw_secret, # Pass TOTP Secret as the primary login key
-            qr_url=qr_url
-        )
-
-    return {"status": "APPROVED_AND_PROVISIONED", "entity_id": target_id}
-
-
-@auth_router.post("/revoke")
-def revoke_user(
-    target_id: str = Form(..., alias="target_entity_id"),
-    current_user: dict = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
-):
-    """Admin endpoint to revoke a user's access via Clearance ID."""
-    # 1. Search in Enterprise Silo
-    user = db.query(EnterpriseUser).filter(EnterpriseUser.id == target_id).first()
-    
-    # 2. Search in Regulatory Silo if not found
-    if not user:
-        user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == target_id).first()
-        
-    if not user:
-        raise HTTPException(status_code=404, detail="IDENTITY_NOT_FOUND")
-    
-    user.status = "revoked"
-    db.commit()
-    return {"status": "REVOKED", "entity_id": target_id}
-
-
-@auth_router.get("/pending")
-def get_pending_users(
-    current_user: dict = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
-):
-    # 1. Fetch all pending Enterprise Users
-    e_pending = db.query(EnterpriseUser).filter(EnterpriseUser.status == "pending").all()
-    
-    # 2. Fetch all pending Regulatory Officials
-    r_pending = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.status == "pending").all()
-    
-    # Combined response
-    results = []
-    for u in e_pending:
-        entry = {
-            "id": u.id,
-            "display_name": u.display_name,
-            "email": u.email,
-            "type": "enterprise",
-            "role": u.role,
-            "department": u.department,
-            "created_at": u.created_at,
-            "org_name": None
-        }
-        if u.org_id:
-            org = db.query(Organization).filter(Organization.id == u.org_id).first()
-            if org:
-                entry["org_name"] = org.display_name
-                entry["org_hub_id"] = org.hub_id
-                entry["org_region"] = org.region
-        results.append(entry)
-
-    for u in r_pending:
-        results.append({
-            "id": u.id,
-            "display_name": u.display_name,
-            "email": u.email,
-            "type": "regulator",
-            "role": u.role,
-            "department": u.department,
-            "jurisdiction": u.jurisdiction,
-            "created_at": u.created_at
-        })
-    return results
-
-
-@auth_router.get("/admin/orgs")
-def list_all_organizations(
-    current_user: dict = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
-):
-    """Root-admin endpoint: lists every registered Organization on the mesh."""
-    orgs = db.query(Organization).order_by(Organization.created_at.desc()).all()
-    return [
-        {
-            "id":             o.id,
-            "hub_id":         o.hub_id,
-            "display_name":   o.display_name,
-            "domain":         o.domain,
-            "server_region":  o.server_region,
-            "status":         o.status,
-            "created_at":     o.created_at,
-            "project_count":  len(o.projects),
-            "member_count":   len(o.enterprise_members),
-        }
-        for o in orgs
-    ]
-
-
-# --- INVITE SYSTEM ENDPOINTS ---
-
-@auth_router.post("/invite")
-def create_invite(
-    email: str = Form(...),
-    clearance_id: str = Form(...),
-    project_name: str = Form(...),
-    role: str = Form("developer"),
-    current_admin: dict = Depends(get_current_org_admin),
-    db: Session = Depends(get_db)
-):
-    """Generates a secure tactical invitation for a new team member."""
-    if db.query(EnterpriseUser).filter(EnterpriseUser.email == email.strip().lower()).first():
-         raise HTTPException(status_code=400, detail="USER ALREADY REGISTERED IN THE MESH")
-
-    token = str(uuid.uuid4())
-    expires = datetime.utcnow() + timedelta(hours=48)
-    
-    invite = OrgInvite(
-        id=token,
-        org_id=current_admin["org_id"],
-        invited_email=email.strip().lower(),
-        clearance_id=clearance_id.strip().upper(),
-        target_project=project_name.strip(),
-        role=role,
-        status="pending",
-        created_at=datetime.utcnow().isoformat(),
-        expires_at=expires.isoformat()
-    )
-    db.add(invite)
-    db.commit()
-
-    # Dispatch Onboarding Email
-    org_name = db.query(Organization).filter(Organization.id == invite.org_id).first().display_name
-    invite_link = f"https://enterprise.anchorgovernance.tech/auth?invite=true&token={token}"
-    
-    from mail import send_developer_invite
-    send_developer_invite(
-        to_email=invite.invited_email,
-        display_name=email.split('@')[0], # Placeholder until they set name
-        org_name=org_name,
-        project_name=invite.target_project,
-        clearance_id=invite.clearance_id,
-        org_id=current_admin["org_id"],
-        invite_link=invite_link
-    )
-
-    return {
-        "status": "INVITE_CREATED_AND_DISPATCHED",
-        "clearance_id": invite.clearance_id,
-        "token": token
-    }
-
-@auth_router.get("/invite/verify/{token}")
-def verify_invite(token: str, db: Session = Depends(get_db)):
-    """Validates an invite token and returns tactical identity markers."""
-    invite = db.query(OrgInvite).filter(OrgInvite.id == token).first()
-    if not invite or invite.status != "pending":
-        raise HTTPException(status_code=404, detail="INVALID OR EXPIRED INVITE")
-    
-    if datetime.fromisoformat(invite.expires_at) < datetime.utcnow():
-        invite.status = "expired"
-        db.commit()
-        raise HTTPException(status_code=400, detail="INVITE EXPIRED")
-
-    return {
-        "org_name": invite.organization.display_name,
-        "org_id": invite.org_id,
-        "email": invite.invited_email,
-        "clearance_id": invite.clearance_id,
-        "project": invite.target_project,
-        "role": invite.role
-    }
-
-
-@auth_router.post("/register/accept-invite")
-def accept_invite(
-    token: str = Form(...),
-    display_name: str = Form(...),
-    password: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    """Completes registration for an invited user."""
-    invite = db.query(OrgInvite).filter(OrgInvite.id == token).first()
-    if not invite or invite.status != "pending":
-        raise HTTPException(status_code=400, detail="INVALID INVITE TOKEN")
-
-    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-    
-    user = EnterpriseUser(
-        id=invite.clearance_id, 
-        email=invite.invited_email,
-        org_id=invite.org_id,
-        display_name=display_name,
-        role=invite.role,
-        department=invite.department,
-        hashed_pass=hashed,
-        status="active",
-        email_verified=True,
-        created_at=datetime.utcnow().isoformat()
-    )
-    
-    invite.status = "accepted"
-    db.add(user)
-    db.commit()
-
-    return {"status": "SUCCESS", "message": f"Welcome to {invite.organization.display_name}"}
-
-
 @auth_router.get("/me")
 def get_current_user_profile(
     current_user: dict = Depends(get_current_user),
@@ -1293,15 +767,17 @@ def get_current_user_profile(
     if not user:
         raise HTTPException(status_code=404, detail="USER NOT FOUND")
 
+    org = db.query(Organization).filter(Organization.id == user.org_id).first()
+    
     return {
         "sub":           user.id,
         "email":         user.email,
         "display_name":  user.display_name,
         "role":          user.role,
         "status":        user.status,
-        "org_id":        user.org_id,
+        "hub_id":        org.hub_id if org else "PENDING",
         "email_verified": user.email_verified,
         "department":    getattr(user, 'department', 'OPS'),
-        "region":        getattr(user.organization, 'region', 'GLOBAL') if hasattr(user, 'organization') else 'GLOBAL',
-        "regional_key":  getattr(user.organization, 'regional_key', None) if hasattr(user, 'organization') else None
+        "region":        getattr(org, 'region', 'GLOBAL') if org else 'GLOBAL',
+        "regional_key":  getattr(org, 'regional_key', None) if org else None
     }
