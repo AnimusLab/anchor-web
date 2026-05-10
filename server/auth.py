@@ -796,6 +796,8 @@ def get_current_user_profile(
         "department":    getattr(user, 'department', 'OPS'),
         "region":        getattr(org, 'region', 'GLOBAL'),
         "regional_key":  getattr(org, 'regional_key', None)
+    }
+
 @auth_router.get("/debug/db")
 def debug_db_schema(db: Session = Depends(get_db)):
     """Oversight Tool: Verifies that all required tables exist in the live database."""
