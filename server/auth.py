@@ -437,11 +437,11 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
     if user:
         org = db.query(Organization).filter(Organization.id == user.org_id).first()
         return {
-            "email": user.email,
-            "hub_id": (org.hub_id if org else user.org_id) or "PENDING",
-            "display_name": user.display_name,
-            "org_name": org.display_name if org else "PENDING",
-            "region": getattr(org, 'region', 'GLOBAL') if org else "GLOBAL",
+            "email": getattr(user, 'email', 'UNKNOWN'),
+            "hub_id": getattr(org, 'hub_id', getattr(user, 'org_id', 'PENDING')) or "PENDING",
+            "display_name": getattr(user, 'display_name', 'AUTHORIZED PERSON'),
+            "org_name": getattr(org, 'display_name', 'PENDING'),
+            "region": getattr(org, 'region', 'GLOBAL'),
             "department": getattr(user, 'department', 'OPS')
         }
         
@@ -450,11 +450,11 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
     if official:
         org = db.query(Organization).filter(Organization.id == official.org_id).first()
         return {
-            "email": official.email,
-            "hub_id": (org.hub_id if org else official.id.split('-')[0].lower()) or "PENDING",
-            "display_name": official.display_name,
-            "org_name": org.display_name if org else "PENDING",
-            "region": getattr(org, 'region', 'GLOBAL') if org else "GLOBAL",
+            "email": getattr(official, 'email', 'UNKNOWN'),
+            "hub_id": getattr(org, 'hub_id', official.id.split('-')[0].lower()) or "PENDING",
+            "display_name": getattr(official, 'display_name', 'OVERSIGHT OFFICER'),
+            "org_name": getattr(org, 'display_name', 'PENDING'),
+            "region": getattr(org, 'region', 'GLOBAL'),
             "department": getattr(official, 'department', 'AUDIT')
         }
         
@@ -771,13 +771,13 @@ def get_current_user_profile(
     
     return {
         "sub":           user.id,
-        "email":         user.email,
-        "display_name":  user.display_name,
-        "role":          user.role,
-        "status":        user.status,
-        "hub_id":        org.hub_id if org else "PENDING",
-        "email_verified": user.email_verified,
+        "email":         getattr(user, 'email', None),
+        "display_name":  getattr(user, 'display_name', 'AUTHORIZED'),
+        "role":          getattr(user, 'role', 'member'),
+        "status":        getattr(user, 'status', 'active'),
+        "hub_id":        getattr(org, 'hub_id', 'PENDING'),
+        "email_verified": getattr(user, 'email_verified', False),
         "department":    getattr(user, 'department', 'OPS'),
-        "region":        getattr(org, 'region', 'GLOBAL') if org else 'GLOBAL',
-        "regional_key":  getattr(org, 'regional_key', None) if org else None
+        "region":        getattr(org, 'region', 'GLOBAL'),
+        "regional_key":  getattr(org, 'regional_key', None)
     }
