@@ -212,23 +212,37 @@ def login(
     if not final_email or not final_pass:
         raise HTTPException(status_code=400, detail="MISSING CREDENTIALS")
 
-    user = db.query(User).filter(User.email == final_email.strip().lower()).first()
+    # 1. Search Enterprise silo
+    user = db.query(EnterpriseUser).filter(EnterpriseUser.email == final_email.strip().lower()).first()
+    
+    # 2. Search Regulatory silo if not found
+    if not user:
+        user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.email == final_email.strip().lower()).first()
 
     if not user:
         raise HTTPException(status_code=401, detail="IDENTITY NOT FOUND")
 
-    if user.status == "revoked":
-        raise HTTPException(status_code=403, detail="ACCESS PERMANENTLY REVOKED")
+    if user.status in ["revoked", "suspended"]:
+        raise HTTPException(status_code=403, detail="ACCESS SUSPENDED")
     if not user.email_verified:
         raise HTTPException(status_code=403, detail="EMAIL NOT VERIFIED")
 
     # Verify password (which is the ANCHOR_MASTER_KEY for root admins)
-    if not bcrypt.checkpw(final_pass.encode("utf-8"), user.hashed_pass.encode("utf-8")):
-        raise HTTPException(status_code=401, detail="INVALID SIGNATURE")
+    # Note: Regulatory officials use TOTP only for stage 2, but we verify pass if set
+    if hasattr(user, 'hashed_pass') and user.hashed_pass:
+        if not bcrypt.checkpw(final_pass.encode("utf-8"), user.hashed_pass.encode("utf-8")):
+            raise HTTPException(status_code=401, detail="INVALID SIGNATURE")
 
     # Scoped Token Generation
     exp = datetime.utcnow() + timedelta(days=7)
-    token = jwt.encode({"sub": user.email, "role": user.role, "org_id": user.org_id, "exp": exp}, ANCHOR_MASTER_KEY, algorithm="HS256")
+    token = jwt.encode({
+        "sub": user.id, 
+        "role": user.role, 
+        "org_id": user.org_id, 
+        "dept": getattr(user, 'department', 'OPS'),
+        "region": getattr(user, 'region', 'GLOBAL'),
+        "exp": exp
+    }, ANCHOR_MASTER_KEY, algorithm="HS256")
     
     return {
         "access_token": token,
@@ -238,7 +252,8 @@ def login(
             "email": user.email,
             "display_name": user.display_name,
             "role": user.role,
-            "org_id": user.org_id
+            "org_id": user.org_id,
+            "department": getattr(user, 'department', 'OPS')
         }
     }
 
@@ -251,6 +266,98 @@ def get_jurisdictions():
             return json.load(f)
     except Exception:
         return {"jurisdictions": []}
+
+# --- INVITATION ENGINE ---
+
+@auth_router.post("/invite")
+def create_invite(
+    email: str = Body(..., embed=True),
+    department: str = Body("OPS", embed=True),
+    role: str = Body("member", embed=True),
+    admin: dict = Depends(get_current_org_admin),
+    db: Session = Depends(get_db)
+):
+    """Generates a regional invitation for a new developer."""
+    org = db.query(Organization).filter(Organization.id == admin["org_id"]).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="ORG_NOT_FOUND")
+
+    # Check for existing invite
+    existing = db.query(OrgInvite).filter(OrgInvite.invited_email == email, OrgInvite.org_id == org.id).first()
+    if existing and existing.status == "pending":
+        return {"invite_token": existing.id, "already_exists": True}
+
+    invite_id = str(uuid.uuid4())
+    # Tactical Clearance ID generation: [DEPT]-[RANDOM-HEX]
+    cid = f"{department.upper()}-{secrets.token_hex(3).upper()}"
+    
+    new_invite = OrgInvite(
+        id=invite_id,
+        org_id=org.id,
+        invited_email=email.strip().lower(),
+        clearance_id=cid,
+        role=role,
+        department=department.upper(),
+        status="pending",
+        created_at=datetime.utcnow().isoformat(),
+        expires_at=(datetime.utcnow() + timedelta(days=7)).isoformat()
+    )
+    db.add(new_invite)
+    db.commit()
+
+    return {"invite_token": invite_id, "clearance_id": cid}
+
+@auth_router.get("/invite/verify/{token}")
+def verify_invite(token: str, db: Session = Depends(get_db)):
+    """Verifies an invite token and returns pre-fill metadata."""
+    invite = db.query(OrgInvite).filter(OrgInvite.id == token).first()
+    if not invite or invite.status != "pending":
+        raise HTTPException(status_code=404, detail="INVITE_INVALID_OR_EXPIRED")
+    
+    org = db.query(Organization).filter(Organization.id == invite.org_id).first()
+    return {
+        "email": invite.invited_email,
+        "org_id": org.hub_id,
+        "org_name": org.display_name,
+        "clearance_id": invite.clearance_id,
+        "department": invite.department,
+        "region": org.region
+    }
+
+@auth_router.post("/register/accept-invite")
+def accept_invite(
+    token: str = Body(..., embed=True),
+    password: str = Body(..., embed=True),
+    display_name: str = Body(..., embed=True),
+    db: Session = Depends(get_db)
+):
+    """Finalizes developer registration via a regional invitation."""
+    invite = db.query(OrgInvite).filter(OrgInvite.id == token).first()
+    if not invite or invite.status != "pending":
+        raise HTTPException(status_code=404, detail="INVITE_INVALID_OR_EXPIRED")
+
+    # Hash password
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+
+    new_user = EnterpriseUser(
+        id=invite.clearance_id,
+        email=invite.invited_email,
+        org_id=invite.org_id,
+        display_name=display_name,
+        role=invite.role,
+        department=invite.department,
+        hashed_pass=hashed,
+        status="active",
+        email_verified=True, # Verified by virtue of invite email access
+        created_at=datetime.utcnow().isoformat()
+    )
+    
+    invite.status = "accepted"
+    db.add(new_user)
+    db.commit()
+
+    return {"status": "SUCCESS", "clearance_id": invite.clearance_id}
 
 def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: list, db: Session):
     """Internal shared logic for identity challenge with strict triple-factor scoping."""
@@ -330,7 +437,9 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
             "email": user.email,
             "hub_id": org.hub_id if org else user.org_id,
             "display_name": user.display_name,
-            "org_name": org.display_name if org else "PENDING"
+            "org_name": org.display_name if org else "PENDING",
+            "region": org.region if org else "GLOBAL",
+            "department": user.department or "OPS"
         }
         
     # 2. Search Regulatory silo
@@ -341,7 +450,9 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
             "email": official.email,
             "hub_id": org.hub_id if org else official.id.split('-')[0].lower(),
             "display_name": official.display_name,
-            "org_name": org.display_name if org else "PENDING"
+            "org_name": org.display_name if org else "PENDING",
+            "region": org.region if org else "GLOBAL",
+            "department": official.department or "AUDIT"
         }
         
     raise HTTPException(status_code=404, detail="CLEARANCE_ID_NOT_FOUND")
@@ -1155,7 +1266,7 @@ def accept_invite(
         org_id=invite.org_id,
         display_name=display_name,
         role=invite.role,
-        department=invite.target_project,
+        department=invite.department,
         hashed_pass=hashed,
         status="active",
         email_verified=True,
@@ -1190,4 +1301,7 @@ def get_current_user_profile(
         "status":        user.status,
         "org_id":        user.org_id,
         "email_verified": user.email_verified,
+        "department":    getattr(user, 'department', 'OPS'),
+        "region":        getattr(user.organization, 'region', 'GLOBAL') if hasattr(user, 'organization') else 'GLOBAL',
+        "regional_key":  getattr(user.organization, 'regional_key', None) if hasattr(user, 'organization') else None
     }
