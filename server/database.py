@@ -12,16 +12,21 @@ load_dotenv()
 # 1. Pull the URL from the environment, fallback to local SQLite for safety
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./anchor.db")
 
-# 2. Fix for SQLite/Postgres compatibility
+# 2. Fix for SQLite/Postgres compatibility + Clean URL for HF Spaces
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
+    # Strip problematic params that some libpq versions don't support (e.g. channel_binding)
+    cleaned_url = DATABASE_URL.split("?")[0]
+    if "sslmode" in DATABASE_URL:
+        cleaned_url += "?sslmode=require"
+    
     engine = create_engine(
-        DATABASE_URL,
-        pool_pre_ping=True,    # Test connection before use — handles Neon idle timeouts
-        pool_recycle=300,      # Recycle connections every 5 min (Neon drops idle at ~5 min)
-        pool_size=5,           # Keep 5 connections in pool
-        max_overflow=10,       # Allow up to 10 extra connections under load
+        cleaned_url,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=5,
+        max_overflow=10,
     )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
