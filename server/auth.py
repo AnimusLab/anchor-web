@@ -399,11 +399,19 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
     if user.status == "revoked":
         raise HTTPException(status_code=403, detail="ACCESS PERMANENTLY REVOKED")
     
-    intent_exp = datetime.utcnow() + timedelta(minutes=5)
-    intent_token = jwt.encode({
-        "sub": user.email, "org_id": user.org_id, "role": user.role, "type": "auth_intent", "exp": intent_exp
-    }, ANCHOR_MASTER_KEY, algorithm="HS256")
-    return {"status": "CHALLENGE_AUTHORIZED", "intent_token": intent_token, "display_name": user.display_name, "role": user.role, "org_name": org.display_name}
+    try:
+        intent_exp = datetime.utcnow() + timedelta(minutes=5)
+        intent_token = jwt.encode({
+            "sub": user.email, "org_id": user.org_id, "role": user.role, "type": "auth_intent", "exp": intent_exp
+        }, ANCHOR_MASTER_KEY, algorithm="HS256")
+        return {"status": "CHALLENGE_AUTHORIZED", "intent_token": intent_token, "display_name": user.display_name, "role": user.role, "org_name": org.display_name}
+    except Exception as e:
+        import traceback
+        return {
+            "status": "ERROR",
+            "detail": f"JWT_ENCODE_FAILURE: {str(e)}",
+            "trace": traceback.format_exc()
+        }
 
 def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
     """Internal shared logic for TOTP verification with strict role scoping."""
