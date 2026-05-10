@@ -404,7 +404,13 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
         intent_token = jwt.encode({
             "sub": user.email, "org_id": user.org_id, "role": user.role, "type": "auth_intent", "exp": intent_exp
         }, ANCHOR_MASTER_KEY, algorithm="HS256")
-        return {"status": "CHALLENGE_AUTHORIZED", "intent_token": intent_token, "display_name": user.display_name, "role": user.role, "org_name": org.display_name}
+        return {
+            "status": "CHALLENGE_AUTHORIZED", 
+            "intent_token": intent_token, 
+            "display_name": getattr(user, 'display_name', 'AUTHORIZED'), 
+            "role": getattr(user, 'role', 'member'), 
+            "org_name": getattr(org, 'display_name', 'PENDING')
+        }
     except Exception as e:
         import traceback
         return {
