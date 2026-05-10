@@ -442,23 +442,23 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
     # 1. Search Enterprise silo
     try:
         user = db.query(EnterpriseUser).filter(EnterpriseUser.id == cid).first()
+        if user:
+            org = db.query(Organization).filter(Organization.id == user.org_id).first()
+            return {
+                "email": getattr(user, 'email', 'UNKNOWN'),
+                "hub_id": getattr(org, 'hub_id', getattr(user, 'org_id', 'PENDING')) or "PENDING",
+                "display_name": getattr(user, 'display_name', 'AUTHORIZED PERSON'),
+                "org_name": getattr(org, 'display_name', 'PENDING'),
+                "region": getattr(org, 'region', 'GLOBAL'),
+                "department": getattr(user, 'department', 'OPS')
+            }
+        raise HTTPException(status_code=404, detail="IDENTITY NOT FOUND")
     except Exception as e:
-        if "relation" in str(e).lower() or "no such table" in str(e).lower():
-            from database import init_db
-            init_db()
-            user = db.query(EnterpriseUser).filter(EnterpriseUser.id == cid).first()
-        else:
-            raise e
-
-    if user:
-        org = db.query(Organization).filter(Organization.id == user.org_id).first()
+        import traceback
         return {
-            "email": getattr(user, 'email', 'UNKNOWN'),
-            "hub_id": getattr(org, 'hub_id', getattr(user, 'org_id', 'PENDING')) or "PENDING",
-            "display_name": getattr(user, 'display_name', 'AUTHORIZED PERSON'),
-            "org_name": getattr(org, 'display_name', 'PENDING'),
-            "region": getattr(org, 'region', 'GLOBAL'),
-            "department": getattr(user, 'department', 'OPS')
+            "status": "ERROR",
+            "detail": str(e),
+            "trace": traceback.format_exc()
         }
         
     # 2. Search Regulatory silo
@@ -804,9 +804,16 @@ def debug_db_schema(db: Session = Depends(get_db)):
     from sqlalchemy import inspect
     inspector = inspect(db.get_bind())
     tables = inspector.get_table_names()
+    
+    schema_details = {}
+    for table in tables:
+        columns = [c["name"] for c in inspector.get_columns(table)]
+        schema_details[table] = columns
+
     return {
         "status": "OPERATIONAL",
-        "database": str(db.get_bind().url).split("@")[-1], # Show host only
+        "database": str(db.get_bind().url).split("@")[-1],
         "tables": tables,
+        "schema": schema_details,
         "required_tables_present": all(t in tables for t in ["organizations", "enterprise_users", "regulatory_officials"])
     }
