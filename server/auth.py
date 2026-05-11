@@ -402,7 +402,11 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
     try:
         intent_exp = datetime.utcnow() + timedelta(minutes=5)
         intent_token = jwt.encode({
-            "sub": user.email, "org_id": user.org_id, "role": user.role, "type": "auth_intent", "exp": intent_exp
+            "sub": getattr(user, 'email', 'UNKNOWN'), 
+            "org_id": getattr(user, 'org_id', 'PENDING'), 
+            "role": getattr(user, 'role', 'member'), 
+            "type": "auth_intent", 
+            "exp": intent_exp
         }, ANCHOR_MASTER_KEY, algorithm="HS256")
         return {
             "status": "CHALLENGE_AUTHORIZED", 
@@ -813,8 +817,12 @@ def get_current_user_profile(
     }
 
 @auth_router.get("/debug/db")
-def debug_db_schema(db: Session = Depends(get_db)):
-    """Oversight Tool: Verifies that all required tables exist in the live database."""
+def debug_db_schema(provision: bool = False, db: Session = Depends(get_db)):
+    """Oversight Tool: Verifies and optionally provisions the live database schema."""
+    if provision:
+        from database import init_db
+        init_db()
+        
     from sqlalchemy import inspect
     inspector = inspect(db.get_bind())
     tables = inspector.get_table_names()
@@ -826,6 +834,7 @@ def debug_db_schema(db: Session = Depends(get_db)):
 
     return {
         "status": "OPERATIONAL",
+        "master_key_present": bool(ANCHOR_MASTER_KEY),
         "database": str(db.get_bind().url).split("@")[-1],
         "tables": tables,
         "schema": schema_details,
