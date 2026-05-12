@@ -151,6 +151,8 @@ def _validate_slug(slug: str, type_name: str = "ID"):
 # Authentication Models
 # =============================================================================
 
+from pydantic import BaseModel
+
 class LoginRequest(BaseModel):
     email: str
     password: str
