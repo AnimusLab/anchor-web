@@ -509,9 +509,12 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
     raise HTTPException(status_code=404, detail="CLEARANCE_ID_NOT_FOUND")
 
 @auth_router.post("/enterprise/identify")
-def enterprise_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
+def enterprise_identify(request_body: dict = Body(...), db: Session = Depends(get_db)):
     """Enterprise-specific identity challenge (Stage 1)."""
-    return _identify_logic(request.clearance_id, request.email, request.hub_id, ["owner", "admin", "member", "lead", "developer"], db)
+    cid = request_body.get("clearance_id")
+    email = request_body.get("email")
+    hub_id = request_body.get("hub_id")
+    return _identify_logic(cid, email, hub_id, ["owner", "admin", "member", "lead", "developer"], db)
 
 @auth_router.post("/enterprise/verify-totp")
 def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
