@@ -363,7 +363,6 @@ def accept_invite(
     return {"status": "SUCCESS", "clearance_id": invite.clearance_id}
 
 def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: list, db: Session):
-    return {"status": "DEBUG", "msg": "REACHED _IDENTIFY_LOGIC", "email": email}
     """Internal shared logic for identity challenge with strict triple-factor scoping."""
     email_clean = email.strip().lower()
     
@@ -421,6 +420,15 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
         return {
             "status": "ERROR",
             "detail": f"JWT_ENCODE_FAILURE: {str(e)}",
+            "trace": traceback.format_exc()
+        }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        import traceback
+        return {
+            "status": "ERROR",
+            "detail": f"IDENTITY_LOGIC_CRASH: {str(e)}",
             "trace": traceback.format_exc()
         }
 
