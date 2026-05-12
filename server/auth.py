@@ -363,6 +363,7 @@ def accept_invite(
     return {"status": "SUCCESS", "clearance_id": invite.clearance_id}
 
 def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: list, db: Session):
+    return {"status": "DEBUG", "msg": "REACHED _IDENTIFY_LOGIC", "email": email}
     """Internal shared logic for identity challenge with strict triple-factor scoping."""
     email_clean = email.strip().lower()
     
