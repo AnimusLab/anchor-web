@@ -423,7 +423,12 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
             "trace": traceback.format_exc()
         }
     except HTTPException as he:
-        raise he
+        # Re-wrap as 200 to bypass HF 500 page during forensic debugging
+        return {
+            "status": "ERROR",
+            "detail": he.detail,
+            "trace": "HTTPException_RE-ROUTED"
+        }
     except Exception as e:
         import traceback
         return {
