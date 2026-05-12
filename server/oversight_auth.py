@@ -21,7 +21,7 @@ import jwt
 import pyotp
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.orm import Session
 
