@@ -369,6 +369,7 @@ def accept_invite(
 def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: list, db: Session):
     """Internal shared logic for identity challenge with strict triple-factor scoping."""
     email_clean = email.strip().lower()
+    cid = clearance_id.strip().upper()
     
     # 1. Search Enterprise silo with Self-Healing Trigger
     try:
@@ -403,7 +404,7 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
     if user.status == "revoked":
         raise HTTPException(status_code=403, detail="ACCESS PERMANENTLY REVOKED")
     
-    try:
+        from datetime import datetime, timedelta
         intent_exp = datetime.utcnow() + timedelta(minutes=5)
         intent_token = jwt.encode({
             "sub": getattr(user, 'email', 'UNKNOWN'), 
@@ -412,19 +413,13 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
             "type": "auth_intent", 
             "exp": intent_exp
         }, ANCHOR_MASTER_KEY, algorithm="HS256")
+
         return {
             "status": "CHALLENGE_AUTHORIZED", 
             "intent_token": intent_token, 
             "display_name": getattr(user, 'display_name', 'AUTHORIZED'), 
             "role": getattr(user, 'role', 'member'), 
             "org_name": getattr(org, 'display_name', 'PENDING')
-        }
-    except Exception as e:
-        import traceback
-        return {
-            "status": "ERROR",
-            "detail": f"JWT_ENCODE_FAILURE: {str(e)}",
-            "trace": traceback.format_exc()
         }
     except HTTPException as he:
         # Re-wrap as 200 to bypass HF 500 page during forensic debugging
