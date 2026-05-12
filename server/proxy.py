@@ -56,7 +56,8 @@ def get_system_status():
         "engine": "Anchor Governance Master Node",
         "version": "5.0.0",
         "jurisdictions": ["USA", "UK", "IN", "EU"],
-        "node_type": "HUB"
+        "node_type": "HUB",
+        "_pulse": "STABLE" # Heartbeat marker for force-rebuild
     }
 
 # --- STARTUP: Initialize database + seed root admin ---
