@@ -34,6 +34,10 @@ from mail import (
 auth_router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 security = HTTPBearer(auto_error=False)
 
+@auth_router.get("/test/ping")
+def auth_ping():
+    return {"status": "PONG", "module": "auth_router"}
+
 ANCHOR_MASTER_KEY = os.getenv("ANCHOR_MASTER_KEY")
 if not ANCHOR_MASTER_KEY:
     raise RuntimeError("CRITICAL: ANCHOR_MASTER_KEY missing from environment.")
