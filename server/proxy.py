@@ -458,10 +458,13 @@ def resolve_identity(req: ResolveRequest, current_user: dict = Depends(get_curre
         }
     raise HTTPException(status_code=404, detail="IDENTITY NOT FOUND IN MESH")
 
-# --- 6. INGRESS ENDPOINT (The SDK/CLI Firehose) ---
+# --- 6. SOVEREIGN INGRESS (Metadata-Only Hub) ---
 @app.post("/api/ingress")
 def submit_telemetry(payload: IngressPayload, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    """Receives data from the Python CLI or Runtime SDK and dispatches signed alerts for violations"""
+    """
+    Receives data from the SDK/Spoke and persists only the Cryptographic Header.
+    The full raw payload stays on the Enterprise Spoke (Sovereign Data Plane).
+    """
     if not verify_entity(payload.entity_id, payload.mat, db):
         raise HTTPException(status_code=401, detail="INVALID CRYPTOGRAPHIC SIGNATURE")
     
@@ -469,30 +472,45 @@ def submit_telemetry(payload: IngressPayload, background_tasks: BackgroundTasks,
     status = audit.get("governance_status", {}).get("status", "UNKNOWN")
     entry_id = audit.get("entry_id", f"led_{int(time.time()*1000)}")
     
-    # 1. Persist to Global Ledger (Using SQLAlchemy)
-    # We store the full JSON payload, but the forensic 'payload' block is already encrypted.
+    # 1. STRIP SENSITIVE DATA (Hub only keeps the 'Proof of Governance')
+    # We generate a hash of the full audit for future verification/non-repudiation.
+    full_audit_str = json.dumps(audit, sort_keys=True)
+    audit_fingerprint = hashlib.sha256(full_audit_str.encode()).hexdigest()
+
+    header_payload = {
+        "project_name": audit.get("project_name", "unknown"),
+        "is_compliant": (status != "VIOLATION"),
+        "rule_id": audit.get("governance_status", {}).get("rule_id"),
+        "violation_count": len(audit.get("violations", [])),
+        "decentralized": True,         # UI trigger for FORENSIC_PULL
+        "fingerprint": audit_fingerprint,
+        "_spoke_source": payload.entity_id,
+        "risk_classification": "HIGH" if status == "VIOLATION" else "LOW"
+    }
+    
+    # 2. Persist Metadata-Only Header to Neon (SQLAlchemy)
     new_entry = LedgerEntry(
         id=entry_id,
         entity_id=payload.entity_id,
-        timestamp=audit.get("timestamp"),
-        type="forensic_audit" if audit.get("forensic_data") else audit.get("execution_context", {}).get("layer", "runtime"),
+        timestamp=audit.get("timestamp") or datetime.now(timezone.utc).isoformat(),
+        type="runtime_violation" if status == "VIOLATION" else "runtime_check",
         chain_hash=audit.get("cryptography", {}).get("chain_hash"),
         signature=audit.get("cryptography", {}).get("signature"),
-        payload=json.dumps(audit) # Hub hosts the encrypted blob
+        payload=json.dumps(header_payload) # ~200 Bytes vs ~2000 Bytes
     )
     
     db.add(new_entry)
     db.commit()
     
-    # 2. Resilient Background Dispatch (The "Handshake")
+    # 3. Resilient Background Handshake (Alerts)
     if status == "VIOLATION":
         background_tasks.add_task(
             dispatch_webhook, 
             payload.entity_id, 
-            audit, 
+            audit, # Webhook gets full audit (asymmetric encryption handled by dispatcher)
             db
         )
-        # 3. Real-time Master Node Broadcast
+        # 4. Real-time NOC Broadcast (Summary only)
         background_tasks.add_task(
             manager.broadcast,
             payload.entity_id,
@@ -502,11 +520,16 @@ def submit_telemetry(payload: IngressPayload, background_tasks: BackgroundTasks,
                 "entry_id": entry_id,
                 "project": audit.get("project_name"),
                 "violations": audit.get("violations", []),
-                "chain_hash": new_entry.chain_hash
+                "fingerprint": audit_fingerprint[:16]
             }
         )
     
-    return {"status": "ACKNOWLEDGED", "entry_id": entry_id, "chain_hash": new_entry.chain_hash, "dispatched": status == "VIOLATION"}
+    return {
+        "status": "ACKNOWLEDGED", 
+        "entry_id": entry_id, 
+        "fingerprint": audit_fingerprint,
+        "storage": "SOVEREIGN_HEADER_ONLY"
+    }
 
 # --- 7. TENANT-ISOLATED READ ENDPOINTS ---
 
