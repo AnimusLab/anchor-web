@@ -60,6 +60,31 @@ def get_system_status():
         "_pulse": "STABLE" # Heartbeat marker for force-rebuild
     }
 
+# --- ROOT MONITORING (Storage & Health) ---
+@app.get("/api/monitoring/storage")
+async def storage_monitor(current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    """
+    Sovereign Storage Analytics:
+    Calculates efficiency of the metadata-only model and monitors Neon footprint.
+    """
+    total_records = db.query(LedgerEntry).count()
+    decentralized_count = db.query(LedgerEntry).filter(text("payload LIKE '%\"decentralized\": true%'")).count()
+    
+    # Estimate savings: Assume 2KB avg for full vs 300B for header
+    full_est_mb = (total_records * 2000) / (1024 * 1024)
+    actual_est_mb = (total_records * 300) / (1024 * 1024)
+    savings_mb = full_est_mb - actual_est_mb
+
+    return {
+        "status": "OPERATIONAL",
+        "total_ledger_records": total_records,
+        "decentralized_audits": decentralized_count,
+        "neon_storage_mb_est": round(actual_est_mb, 2),
+        "sovereign_savings_mb": round(savings_mb, 2),
+        "architecture_mode": "METADATA_ONLY",
+        "recommendation": "Safe" if total_records < 1000000 else "Consider Spoke Pruning"
+    }
+
 @app.on_event("startup")
 def on_startup():
     init_db()
@@ -68,12 +93,20 @@ def on_startup():
         from sqlalchemy import text
         from database import SessionLocal
         db = SessionLocal()
-        # Ensure 'regional_key' exists in organizations
+        
+        # 1. Organizations Table Enhancements
         db.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS regional_key VARCHAR;"))
-        # Ensure 'hr_contact' exists (legacy migration check)
         db.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS hr_contact VARCHAR;"))
-        # Ensure 'status' exists in enterprise_users
+        
+        # 2. Enterprise Users Table Enhancements
         db.execute(text("ALTER TABLE enterprise_users ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'approved';"))
+        
+        # 3. Ledger Table: Metadata-Only Architecture Support
+        db.execute(text("ALTER TABLE ledger ADD COLUMN IF NOT EXISTS decision_hash VARCHAR;"))
+        db.execute(text("ALTER TABLE ledger ADD COLUMN IF NOT EXISTS decentralized BOOLEAN DEFAULT TRUE;"))
+        db.execute(text("ALTER TABLE ledger ADD COLUMN IF NOT EXISTS chain_proof TEXT;"))
+        db.execute(text("ALTER TABLE ledger ADD COLUMN IF NOT EXISTS spoke_node_id VARCHAR;"))
+        
         db.commit()
         db.close()
     except Exception as e:

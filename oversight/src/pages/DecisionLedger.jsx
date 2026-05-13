@@ -39,12 +39,53 @@ export default function DecisionLedger() {
   }, [token]);
 
   const openVault = async (entry) => {
-    setVault(entry); setTranslated(null);
+    // Parse the metadata payload to check for decentralization
+    let meta = {};
+    try { meta = JSON.parse(entry.payload || '{}'); } catch(e) {}
+
+    setVault({ ...entry, meta });
+    setTranslated(null);
     log('VAULT_VIEW', { target_id: entry.entry_id, target_name: entry.project_name, detail: entry.is_compliant ? 'COMPLIANT' : 'VIOLATION' });
+    
+    // If it's a legacy record (or not decentralized), try the standard translation route
+    if (!meta.decentralized) {
+      try {
+        const r = await fetch(`${endpoints.baseUrl}/api/audit/${entry.entity_id || 'unknown'}/entry/${entry.entry_id}?dialect=${dialect}`, { 
+          headers: { Authorization: `Bearer ${token}` } 
+        });
+        if (r.ok) setTranslated(await r.json());
+      } catch(e) {}
+    }
+  };
+
+  const initiateRelayPull = async (entry) => {
+    setLoading(true);
+    log('FORENSIC_RELAY_INIT', { target_id: entry.id, target_name: entry.entity_id });
+    
     try {
-      const r = await fetch(`${endpoints.baseUrl}/api/audit/${entry.entity_id || 'unknown'}/entry/${entry.entry_id}?dialect=${dialect}`, { headers: { Authorization: `Bearer ${token}` } });
-      setTranslated(await r.json());
-    } catch(e) {}
+      const r = await fetch(`${endpoints.baseUrl}/api/forensic/relay`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          entry_id: entry.id,
+          entity_id: entry.entity_id
+        })
+      });
+      
+      const res = await r.json();
+      if (res.status === 'FORENSIC_RETRIEVED') {
+        setTranslated({ raw_payload: res.data, translation: { "note": "Relay successful. Raw data retrieved from Spoke." } });
+      } else {
+        alert(`Relay Failed: ${res.detail || 'Spoke offline'}`);
+      }
+    } catch(e) {
+      alert("Relay Error: Could not reach the Sovereign Spoke.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const rows = useMemo(() => ledger.filter(e => {
@@ -208,10 +249,29 @@ export default function DecisionLedger() {
                 </div>
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)', fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Raw Payload</div>
-                <pre style={{ flex: 1, overflowY: 'auto', padding: 20, fontFamily: 'JetBrains Mono', fontSize: 12, lineHeight: 1.7, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
-                  {JSON.stringify(translated?.raw_payload || vault.raw_payload, null, 2)}
-                </pre>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)', fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Raw Payload</span>
+                  {vault.meta?.decentralized && !translated && (
+                    <button onClick={() => initiateRelayPull(vault)} className="badge badge-purple" style={{ border: 'none', cursor: 'pointer', padding: '4px 8px' }}>
+                      🔓 Unlock Forensic Vault
+                    </button>
+                  )}
+                </div>
+                <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+                  {translated?.raw_payload || vault.raw_payload ? (
+                    <pre style={{ fontFamily: 'JetBrains Mono', fontSize: 12, lineHeight: 1.7, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                      {JSON.stringify(translated?.raw_payload || vault.raw_payload, null, 2)}
+                    </pre>
+                  ) : (
+                    <div style={{ padding: 40, textAlign: 'center' }}>
+                      <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
+                      <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: 8 }}>Sovereign Data Protection</div>
+                      <div style={{ color: 'var(--text-dim)', fontSize: 13, maxWidth: 300, margin: '0 auto' }}>
+                        This evidence is stored exclusively on the Enterprise Spoke node. Click 'Unlock' above to request a secure forensic relay.
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

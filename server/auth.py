@@ -342,6 +342,59 @@ def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db))
 def oversight_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
     return _identify_logic(request.clearance_id, request.email, request.hub_id, ["auditor", "regulator"], db)
 
+@auth_router.post("/provision/enterprise")
+def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depends(get_db)):
+    """
+    Sovereign Onboarding: 
+    Automatically creates an Organization and its first Owner user.
+    This is the "Birth" of a new Sovereign Silo in the Anchor Mesh.
+    """
+    # 1. Find or Atomic-Create Organization
+    org = db.query(Organization).filter(Organization.display_name == request.company_name).first()
+    if not org:
+        org_id = _generate_org_id(request.company_name)
+        org = Organization(
+            id=org_id,
+            display_name=request.company_name,
+            region=request.region,
+            hub_id=f"hub-{org_id.lower()}",
+            regional_key=secrets.token_hex(16)
+        )
+        db.add(org)
+        db.flush() # Ensure org.id is available for user linkage
+    
+    # 2. Check if User already exists
+    existing_user = db.query(EnterpriseUser).filter(EnterpriseUser.email == request.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="USER ALREADY PROVISIONED")
+        
+    # 3. Create the Founding Owner
+    clearance_id = _generate_clearance_id(request.company_name, request.display_name)
+    totp_secret = pyotp.random_base32()
+    
+    new_user = EnterpriseUser(
+        id=clearance_id,
+        email=request.email.strip().lower(),
+        display_name=request.display_name,
+        role="owner",
+        org_id=org.id,
+        department=request.department or "EXECUTIVE",
+        totp_secret=totp_secret,
+        status="approved"
+    )
+    
+    db.add(new_user)
+    db.commit()
+    
+    return {
+        "status": "PROVISION_SUCCESS",
+        "clearance_id": clearance_id,
+        "org_id": org.id,
+        "hub_id": org.hub_id,
+        "totp_secret": totp_secret,
+        "note": "⚠️ SAVE THE TOTP SECRET IMMEDIATELY for MFA setup."
+    }
+
 @auth_router.get("/me")
 def get_current_user_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     user = db.query(EnterpriseUser).filter(EnterpriseUser.id == current_user["sub"]).first()
