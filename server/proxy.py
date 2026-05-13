@@ -60,10 +60,24 @@ def get_system_status():
         "_pulse": "STABLE" # Heartbeat marker for force-rebuild
     }
 
-# --- STARTUP: Initialize database + seed root admin ---
 @app.on_event("startup")
 def on_startup():
     init_db()
+    # --- Sovereign Schema Healer (v5.0.0 Patch) ---
+    try:
+        from sqlalchemy import text
+        from database import SessionLocal
+        db = SessionLocal()
+        # Ensure 'regional_key' exists in organizations
+        db.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS regional_key VARCHAR;"))
+        # Ensure 'hr_contact' exists (legacy migration check)
+        db.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS hr_contact VARCHAR;"))
+        # Ensure 'status' exists in enterprise_users
+        db.execute(text("ALTER TABLE enterprise_users ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'approved';"))
+        db.commit()
+        db.close()
+    except Exception as e:
+        print(f"[!!!] SCHEMA HEALER FAILED: {e}")
 
 
 # --- PUBLIC MESH TELEMETRY (No auth — all identifiers hashed) ---
