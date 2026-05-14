@@ -485,14 +485,25 @@ def register_auditor(
     }
 
 @auth_router.post("/register/org")
-def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depends(get_db)):
+def provision_enterprise(
+    display_name: str = Form(...),
+    email: str = Form(...),
+    company_name: str = Form(...),
+    server_region: str = Form(...),
+    department: str = Form("EXECUTIVE"),
+    hub_id: str = Form(None), # Optional from frontend
+    db: Session = Depends(get_db)
+):
     """
     Sovereign Onboarding: 
     Automatically creates an Organization and its first Owner user.
-    This is the "Birth" of a new Sovereign Silo in the Anchor Mesh.
+    Supports multipart/form-data from the React frontend.
     """
+    email = email.strip().lower()
+    region = server_region.strip().upper()[:2] # Normalize to 2-char code
+    
     # 0. Check Whitelist
-    whitelist = db.query(WhitelistEntry).filter(WhitelistEntry.email == request.email.strip().lower()).first()
+    whitelist = db.query(WhitelistEntry).filter(WhitelistEntry.email == email).first()
     if not whitelist:
         raise HTTPException(status_code=403, detail="SECURITY_VIOLATION: Email not on authorized advance list.")
 
@@ -502,9 +513,9 @@ def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depe
     if not org:
         org = Organization(
             id=org_id_base,
-            display_name=request.company_name,
-            domain=request.email.split('@')[-1],
-            region=request.region,
+            display_name=company_name,
+            domain=email.split('@')[-1],
+            region=region,
             created_at=datetime.utcnow().isoformat()
         )
         db.add(org)
@@ -512,35 +523,35 @@ def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depe
         
         # AUTO-PROVISION PRIMARY HUB (The Spoke Node)
         from models import Hub
-        # Format: JPMC-IN-UNIT01
-        hub_id = _generate_hub_id(request.company_name, request.region, "UNIT01")
+        # Generate Hub ID: [ABBR]-[REGION]-UNIT01
+        final_hub_id = _generate_hub_id(company_name, region, "UNIT01")
         new_hub = Hub(
-            id=hub_id,
+            id=final_hub_id,
             org_id=org.id,
-            regional_key="PENDING_ACTIVATION", # Only generated during Beat 3 Activation
+            regional_key="PENDING_ACTIVATION",
             display_name="Primary Sovereign Silo",
-            region=request.region,
+            region=region,
             unit="UNIT01",
-            is_active=False, # Dormant until Owner Activates
+            is_active=False,
             created_at=datetime.utcnow().isoformat()
         )
         db.add(new_hub)
         db.flush()
     
-    existing_user = db.query(EnterpriseUser).filter(EnterpriseUser.email == request.email.strip().lower()).first()
+    existing_user = db.query(EnterpriseUser).filter(EnterpriseUser.email == email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="USER ALREADY PROVISIONED")
         
-    clearance_id = _generate_clearance_id("owner", org.id, request.region)
+    clearance_id = _generate_clearance_id("owner", org.id, region)
     totp_secret = pyotp.random_base32()
     
     new_user = EnterpriseUser(
         id=clearance_id,
-        email=request.email.strip().lower(),
-        display_name=request.display_name,
+        email=email,
+        display_name=display_name,
         role="owner",
         org_id=org.id,
-        department=request.department or "EXECUTIVE",
+        department=department,
         totp_secret=totp_secret,
         status="approved",
         created_at=datetime.utcnow().isoformat()
@@ -553,7 +564,7 @@ def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depe
         "clearance_id": clearance_id,
         "org_id": org.id,
         "totp_secret": totp_secret,
-        "note": "⚠️ SAVE THE TOTP SECRET IMMEDIATELY for MFA setup. Your primary Spoke Node (Hub) has been auto-provisioned."
+        "note": "⚠️ SAVE THE TOTP SECRET IMMEDIATELY for MFA setup."
     }
 
 @auth_router.get("/me")
