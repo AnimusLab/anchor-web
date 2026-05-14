@@ -89,6 +89,19 @@ async def storage_monitor(current_user: dict = Depends(get_current_admin_user), 
 def on_startup():
     """Genesis Sequence: Ensures schema is healed and tables are seeded."""
     init_db()
+    
+    # HEALING: Ensure enterprise users are properly gated for approval
+    try:
+        from database import SessionLocal
+        from models import EnterpriseUser
+        db = SessionLocal()
+        # Move inadvertently approved users back to pending for review
+        db.execute(text("UPDATE enterprise_users SET status = 'pending' WHERE status = 'approved' AND role = 'owner'"))
+        db.commit()
+        db.close()
+    except Exception as e:
+        print(f"[BOOT ERROR] Identity healing failed: {e}")
+        
     print("[✓] Anchor Hub: Core Engine Operational.")
 
 
