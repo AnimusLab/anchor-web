@@ -11,12 +11,16 @@ class Organization(Base):
     hub_id         = Column(String, unique=True, index=True)        # "alab", "sec"
     display_name   = Column(String, nullable=False)                 # "Animus Global"
     domain         = Column(String, unique=True, index=True)        # "animuslab.ai"
-    region         = Column(String, nullable=True)                  # "India", "USA", "UK"
-    master_key_hash= Column(String, nullable=True)                  # SHA-256 of the Org Regional Master Key
-    server_region  = Column(String, default="IN")                  # "IN", "EU", "US"
+    # --- Unified Sovereign Schema (v5.0.0) ---
+    region         = Column(String, nullable=True)                  # Unified Region (e.g., "IN", "US", "EU")
+    regional_key   = Column(String, nullable=True)                  # Unified God Key (sk_live_...)
+    
+    # --- DEPRECATED COLUMNS (Scheduled for Purge) ---
+    master_key_hash= Column(String, nullable=True)                  # DEPRECATED: Use regional_key
+    server_region  = Column(String, nullable=True)                  # DEPRECATED: Use region
+    
     hr_contact     = Column(String, nullable=True)                  # Onboarding Manager
     status         = Column(String, default="pending")              # "pending", "approved", "suspended"
-    regional_key   = Column(String, nullable=True)                  # Plaintext regional god key (sk_live_...)
     org_type       = Column(String, default="enterprise")           # "enterprise", "regulator"
     created_at     = Column(String, nullable=False)                 # ISO-8601
 

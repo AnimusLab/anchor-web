@@ -32,7 +32,8 @@ export default function PrivateRoute({ requiredRole, children }) {
     }
 
     // Root admin can access everything. Otherwise, roles must match.
-    if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {
+    const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (requiredRole && !allowedRoles.includes(user.role) && user.role !== 'admin') {
         return <Navigate to="/" replace />;
     }
 

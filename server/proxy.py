@@ -107,8 +107,23 @@ def on_startup():
         db.execute(text("ALTER TABLE ledger ADD COLUMN IF NOT EXISTS chain_proof TEXT;"))
         db.execute(text("ALTER TABLE ledger ADD COLUMN IF NOT EXISTS spoke_node_id VARCHAR;"))
         
+        # 4. ATOMIC MIGRATION: Unify deprecated columns into sovereign standard
+        # Migrate server_region → region (only where region is NULL)
+        db.execute(text("""
+            UPDATE organizations 
+            SET region = server_region 
+            WHERE region IS NULL AND server_region IS NOT NULL;
+        """))
+        # Migrate master_key_hash → regional_key (only where regional_key is NULL)
+        db.execute(text("""
+            UPDATE organizations 
+            SET regional_key = master_key_hash 
+            WHERE regional_key IS NULL AND master_key_hash IS NOT NULL;
+        """))
+        
         db.commit()
         db.close()
+        print("[✓] Sovereign Schema Healer: All columns unified successfully.")
     except Exception as e:
         print(f"[!!!] SCHEMA HEALER FAILED: {e}")
 

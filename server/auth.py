@@ -123,23 +123,58 @@ def _issue_jwt(user):
 # ID Generation Patterns
 # =============================================================================
 
-def _generate_org_id(name: str):
-    clean = "".join(c for c in name if c.isalnum())
-    prefix = clean[:4].capitalize() if len(clean) >= 4 else clean.capitalize()
-    date_str = datetime.utcnow().strftime("%d-%m-%y")
-    return f"{prefix}_{date_str}"
+def _generate_org_id(company_name: str, region: str = "GL"):
+    """
+    Hub ID Format: JPMC-IN-MUM01
+    Pattern: [COMPANY_ABBR]-[REGION_CODE]-[RANDOM_CODE]
+    """
+    # Abbreviate company name: take first letters of each word, max 6 chars
+    words = company_name.strip().upper().split()
+    if len(words) >= 2:
+        abbr = "".join(w[0] for w in words if w)[:6]
+    else:
+        abbr = words[0][:6] if words else "ORG"
+    
+    region_code = region.strip().upper()[:2] if region else "GL"
+    serial = secrets.randbelow(900) + 100  # 100–999
+    return f"{abbr}-{region_code}-{serial:03d}"
 
-def _generate_clearance_id(org_name: str, user_name: str):
-    clean_org = "".join(c for c in org_name if c.isalnum()).upper()
-    prefix = clean_org[:4] if len(clean_org) >= 4 else clean_org
-    suffix = secrets.token_hex(2).upper()[:3]
-    return f"{prefix}-{suffix}"
+def _generate_clearance_id(company_name: str, user_name: str, role: str = "member", region: str = "GL"):
+    """
+    Clearance ID Format: OWN-JPMC-MUM-042
+    Pattern: [ROLE_CODE]-[COMPANY_ABBR]-[REGION_CODE]-[SEQUENCE]
+    """
+    role_map = {
+        "owner": "OWN",
+        "admin": "ADM",
+        "member": "DEV",
+        "developer": "DEV",
+        "lead": "LDR",
+        "auditor": "AUD",
+        "regulator": "REG",
+        "root": "ROOT",
+    }
+    role_code = role_map.get(role.lower(), "MBR")
+    
+    words = company_name.strip().upper().split()
+    if len(words) >= 2:
+        company_abbr = "".join(w[0] for w in words if w)[:6]
+    else:
+        company_abbr = words[0][:6] if words else "ORG"
+    
+    region_code = region.strip().upper()[:3] if region else "GLB"
+    sequence = secrets.randbelow(900) + 100  # 100–999
+    return f"{role_code}-{company_abbr}-{region_code}-{sequence:03d}"
 
-def _generate_regulator_id(bureau: str, user_name: str):
-    prefix = bureau.strip().upper()
-    word = secrets.choice(NATO_PHONETIC)
-    digit = secrets.randbelow(10)
-    return f"{prefix}-{word}-{digit}"
+def _generate_regulator_id(bureau: str, user_name: str, region: str = "GL"):
+    """
+    Auditor ID Format: AUD-RBI-IN-009
+    Pattern: AUD-[BUREAU]-[REGION]-[SEQUENCE]
+    """
+    bureau_code = bureau.strip().upper()[:6]
+    region_code = region.strip().upper()[:2] if region else "GL"
+    sequence = secrets.randbelow(900) + 100
+    return f"AUD-{bureau_code}-{region_code}-{sequence:03d}"
 
 def _validate_slug(slug: str, type_name: str = "ID"):
     if not slug or len(slug) < 2 or len(slug) > 32:
@@ -352,24 +387,25 @@ def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depe
     # 1. Find or Atomic-Create Organization
     org = db.query(Organization).filter(Organization.display_name == request.company_name).first()
     if not org:
-        org_id = _generate_org_id(request.company_name)
+        org_id = _generate_org_id(request.company_name, request.region)
         org = Organization(
             id=org_id,
             display_name=request.company_name,
             region=request.region,
             hub_id=f"hub-{org_id.lower()}",
-            regional_key=secrets.token_hex(16)
+            regional_key=secrets.token_hex(16),
+            created_at=datetime.utcnow().isoformat()
         )
         db.add(org)
-        db.flush() # Ensure org.id is available for user linkage
+        db.flush()
     
-    # 2. Check if User already exists
     existing_user = db.query(EnterpriseUser).filter(EnterpriseUser.email == request.email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="USER ALREADY PROVISIONED")
         
-    # 3. Create the Founding Owner
-    clearance_id = _generate_clearance_id(request.company_name, request.display_name)
+    clearance_id = _generate_clearance_id(
+        request.company_name, request.display_name, "owner", request.region
+    )
     totp_secret = pyotp.random_base32()
     
     new_user = EnterpriseUser(
