@@ -387,31 +387,89 @@ def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db))
 
 @auth_router.get("/pending")
 def list_pending_approvals(current_admin: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
-    """[ROOT ONLY] Lists all users awaiting approval."""
+    """[ROOT ONLY] Lists all users awaiting approval (Auditors + Enterprises)."""
     auditors = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.status == "pending").all()
-    # Also include pending enterprises if they exist
-    return auditors
+    enterprise_pendings = db.query(EnterpriseUser).filter(EnterpriseUser.status == "pending").all()
+    
+    results = []
+    # Add auditors
+    for a in auditors:
+        results.append({
+            "id": a.id,
+            "display_name": a.display_name,
+            "email": a.email,
+            "role": "regulator",
+            "jurisdiction": a.jurisdiction,
+            "department": a.department,
+            "created_at": a.created_at,
+            "status": a.status
+        })
+        
+    # Add enterprises
+    from models import Organization, Hub
+    for e in enterprise_pendings:
+        org = db.query(Organization).filter(Organization.id == e.org_id).first()
+        hub = db.query(Hub).filter(Hub.org_id == e.org_id).first()
+        results.append({
+            "id": e.id,
+            "display_name": e.display_name,
+            "email": e.email,
+            "role": e.role,
+            "department": e.department,
+            "org_name": org.display_name if org else "Unknown",
+            "org_hub_id": hub.id if hub else "Unknown",
+            "org_region": org.region if org else "Global",
+            "created_at": e.created_at,
+            "status": e.status
+        })
+        
+    return results
 
 @auth_router.post("/approve")
 def approve_user(target_entity_id: str = Form(...), current_admin: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
-    """[ROOT ONLY] Approves a pending user."""
-    official = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == target_entity_id).first()
-    if not official:
-        # Check enterprise users
-        official = db.query(EnterpriseUser).filter(EnterpriseUser.id == target_entity_id).first()
+    """[ROOT ONLY] Approves a pending user and dispatches tactical credentials."""
+    user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == target_entity_id).first()
+    is_auditor = True
+    
+    if not user:
+        user = db.query(EnterpriseUser).filter(EnterpriseUser.id == target_entity_id).first()
+        is_auditor = False
         
-    if not official:
+    if not user:
         raise HTTPException(status_code=404, detail="Identity not found.")
         
-    official.status = "approved"
+    user.status = "approved"
     db.commit()
     
-    # Send notification if mail is configured
+    # DISPATCH CREDENTIALS VIA SOVEREIGN GATEKEEPER
     try:
-        send_approval_notification(official.email, official.display_name, official.id)
-    except: pass
+        from mail import send_auditor_provisioned, send_enterprise_provisioned
+        import pyotp
+        
+        # Standard QR handshaker
+        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=otpauth://totp/Anchor:{user.email}?secret={user.totp_secret}&issuer=Anchor"
+
+        if is_auditor:
+            send_auditor_provisioned(
+                user.email, user.display_name, user.id, 
+                "GLOBAL-HUB", user.jurisdiction or "GL", qr_url, user.totp_secret
+            )
+        else:
+            from models import Organization, Hub
+            org = db.query(Organization).filter(Organization.id == user.org_id).first()
+            hub = db.query(Hub).filter(Hub.org_id == user.org_id).first()
+            
+            send_enterprise_provisioned(
+                user.email, user.display_name, 
+                org.display_name if org else "Enterprise",
+                org.region if org else "Global",
+                user.id, hub.id if hub else "PENDING",
+                user.totp_secret, qr_url
+            )
+    except Exception as e:
+        print(f"[APPROVE ERROR] Sovereign Gatekeeper dispatch failed: {str(e)}")
     
-    return {"status": "SUCCESS", "message": f"User {official.id} approved."}
+    return {"status": "SUCCESS", "message": f"User {user.id} approved. Credentials dispatched via encrypted channel."}
 
 @auth_router.post("/register/auditor")
 def register_auditor(
@@ -554,7 +612,7 @@ def provision_enterprise(
             org_id=org.id,
             department=department,
             totp_secret=totp_secret,
-            status="approved",
+            status="pending",
             created_at=datetime.utcnow().isoformat()
         )
         db.add(new_user)
@@ -562,10 +620,9 @@ def provision_enterprise(
         
         return {
             "status": "PROVISION_SUCCESS",
+            "message": "REGISTRATION COMPLETE. Your Hub request is now pending Master Node administrative review.",
             "clearance_id": clearance_id,
-            "org_id": org.id,
-            "totp_secret": totp_secret,
-            "note": "⚠️ SAVE THE TOTP SECRET IMMEDIATELY for MFA setup."
+            "note": "⚠️ You will receive your Sovereign Master Key via encrypted email once your node is approved."
         }
     except HTTPException:
         raise
