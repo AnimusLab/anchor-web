@@ -391,9 +391,33 @@ def oversight_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
 def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
     return _verify_logic(request, ["owner", "admin", "member"], db)
 
-@auth_router.post("/oversight/identify")
-def oversight_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
-    return _identify_logic(request.clearance_id, request.email, request.hub_id, ["auditor", "regulator"], db)
+@auth_router.get("/pending")
+def list_pending_approvals(current_admin: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    """[ROOT ONLY] Lists all users awaiting approval."""
+    auditors = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.status == "pending").all()
+    # Also include pending enterprises if they exist
+    return auditors
+
+@auth_router.post("/approve")
+def approve_user(target_entity_id: str = Form(...), current_admin: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    """[ROOT ONLY] Approves a pending user."""
+    official = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == target_entity_id).first()
+    if not official:
+        # Check enterprise users
+        official = db.query(EnterpriseUser).filter(EnterpriseUser.id == target_entity_id).first()
+        
+    if not official:
+        raise HTTPException(status_code=404, detail="Identity not found.")
+        
+    official.status = "approved"
+    db.commit()
+    
+    # Send notification if mail is configured
+    try:
+        send_approval_notification(official.email, official.display_name, official.id)
+    except: pass
+    
+    return {"status": "SUCCESS", "message": f"User {official.id} approved."}
 
 @auth_router.post("/register/auditor")
 def register_auditor(
