@@ -529,10 +529,24 @@ def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depe
         org_id=org.id,
         department=request.department or "EXECUTIVE",
         totp_secret=totp_secret,
-        status="approved"
+        status="approved",
+        created_at=datetime.utcnow().isoformat()
     )
-    
     db.add(new_user)
+    
+    # 3. AUTO-PROVISION SPOKE NODE (Zero-Touch Friction Reduction)
+    # Every Sovereign Silo needs at least one data plane (Fleet) to start logging.
+    spoke_id = f"{org.id.lower()}-primary"
+    default_fleet = Fleet(
+        entity_id=spoke_id,
+        org_id=org.id,
+        name="Primary Sovereign Silo",
+        tier="enterprise",
+        key_hash=secrets.token_hex(16), # Initial placeholder hash
+        created_at=datetime.utcnow().isoformat(),
+        provisioned_by=clearance_id
+    )
+    db.add(default_fleet)
     db.commit()
     
     return {
@@ -541,7 +555,7 @@ def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depe
         "org_id": org.id,
         "hub_id": org.hub_id,
         "totp_secret": totp_secret,
-        "note": "⚠️ SAVE THE TOTP SECRET IMMEDIATELY for MFA setup."
+        "note": "⚠️ SAVE THE TOTP SECRET IMMEDIATELY for MFA setup. Your primary Spoke Node has been auto-provisioned."
     }
 
 @auth_router.get("/me")
