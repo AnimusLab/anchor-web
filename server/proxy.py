@@ -549,8 +549,6 @@ def _enforce_tenant_scope(current_user: dict, db: Session, hub_id: str = None):
         return user_hub_id
         
     return hub_id
-  return entity_id
-
 
 @app.get("/api/ledger")
 def get_hub_ledger(hub_id: str = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
