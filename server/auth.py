@@ -377,6 +377,77 @@ def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db))
 def oversight_identify(request: IdentityChallengeRequest, db: Session = Depends(get_db)):
     return _identify_logic(request.clearance_id, request.email, request.hub_id, ["auditor", "regulator"], db)
 
+@auth_router.post("/register/auditor")
+def register_auditor(
+    display_name: str = Form(...),
+    email: str = Form(...),
+    jurisdiction: str = Form(...),
+    department: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Regulator Onboarding:
+    Registers a new auditor/official under a Regulatory Agency Hub.
+    """
+    # 1. Deduplicate
+    official = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.email == email.strip().lower()).first()
+    if official:
+        return {
+            "status": "APPROVED",
+            "message": "Access restored. Your credentials have been re-verified.",
+            "clearance_id": official.id,
+            "totp_secret": official.totp_secret
+        }
+    
+    # 2. Find/Create Regulator Hub
+    # Frontend sends Agency Hub ID (e.g. RBI) in 'department' field
+    agency_hub_id = department.strip().upper()
+    org = db.query(Organization).filter(Organization.hub_id == agency_hub_id).first()
+    if not org:
+        # Generate a proper Org ID for the agency
+        real_org_id = _generate_org_id(agency_hub_id, jurisdiction)
+        org = Organization(
+            id=real_org_id,
+            display_name=agency_hub_id,
+            hub_id=agency_hub_id,
+            domain=f"{agency_hub_id.lower()}.gov",
+            region=jurisdiction,
+            org_type="regulator",
+            status="approved",
+            created_at=datetime.utcnow().isoformat()
+        )
+        db.add(org)
+        db.flush()
+
+    # 3. Provision Auditor
+    clearance_id = _generate_clearance_id(agency_hub_id, display_name, "auditor", jurisdiction)
+    totp_secret = pyotp.random_base32()
+
+    new_official = RegulatoryOfficial(
+        id=clearance_id,
+        org_id=org.id,
+        display_name=display_name,
+        email=email.strip().lower(),
+        role="auditor",
+        department="ENFORCEMENT",
+        jurisdiction=jurisdiction,
+        totp_secret=totp_secret,
+        status="approved",
+        created_at=datetime.utcnow().isoformat()
+    )
+
+    db.add(new_official)
+    db.commit()
+
+    print(f"[ONBOARD] Regulator Provisioned: {clearance_id} ({email}) for {agency_hub_id}")
+    
+    return {
+        "status": "APPROVED",
+        "message": f"Welcome Auditor {display_name}. Your tactical ID {clearance_id} is now active on the {agency_hub_id} hub.",
+        "clearance_id": clearance_id,
+        "totp_secret": totp_secret
+    }
+
 @auth_router.post("/provision/enterprise")
 def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depends(get_db)):
     """
