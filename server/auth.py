@@ -120,44 +120,31 @@ def _issue_jwt(user):
     }, ANCHOR_MASTER_KEY, algorithm="HS256")
 
 # =============================================================================
-# ID Generation Patterns
+# Final ID Standard Generators (v5.8)
 # =============================================================================
 
-def _generate_org_id(company_name: str, region: str = "GL"):
-    """
-    Hub ID Format: JPMC-IN-MUM01
-    Pattern: [COMPANY_ABBR]-[REGION_CODE]-[RANDOM_CODE]
-    """
-    # Abbreviate company name: take first letters of each word, max 6 chars
-    words = company_name.strip().upper().split()
-    if len(words) >= 2:
-        abbr = "".join(w[0] for w in words if w)[:6]
-    else:
-        abbr = words[0][:6] if words else "ORG"
-    
-    region_code = region.strip().upper()[:2] if region else "GL"
-    serial = secrets.randbelow(900) + 100  # 100–999
-    return f"{abbr}-{region_code}-{serial:03d}"
+def _generate_hub_id(org_id: str, region: str, unit: str):
+    """Format: JPMC-IN-MUM01"""
+    return f"{org_id.strip().upper()}-{region.strip().upper()}-{unit.strip().upper()}"
 
-def _generate_clearance_id(company_name: str, user_name: str, role: str = "member", region: str = "GL"):
+def _generate_clearance_id(role: str, org_id: str, region: str, agency: str = None):
     """
-    Clearance ID Format: OWN-JPMC-MUM-042
-    Pattern: [ROLE_CODE]-[COMPANY_ABBR]-[REGION_CODE]-[SEQUENCE]
+    Format: OWN-JPMC-MUM-042
+    Format (Auditor): AUD-RBI-009
     """
     role_map = {
-        "owner": "OWN",
-        "admin": "ADM",
-        "member": "DEV",
-        "developer": "DEV",
-        "lead": "LDR",
-        "auditor": "AUD",
-        "regulator": "REG",
-        "root": "ROOT",
+        "owner": "OWN", "admin": "ADM", "dev": "DEV", "developer": "DEV",
+        "auditor": "AUD", "regulator": "AUD", "root": "ROOT"
     }
-    role_code = role_map.get(role.lower(), "MBR")
+    role_code = role_map.get(role.lower(), "USR")
+    serial = secrets.randbelow(900) + 100 # 100-999
     
-    words = company_name.strip().upper().split()
-    if len(words) >= 2:
+    if role_code == "AUD" and agency:
+        return f"AUD-{agency.strip().upper()}-{serial:03d}"
+    
+    # Standard: [ROLE]-[ORG]-[REGION_PREFIX]-[SERIAL]
+    region_prefix = region.strip().upper()[:3]
+    return f"{role_code}-{org_id.strip().upper()}-{region_prefix}-{serial:03d}"
         company_abbr = "".join(w[0] for w in words if w)[:6]
     else:
         company_abbr = words[0][:6] if words else "ORG"
@@ -431,27 +418,28 @@ def register_auditor(
     Regulator Onboarding:
     Registers a new auditor/official under a Regulatory Agency Hub.
     """
+    # 0. Check Whitelist (The Advance List Security Gate)
+    whitelist = db.query(WhitelistEntry).filter(WhitelistEntry.email == email.strip().lower()).first()
+    if not whitelist:
+        raise HTTPException(status_code=403, detail="SECURITY_VIOLATION: Email not authorized for regulatory onboarding.")
+
     # 1. Deduplicate
     official = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.email == email.strip().lower()).first()
     if official:
         return {
             "status": "APPROVED",
             "message": "Access restored. Your credentials have been re-verified.",
-            "clearance_id": official.id,
-            "totp_secret": official.totp_secret
+            "clearance_id": official.id
         }
     
     # 2. Find/Create Regulator Hub
-    # Frontend sends Agency Hub ID (e.g. RBI) in 'department' field
-    agency_hub_id = department.strip().upper()
-    org = db.query(Organization).filter(Organization.hub_id == agency_hub_id).first()
+    agency_id = department.strip().upper() # e.g. "RBI"
+    org = db.query(Organization).filter(Organization.id == agency_id.lower()).first()
     if not org:
-        # Generate a proper Org ID for the agency
-        real_org_id = _generate_org_id(agency_hub_id, jurisdiction)
         org = Organization(
-            id=real_org_id,
-            display_name=agency_hub_id,
-            domain=f"{agency_hub_id.lower()}.gov",
+            id=agency_id.lower(),
+            display_name=agency_id,
+            domain=f"{agency_id.lower()}.gov",
             region=jurisdiction,
             org_type="regulator",
             status="approved",
@@ -460,20 +448,8 @@ def register_auditor(
         db.add(org)
         db.flush()
 
-        # Create the agency hub
-        from models import Hub
-        hub = Hub(
-            id=agency_hub_id,
-            org_id=org.id,
-            regional_key=secrets.token_hex(16),
-            display_name=f"{agency_hub_id} Regulatory Hub",
-            created_at=datetime.utcnow().isoformat()
-        )
-        db.add(hub)
-        db.flush()
-
-    # 3. Provision Auditor
-    clearance_id = _generate_clearance_id(agency_hub_id, display_name, "auditor", jurisdiction)
+    # 3. Provision Auditor with Final ID Standard
+    clearance_id = _generate_clearance_id("auditor", org.id, jurisdiction, agency_id)
     totp_secret = pyotp.random_base32()
 
     new_official = RegulatoryOfficial(
@@ -508,13 +484,19 @@ def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depe
     Automatically creates an Organization and its first Owner user.
     This is the "Birth" of a new Sovereign Silo in the Anchor Mesh.
     """
+    # 0. Check Whitelist
+    whitelist = db.query(WhitelistEntry).filter(WhitelistEntry.email == request.email.strip().lower()).first()
+    if not whitelist:
+        raise HTTPException(status_code=403, detail="SECURITY_VIOLATION: Email not on authorized advance list.")
+
     # 1. Find or Atomic-Create Organization
-    org = db.query(Organization).filter(Organization.display_name == request.company_name).first()
+    org_id_base = whitelist.org_id.strip().lower() # e.g. "jpmc"
+    org = db.query(Organization).filter(Organization.id == org_id_base).first()
     if not org:
-        org_id = _generate_org_id(request.company_name, request.region)
         org = Organization(
-            id=org_id,
+            id=org_id_base,
             display_name=request.company_name,
+            domain=request.email.split('@')[-1],
             region=request.region,
             created_at=datetime.utcnow().isoformat()
         )
@@ -523,24 +505,26 @@ def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depe
         
         # AUTO-PROVISION PRIMARY HUB (The Spoke Node)
         from models import Hub
-        hub_id = f"hub-{org_id.lower()}-{secrets.token_hex(3)}"
+        # Format: JPMC-IN-UNIT01
+        hub_id = _generate_hub_id(org.id, request.region, "UNIT01")
         new_hub = Hub(
             id=hub_id,
             org_id=org.id,
-            regional_key=secrets.token_hex(16), # THE REGIONAL KEY ACTS AS THE SPOKE NODE HANDLE
+            regional_key="PENDING_ACTIVATION", # Only generated during Beat 3 Activation
             display_name="Primary Sovereign Silo",
+            region=request.region,
+            unit="UNIT01",
+            is_active=False, # Dormant until Owner Activates
             created_at=datetime.utcnow().isoformat()
         )
         db.add(new_hub)
         db.flush()
     
-    existing_user = db.query(EnterpriseUser).filter(EnterpriseUser.email == request.email).first()
+    existing_user = db.query(EnterpriseUser).filter(EnterpriseUser.email == request.email.strip().lower()).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="USER ALREADY PROVISIONED")
         
-    clearance_id = _generate_clearance_id(
-        request.company_name, request.display_name, "owner", request.region
-    )
+    clearance_id = _generate_clearance_id("owner", org.id, request.region)
     totp_secret = pyotp.random_base32()
     
     new_user = EnterpriseUser(
@@ -595,9 +579,40 @@ def get_current_user_profile(current_user: dict = Depends(get_current_user), db:
         "org_id": getattr(user, 'org_id', None),
         "hub_id": getattr(hub, 'id', 'PENDING'),
         "hub_name": getattr(hub, 'display_name', 'Default Hub'),
+        "hub_active": getattr(hub, 'is_active', False),
         "regional_key": getattr(hub, 'regional_key', 'UNSET'),
         "region": getattr(org, 'region', 'GLOBAL'),
         "department": getattr(user, 'department', 'OPS')
+    }
+
+@auth_router.post("/activate/hub")
+def activate_hub(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Beat 3: The 'Wow' Ceremony
+    Generates the actual Sovereign Spoke handle (Regional Key).
+    """
+    if current_user.get("role") != "owner":
+        raise HTTPException(status_code=403, detail="Only the Owner can activate the Sovereign Silo.")
+    
+    from models import Hub, EnterpriseUser
+    user = db.query(EnterpriseUser).filter(EnterpriseUser.email == current_user["sub"]).first()
+    hub = db.query(Hub).filter(Hub.id == user.hub_id).first()
+    
+    if not hub:
+        raise HTTPException(status_code=404, detail="Silo not found.")
+    if hub.is_active:
+        return {"status": "ALREADY_ACTIVE", "key": hub.regional_key}
+        
+    # GENERATE THE ACTUAL SOVEREIGN HANDLE
+    hub.regional_key = f"sk_live_{secrets.token_urlsafe(24)}"
+    hub.is_active = True
+    db.commit()
+    
+    return {
+        "status": "ACTIVATED",
+        "hub_id": hub.id,
+        "regional_key": hub.regional_key,
+        "message": "SOVEREIGN SILO INITIALIZED. Node is now live on the mesh."
     }
 
 @auth_router.get("/debug/db")

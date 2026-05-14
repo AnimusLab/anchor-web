@@ -46,14 +46,13 @@ def run_migrations():
     SQLAlchemy models but are absent from the live database table."""
     from sqlalchemy import text
     migrations = [
-        "ALTER TABLE organizations ADD COLUMN region VARCHAR",
-        "ALTER TABLE regulatory_officials ADD COLUMN org_id VARCHAR",
-        "ALTER TABLE regulatory_officials ADD COLUMN department VARCHAR",
-        "ALTER TABLE regulatory_officials ADD COLUMN jurisdiction VARCHAR",
-        "ALTER TABLE enterprise_users ADD COLUMN department VARCHAR",
-        "ALTER TABLE enterprise_users ADD COLUMN hub_id VARCHAR",
-        "ALTER TABLE ledger ADD COLUMN hub_id VARCHAR",
-        "ALTER TABLE org_invites ADD COLUMN department VARCHAR",
+        "CREATE TABLE IF NOT EXISTS whitelist (id INTEGER PRIMARY KEY, email VARCHAR UNIQUE, org_id VARCHAR, role VARCHAR, created_at VARCHAR)",
+        "ALTER TABLE hubs ADD COLUMN region VARCHAR",
+        "ALTER TABLE hubs ADD COLUMN unit VARCHAR",
+        "ALTER TABLE hubs ADD COLUMN is_active BOOLEAN DEFAULT 0",
+        "ALTER TABLE organizations ADD COLUMN domain VARCHAR",
+        "ALTER TABLE regulatory_officials ADD COLUMN status VARCHAR DEFAULT 'pending'",
+        "ALTER TABLE enterprise_users ADD COLUMN status VARCHAR DEFAULT 'pending'",
     ]
 
     # Run ALTER TABLE on both SQLite and Postgres
@@ -99,24 +98,28 @@ def seed_mesh_identities(db):
         existing = db.query(Organization).filter(Organization.id == cfg["id"]).first()
         if not existing:
             org = Organization(
-                id=cfg["id"],
+                id=cfg["prefix"], # e.g. "sec"
                 display_name=cfg["name"],
                 org_type=cfg["type"],
                 domain=f"{cfg['prefix']}.gov" if cfg["type"] == "regulator" else "animuslab.ai",
                 created_at=datetime.utcnow().isoformat()
             )
             db.add(org)
-            # Seed a default hub for the org
+            # Seed a default hub using the new format: [ORG]-[REGION]-[UNIT]
             from models import Hub
+            hub_id = f"{cfg['prefix'].upper()}-GL-UNIT01"
             hub = Hub(
-                id=cfg["prefix"],
-                org_id=cfg["id"],
+                id=hub_id,
+                org_id=org.id,
                 regional_key=secrets.token_hex(16),
-                display_name=f"{cfg['name']} Primary Hub",
+                display_name=f"{cfg['name']} Global Hub",
+                region="GL",
+                unit="UNIT01",
+                is_active=True,
                 created_at=datetime.utcnow().isoformat()
             )
             db.add(hub)
-            print(f"[SYSTEM] Mesh Node + Hub Seeded: {cfg['prefix'].upper()}")
+            print(f"[SYSTEM] Mesh Node + Hub Seeded: {hub_id}")
 
     db.commit()
 
