@@ -16,7 +16,7 @@ import qrcode
 import base64
 from io import BytesIO
 from database import get_db, SessionLocal
-from models import EnterpriseUser, RegulatoryOfficial, Organization, OrgInvite, Hub, WhitelistEntry
+from models import EnterpriseUser, RegulatoryOfficial, Organization, Hub, WhitelistEntry
 from security import encrypt_secret
 from mail import (
     send_enterprise_credentials, 

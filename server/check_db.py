@@ -2,7 +2,7 @@ import sys
 import os
 from sqlalchemy import text
 from database import engine, SessionLocal
-from models import Organization, User
+from models import Organization, EnterpriseUser, RegulatoryOfficial
 
 def check_db():
     print("\n--- ANCHOR DATABASE INSPECTION ---\n")
@@ -14,15 +14,23 @@ def check_db():
         if not orgs:
             print("  No organizations found.")
         for org in orgs:
-            print(f"  - ID: {org.id} | Prefix: {org.entity_prefix} | Name: {org.display_name} | Region: {org.region}")
+            print(f"  - ID: {org.id} | Name: {org.display_name} | Region: {org.region}")
 
-        # 2. Check Users
-        print("\n[USERS]")
-        users = db.query(User).all()
+        # 2. Check Enterprise Users
+        print("\n[ENTERPRISE USERS]")
+        users = db.query(EnterpriseUser).all()
         if not users:
-            print("  No users found.")
+            print("  No enterprise users found.")
         for user in users:
-            print(f"  - Email: {user.email} | Role: {user.role} | Organization ID: {user.org_id} | Status: {user.status}")
+            print(f"  - ID: {user.id} | Email: {user.email} | Role: {user.role} | Org: {user.org_id}")
+
+        # 3. Check Regulatory Officials
+        print("\n[REGULATORY OFFICIALS]")
+        regs = db.query(RegulatoryOfficial).all()
+        if not regs:
+            print("  No regulatory officials found.")
+        for reg in regs:
+            print(f"  - ID: {reg.id} | Email: {reg.email} | Org: {reg.org_id}")
 
         print("\n----------------------------------")
     except Exception as e:

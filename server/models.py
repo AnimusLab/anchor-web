@@ -109,3 +109,26 @@ class ForensicRequest(Base):
     hub_id        = Column(String, nullable=False)
     status        = Column(String, default="PENDING")
     created_at    = Column(String, nullable=False)
+
+# --- 6. REGULATORY OVERSIGHT (Notices & Internal Audits) ---
+class EnforcementNotice(Base):
+    """v5.8 Official regulatory notices issued to a specific Hub Silo."""
+    __tablename__ = "enforcement_notices"
+
+    id           = Column(String, primary_key=True)
+    auditor_id   = Column(String, ForeignKey("regulatory_officials.id"))
+    hub_id       = Column(String, ForeignKey("hubs.id"))
+    target_email = Column(String, nullable=False)
+    severity     = Column(String, default="MEDIUM") # HIGH, MEDIUM, LOW
+    notice_text  = Column(Text, nullable=False)
+    filed_at     = Column(String, nullable=False)
+
+class AuditTrailEntry(Base):
+    """Tracks internal actions performed by Auditors for accountability."""
+    __tablename__ = "auditor_trail"
+
+    id           = Column(Integer, primary_key=True)
+    auditor_id   = Column(String, ForeignKey("regulatory_officials.id"))
+    action       = Column(String, nullable=False)
+    target_id    = Column(String, nullable=True) # ID of the Hub or Entry inspected
+    timestamp    = Column(String, nullable=False)
