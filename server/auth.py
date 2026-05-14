@@ -375,6 +375,18 @@ def enterprise_identify(request_body: dict = Body(...), db: Session = Depends(ge
     hub_id = request_body.get("hub_id")
     return _identify_logic(cid, email, hub_id, ["owner", "admin", "member", "lead", "developer"], db)
 
+@auth_router.post("/oversight/identify")
+def oversight_identify(request_body: dict = Body(...), db: Session = Depends(get_db)):
+    cid = request_body.get("clearance_id")
+    email = request_body.get("email")
+    hub_id = request_body.get("hub_id")
+    return _identify_logic(cid, email, hub_id, ["auditor", "regulator"], db)
+
+@auth_router.post("/oversight/login")
+@auth_router.post("/oversight/verify-totp")
+def oversight_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
+    return _verify_logic(request, ["auditor", "regulator"], db)
+
 @auth_router.post("/enterprise/verify-totp")
 def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
     return _verify_logic(request, ["owner", "admin", "member"], db)
