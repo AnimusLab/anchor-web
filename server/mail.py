@@ -58,17 +58,17 @@ def _send_email(to_email: str, subject: str, html_body: str):
         return False
 
 
-def send_enterprise_credentials(to_email: str, display_name: str, entity_id: str, secret_key: str, mat: str):
+def send_enterprise_credentials(to_email: str, display_name: str, clearance_id: str, secret_key: str, regional_key: str):
     """Sends the enterprise their login credentials + SDK .env config."""
-    subject = f"Anchor Governance — Your Fleet Credentials [{entity_id}]"
+    subject = f"Anchor Governance — Your Sovereign Hub Credentials [{clearance_id}]"
     html = f"""
     <div style="font-family: monospace; background: #08080D; color: #E2E8F0; padding: 40px; max-width: 600px;">
         <h2 style="color: #22D3EE; letter-spacing: 0.15em;">ANCHOR GOVERNANCE ENGINE</h2>
         <p style="color: #94A3B8;">Welcome, <strong>{display_name}</strong>. Your enterprise fleet has been provisioned.</p>
         
         <div style="background: #0D0D14; border: 1px solid #1E293B; padding: 20px; margin: 20px 0;">
-            <p style="color: #94A3B8; font-size: 11px; margin: 0 0 8px;">ENTITY ID</p>
-            <code style="color: #22D3EE; font-size: 14px;">{entity_id}</code>
+            <p style="color: #94A3B8; font-size: 11px; margin: 0 0 8px;">CLEARANCE ID</p>
+            <code style="color: #22D3EE; font-size: 14px;">{clearance_id}</code>
         </div>
         
         <div style="background: #0D0D14; border: 1px solid rgba(239,68,68,0.3); padding: 20px; margin: 20px 0;">
@@ -78,8 +78,8 @@ def send_enterprise_credentials(to_email: str, display_name: str, entity_id: str
         
         <div style="background: #0D0D14; border: 1px solid #1E293B; padding: 20px; margin: 20px 0;">
             <p style="color: #94A3B8; font-size: 11px; margin: 0 0 8px;">SDK ENVIRONMENT CONFIG (.env)</p>
-            <code style="color: #22D3EE; font-size: 12px; display: block; margin: 4px 0;">ANCHOR_ENTITY_ID={entity_id}</code>
-            <code style="color: #22D3EE; font-size: 12px; display: block; margin: 4px 0;">ANCHOR_MAT={mat}</code>
+            <code style="color: #22D3EE; font-size: 12px; display: block; margin: 4px 0;">ANCHOR_HUB_ID={clearance_id}</code>
+            <code style="color: #22D3EE; font-size: 12px; display: block; margin: 4px 0;">ANCHOR_REGIONAL_KEY={regional_key}</code>
         </div>
         
         <p style="color: #64748B; font-size: 11px;">

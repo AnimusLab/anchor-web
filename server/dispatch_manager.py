@@ -11,7 +11,7 @@ from logging.config import fileConfig
 import logging
 from tenacity import retry, stop_after_attempt, wait_exponential
 from sqlalchemy.orm import Session
-from models import Fleet, WebhookSubscription, LedgerEntry
+from models import Hub, LedgerEntry
 from security import decrypt_secret
 
 # Hardcoded path for v5.0.0 hardening mission
@@ -79,21 +79,19 @@ def _log_receipt(db: Session, parent_entry_id: str, status: str, response_body: 
     db.add(receipt)
     db.commit()
 
-async def dispatch_webhook(entity_id: str, audit_dict: dict, db: Session):
+async def dispatch_webhook(hub_id: str, audit_data: dict, db: Session):
     """
-    Orchestrates the Multi-Dialect "Handshake" (Phase 7).
-    Translates the internal truth into regional regulatory dialects and fires signed alerts.
+    Sovereign Dispatch Engine:
+    Routes violation alerts to the appropriate regional Hub endpoint.
     """
-    logger.info(f"[DISPATCH] Processing violation for {entity_id}")
-    
-    # 1. Fetch Fleet and ALL regional subscriptions
-    fleet = db.query(Fleet).filter(Fleet.entity_id == entity_id).first()
-    if not fleet or not fleet.subscriptions:
-        logger.warning(f"[DISPATCH] No active subscriptions for {entity_id}")
+    # 1. Fetch Hub
+    hub = db.query(Hub).filter(Hub.id == hub_id).first()
+    if not hub:
+        logger.warning(f"[DISPATCH] Hub {hub_id} not found. Skipping webhook.")
         return
 
     # 2. Reconstruct AuditEntry to use the Dialect Factory
-    p = audit_dict.get("primitives", {})
+    p = audit_data.get("primitives", {})
     entry = AuditEntry(
         action=p.get("action", "unknown"),
         object=p.get("object", "unknown"),

@@ -26,7 +26,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import EnforcementNotice, AuditTrailEntry, LedgerEntry, Fleet, Organization
+from models import EnforcementNotice, AuditTrailEntry, LedgerEntry, Hub, Organization
 from mail import send_auditor_provisioned
 
 # ---------------------------------------------------------------------------
@@ -479,30 +479,29 @@ def get_jurisdiction_summary(
 ):
     """
     [Auditor] Returns compliance statistics grouped by jurisdiction/region.
-    Joins: LedgerEntry → Fleet (entities) → Organization.
+    Joins: LedgerEntry → Hub (hubs) → Organization.
     """
 
     try:
-        # Correct join direction: start from LedgerEntry, walk up to org
-        rows = (
+        results = (
             db.query(
-                Organization.region,
-                Organization.display_name,
-                Organization.id.label("org_id"),
-                Fleet.entity_id,
-                Fleet.name.label("entity_name"),
-                LedgerEntry.id.label("entry_id"),
-                LedgerEntry.type.label("entry_type"),
+                LedgerEntry.id,
+                LedgerEntry.timestamp,
+                LedgerEntry.type,
+                LedgerEntry.chain_hash,
+                Hub.id.label("hub_id"),
+                Hub.id.label("entity_name"), # Reuse ID as name for now
+                Organization.name.label("org_name"),
+                Organization.id.label("org_id")
             )
-            .select_from(LedgerEntry)
-            .outerjoin(Fleet,        Fleet.entity_id   == LedgerEntry.entity_id)
-            .outerjoin(Organization, Organization.id   == Fleet.org_id)
+            .outerjoin(Hub,          Hub.id            == LedgerEntry.hub_id)
+            .outerjoin(Organization, Organization.id   == Hub.org_id)
             .all()
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"DB query failed: {exc}")
 
-    if not rows:
+    if not results:
         return {
             "summary": {
                 "total_decisions": 0, "total_violations": 0,
@@ -513,31 +512,31 @@ def get_jurisdiction_summary(
 
     # Aggregate by region
     regions: dict = {}
-    for r in rows:
-        region = r.region or "Unknown"
+    for r in results:
+        region = "Global" # Region info is in Hub
         if region not in regions:
             regions[region] = {
                 "region": region, "total": 0, "violations": 0,
                 "entities": set(), "orgs": set(), "_entity_viols": {},
             }
         regions[region]["total"] += 1
-        if r.entity_id:
-            regions[region]["entities"].add(r.entity_id)
+        if r.hub_id:
+            regions[region]["entities"].add(r.hub_id)
         if r.org_id:
             regions[region]["orgs"].add(r.org_id)
-        if r.entry_type == "runtime_violation":
+        if r.type == "runtime_violation":
             regions[region]["violations"] += 1
-            key = r.entity_name or r.entity_id or "unknown"
+            key = r.hub_id or "unknown"
             ev  = regions[region]["_entity_viols"]
             ev[key] = ev.get(key, 0) + 1
 
-    result = []
+    result_list = []
     for region, d in sorted(regions.items()):
         total = d["total"]; viols = d["violations"]
         pct   = round(((total - viols) / total) * 100, 1) if total > 0 else 100.0
         ev    = d["_entity_viols"]
         worst = max(ev, key=ev.get) if ev else None
-        result.append({
+        result_list.append({
             "region": region, "total_decisions": total, "violations": viols,
             "compliance_pct": pct, "entity_count": len(d["entities"]),
             "org_count": len(d["orgs"]),
@@ -546,7 +545,7 @@ def get_jurisdiction_summary(
 
     grand_total  = sum(d["total"]      for d in regions.values())
     grand_viols  = sum(d["violations"] for d in regions.values())
-    grand_ents   = len({r.entity_id for r in rows if r.entity_id})
+    grand_ents   = len({r.hub_id for r in results if r.hub_id})
 
     return {
         "summary": {
@@ -556,7 +555,7 @@ def get_jurisdiction_summary(
             "total_entities":   grand_ents,
             "total_regions":    len(regions),
         },
-        "by_region": sorted(result, key=lambda x: x["compliance_pct"]),
+        "by_region": sorted(result_list, key=lambda x: x["compliance_pct"]),
     }
 
 
