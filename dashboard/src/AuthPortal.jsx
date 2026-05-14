@@ -128,6 +128,13 @@ export default function AuthPortal({ isInvite = false }) {
     setIsLoading(true);
     try {
       if (loginStep === 'identify') {
+        // Guard: Validate email format before proceeding
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+          setError('Invalid email address. Please check and re-enter your corporate email.');
+          setIsLoading(false);
+          return;
+        }
         const res = await fetch(endpoints.identify, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -173,7 +180,7 @@ export default function AuthPortal({ isInvite = false }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ clearance_id: id })
           });
-          if (res.ok) {
+            if (res.ok) {
             const data = await res.json();
             setFormData(prev => {
               const dName = data.display_name || (data.hub_id === 'anchor-root' ? 'ROOT ADMIN' : prev.displayName);
@@ -184,9 +191,15 @@ export default function AuthPortal({ isInvite = false }) {
                 cName = data.hub_id === 'anchor-root' ? 'ANCHOR CORE' : 'AUTHORIZED HUB';
               }
               
+              // SAFETY: Only auto-fill email if:
+              // 1. The user has NOT already typed one, AND
+              // 2. The returned email passes a basic format check
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              const safeEmail = data.email && emailRegex.test(data.email) ? data.email : null;
+              
               return {
                 ...prev,
-                email: data.email || prev.email,
+                email: prev.email ? prev.email : (safeEmail || prev.email),
                 orgId: data.hub_id || prev.orgId,
                 displayName: dName,
                 companyName: cName

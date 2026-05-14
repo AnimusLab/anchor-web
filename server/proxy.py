@@ -128,6 +128,32 @@ def on_startup():
         print(f"[!!!] SCHEMA HEALER FAILED: {e}")
 
 
+# --- ROOT EMAIL REPAIR (One-time fix for corrupted records) ---
+@app.post("/api/admin/repair-email")
+async def repair_email(
+    payload: dict = Body(...),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Root-only: Corrects a corrupted email for a given Clearance ID."""
+    if current_user.get("role") != "root":
+        raise HTTPException(status_code=403, detail="ROOT CLEARANCE REQUIRED")
+    clearance_id = payload.get("clearance_id", "").strip().upper()
+    correct_email = payload.get("correct_email", "").strip().lower()
+    if not clearance_id or not correct_email or "@" not in correct_email:
+        raise HTTPException(status_code=400, detail="Invalid clearance_id or email")
+    from models import EnterpriseUser, RegulatoryOfficial
+    user = db.query(EnterpriseUser).filter(EnterpriseUser.id == clearance_id).first()
+    if not user:
+        user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == clearance_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail=f"No user found: {clearance_id}")
+    old_email = user.email
+    user.email = correct_email
+    db.commit()
+    print(f"[REPAIR] {clearance_id}: '{old_email}' → '{correct_email}'")
+    return {"status": "REPAIRED", "clearance_id": clearance_id, "old_email": old_email, "new_email": correct_email}
+
 # --- PUBLIC MESH TELEMETRY (No auth — all identifiers hashed) ---
 @app.get("/api/public/stats")
 def get_public_mesh_stats(db: Session = Depends(get_db)):
