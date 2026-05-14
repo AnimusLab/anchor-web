@@ -217,7 +217,6 @@ class EnterpriseProvisionRequest(BaseModel):
     company_name: str
     region: str
     department: str
-    jurisdiction: str
 
 # =============================================================================
 # Identity Logic (FORENSIC VERSION)
@@ -485,7 +484,7 @@ def register_auditor(
         "totp_secret": totp_secret
     }
 
-@auth_router.post("/provision/enterprise")
+@auth_router.post("/register/org")
 def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depends(get_db)):
     """
     Sovereign Onboarding: 
