@@ -82,6 +82,7 @@ export default function AuthPortal({ isInvite = false }) {
   const [loginStep, setLoginStep] = useState('identify');
   const [intentToken, setIntentToken] = useState(null);
   const [focusedField, setFocusedField] = useState(null);
+  const [scanStatus, setScanStatus] = useState(''); // 'scanning' | 'found' | 'not_found' | ''
   const [formData, setFormData] = useState({
     email: '', orgId: '', clearanceId: '', totpCode: '',
     entityPrefix: '', serverRegion: 'IN', jurisdiction: '',
@@ -169,50 +170,67 @@ export default function AuthPortal({ isInvite = false }) {
     }
   };
 
-  // --- Identity First Auto-Fill ---
+  // --- Identity First Auto-Fill (Optimized) ---
   useEffect(() => {
     const id = formData.clearanceId.trim().toUpperCase();
-    if (id.length >= 5 && activeTab === 'login' && loginStep === 'identify') {
-      const timer = setTimeout(async () => {
-        try {
-          const res = await fetch(endpoints.identifyFirst, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ clearance_id: id })
-          });
-            if (res.ok) {
-            const data = await res.json();
-            setFormData(prev => {
-              const dName = data.display_name || (data.hub_id === 'anchor-root' ? 'ROOT ADMIN' : prev.displayName);
-              let cName = data.org_name || (data.hub_id === 'anchor-root' ? 'ANCHOR CORE' : prev.companyName);
-              
-              // Prevent duplication if user named org after themselves
-              if (cName.toUpperCase() === dName.toUpperCase()) {
-                cName = data.hub_id === 'anchor-root' ? 'ANCHOR CORE' : 'AUTHORIZED HUB';
-              }
-              
-              // SAFETY: Only auto-fill email if:
-              // 1. The user has NOT already typed one, AND
-              // 2. The returned email passes a basic format check
-              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-              const safeEmail = data.email && emailRegex.test(data.email) ? data.email : null;
-              
-              return {
-                ...prev,
-                email: prev.email ? prev.email : (safeEmail || prev.email),
-                orgId: data.hub_id || prev.orgId,
-                displayName: dName,
-                companyName: cName
-              };
-            });
-          }
-        } catch (e) { /* silent fail */ }
-      }, 600);
-      return () => clearTimeout(timer);
-    } else if (id.length === 0) {
-      // Clear fields if ID is deleted to prevent stale browser fills
+
+    if (id.length === 0) {
       setFormData(prev => ({ ...prev, email: '', orgId: '' }));
+      setScanStatus('');
+      return;
     }
+
+    if (id.length < 5 || activeTab !== 'login' || loginStep !== 'identify') {
+      setScanStatus('');
+      return;
+    }
+
+    const controller = new AbortController();
+    setScanStatus('scanning');
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(endpoints.identifyFirst, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clearance_id: id }),
+          signal: controller.signal
+        });
+
+        if (!res.ok) { setScanStatus('not_found'); return; }
+
+        const data = await res.json();
+        if (data.status === 'ERROR' || !data.email) { setScanStatus('not_found'); return; }
+
+        const dName = data.display_name || (data.hub_id === 'anchor-root' ? 'ROOT ADMIN' : '');
+        let cName = data.org_name || (data.hub_id === 'anchor-root' ? 'ANCHOR CORE' : '');
+        if (cName.toUpperCase() === dName.toUpperCase()) {
+          cName = data.hub_id === 'anchor-root' ? 'ANCHOR CORE' : 'AUTHORIZED HUB';
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const safeEmail = data.email && emailRegex.test(data.email) ? data.email : null;
+
+        setFormData(prev => ({
+          ...prev,
+          email: prev.email ? prev.email : (safeEmail || prev.email),
+          orgId: data.hub_id || prev.orgId,
+          displayName: dName || prev.displayName,
+          companyName: cName || prev.companyName
+        }));
+        setScanStatus('found');
+        // Auto-clear success indicator after 2s
+        setTimeout(() => setScanStatus(''), 2000);
+      } catch (e) {
+        if (e.name !== 'AbortError') setScanStatus('not_found');
+      }
+    }, 250); // 250ms debounce — fast enough to feel instant
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+      setScanStatus('');
+    };
   }, [formData.clearanceId, activeTab, loginStep]);
 
   const handleRegister = async (e) => {
@@ -409,10 +427,25 @@ export default function AuthPortal({ isInvite = false }) {
                     </div>
                     <Field label="Tactical Clearance ID">
                       <input required autoFocus autoComplete="off" type="text" name="clearanceId" value={formData.clearanceId} onChange={handleInputChange}
-                        placeholder="e.g. DEV-SEC-X92F"
-                        style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace', borderColor: focusedField === 'clearanceId' ? '#10b981' : '#1f2937' }}
+                        placeholder="e.g. OWN-JPMC-IN-214"
+                        style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace', borderColor: focusedField === 'clearanceId' ? '#10b981' : scanStatus === 'not_found' ? '#ef4444' : scanStatus === 'found' ? '#10b981' : '#1f2937' }}
                         onFocus={() => setFocusedField('clearanceId')} onBlur={() => setFocusedField(null)}
                       />
+                      {scanStatus === 'scanning' && (
+                        <div style={{ fontSize: 10, color: '#f59e0b', letterSpacing: '0.15em', marginTop: 4, fontFamily: 'JetBrains Mono, monospace', animation: 'pulse 1s infinite' }}>
+                          ⟳ SCANNING MESH...
+                        </div>
+                      )}
+                      {scanStatus === 'found' && (
+                        <div style={{ fontSize: 10, color: '#10b981', letterSpacing: '0.15em', marginTop: 4, fontFamily: 'JetBrains Mono, monospace' }}>
+                          ✓ IDENTITY LOCATED — CREDENTIALS AUTO-FILLED
+                        </div>
+                      )}
+                      {scanStatus === 'not_found' && (
+                        <div style={{ fontSize: 10, color: '#ef4444', letterSpacing: '0.15em', marginTop: 4, fontFamily: 'JetBrains Mono, monospace' }}>
+                          ✗ ID NOT FOUND IN MESH — CHECK AND RE-ENTER
+                        </div>
+                      )}
                     </Field>
                     <Field label="Corporate Access Email">
                       <input required autoComplete="off" type="email" name="email" value={formData.email} onChange={handleInputChange}
