@@ -260,8 +260,14 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
         if getattr(user, 'role', None) not in allowed_roles:
             raise HTTPException(status_code=403, detail="ROLE NOT AUTHORIZED")
 
+        # 3. Verify Organizational Hub ID (Case-Insensitive Handshake)
         org = db.query(Organization).filter(Organization.id == getattr(user, 'org_id', None)).first()
-        if not org or (getattr(org, 'hub_id', None) != hub_id.strip().lower() and getattr(org, 'id', None) != hub_id.strip().lower()):
+        submitted_hub_id = hub_id.strip().upper()
+        
+        stored_hub_id = (getattr(org, 'hub_id', '') or '').strip().upper()
+        stored_org_id = (getattr(org, 'id', '') or '').strip().upper()
+        
+        if not org or (submitted_hub_id != stored_hub_id and submitted_hub_id != stored_org_id):
             raise HTTPException(status_code=401, detail="ORGANIZATIONAL ACCESS DENIED")
         
         if getattr(user, 'status', None) == "revoked":
