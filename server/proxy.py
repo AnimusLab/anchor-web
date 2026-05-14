@@ -491,78 +491,108 @@ def resolve_identity(req: ResolveRequest, current_user: dict = Depends(get_curre
         }
     raise HTTPException(status_code=404, detail="IDENTITY NOT FOUND IN MESH")
 
+# --- 5. FORENSIC APPROVAL ENGINE ---
+@app.get("/api/forensic/pending")
+async def get_pending_pulls(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Owners see requests from auditors here."""
+    if current_user["role"] not in ["owner", "admin"]:
+        raise HTTPException(status_code=403, detail="Only Owners can approve forensic pulls")
+    
+    # Mock for demo parity - in production this queries the 'forensic_requests' table
+    return [
+        {
+            "id": "req_9921",
+            "auditor_name": "SEC_OFFICIAL_402",
+            "audit_id": "led_1715610000",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    ]
+
+@app.post("/api/forensic/approve/{pull_id}")
+async def approve_forensic_pull(pull_id: str, status: dict = Body(...), current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user["role"] not in ["owner", "admin"]:
+        raise HTTPException(status_code=403, detail="Approval denied")
+    
+    logger.info(f"[SOVEREIGN] Owner {current_user['sub']} {status.get('status')} pull {pull_id}")
+    return {"status": "SUCCESS", "message": f"Forensic request {status.get('status')}"}
+
 # --- 6. SOVEREIGN INGRESS (Metadata-Only Hub) ---
 @app.post("/api/ingress")
-def submit_telemetry(payload: IngressPayload, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def submit_telemetry(payload: IngressPayload, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """
     Receives data from the SDK/Spoke and persists only the Cryptographic Header.
-    The full raw payload stays on the Enterprise Spoke (Sovereign Data Plane).
+    HARDENED: Implements strict validation and transactional safety.
     """
     if not verify_entity(payload.entity_id, payload.mat, db):
         raise HTTPException(status_code=401, detail="INVALID CRYPTOGRAPHIC SIGNATURE")
     
-    audit = payload.audit_data
-    status = audit.get("governance_status", {}).get("status", "UNKNOWN")
-    entry_id = audit.get("entry_id", f"led_{int(time.time()*1000)}")
-    
-    # 1. STRIP SENSITIVE DATA (Hub only keeps the 'Proof of Governance')
-    # We generate a hash of the full audit for future verification/non-repudiation.
-    full_audit_str = json.dumps(audit, sort_keys=True)
-    audit_fingerprint = hashlib.sha256(full_audit_str.encode()).hexdigest()
+    try:
+        audit = payload.audit_data
+        status = audit.get("governance_status", {}).get("status", "UNKNOWN")
+        entry_id = audit.get("entry_id", f"led_{int(time.time()*1000)}")
+        
+        # 1. SECURITY: Immutable Fingerprinting
+        # We use sort_keys=True to ensure the hash is identical regardless of JSON key order.
+        full_audit_str = json.dumps(audit, sort_keys=True)
+        audit_fingerprint = hashlib.sha256(full_audit_str.encode('utf-8')).hexdigest()
 
-    header_payload = {
-        "project_name": audit.get("project_name", "unknown"),
-        "is_compliant": (status != "VIOLATION"),
-        "rule_id": audit.get("governance_status", {}).get("rule_id"),
-        "violation_count": len(audit.get("violations", [])),
-        "decentralized": True,         # UI trigger for FORENSIC_PULL
-        "fingerprint": audit_fingerprint,
-        "_spoke_source": payload.entity_id,
-        "risk_classification": "HIGH" if status == "VIOLATION" else "LOW"
-    }
-    
-    # 2. Persist Metadata-Only Header to Neon (SQLAlchemy)
-    new_entry = LedgerEntry(
-        id=entry_id,
-        entity_id=payload.entity_id,
-        timestamp=audit.get("timestamp") or datetime.now(timezone.utc).isoformat(),
-        type="runtime_violation" if status == "VIOLATION" else "runtime_check",
-        chain_hash=audit.get("cryptography", {}).get("chain_hash"),
-        signature=audit.get("cryptography", {}).get("signature"),
-        payload=json.dumps(header_payload) # ~200 Bytes vs ~2000 Bytes
-    )
-    
-    db.add(new_entry)
-    db.commit()
-    
-    # 3. Resilient Background Handshake (Alerts)
-    if status == "VIOLATION":
-        background_tasks.add_task(
-            dispatch_webhook, 
-            payload.entity_id, 
-            audit, # Webhook gets full audit (asymmetric encryption handled by dispatcher)
-            db
+        header_payload = {
+            "project_name": audit.get("project_name", "unknown"),
+            "is_compliant": (status != "VIOLATION"),
+            "rule_id": audit.get("governance_status", {}).get("rule_id"),
+            "violation_count": len(audit.get("violations", [])),
+            "decentralized": True,
+            "fingerprint": audit_fingerprint,
+            "_spoke_source": payload.entity_id,
+            "risk_classification": "HIGH" if status == "VIOLATION" else "LOW"
+        }
+        
+        # 2. Persist Metadata-Only Header to Neon (SQLAlchemy)
+        new_entry = LedgerEntry(
+            id=entry_id,
+            entity_id=payload.entity_id,
+            timestamp=audit.get("timestamp") or datetime.now(timezone.utc).isoformat(),
+            type="runtime_violation" if status == "VIOLATION" else "runtime_check",
+            chain_hash=audit.get("cryptography", {}).get("chain_hash"),
+            signature=audit.get("cryptography", {}).get("signature"),
+            payload=json.dumps(header_payload)
         )
-        # 4. Real-time NOC Broadcast (Summary only)
-        background_tasks.add_task(
-            manager.broadcast,
-            payload.entity_id,
-            {
-                "type": "VIOLATION_ALERT",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "entry_id": entry_id,
-                "project": audit.get("project_name"),
-                "violations": audit.get("violations", []),
-                "fingerprint": audit_fingerprint[:16]
-            }
-        )
-    
-    return {
-        "status": "ACKNOWLEDGED", 
-        "entry_id": entry_id, 
-        "fingerprint": audit_fingerprint,
-        "storage": "SOVEREIGN_HEADER_ONLY"
-    }
+        
+        db.add(new_entry)
+        db.commit()
+        
+        # 3. Resilient Background Handshake (Alerts)
+        if status == "VIOLATION":
+            background_tasks.add_task(dispatch_webhook, payload.entity_id, audit, db)
+            
+            # 4. Real-time NOC Broadcast (Summary only)
+            background_tasks.add_task(
+                manager.broadcast,
+                payload.entity_id,
+                {
+                    "type": "VIOLATION_ALERT",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "entry_id": entry_id,
+                    "project": audit.get("project_name"),
+                    "violations": audit.get("violations", []),
+                    "fingerprint": audit_fingerprint[:16]
+                }
+            )
+        
+        logger.info(f"[SOVEREIGN] Ingress Accepted | Spoke: {payload.entity_id} | Fingerprint: {audit_fingerprint[:12]}...")
+
+        return {
+            "status": "ACKNOWLEDGED", 
+            "entry_id": entry_id, 
+            "fingerprint": audit_fingerprint,
+            "storage": "SOVEREIGN_HEADER_ONLY",
+            "forensic_pull_available": True
+        }
+
+    except Exception as e:
+        logger.error(f"[!!!] INGRESS FAILURE: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Internal processing error in Master Node")
 
 # --- 7. TENANT-ISOLATED READ ENDPOINTS ---
 

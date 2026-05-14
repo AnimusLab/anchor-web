@@ -14,15 +14,19 @@ export default function PrivateDashboard() {
 
   const isOwner = user?.role === 'owner' || user?.role === 'root';
 
+  const [pendingPulls, setPendingPulls] = useState([]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, projectsRes] = await Promise.all([
+        const [statsRes, projectsRes, pullsRes] = await Promise.all([
           fetch(endpoints.stats(), { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(endpoints.listProjects, { headers: { Authorization: `Bearer ${token}` } })
+          fetch(endpoints.listProjects, { headers: { Authorization: `Bearer ${token}` } }),
+          isOwner ? fetch(`${endpoints.baseUrl}/api/forensic/pending`, { headers: { Authorization: `Bearer ${token}` } }) : Promise.resolve({ ok: false })
         ]);
         if (statsRes.ok) setStats(await statsRes.json());
         if (projectsRes.ok) setProjects(await projectsRes.json());
+        if (pullsRes.ok) setPendingPulls(await pullsRes.json());
       } catch (e) {
         console.error("Fetch Error", e);
       } finally {
@@ -30,26 +34,17 @@ export default function PrivateDashboard() {
       }
     };
     if (token) fetchData();
-  }, [token]);
+  }, [token, isOwner]);
 
-  const handleInvite = async (e) => {
-    e.preventDefault();
-    setInviteStatus('GENERATING...');
+  const handleApproval = async (pullId, status) => {
     try {
-      const res = await fetch(endpoints.invite, {
+      await fetch(`${endpoints.baseUrl}/api/forensic/approve/${pullId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ email: inviteEmail, department: inviteDept, role: 'member' })
+        body: JSON.stringify({ status })
       });
-      if (res.ok) {
-        setInviteStatus('INVITE_SENT_SUCCESS');
-        setInviteEmail('');
-      } else {
-        setInviteStatus('ERROR_FAILED_TO_DISPATCH');
-      }
-    } catch (e) {
-      setInviteStatus('ERROR_NETWORK_BREACH');
-    }
+      setPendingPulls(prev => prev.filter(p => p.id !== pullId));
+    } catch (e) { console.error("Approval Failed", e); }
   };
 
   if (loading) return (
@@ -69,15 +64,15 @@ export default function PrivateDashboard() {
           </div>
           <div className="flex flex-col">
             <h1 className="text-sm font-bold tracking-[0.3em] uppercase text-cyan-500">
-              {isOwner ? 'Ops_Center' : 'Lattice_Deck'} // {user?.region || 'GLOBAL'}
+              {isOwner ? 'HUB_COMMAND' : 'LATTICE_DECK'} // {user?.region || 'GLOBAL'}
             </h1>
-            <span className="text-[9px] text-slate-500 uppercase tracking-widest">{user?.hub_id || 'PENDING'} // {user?.department}</span>
+            <span className="text-[9px] text-slate-500 uppercase tracking-widest">{user?.hub_id || 'ANCHOR-MASTER-01'} // {user?.department}</span>
           </div>
         </div>
         <div className="flex items-center gap-12">
            <div className="flex flex-col items-end">
-              <span className="text-[9px] text-slate-500 uppercase tracking-widest">Active_Session</span>
-              <span className="text-[10px] text-white font-bold">{user?.display_name}</span>
+              <span className="text-[9px] text-slate-500 uppercase tracking-widest">Operator_Status</span>
+              <span className="text-[10px] text-white font-bold">{user?.display_name} // <span className="text-cyan-500">{user?.role?.toUpperCase()}</span></span>
            </div>
            <button onClick={logout} className="px-4 py-2 border border-white/10 text-[9px] hover:border-cyan-500/50 hover:text-cyan-500 transition-all uppercase tracking-widest">
              Exit_Session
@@ -90,12 +85,29 @@ export default function PrivateDashboard() {
         {/* --- Sidebar Nav --- */}
         <aside className="w-64 border-r border-white/5 p-6 flex flex-col gap-8 bg-white/[0.005]">
           <nav className="flex flex-col gap-2">
-            {['Overview', 'Project_Lattice', 'Compliance_Shield', 'Security_Vault'].map((item) => (
+            {['Overview', 'Project_Lattice', 'Compliance_Shield', 'Forensic_Vault'].map((item) => (
               <button key={item} className={`text-[10px] text-left py-3 px-4 tracking-widest uppercase transition-all ${item === 'Overview' ? 'bg-cyan-500/10 text-cyan-500 border-l-2 border-cyan-500' : 'text-slate-500 hover:text-white'}`}>
                 {item}
               </button>
             ))}
           </nav>
+
+          {/* Pending Pulls Section (Owner Only) */}
+          {isOwner && pendingPulls.length > 0 && (
+            <div className="border border-cyan-500/20 bg-cyan-500/5 p-4 rounded">
+              <h4 className="text-[9px] font-bold text-cyan-500 tracking-widest uppercase mb-3">Pending_Pulls ({pendingPulls.length})</h4>
+              {pendingPulls.map(pull => (
+                <div key={pull.id} className="text-[9px] mb-3 pb-3 border-b border-white/5">
+                  <div className="text-white mb-1">Auditor: {pull.auditor_name}</div>
+                  <div className="text-slate-500 mb-2">Ref: {pull.audit_id.slice(0,8)}...</div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleApproval(pull.id, 'APPROVED')} className="flex-1 bg-cyan-500 text-black py-1 hover:bg-cyan-400 transition-all">APPROVE</button>
+                    <button onClick={() => handleApproval(pull.id, 'REJECTED')} className="flex-1 border border-white/10 py-1 hover:border-red-500/50 hover:text-red-500 transition-all">DENY</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {isOwner && (
             <div className="mt-auto border-t border-white/5 pt-6">
@@ -131,7 +143,7 @@ export default function PrivateDashboard() {
             {[
               { label: 'Regional Hub', value: user?.org_id?.toUpperCase(), sub: 'SOVEREIGN_GATEWAY' },
               { label: 'Active Spoke Nodes', value: projects.length, sub: 'FLEET_ENUMERATION' },
-              { label: 'Compliance Health', value: '98.2%', sub: 'REAL_TIME_PARITY', high: true },
+              { label: 'Integrity Score', value: stats?.integrity_score || '98.2%', sub: 'REAL_TIME_PARITY', high: true },
               { label: 'Regional God Key', value: '••••••••', sub: 'ENCRYPTED_VAULT', reveal: true },
             ].map((m, i) => (
               <div key={i} className="p-6 border border-white/5 bg-white/[0.01] relative group overflow-hidden">
@@ -152,19 +164,53 @@ export default function PrivateDashboard() {
               <TacticalLattice projects={projects} department={user?.department} />
             </div>
 
-            {/* Event Ticker */}
+            {/* Event Ticker (Live Data) */}
             <div className="border border-white/5 bg-white/[0.005] flex flex-col h-[500px]">
-               <div className="p-4 border-b border-white/5 text-[9px] font-bold tracking-widest text-slate-400 uppercase">
-                  Violation_Ticker // Live
+               <div className="p-4 border-b border-white/5 text-[9px] font-bold tracking-widest text-slate-400 uppercase flex justify-between">
+                  <span>Violation_Ticker // Live</span>
+                  <span className="text-cyan-500 animate-pulse">●</span>
                </div>
                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {[1,2,3,4,5].map(i => (
-                    <div key={i} className="border-l-2 border-amber-500/30 pl-4 py-1">
-                      <div className="text-[8px] text-slate-500 mb-1">2026-05-09 10:22:1{i} // SEC-042</div>
-                      <div className="text-[10px] text-slate-300">RULE_BREACH: Unapproved transfer threshold exceeded on Node_0x{i}</div>
+                  {projects.flatMap(p => p.recent_violations || []).length === 0 ? (
+                    <div className="text-[10px] text-slate-600 text-center py-20 uppercase tracking-[0.3em]">No_Threats_Detected</div>
+                  ) : projects.flatMap(p => p.recent_violations || []).map((v, i) => (
+                    <div key={i} className="border-l-2 border-red-500/30 pl-4 py-1 hover:bg-white/[0.02] transition-all cursor-pointer">
+                      <div className="text-[8px] text-slate-500 mb-1">{v.timestamp} // {v.rule_id}</div>
+                      <div className="text-[10px] text-slate-300">{v.summary}</div>
+                      <div className="text-[8px] text-cyan-500 mt-2 uppercase">Investigate_Relay →</div>
                     </div>
                   ))}
                </div>
+            </div>
+          </div>
+
+          {/* Project Detailed Grid */}
+          <div className="mt-10">
+            <h4 className="text-[10px] font-bold text-slate-500 tracking-[0.4em] uppercase mb-6">Spoke_Node_Inventory</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+               {projects.map(p => (
+                 <div key={p.id} className="border border-white/5 bg-white/[0.01] p-6 hover:border-cyan-500/30 transition-all group">
+                    <div className="flex justify-between items-start mb-6">
+                      <div>
+                        <div className="text-sm font-bold text-white mb-1 group-hover:text-cyan-500 transition-all">{p.name}</div>
+                        <div className="text-[9px] text-slate-500 uppercase tracking-widest">{p.id}</div>
+                      </div>
+                      <span className={`px-2 py-1 text-[8px] font-bold rounded ${p.status === 'ACTIVE' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                        {p.status}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-2 mb-6">
+                       <div className="flex justify-between text-[9px]">
+                          <span className="text-slate-500">Compliance_Rate</span>
+                          <span className="text-white font-bold">{p.compliance_rate || '100%'}</span>
+                       </div>
+                       <div className="w-full h-1 bg-white/5">
+                          <div className="h-full bg-cyan-500" style={{ width: p.compliance_rate || '100%' }} />
+                       </div>
+                    </div>
+                    <button className="w-full border border-white/10 py-2 text-[9px] tracking-widest uppercase hover:bg-white/5 transition-all">Enter_Node_Console</button>
+                 </div>
+               ))}
             </div>
           </div>
 
