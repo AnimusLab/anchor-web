@@ -121,9 +121,13 @@ def on_startup():
             WHERE regional_key IS NULL AND master_key_hash IS NOT NULL;
         """))
         
+        # 5. SOVEREIGN PURGE: Drop the deprecated duplicate columns permanently
+        db.execute(text("ALTER TABLE organizations DROP COLUMN IF EXISTS server_region;"))
+        db.execute(text("ALTER TABLE organizations DROP COLUMN IF EXISTS master_key_hash;"))
+        
         db.commit()
         db.close()
-        print("[✓] Sovereign Schema Healer: All columns unified successfully.")
+        print("[✓] Sovereign Schema Healer: All columns unified and purged successfully.")
     except Exception as e:
         print(f"[!!!] SCHEMA HEALER FAILED: {e}")
 

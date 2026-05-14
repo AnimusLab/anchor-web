@@ -11,14 +11,9 @@ class Organization(Base):
     hub_id         = Column(String, unique=True, index=True)        # "alab", "sec"
     display_name   = Column(String, nullable=False)                 # "Animus Global"
     domain         = Column(String, unique=True, index=True)        # "animuslab.ai"
-    # --- Unified Sovereign Schema (v5.0.0) ---
-    region         = Column(String, nullable=True)                  # Unified Region (e.g., "IN", "US", "EU")
-    regional_key   = Column(String, nullable=True)                  # Unified God Key (sk_live_...)
-    
-    # --- DEPRECATED COLUMNS (Scheduled for Purge) ---
-    master_key_hash= Column(String, nullable=True)                  # DEPRECATED: Use regional_key
-    server_region  = Column(String, nullable=True)                  # DEPRECATED: Use region
-    
+    # --- Sovereign Schema (v5.0.0) ---
+    region         = Column(String, nullable=True)                  # Region code e.g. "IN", "US", "EU"
+    regional_key   = Column(String, nullable=True)                  # Sovereign God Key (sk_live_...)
     hr_contact     = Column(String, nullable=True)                  # Onboarding Manager
     status         = Column(String, default="pending")              # "pending", "approved", "suspended"
     org_type       = Column(String, default="enterprise")           # "enterprise", "regulator"
