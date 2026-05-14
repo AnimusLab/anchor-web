@@ -67,7 +67,11 @@ def run_migrations():
                 conn.execute(text(stmt))
                 conn.commit()
             except Exception:
-                # Column already exists or table already exists
+                # IMPORTANT: Rollback the transaction on failure to allow the next statement to run
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
                 pass
     print("[BOOT] Schema migrations verified.")
 
