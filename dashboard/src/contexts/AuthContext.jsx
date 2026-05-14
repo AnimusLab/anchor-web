@@ -31,19 +31,29 @@ export function AuthProvider({ children }) {
 
 
     const completeRelayLogin = async (newToken) => {
-        // Step 1: Store the token immediately
+        // Step 1: Store token
         setToken(newToken);
         localStorage.setItem('anchor_token', newToken);
         
-        // Step 2: Decode role directly from JWT payload (no extra network call needed)
         try {
+            // Step 2: Decode JWT and set user IMMEDIATELY so PrivateRoute doesn't kick back
             const payload = JSON.parse(atob(newToken.split('.')[1]));
-            // Step 3: Fetch full profile in background to populate user context
+            const immediateUser = {
+                sub: payload.sub,
+                email: payload.sub, // sub is email
+                role: payload.role || 'member',
+                org_id: payload.org_id || null,
+                display_name: 'LOADING...',
+                hub_id: 'PENDING',
+            };
+            setUser(immediateUser); // <-- Set NOW, before navigate() fires
+            
+            // Step 3: Enrich with full profile in background
             fetch(endpoints.me, { headers: { Authorization: `Bearer ${newToken}` } })
                 .then(res => res.ok ? res.json() : null)
                 .then(data => { if (data) setUser(data); })
                 .catch(() => {});
-            // Return role immediately from JWT — don't wait for /me
+            
             return payload.role || 'member';
         } catch (err) {
             console.error("JWT decode failed:", err);
