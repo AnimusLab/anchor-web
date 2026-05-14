@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import { AuthProvider } from './contexts/AuthContext'
 import Dashboard from './pages/Dashboard'
 import ProvisioningPortal from './pages/ProvisioningPortal'
+import WhitelistManagement from './pages/WhitelistManagement'
 import AuditorManagement from './pages/AuditorManagement'
 import LiveNOC from './pages/LiveNOC'
 import PendingApprovals from './pages/PendingApprovals'
@@ -36,6 +37,7 @@ const navItems = [
     section: 'ACCESS MANAGEMENT',
     items: [
       { label: 'Pending Approvals', path: '/approvals', icon: Icon.approve },
+      { label: 'Sovereign Whitelist', path: '/whitelist', icon: Icon.lock },
     ]
   },
   {
@@ -215,6 +217,7 @@ export default function App() {
         <Route path="/provisioning"      element={<Layout><ProvisioningPortal /></Layout>} />
         <Route path="/auditors"          element={<Layout><AuditorManagement /></Layout>} />
         <Route path="/approvals"         element={<Layout><PendingApprovals /></Layout>} />
+        <Route path="/whitelist"         element={<Layout><WhitelistManagement /></Layout>} />
         <Route path="/billing"           element={<Layout><BillingSubscriptions /></Layout>} />
         <Route path="/identity"          element={<Layout><IdentityResolution /></Layout>} />
         <Route path="/identity-recovery" element={<Layout><IdentityRecovery /></Layout>} />

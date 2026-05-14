@@ -397,11 +397,17 @@ def rotate_hub_key(hub_id: str, current_user: dict = Depends(get_current_admin_u
         "message": "REGIONAL KEY ROTATED SUCCESSFULLY"
     }
 
+@app.get("/api/admin/whitelist")
+def get_whitelist(current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    """Lists all pre-authorized emails."""
+    return db.query(WhitelistEntry).all()
+
 @app.post("/api/admin/whitelist")
 def add_to_whitelist(req: dict = Body(...), current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
     """Pre-authorizes an email for onboarding."""
     email = req.get("email", "").strip().lower()
     org_id = req.get("org_id", "").strip().lower()
+    role = req.get("role", "owner").strip().lower()
     
     if not email or not org_id:
         raise HTTPException(status_code=400, detail="Email and Org ID are required.")
@@ -412,11 +418,22 @@ def add_to_whitelist(req: dict = Body(...), current_user: dict = Depends(get_cur
     new_entry = WhitelistEntry(
         email=email,
         org_id=org_id,
+        role=role,
         created_at=datetime.utcnow().isoformat()
     )
     db.add(new_entry)
     db.commit()
     return {"status": "WHITELISTED", "email": email}
+
+@app.delete("/api/admin/whitelist/{id}")
+def delete_from_whitelist(id: int, current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    """Revokes a whitelist authorization."""
+    entry = db.query(WhitelistEntry).filter(WhitelistEntry.id == id).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="ENTRY NOT FOUND")
+    db.delete(entry)
+    db.commit()
+    return {"status": "DELETED"}
 
 # --- 5. FORENSIC APPROVAL ENGINE ---
 @app.get("/api/forensic/pending")

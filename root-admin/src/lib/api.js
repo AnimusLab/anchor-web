@@ -22,6 +22,10 @@ export const endpoints = {
   pending:  `${API_BASE}/api/auth/pending`,
   approve:  `${API_BASE}/api/auth/approve`,
   revoke:   `${API_BASE}/api/oversight/admin/revoke`,
+  
+  // Whitelist Management
+  whitelist: `${API_BASE}/api/admin/whitelist`,
+  deleteWhitelist: (id) => `${API_BASE}/api/admin/whitelist/${id}`,
 
   // Analytics & Ledger
   stats:  `${API_BASE}/api/stats`,
