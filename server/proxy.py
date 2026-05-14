@@ -531,7 +531,9 @@ async def submit_telemetry(payload: IngressPayload, background_tasks: Background
     except Exception as e:
         logger.error(f"[!!!] INGRESS FAILURE: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail="Internal processing error def _enforce_tenant_scope(current_user: dict, db: Session, hub_id: str = None):
+        raise HTTPException(status_code=500, detail="Internal processing error in Master Node")
+
+def _enforce_tenant_scope(current_user: dict, db: Session, hub_id: str = None):
     """
     Enforces hub-level isolation.
     """
