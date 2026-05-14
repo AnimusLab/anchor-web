@@ -10,7 +10,8 @@ const V = {
   card: 'var(--bg-card)', surface: 'var(--bg-surface)', void: 'var(--bg-void)',
   border: 'var(--border)', borderLit: 'var(--border-lit)',
   green: 'var(--green)', red: 'var(--red)', amber: 'var(--amber)',
-  accent: 'var(--accent)', cyan: 'var(--cyan)',
+  accent: 'var(--accent)', 'accent-soft': 'var(--accent-soft)',
+  cyan: 'var(--cyan)', 'cyan-soft': 'var(--cyan-soft)',
 };
 
 function StatCard({ label, value, sub, color, colorClass }) {
@@ -112,13 +113,13 @@ function DashboardInner() {
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: V.primary }}>Anchor Enterprise</div>
-            <div style={{ fontSize: 10, color: V.accent-soft, letterSpacing: '0.05em', fontWeight: 500 }}>SOVEREIGN MODE</div>
+            <div style={{ fontSize: 10, color: V['accent-soft'], letterSpacing: '0.05em', fontWeight: 500 }}>SOVEREIGN MODE</div>
           </div>
         </div>
 
         {/* Clearance Badge (Oversight Style) */}
         <div style={{ margin: '12px 12px 0', padding: '8px 12px', background: 'rgba(6,182,212,0.08)', borderRadius: 6, border: '1px solid rgba(6,182,212,0.2)' }}>
-          <div style={{ fontSize: 10, color: V.cyan-soft, marginBottom: 2, fontWeight: 600 }}>PRIVILEGE: OWNER</div>
+          <div style={{ fontSize: 10, color: V['cyan-soft'], marginBottom: 2, fontWeight: 600 }}>PRIVILEGE: OWNER</div>
           <div style={{ fontSize: 11, color: V.secondary, fontFamily: 'JetBrains Mono, monospace' }}>
             {user?.org_id || 'LOCAL_NODE'}
           </div>
@@ -304,7 +305,7 @@ function DashboardInner() {
                         <span style={{ color: '#fff' }}>{p.compliance_rate || '100%'}</span>
                       </div>
                       <div style={{ height: 4, background: V.void, borderRadius: 2, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', background: V.accent, width: p.compliance_rate || '100%', boxShadow: `0 0 8px ${V.accent-soft}` }} />
+                        <div style={{ height: '100%', background: V.accent, width: p.compliance_rate || '100%', boxShadow: `0 0 8px ${V['accent-soft']}` }} />
                       </div>
                    </div>
                    
