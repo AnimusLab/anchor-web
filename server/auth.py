@@ -433,9 +433,17 @@ def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depe
 
 @auth_router.get("/me")
 def get_current_user_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    user = db.query(EnterpriseUser).filter(EnterpriseUser.id == current_user["sub"]).first()
+    sub = current_user.get("sub", "")
+    
+    # JWT stores 'sub' as the email. Try email lookup first.
+    user = db.query(EnterpriseUser).filter(EnterpriseUser.email == sub).first()
     if not user:
-        user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == current_user["sub"]).first()
+        user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.email == sub).first()
+    # Fallback: try as ID (legacy tokens)
+    if not user:
+        user = db.query(EnterpriseUser).filter(EnterpriseUser.id == sub).first()
+    if not user:
+        user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == sub).first()
     if not user:
         raise HTTPException(status_code=404, detail="USER NOT FOUND")
     org = db.query(Organization).filter(Organization.id == user.org_id).first()
@@ -444,7 +452,9 @@ def get_current_user_profile(current_user: dict = Depends(get_current_user), db:
         "email": getattr(user, 'email', None),
         "display_name": getattr(user, 'display_name', 'AUTHORIZED'),
         "role": getattr(user, 'role', 'member'),
+        "org_id": getattr(user, 'org_id', None),
         "hub_id": getattr(org, 'hub_id', 'PENDING'),
+        "region": getattr(org, 'region', 'GLOBAL'),
         "department": getattr(user, 'department', 'OPS')
     }
 

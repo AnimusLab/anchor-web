@@ -31,22 +31,24 @@ export function AuthProvider({ children }) {
 
 
     const completeRelayLogin = async (newToken) => {
+        // Step 1: Store the token immediately
         setToken(newToken);
         localStorage.setItem('anchor_token', newToken);
         
+        // Step 2: Decode role directly from JWT payload (no extra network call needed)
         try {
-            const res = await fetch(endpoints.me, {
-                headers: { Authorization: `Bearer ${newToken}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setUser(data);
-                return data.role;
-            }
+            const payload = JSON.parse(atob(newToken.split('.')[1]));
+            // Step 3: Fetch full profile in background to populate user context
+            fetch(endpoints.me, { headers: { Authorization: `Bearer ${newToken}` } })
+                .then(res => res.ok ? res.json() : null)
+                .then(data => { if (data) setUser(data); })
+                .catch(() => {});
+            // Return role immediately from JWT — don't wait for /me
+            return payload.role || 'member';
         } catch (err) {
-            console.error("Failed to establish session:", err);
+            console.error("JWT decode failed:", err);
+            return null;
         }
-        return null;
     };
 
     const logout = () => {
