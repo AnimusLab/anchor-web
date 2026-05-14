@@ -36,7 +36,7 @@ class MessageType(str, Enum):
 class RelayMessage(BaseModel):
     """Universal envelope for all Hub ↔ Spoke messages."""
     type:      MessageType
-    entity_id: str
+    hub_id:    str
     timestamp: str = ""
     payload:   Optional[Any] = None
 
@@ -56,8 +56,8 @@ class RelayMessage(BaseModel):
 # ─── Payload Shapes ──────────────────────────────────────────────────────────
 
 class SpokeRegisterPayload(BaseModel):
-    """Sent by Spoke after WebSocket connection. Hub verifies MAT."""
-    mat:           str   # Machine Access Token for this entity
+    """Sent by Spoke after WebSocket connection. Hub verifies Regional Key."""
+    regional_key:  str   # The Sovereign Key for this Hub Silo
     spoke_version: str = "5.0.0"
 
 
@@ -84,7 +84,7 @@ class ForensicPullPayload(BaseModel):
     """
     request_id:  str   # Unique ID to correlate the async response
     entry_id:    str   # The LedgerEntry ID the Auditor wants to inspect
-    auditor_id:  str   # entity_id of the requesting Auditor (for audit trail)
+    clearance_id: str  # Clearance ID of the requesting Auditor (for audit trail)
 
 
 class ForensicResponsePayload(BaseModel):

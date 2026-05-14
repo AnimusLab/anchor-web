@@ -219,30 +219,30 @@ app.add_middleware(
 
 # --- 2. BROADCAST ENGINE (WebSockets) ---
 class ConnectionManager:
-    """Manages real-time oversight telemetry for Fleet Command (The NOC)"""
+    """Manages real-time oversight telemetry for Hub Command (The NOC)"""
     def __init__(self):
         self.active_connections: Dict[str, List[WebSocket]] = {}
 
-    async def connect(self, websocket: WebSocket, entity_id: str):
+    async def connect(self, websocket: WebSocket, hub_id: str):
         await websocket.accept()
-        if entity_id not in self.active_connections:
-            self.active_connections[entity_id] = []
-        self.active_connections[entity_id].append(websocket)
+        if hub_id not in self.active_connections:
+            self.active_connections[hub_id] = []
+        self.active_connections[hub_id].append(websocket)
 
-    def disconnect(self, websocket: WebSocket, entity_id: str):
-        if entity_id in self.active_connections:
-            self.active_connections[entity_id].remove(websocket)
+    def disconnect(self, websocket: WebSocket, hub_id: str):
+        if hub_id in self.active_connections:
+            self.active_connections[hub_id].remove(websocket)
 
-    async def broadcast(self, entity_id: str, message: dict):
+    async def broadcast(self, hub_id: str, message: dict):
         """Streams real-time violation alerts to the CISO Dashboard and Global NOC"""
-        # 1. Send to entity-specific listeners
-        if entity_id in self.active_connections:
-            for connection in self.active_connections[entity_id]:
+        # 1. Send to hub-specific listeners
+        if hub_id in self.active_connections:
+            for connection in self.active_connections[hub_id]:
                 await connection.send_json(message)
         
         # 2. Mirror to Global NOC (Admin only)
         if "GLOBAL_SYSTEM" in self.active_connections:
-            message["_mirror"] = entity_id # Mark the source entity
+            message["_mirror"] = hub_id # Mark the source hub
             for connection in self.active_connections["GLOBAL_SYSTEM"]:
                 await connection.send_json(message)
 
@@ -252,26 +252,25 @@ manager = ConnectionManager()
 class SpokeRegistry:
     """
     Tracks all active Enterprise Spoke WebSocket connections.
-    The Hub uses this to push FORENSIC_PULL commands to specific Spokes
-    when an Auditor requests raw evidence — acting as the sovereign relay.
+    The Hub uses this to push FORENSIC_PULL commands to specific Spokes.
     """
     def __init__(self):
-        # entity_id → WebSocket
+        # hub_id → WebSocket
         self._spokes: Dict[str, WebSocket] = {}
         # Pending forensic requests: request_id → asyncio.Future
         self._pending: Dict[str, asyncio.Future] = {}
 
-    def register(self, entity_id: str, ws: WebSocket):
-        self._spokes[entity_id] = ws
+    def register(self, hub_id: str, ws: WebSocket):
+        self._spokes[hub_id] = ws
 
-    def deregister(self, entity_id: str):
-        self._spokes.pop(entity_id, None)
+    def deregister(self, hub_id: str):
+        self._spokes.pop(hub_id, None)
 
-    def is_online(self, entity_id: str) -> bool:
-        return entity_id in self._spokes
+    def is_online(self, hub_id: str) -> bool:
+        return hub_id in self._spokes
 
-    async def pull_forensics(self, entity_id: str, entry_id: str,
-                              auditor_id: str, timeout: float = 15.0) -> dict:
+    async def pull_forensics(self, hub_id: str, entry_id: str,
+                               clearance_id: str, timeout: float = 15.0) -> dict:
         """
         Brokers a real-time forensic pull from an Enterprise Spoke.
         Returns the decrypted forensic payload or raises HTTPException.
@@ -279,11 +278,11 @@ class SpokeRegistry:
         import asyncio, base64
         from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-        ws = self._spokes.get(entity_id)
+        ws = self._spokes.get(hub_id)
         if not ws:
             raise HTTPException(
                 status_code=503,
-                detail=f"SPOKE_OFFLINE: Enterprise node '{entity_id}' is not connected to the Grid."
+                detail=f"SPOKE_OFFLINE: Enterprise node '{hub_id}' is not connected to the Grid."
             )
 
         request_id = f"req_{int(time.time()*1000)}"
@@ -292,11 +291,11 @@ class SpokeRegistry:
 
         pull_msg = RelayMessage(
             type=MessageType.FORENSIC_PULL,
-            entity_id=entity_id,
+            hub_id=hub_id,
             payload=ForensicPullPayload(
                 request_id=request_id,
                 entry_id=entry_id,
-                auditor_id=auditor_id,
+                clearance_id=clearance_id,
             ).model_dump(),
         )
         await ws.send_text(pull_msg.to_json())
@@ -365,7 +364,7 @@ class SubscriptionRequest(BaseModel):
     dialect: str
 
 class IngressPayload(BaseModel):
-    entity_id: str
+    hub_id: str
     mat: str
     audit_data: Dict[str, Any]
     
@@ -379,24 +378,23 @@ class ResolveRequest(BaseModel):
 def provision_hub_manual(org_id: str, region: str, unit: str, current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
     from auth import _generate_hub_id
     hub_id = _generate_hub_id(org_id, region, unit)
-    # logic...
     return {"status": "SUCCESS", "hub_id": hub_id}
 
-@app.post("/api/admin/rotate-secret/{entity_id}")
-def rotate_fleet_secret(entity_id: str, current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
-    """Rotates the webhook secret for a fleet to satisfy operational resilience requirements"""
-    fleet = db.query(Fleet).filter(Fleet.entity_id == entity_id).first()
-    if not fleet:
-        raise HTTPException(status_code=404, detail="FLEET NOT FOUND")
+@app.post("/api/admin/rotate-key/{hub_id}")
+def rotate_hub_key(hub_id: str, current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    """Rotates the Sovereign Regional Key for a hub."""
+    hub = db.query(Hub).filter(Hub.id == hub_id).first()
+    if not hub:
+        raise HTTPException(status_code=404, detail="HUB NOT FOUND")
 
-    new_secret = secrets.token_urlsafe(32)
-    fleet.webhook_secret = encrypt_secret(new_secret)
+    new_key = f"sk_live_{secrets.token_urlsafe(32)}"
+    hub.regional_key = new_key
     db.commit()
 
     return {
-        "entity_id": entity_id,
-        "new_webhook_secret": new_secret,
-        "message": "WEBHOOK SECRET ROTATED SUCCESSFULLY"
+        "hub_id": hub_id,
+        "new_regional_key": new_key,
+        "message": "REGIONAL KEY ROTATED SUCCESSFULLY"
     }
 
 @app.post("/api/admin/whitelist")
@@ -974,7 +972,7 @@ async def fleet_command_center(websocket: WebSocket, entity_id: str, token: str 
 # --- 10. SPOKE RELAY GATEWAY (Phase 18 — Sovereign Relay) ---
 
 @app.websocket("/ws/spoke")
-async def spoke_gateway(websocket: WebSocket, entity_id: str = Query(...)):
+async def spoke_gateway(websocket: WebSocket):
     """
     The sovereign relay endpoint. Enterprise Spokes connect here permanently.
     - Spokes register via SPOKE_REGISTER with their MAT.
@@ -985,34 +983,36 @@ async def spoke_gateway(websocket: WebSocket, entity_id: str = Query(...)):
     authenticated = False
 
     try:
-        # Step 1: Await SPOKE_REGISTER with MAT verification
+        # Step 1: Handshake (Wait for SPOKE_REGISTER)
         raw = await asyncio.wait_for(websocket.receive_text(), timeout=10.0)
-        msg = RelayMessage.from_json(raw)
-
-        if msg.type != MessageType.SPOKE_REGISTER:
-            await websocket.close(code=4001, reason="EXPECTED SPOKE_REGISTER")
+        reg_msg = RelayMessage.from_json(raw)
+        
+        if reg_msg.type != MessageType.SPOKE_REGISTER:
+            await websocket.close(code=4002, reason="EXPECTED_SPOKE_REGISTER")
             return
 
-        reg = SpokeRegisterPayload(**msg.payload)
+        reg = SpokeRegisterPayload(**reg_msg.payload)
+        hub_id = reg_msg.hub_id
 
-        # Verify the MAT against the Hub's entity registry (Neon)
+        # Verify Hub identity and Regional Key
         with next(get_db()) as db:
-            fleet = db.query(Fleet).filter(Fleet.entity_id == entity_id).first()
-            if not fleet or fleet.key_hash != hashlib.sha256(reg.mat.encode()).hexdigest():
-                rej = RelayMessage(type=MessageType.HUB_REJECT, entity_id=entity_id,
-                                    payload=HubAckPayload(status="ERROR", message="INVALID_MAT").model_dump())
+            from models import Hub
+            hub = db.query(Hub).filter(Hub.id == hub_id).first()
+            if not hub or hub.regional_key != reg.regional_key:
+                rej = RelayMessage(type=MessageType.HUB_REJECT, hub_id=hub_id,
+                                    payload=HubAckPayload(status="ERROR", message="INVALID_REGIONAL_KEY").model_dump())
                 await websocket.send_text(rej.to_json())
-                await websocket.close(code=4003, reason="INVALID MAT")
+                await websocket.close(code=4003, reason="INVALID REGIONAL KEY")
                 return
 
-        # MAT verified — register this Spoke
-        spoke_registry.register(entity_id, websocket)
+        # Regional Key verified — register this Spoke
+        spoke_registry.register(hub_id, websocket)
         authenticated = True
 
-        ack = RelayMessage(type=MessageType.HUB_ACK, entity_id=entity_id,
+        ack = RelayMessage(type=MessageType.HUB_ACK, hub_id=hub_id,
                             payload=HubAckPayload(status="OK", message="SPOKE_REGISTERED").model_dump())
         await websocket.send_text(ack.to_json())
-        logger.info("[GRID] Spoke registered: entity_id='%s'", entity_id)
+        logger.info("[GRID] Spoke registered: hub_id='%s'", hub_id)
 
         # Step 2: Message processing loop
         while True:
@@ -1032,7 +1032,7 @@ async def spoke_gateway(websocket: WebSocket, entity_id: str = Query(...)):
                     if not existing:
                         entry = LedgerEntry(
                             id=header.entry_id,
-                            entity_id=entity_id,
+                            hub_id=hub_id,
                             timestamp=header.timestamp,
                             type=header.type,
                             chain_hash=header.chain_hash,
@@ -1046,7 +1046,7 @@ async def spoke_gateway(websocket: WebSocket, entity_id: str = Query(...)):
                         )
                         db.add(entry)
                         db.commit()
-                logger.info("[GRID] Audit header stored for %s / %s", entity_id, header.entry_id)
+                logger.info("[GRID] Audit header stored for %s / %s", hub_id, header.entry_id)
 
             elif msg.type == MessageType.FORENSIC_RESPONSE:
                 # Resolve a pending Auditor request
@@ -1066,22 +1066,22 @@ async def spoke_gateway(websocket: WebSocket, entity_id: str = Query(...)):
                 spoke_registry.resolve_pull(resp.request_id, decrypted)
 
             elif msg.type == MessageType.PING:
-                pong = RelayMessage(type=MessageType.PONG, entity_id=entity_id)
+                pong = RelayMessage(type=MessageType.PONG, hub_id=hub_id)
                 await websocket.send_text(pong.to_json())
 
     except WebSocketDisconnect:
         pass
     except asyncio.TimeoutError:
-        logger.warning("[GRID] Spoke '%s' timed out during handshake", entity_id)
+        logger.warning("[GRID] Spoke '%s' timed out during handshake", hub_id)
     finally:
         if authenticated:
-            spoke_registry.deregister(entity_id)
-            logger.info("[GRID] Spoke disconnected: entity_id='%s'", entity_id)
+            spoke_registry.deregister(hub_id)
+            logger.info("[GRID] Spoke disconnected: hub_id='%s'", hub_id)
 
 
 class ForensicRelayRequest(BaseModel):
     entry_id:  str
-    entity_id: str
+    hub_id: str
 
 
 @app.post("/api/forensic/relay")
@@ -1098,14 +1098,14 @@ async def forensic_relay(
     if current_user["role"] not in ("admin", "regulator"):
         raise HTTPException(status_code=403, detail="AUDITOR PRIVILEGES REQUIRED")
 
-    auditor_id = current_user["sub"]
+    clearance_id = current_user["sub"]
     logger.info("[RELAY] Auditor '%s' requesting forensics for entry '%s' from Spoke '%s'",
-                 auditor_id, body.entry_id, body.entity_id)
+                 clearance_id, body.entry_id, body.hub_id)
 
     decrypted = await spoke_registry.pull_forensics(
-        entity_id=body.entity_id,
+        hub_id=body.hub_id,
         entry_id=body.entry_id,
-        auditor_id=auditor_id,
+        clearance_id=clearance_id,
     )
     return {
         "status": "FORENSIC_RETRIEVED",

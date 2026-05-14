@@ -87,7 +87,7 @@ export default function PortalLayout({ children }) {
         
         const breachFound = data.some(entry => {
           if (entry.is_compliant) return false;
-          const watched = watchlist.find(w => w.id === (entry.entity_id || entry.project_name));
+          const watched = watchlist.find(w => w.id === (entry.hub_id || entry.project_name));
           if (!watched) return false;
           // Check if breach is newer than our last acknowledged check
           return new Date(entry.timestamp) > new Date(watched.lastSeen);

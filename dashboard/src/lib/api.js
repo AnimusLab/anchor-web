@@ -26,20 +26,20 @@ export const endpoints = {
     acceptInvite: `${API_BASE}/api/auth/register/accept-invite`,
 
     // Data
-    ledger: (entityId) => `${API_BASE}/api/ledger${entityId ? `?entity_id=${entityId}` : ''}`,
-    stats: (entityId) => `${API_BASE}/api/stats${entityId ? `?entity_id=${entityId}` : ''}`,
+    ledger: (hubId) => `${API_BASE}/api/ledger${hubId ? `?hub_id=${hubId}` : ''}`,
+    stats: (hubId) => `${API_BASE}/api/stats${hubId ? `?hub_id=${hubId}` : ''}`,
 
     // Audit
-    audit: (entityId) => `${API_BASE}/api/audit/${entityId}`,
-    translate: (entityId, entryId, dialect) =>
-        `${API_BASE}/api/audit/${entityId}/translate?entry_id=${entryId}&dialect=${dialect}`,
+    audit: (hubId) => `${API_BASE}/api/audit/${hubId}`,
+    translate: (hubId, entryId, dialect) =>
+        `${API_BASE}/api/audit/${hubId}/translate?entry_id=${entryId}&dialect=${dialect}`,
 
     // Phase 18: Sovereign Relay
     // Auditor calls this to pull raw forensic data brokered from the Enterprise Spoke
     forensicRelay: `${API_BASE}/api/forensic/relay`,
 
     // WebSocket
-    fleet: (entityId, token) => `${WS_BASE}/ws/fleet/${entityId}?token=${token}`,
+    spoke: (hubId, token) => `${WS_BASE}/ws/spoke/${hubId}?token=${token}`,
 
     // Admin (Root)
     provision: `${API_BASE}/api/admin/provision`,

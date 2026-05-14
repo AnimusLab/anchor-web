@@ -110,6 +110,20 @@ def get_current_admin_user(user: dict = Depends(get_current_user)):
 def _generate_key():
     return secrets.token_urlsafe(32)
 
+# Generate Company Abbreviation for IDs
+def generate_company_abbr(company_name: str) -> str:
+    if not company_name:
+        return "UNK"
+    
+    words = company_name.strip().upper().split()
+    if len(words) == 1:
+        abbr = words[0][:4]  # Take first 4 letters if single word
+    else:
+        # Take first letter of each word, max 4 letters
+        abbr = "".join(w[0] for w in words[:4])
+    
+    return abbr[:4]  # Ensure max 4 characters
+
 def _issue_jwt(user):
     exp = datetime.utcnow() + timedelta(days=1)
     return jwt.encode({
@@ -123,9 +137,10 @@ def _issue_jwt(user):
 # Final ID Standard Generators (v5.8)
 # =============================================================================
 
-def _generate_hub_id(org_id: str, region: str, unit: str):
+def _generate_hub_id(company_name: str, region: str, unit: str):
     """Format: JPMC-IN-MUM01"""
-    return f"{org_id.strip().upper()}-{region.strip().upper()}-{unit.strip().upper()}"
+    abbr = generate_company_abbr(company_name)
+    return f"{abbr}-{region.strip().upper()}-{unit.strip().upper()}"
 
 def _generate_clearance_id(role: str, org_id: str, region: str, agency: str = None):
     """
@@ -145,13 +160,6 @@ def _generate_clearance_id(role: str, org_id: str, region: str, agency: str = No
     # Standard: [ROLE]-[ORG]-[REGION_PREFIX]-[SERIAL]
     region_prefix = region.strip().upper()[:3]
     return f"{role_code}-{org_id.strip().upper()}-{region_prefix}-{serial:03d}"
-        company_abbr = "".join(w[0] for w in words if w)[:6]
-    else:
-        company_abbr = words[0][:6] if words else "ORG"
-    
-    region_code = region.strip().upper()[:3] if region else "GLB"
-    sequence = secrets.randbelow(900) + 100  # 100–999
-    return f"{role_code}-{company_abbr}-{region_code}-{sequence:03d}"
 
 def _generate_regulator_id(bureau: str, user_name: str, region: str = "GL"):
     """
@@ -506,7 +514,7 @@ def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depe
         # AUTO-PROVISION PRIMARY HUB (The Spoke Node)
         from models import Hub
         # Format: JPMC-IN-UNIT01
-        hub_id = _generate_hub_id(org.id, request.region, "UNIT01")
+        hub_id = _generate_hub_id(request.company_name, request.region, "UNIT01")
         new_hub = Hub(
             id=hub_id,
             org_id=org.id,

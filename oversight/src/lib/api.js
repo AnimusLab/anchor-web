@@ -11,11 +11,11 @@ export const endpoints = {
   me:       `${API_BASE}/api/auth/me`,
   logout:   `${API_BASE}/api/auth/me`, // Placeholder for session wipe
   
-  ledger:   (entityId = '') =>
-    entityId
-      ? `${API_BASE}/api/ledger?entity_id=${entityId}`
+  ledger:   (hubId = '') =>
+    hubId
+      ? `${API_BASE}/api/ledger?hub_id=${hubId}`
       : `${API_BASE}/api/ledger`,
-  entry:    (entityId, entryId, dialect) =>
-    `${API_BASE}/api/audit/${entityId}/entry/${entryId}?dialect=${dialect}`,
+  entry:    (hubId, entryId, dialect) =>
+    `${API_BASE}/api/audit/${hubId}/entry/${entryId}?dialect=${dialect}`,
   forensic: `${API_BASE}/api/forensic/relay`,
 }

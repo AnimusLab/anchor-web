@@ -12,8 +12,8 @@ Responsibilities:
 Deployment:
   docker run -d anchorgrid/spoke:5.0.0 \\
     -e HUB_URL=wss://api.anchorgovernance.tech/ws/spoke \\
-    -e ENTITY_ID=nexus_ai \\
-    -e MAT=0x... \\
+    -e HUB_ID=nexus_ai \\
+    -e REGIONAL_KEY=sk_live_... \\
     -v /data/anchor:/data
 """
 
@@ -49,8 +49,8 @@ from relay_protocol import (
 load_dotenv()
 
 # ─── Configuration ────────────────────────────────────────────────────────────
-ENTITY_ID    = os.getenv("ENTITY_ID", "")
-MAT          = os.getenv("MAT", "")
+HUB_ID       = os.getenv("HUB_ID", "")
+REGIONAL_KEY = os.getenv("REGIONAL_KEY", os.getenv("MAT", ""))
 HUB_URL      = os.getenv("HUB_URL", "wss://api.anchorgovernance.tech/ws/spoke")
 SPOKE_PORT   = int(os.getenv("SPOKE_PORT", 8001))
 
@@ -86,7 +86,7 @@ def init_spoke_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS spoke_ledger (
                 id               TEXT PRIMARY KEY,
-                entity_id        TEXT NOT NULL,
+                hub_id           TEXT NOT NULL,
                 parent_entry_id  TEXT,
                 timestamp        TEXT NOT NULL,
                 type             TEXT NOT NULL,
@@ -102,7 +102,7 @@ def init_spoke_db():
     logger.info("[SPOKE BOOT] Local SQLite schema verified at %s", DB_PATH)
 
 
-def store_entry_locally(entry_id: str, entity_id: str, entry_type: str,
+def store_entry_locally(entry_id: str, hub_id: str, entry_type: str,
                         chain_hash: str, signature: str, project_name: str,
                         is_compliant: bool, rule_id: Optional[str],
                         payload: dict) -> None:
@@ -110,11 +110,11 @@ def store_entry_locally(entry_id: str, entity_id: str, entry_type: str,
     with get_spoke_db() as conn:
         conn.execute("""
             INSERT OR IGNORE INTO spoke_ledger
-              (id, entity_id, timestamp, type, chain_hash, signature,
+              (id, hub_id, timestamp, type, chain_hash, signature,
                project_name, is_compliant, rule_id, payload)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            entry_id, entity_id,
+            entry_id, hub_id,
             datetime.now(timezone.utc).isoformat(),
             entry_type, chain_hash, signature,
             project_name, int(is_compliant), rule_id,
@@ -156,7 +156,7 @@ async def relay_loop():
     Reconnects automatically on disconnect.
     """
     global _hub_ws
-    spoke_ws_url = f"{HUB_URL}?entity_id={ENTITY_ID}"
+    spoke_ws_url = f"{HUB_URL}?hub_id={HUB_ID}"
 
     while True:
         try:
@@ -167,8 +167,8 @@ async def relay_loop():
                 # Step 1: Register with the Hub
                 reg_msg = RelayMessage(
                     type=MessageType.SPOKE_REGISTER,
-                    entity_id=ENTITY_ID,
-                    payload=SpokeRegisterPayload(mat=MAT).model_dump(),
+                    hub_id=HUB_ID,
+                    payload=SpokeRegisterPayload(regional_key=REGIONAL_KEY).model_dump(),
                 )
                 await ws.send(reg_msg.to_json())
                 logger.info("[RELAY] Registration sent. Waiting for Hub ACK...")
@@ -191,12 +191,12 @@ async def relay_loop():
                         pull = ForensicPullPayload(**msg.payload)
                         logger.info(
                             "[RELAY] FORENSIC_PULL received for entry %s (auditor: %s)",
-                            pull.entry_id, pull.auditor_id
+                            pull.entry_id, pull.clearance_id
                         )
                         await handle_forensic_pull(ws, pull)
 
                     elif msg.type == MessageType.PING:
-                        pong = RelayMessage(type=MessageType.PONG, entity_id=ENTITY_ID)
+                        pong = RelayMessage(type=MessageType.PONG, hub_id=HUB_ID)
                         await ws.send(pong.to_json())
 
         except Exception as e:
@@ -213,7 +213,7 @@ async def handle_forensic_pull(ws, pull: ForensicPullPayload):
         # Entry not found — tell the Hub
         err_msg = RelayMessage(
             type=MessageType.FORENSIC_RESPONSE,
-            entity_id=ENTITY_ID,
+            hub_id=HUB_ID,
             payload={"request_id": pull.request_id, "error": "ENTRY_NOT_FOUND"},
         )
         await ws.send(err_msg.to_json())
@@ -228,7 +228,7 @@ async def handle_forensic_pull(ws, pull: ForensicPullPayload):
 
     response_msg = RelayMessage(
         type=MessageType.FORENSIC_RESPONSE,
-        entity_id=ENTITY_ID,
+        hub_id=HUB_ID,
         payload=ForensicResponsePayload(
             request_id=pull.request_id,
             entry_id=pull.entry_id,
@@ -249,7 +249,7 @@ async def push_header_to_hub(header: AuditHeaderPayload):
     try:
         msg = RelayMessage(
             type=MessageType.AUDIT_HEADER,
-            entity_id=ENTITY_ID,
+            hub_id=HUB_ID,
             payload=header.model_dump(),
         )
         await _hub_ws.send(msg.to_json())
@@ -262,7 +262,7 @@ async def push_header_to_hub(header: AuditHeaderPayload):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_spoke_db()
-    logger.info("[SPOKE BOOT] Anchor Spoke Node v5.0.0 for entity '%s'", ENTITY_ID)
+    logger.info("[SPOKE BOOT] Anchor Spoke Node v5.0.0 for Hub '%s'", HUB_ID)
     # Start the background relay loop
     relay_task = asyncio.create_task(relay_loop())
     yield
@@ -274,7 +274,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 
 class SpokeIngressPayload(BaseModel):
-    entity_id:  str
+    hub_id:     str
     mat:        str
     audit_data: dict
 
@@ -286,8 +286,8 @@ async def spoke_ingest(body: SpokeIngressPayload):
     Accepts full telemetry, stores it locally, and pushes a lightweight
     header to the Hub — exactly like the old /api/ingress, but local-first.
     """
-    # 1. Verify MAT (check against .env MAT for this Spoke)
-    if body.mat != MAT:
+    # 1. Verify MAT (check against .env REGIONAL_KEY for this Spoke)
+    if body.mat != REGIONAL_KEY:
         raise HTTPException(status_code=401, detail="INVALID MAT")
 
     audit = body.audit_data
@@ -302,7 +302,7 @@ async def spoke_ingest(body: SpokeIngressPayload):
     # 2. Store FULL payload locally on the Spoke's SQLite
     store_entry_locally(
         entry_id=entry_id,
-        entity_id=body.entity_id,
+        hub_id=body.hub_id,
         entry_type=entry_type,
         chain_hash=chain_hash,
         signature=signature,
@@ -338,7 +338,7 @@ async def spoke_ingest(body: SpokeIngressPayload):
 def health():
     return {
         "status": "SPOKE_ONLINE",
-        "entity_id": ENTITY_ID,
+        "hub_id": HUB_ID,
         "hub_connected": _hub_ws is not None,
         "db": str(DB_PATH),
     }
