@@ -14,6 +14,136 @@ const V = {
   cyan: 'var(--cyan)', 'cyan-soft': 'var(--cyan-soft)',
 };
 
+// --- E-DUX ACTIVATION CEREMONY ---
+function HubActivation({ user, token, onActivated }) {
+  const [step, setStep] = useState('initial'); // initial, booting, generating, complete
+  const [logs, setLogs] = useState([]);
+  const [key, setKey] = useState(null);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const bootLogs = [
+    "INITIALIZING_SOVEREIGN_RELAY_V5.8...",
+    "HANDSHAKE: [HUB_SECURE_LATTICE] ... OK",
+    "VERIFYING_CLEARANCE_ID: [" + user?.sub + "] ... VERIFIED",
+    "ESTABLISHING_ISOLATED_SPOKE_CHANNEL...",
+    "GENERATING_GENESIS_BLOCK_HASH...",
+    "AWAITING_OWNER_HANDSHAKE..."
+  ];
+
+  useEffect(() => {
+    if (step === 'booting') {
+      let i = 0;
+      const interval = setInterval(() => {
+        setLogs(prev => [...prev, bootLogs[i]]);
+        i++;
+        if (i >= bootLogs.length) {
+          clearInterval(interval);
+          setTimeout(() => setStep('ready'), 500);
+        }
+      }, 400);
+      return () => clearInterval(interval);
+    }
+  }, [step]);
+
+  const handleActivate = async () => {
+    setStep('generating');
+    try {
+      const res = await fetch(`${endpoints.baseUrl}/api/activate/hub`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.status === 'ACTIVATED' || data.status === 'ALREADY_ACTIVE') {
+        setTimeout(() => {
+          setKey(data.regional_key || data.key);
+          setStep('complete');
+        }, 2000);
+      }
+    } catch (e) {
+      setLogs(prev => [...prev, "CRITICAL_ERROR: ACTIVATION_FAILED"]);
+      setStep('initial');
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'JetBrains Mono, monospace' }}>
+      
+      {/* Background Ambience */}
+      <div style={{ position: 'absolute', inset: 0, opacity: 0.05, background: `radial-gradient(circle at 50% 50%, ${V.accent}, transparent)` }} />
+      
+      <div style={{ width: '100%', maxWidth: 500, padding: 40, position: 'relative' }}>
+        
+        {step === 'initial' && (
+          <div className="fade-in" style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 11, color: V.accent, letterSpacing: '0.4em', marginBottom: 20 }}>SOVEREIGN_HUB_INIT</div>
+            <h1 style={{ fontSize: 24, color: '#fff', fontWeight: 700, marginBottom: 12 }}>Activate Your Silo</h1>
+            <p style={{ fontSize: 13, color: V.muted, lineHeight: 1.6, marginBottom: 32 }}>Your identity has been verified by the Root Admin. You must now activate your Sovereign Hub to generate your unique Spoke handle.</p>
+            <button onClick={() => setStep('booting')} style={{ padding: '14px 40px', background: V.accent, border: 'none', color: '#000', fontWeight: 800, fontSize: 12, letterSpacing: '0.1em', cursor: 'pointer', borderRadius: 4 }}>BEGIN_HANDSHAKE</button>
+          </div>
+        )}
+
+        {(step === 'booting' || step === 'ready') && (
+          <div className="fade-in">
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${V.border}`, borderRadius: 8, padding: 24, height: 240, overflowY: 'hidden', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {logs.map((log, i) => (
+                <div key={i} style={{ fontSize: 11, color: log.includes('OK') ? V.green : V.muted }}>
+                  {">"} {log}
+                </div>
+              ))}
+              {step === 'ready' && (
+                <div className="blink" style={{ marginTop: 20, textAlign: 'center' }}>
+                   <button onClick={handleActivate} style={{ padding: '10px 24px', background: 'transparent', border: `1px solid ${V.accent}`, color: V.accent, fontWeight: 700, fontSize: 11, cursor: 'pointer', borderRadius: 4 }}>ACTIVATE_REGIONAL_HUB</button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {step === 'generating' && (
+          <div className="fade-in" style={{ textAlign: 'center' }}>
+            <div className="pulse" style={{ width: 100, height: 100, borderRadius: '50%', background: 'rgba(6,182,212,0.1)', border: `1px solid ${V.accent}`, margin: '0 auto 30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+               <div style={{ width: 40, height: 40, border: '2px solid transparent', borderTopColor: V.accent, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+            </div>
+            <div style={{ fontSize: 12, color: V.accent, letterSpacing: '0.2em' }}>ASSEMBLING_SOVEREIGN_KEY...</div>
+          </div>
+        )}
+
+        {step === 'complete' && (
+          <div className="scale-in" style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 10, color: V.green, letterSpacing: '0.4em', marginBottom: 16 }}>SYSTEM_LIVE</div>
+            <h2 style={{ fontSize: 20, color: '#fff', marginBottom: 24 }}>Silo Activated</h2>
+            
+            <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', padding: 24, borderRadius: 8, marginBottom: 32 }}>
+               <div style={{ fontSize: 9, color: V.green, fontWeight: 700, letterSpacing: '0.1em', marginBottom: 12 }}>YOUR_SPOKE_HANDLE (REGIONAL_KEY)</div>
+               <div style={{ fontSize: 14, color: '#fff', fontFamily: 'JetBrains Mono', wordBreak: 'break-all', marginBottom: 20 }}>{key}</div>
+               <button onClick={() => { navigator.clipboard.writeText(key); setIsCopied(true); }} style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 10, borderRadius: 4, cursor: 'pointer' }}>
+                 {isCopied ? 'COPIED_TO_CLIPBOARD' : 'COPY_KEY'}
+               </button>
+            </div>
+
+            <div style={{ fontSize: 11, color: V.amber, marginBottom: 24 }}>⚠️ Store this key securely. It is the only handle to your Sovereign Spoke.</div>
+            
+            <button onClick={() => window.location.reload()} style={{ padding: '14px 40px', background: V.accent, border: 'none', color: '#000', fontWeight: 800, fontSize: 12, letterSpacing: '0.1em', cursor: 'pointer', borderRadius: 4 }}>ENTER_GOVERNANCE_PORTAL</button>
+          </div>
+        )}
+
+      </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 0.5; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .fade-in { animation: fadeIn 0.8s ease-out; }
+        .scale-in { animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .blink { animation: blink 1.5s infinite; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+      `}</style>
+    </div>
+  );
+}
+
 function StatCard({ label, value, sub, color, colorClass }) {
   return (
     <div className={`stat-card ${colorClass}`}>
@@ -52,7 +182,6 @@ class DashboardErrorBoundary extends Component {
 function DashboardInner() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
-  const [stats, setStats] = useState(null);
   const [hubs, setHubs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Overview');
@@ -63,7 +192,6 @@ function DashboardInner() {
     const fetchData = async () => {
       try {
         const headers = { Authorization: `Bearer ${token}` };
-        // In the new architecture, we fetch Hubs instead of projects
         const hubsRes = await fetch(`${endpoints.baseUrl}/api/auth/hubs`, { headers });
         if (hubsRes.ok) setHubs(await hubsRes.json());
 
@@ -78,23 +206,17 @@ function DashboardInner() {
     fetchData();
   }, [token]);
 
-  const handleApproval = async (pullId, status) => {
-    try {
-      await fetch(`${endpoints.baseUrl}/api/forensic/approve/${pullId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status })
-      });
-      setPendingPulls(prev => prev.filter(p => p.id !== pullId));
-    } catch (e) { console.error('Approval failed:', e); }
-  };
-
   if (loading) return (
     <div style={{ height: '100vh', background: V.void, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
       <div style={{ width: 40, height: 40, border: '2px solid rgba(255,255,255,0.05)', borderTopColor: V.accent, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
       <div style={{ fontSize: 9, letterSpacing: '0.4em', color: V.muted, textTransform: 'uppercase' }}>Synchronizing Sovereign Mesh</div>
     </div>
   );
+
+  // INTERCEPT: If Hub is not active, force the Ceremony
+  if (user?.role === 'owner' && !user?.hub_active) {
+    return <HubActivation user={user} token={token} />;
+  }
 
   const orgId = user?.org_id || 'PENDING_ORG';
   const clearanceId = user?.sub || 'PENDING_ID';
@@ -143,29 +265,6 @@ function DashboardInner() {
           <div className={`nav-link ${activeTab === 'Forensic' ? 'active' : ''}`} onClick={() => setActiveTab('Forensic')}>
             {Icon.audit} Forensic Vault
           </div>
-
-          {pendingPulls.length > 0 && (
-            <>
-              <div className="section-label">ENFORCEMENT QUEUE</div>
-              <div style={{ padding: '4px 8px' }}>
-                <div style={{ padding: 12, background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)', borderRadius: 6 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: V.accent, letterSpacing: '0.05em' }}>PENDING PULLS</span>
-                    <span style={{ background: V.accent, color: '#000', fontSize: 9, fontWeight: 800, padding: '1px 5px', borderRadius: 4 }}>{pendingPulls.length}</span>
-                  </div>
-                  {pendingPulls.slice(0, 1).map(p => (
-                    <div key={p.id}>
-                      <div style={{ fontSize: 11, color: '#fff', fontWeight: 600, marginBottom: 4 }}>{p.auditor_name}</div>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => handleApproval(p.id, 'APPROVED')} style={{ flex: 1, padding: '5px', background: V.accent, color: '#000', border: 'none', borderRadius: 4, fontSize: 9, fontWeight: 800, cursor: 'pointer' }}>GRANT</button>
-                        <button onClick={() => handleApproval(p.id, 'REJECTED')} style={{ flex: 1, padding: '5px', background: 'transparent', color: V.muted, border: `1px solid ${V.border}`, borderRadius: 4, fontSize: 9, fontWeight: 800, cursor: 'pointer' }}>DENY</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
         </nav>
 
         {/* Sidebar Footer */}
@@ -189,7 +288,7 @@ function DashboardInner() {
             <div style={{ height: 16, width: 1, background: V.borderLit }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div style={{ width: 7, height: 7, borderRadius: '50%', background: V.green, boxShadow: '0 0 6px var(--green)' }} />
-              <span style={{ fontSize: 12, color: V.secondary }}>HUB: {hubId} // {user?.region || 'LOCAL'}</span>
+              <span style={{ fontSize: 12, color: V.secondary }}>HUB: {hubId} // {user?.region || 'GLOBAL'}</span>
             </div>
           </div>
           
@@ -207,28 +306,6 @@ function DashboardInner() {
         {/* Content Area */}
         <main style={{ flex: 1, overflowY: 'auto', background: V.void, padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
           
-          {/* Quick Actions */}
-          <div className="ra-card" style={{ padding: '20px 24px' }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: V.primary, marginBottom: 16 }}>Sovereign Hub Actions</div>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              {[
-                { label: 'Rotate Regional Key', bg: V.accent },
-                { label: 'Verify Hub Integrity', bg: V.surface, border: V.borderLit },
-                { label: 'Export Sovereign Ledger', bg: V.surface, border: V.borderLit },
-              ].map((a, i) => (
-                <button key={i} style={{ padding: '9px 18px', borderRadius: 6, fontSize: 13, fontWeight: 600, color: '#fff', background: a.bg, border: a.border ? `1px solid ${a.border}` : 'none', cursor: 'pointer', transition: 'all 0.15s' }}
-                  onMouseEnter={e => { if(!a.bg.startsWith('var(--accent)')) e.currentTarget.style.background = V.card; }}
-                  onMouseLeave={e => { if(!a.bg.startsWith('var(--accent)')) e.currentTarget.style.background = a.bg; }}>
-                  {a.label}
-                </button>
-              ))}
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: V.muted, letterSpacing: '0.05em' }}>REGIONAL_KEY</span>
-                <span style={{ fontSize: 12, color: V.green, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{regionalKey}</span>
-              </div>
-            </div>
-          </div>
-
           {/* Stats Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
              <StatCard label="Spoke Node Handle" value={regionalKey} sub="REGIONAL_ACTIVATION_KEY" color={V.accent} colorClass="accent" />
@@ -239,7 +316,6 @@ function DashboardInner() {
 
           {/* Main Visuals */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: 20 }}>
-            
             <div className="ra-card" style={{ height: 500, position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 20, left: 24, zIndex: 5 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: V.accent, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Silo Lattice Mesh</div>
@@ -249,59 +325,17 @@ function DashboardInner() {
                 <TacticalLattice projects={hubs} department={user?.department} />
               </div>
             </div>
-
             <div className="ra-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                <div style={{ padding: '16px 20px', borderBottom: `1px solid ${V.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                 <div>
-                   <div style={{ fontSize: 15, fontWeight: 600, color: V.primary }}>Violation Ticker</div>
-                   <div style={{ fontSize: 12, color: V.muted, marginTop: 2 }}>Real-time breach monitoring</div>
-                 </div>
+                 <div style={{ fontSize: 15, fontWeight: 600, color: V.primary }}>Violation Ticker</div>
                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: V.red, animation: 'pulse 2s infinite' }} />
                </div>
-               <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifySelf: 'center', opacity: 0.15, paddingTop: 100 }}>
+               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifySelf: 'center', opacity: 0.15, paddingTop: 100 }}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ width: 64, height: 64, marginBottom: 16 }}><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                     <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase' }}>No Hub Breaches</div>
-                 </div>
                </div>
             </div>
-
           </div>
-
-          {/* Hub Inventory */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-               <div style={{ fontSize: 12, fontWeight: 700, color: V.muted, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Regional Hub Inventory</div>
-               <span className="badge badge-cyan">{hubs.length} HUB(S) ACTIVE</span>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-               {hubs.map(h => (
-                 <div key={h.id} className="ra-card slide-in" style={{ padding: 24, cursor: 'pointer' }}>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 16 }}>
-                     <div>
-                       <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{h.display_name}</div>
-                       <div style={{ fontSize: 11, color: V.dim, fontFamily: 'JetBrains Mono', marginTop: 4 }}>ID: {h.id}</div>
-                     </div>
-                     <span className="badge badge-green">{h.status || 'ACTIVE'}</span>
-                   </div>
-                   
-                   <div style={{ marginBottom: 20 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, fontWeight: 700, color: V.muted, textTransform: 'uppercase', marginBottom: 8 }}>
-                        <span>Silo Utilization</span>
-                        <span style={{ color: '#fff' }}>100%</span>
-                      </div>
-                      <div style={{ height: 4, background: V.void, borderRadius: 2, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', background: V.accent, width: '100%', boxShadow: `0 0 8px ${V['accent-soft']}` }} />
-                      </div>
-                   </div>
-                   
-                   <button style={{ width: '100%', padding: '8px', background: 'transparent', border: `1px solid ${V.borderLit}`, color: V.secondary, borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Connect to Spoke →</button>
-                 </div>
-               ))}
-            </div>
-          </div>
-
         </main>
       </div>
     </div>
