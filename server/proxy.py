@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Header, Depends, BackgroundTasks, WebSocket, WebSocketDisconnect, Query
+from fastapi import FastAPI, HTTPException, Header, Depends, BackgroundTasks, WebSocket, WebSocketDisconnect, Query, Body, Request
 from relay_protocol import (
     MessageType, RelayMessage,
     SpokeRegisterPayload, AuditHeaderPayload, ForensicPullPayload,
