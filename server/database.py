@@ -46,10 +46,10 @@ def run_migrations():
     SQLAlchemy models but are absent from the live database table."""
     from sqlalchemy import text
     migrations = [
-        "CREATE TABLE IF NOT EXISTS whitelist (id INTEGER PRIMARY KEY, email VARCHAR UNIQUE, org_id VARCHAR, role VARCHAR, created_at VARCHAR)",
+        "CREATE TABLE IF NOT EXISTS whitelist (id SERIAL PRIMARY KEY, email VARCHAR UNIQUE, org_id VARCHAR, role VARCHAR, created_at VARCHAR)",
         "ALTER TABLE hubs ADD COLUMN region VARCHAR",
         "ALTER TABLE hubs ADD COLUMN unit VARCHAR",
-        "ALTER TABLE hubs ADD COLUMN is_active BOOLEAN DEFAULT 0",
+        "ALTER TABLE hubs ADD COLUMN is_active BOOLEAN DEFAULT FALSE",
         "ALTER TABLE organizations ADD COLUMN domain VARCHAR",
         "ALTER TABLE regulatory_officials ADD COLUMN status VARCHAR DEFAULT 'pending'",
         "ALTER TABLE enterprise_users ADD COLUMN status VARCHAR DEFAULT 'pending'",

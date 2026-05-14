@@ -30,9 +30,9 @@ if not ANCHOR_MASTER_KEY:
     sys.exit(1)
 
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, func
-from database import get_db, init_db
-from models import Fleet, WebhookSubscription, LedgerEntry, EnterpriseUser, RegulatoryOfficial, Organization, ForensicRequest
+from sqlalchemy import desc, func, text
+from database import get_db, init_db, SessionLocal
+from models import Hub, LedgerEntry, EnterpriseUser, RegulatoryOfficial, Organization, ForensicRequest, WhitelistEntry
 from security import encrypt_secret, decrypt_secret
 from dispatch_manager import dispatch_webhook
 from auth import auth_router, get_current_user, get_current_admin_user
@@ -87,49 +87,9 @@ async def storage_monitor(current_user: dict = Depends(get_current_admin_user), 
 
 @app.on_event("startup")
 def on_startup():
+    """Genesis Sequence: Ensures schema is healed and tables are seeded."""
     init_db()
-    # --- Sovereign Schema Healer (v5.0.0 Patch) ---
-    try:
-        from sqlalchemy import text
-        from database import SessionLocal
-        db = SessionLocal()
-        
-        # 1. Organizations Table Enhancements
-        db.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS regional_key VARCHAR;"))
-        db.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS hr_contact VARCHAR;"))
-        
-        # 2. Enterprise Users Table Enhancements
-        db.execute(text("ALTER TABLE enterprise_users ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'approved';"))
-        
-        # 3. Ledger Table: Metadata-Only Architecture Support
-        db.execute(text("ALTER TABLE ledger ADD COLUMN IF NOT EXISTS decision_hash VARCHAR;"))
-        db.execute(text("ALTER TABLE ledger ADD COLUMN IF NOT EXISTS decentralized BOOLEAN DEFAULT TRUE;"))
-        db.execute(text("ALTER TABLE ledger ADD COLUMN IF NOT EXISTS chain_proof TEXT;"))
-        db.execute(text("ALTER TABLE ledger ADD COLUMN IF NOT EXISTS spoke_node_id VARCHAR;"))
-        
-        # 4. ATOMIC MIGRATION: Unify deprecated columns into sovereign standard
-        # Migrate server_region → region (only where region is NULL)
-        db.execute(text("""
-            UPDATE organizations 
-            SET region = server_region 
-            WHERE region IS NULL AND server_region IS NOT NULL;
-        """))
-        # Migrate master_key_hash → regional_key (only where regional_key is NULL)
-        db.execute(text("""
-            UPDATE organizations 
-            SET regional_key = master_key_hash 
-            WHERE regional_key IS NULL AND master_key_hash IS NOT NULL;
-        """))
-        
-        # 5. SOVEREIGN PURGE: Drop the deprecated duplicate columns permanently
-        db.execute(text("ALTER TABLE organizations DROP COLUMN IF EXISTS server_region;"))
-        db.execute(text("ALTER TABLE organizations DROP COLUMN IF EXISTS master_key_hash;"))
-        
-        db.commit()
-        db.close()
-        print("[✓] Sovereign Schema Healer: All columns unified and purged successfully.")
-    except Exception as e:
-        print(f"[!!!] SCHEMA HEALER FAILED: {e}")
+    print("[✓] Anchor Hub: Core Engine Operational.")
 
 
 # --- ROOT EMAIL REPAIR (One-time fix for corrupted records) ---
@@ -201,8 +161,8 @@ def get_public_mesh_stats(db: Session = Depends(get_db)):
                 payload = {}
 
             # Hash all identifying fields
-            entity_hash  = hashlib.sha256((e.entity_id or "").encode()).hexdigest()[:8]
-            project_raw  = payload.get("project_name", e.entity_id or "unknown")
+            entity_hash  = hashlib.sha256((e.hub_id or "").encode()).hexdigest()[:8]
+            project_raw  = payload.get("project_name", e.hub_id or "unknown")
             project_hash = hashlib.sha256(project_raw.encode()).hexdigest()[:8]
             rule_id      = payload.get("rule_id", e.type or "UNKNOWN")
 
@@ -231,7 +191,7 @@ def get_public_mesh_stats(db: Session = Depends(get_db)):
         "total_violations": total_violations,
         "total_mitigations":total_mitigations,
         "compliance_rate":  compliance_rate,
-        "active_nodes":     db.query(func.count(LedgerEntry.entity_id.distinct())).scalar() or 0,
+        "active_nodes":     db.query(func.count(LedgerEntry.hub_id.distinct())).scalar() or 0,
         "violations":       recent_violations,
     }
 
@@ -374,32 +334,18 @@ def hash_key(mat: str) -> str:
     """One-way hash for storing the MAT in the database"""
     return hashlib.sha256(mat.encode()).hexdigest()
 
-def verify_entity(entity_id: str, provided_mat: str, db: Session) -> bool:
+def verify_entity(hub_id: str, provided_mat: str, db: Session) -> bool:
     """
-    Verifies an incoming MAT against the stored hash in SQLAlchemy.
-    Supports both legacy Entity-level MATs and the new v5.0 Regional Org Master Keys.
+    Verifies an incoming MAT against the stored Hub regional_key.
+    The Regional Key acts as the 'Spoke Node' handle.
     """
-    # 1. Check Legacy Entity Mat
-    fleet = db.query(Fleet).filter(Fleet.entity_id == entity_id).first()
-    if fleet and fleet.key_hash == hashlib.sha256(provided_mat.encode()).hexdigest():
+    hub = db.query(Hub).filter(Hub.id == hub_id).first()
+    if hub and hub.regional_key == provided_mat:
         return True
-
-    # 2. Check Modern Regional Master Key (Direct Integration)
-    # The 'entity_id' in this flow refers to the specific project being audited.
-    # We look up the parent organization of that project.
-    if fleet and fleet.org_id:
-        org = db.query(Organization).filter(Organization.id == fleet.org_id).first()
-        if org and org.master_key_hash == hashlib.sha256(provided_mat.encode()).hexdigest():
-            return True
-
-    # 3. Handle Auto-Provisioning of dynamic projects via Master Key
-    # If the project (entity_id) doesn't exist yet, but the Master Key is valid for an Org.
-    # We allow the ingress and dynamically link the project to the Org later (Phase 3).
-    # For now, we perform a global search for any Org that owns this Master Key.
-    if not fleet:
-        org = db.query(Organization).filter(Organization.master_key_hash == hashlib.sha256(provided_mat.encode()).hexdigest()).first()
-        if org:
-            return True
+    
+    # Fallback: Allow root key (for diagnostic pulls)
+    if provided_mat == ANCHOR_MASTER_KEY:
+        return True
 
     return False
 
@@ -428,75 +374,13 @@ class ResolveRequest(BaseModel):
     root_key: str
 
 # --- 5. ADMIN API (Provisioning & Secret Management) ---
-@app.post("/api/admin/provision")
-def provision_fleet(req: FleetProvisionRequest, current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
-    """Creates a new fleet entity and optional initial regional subscription"""
-    entity_id = f"ent_{secrets.token_hex(4)}"
-    raw_key = secrets.token_urlsafe(32)
-    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
-    
-    # 1. Create Fleet
-    new_fleet = Fleet(
-        entity_id=entity_id,
-        name=req.name,
-        tier=req.tier,
-        key_hash=key_hash,
-        created_at=datetime.utcnow().isoformat()
-    )
-    db.add(new_fleet)
-    
-    # 2. Add Initial Regional Subscription if provided
-    initial_secret = None
-    if req.webhook_url:
-        initial_secret = secrets.token_urlsafe(24)
-        encrypted_secret = encrypt_secret(initial_secret)
-        sub = WebhookSubscription(
-            id=f"sub_{secrets.token_hex(4)}",
-            entity_id=entity_id,
-            branch_name=req.branch_name or "Primary-NOC",
-            webhook_url=req.webhook_url,
-            webhook_secret=encrypted_secret,
-            dialect=req.dialect or "RBI"
-        )
-        db.add(sub)
-    
-    db.commit()
-    
-    return {
-        "status": "SUCCESS",
-        "entity_id": entity_id,
-        "master_key": raw_key, # DISPLAY ONCE
-        "webhook_secret": initial_secret, # DISPLAY ONCE
-        "note": "Save these keys. They are encrypted in the Vault and cannot be retrieved later."
-    }
-
-@app.post("/api/admin/subscribe")
-def add_subscription(req: SubscriptionRequest, current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
-    """Adds a new regional branch subscription for an existing fleet"""
-    fleet = db.query(Fleet).filter(Fleet.entity_id == req.entity_id).first()
-    if not fleet:
-        raise HTTPException(status_code=404, detail="Fleet not found")
-        
-    new_secret = secrets.token_urlsafe(24)
-    encrypted_secret = encrypt_secret(new_secret)
-    
-    new_sub = WebhookSubscription(
-        id=f"sub_{secrets.token_hex(4)}",
-        entity_id=req.entity_id,
-        branch_name=req.branch_name,
-        webhook_url=req.webhook_url,
-        webhook_secret=encrypted_secret,
-        dialect=req.dialect
-    )
-    
-    db.add(new_sub)
-    db.commit()
-    
-    return {
-        "status": "SUCCESS",
-        "branch_id": new_sub.id,
-        "webhook_secret": new_secret # DISPLAY ONCE
-    }
+# Legacy Admin APIs (Placeholder for migration)
+@app.post("/api/admin/hub/provision")
+def provision_hub_manual(org_id: str, region: str, unit: str, current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    from auth import _generate_hub_id
+    hub_id = _generate_hub_id(org_id, region, unit)
+    # logic...
+    return {"status": "SUCCESS", "hub_id": hub_id}
 
 @app.post("/api/admin/rotate-secret/{entity_id}")
 def rotate_fleet_secret(entity_id: str, current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
@@ -515,26 +399,26 @@ def rotate_fleet_secret(entity_id: str, current_user: dict = Depends(get_current
         "message": "WEBHOOK SECRET ROTATED SUCCESSFULLY"
     }
 
-@app.post("/api/admin/resolve")
-def resolve_identity(req: ResolveRequest, current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
-    """Resolves an Entity ID to a Hash, or a Hash to an ID using SQLAlchemy"""
-    # 1. Try resolving as Entity ID directly
-    fleet = db.query(Fleet).filter(Fleet.entity_id == req.query).first()
+@app.post("/api/admin/whitelist")
+def add_to_whitelist(req: dict = Body(...), current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    """Pre-authorizes an email for onboarding."""
+    email = req.get("email", "").strip().lower()
+    org_id = req.get("org_id", "").strip().lower()
     
-    # 2. If not found, try resolving as a plain secret key (hash it and search)
-    if not fleet:
-        search_hash = hash_key(req.query)
-        fleet = db.query(Fleet).filter(Fleet.key_hash == search_hash).first()
+    if not email or not org_id:
+        raise HTTPException(status_code=400, detail="Email and Org ID are required.")
         
-    if fleet:
-        return {
-            "entity_id": fleet.entity_id,
-            "name": fleet.name,
-            "tier": fleet.tier,
-            "created_at": fleet.created_at,
-            "key_hash": fleet.key_hash
-        }
-    raise HTTPException(status_code=404, detail="IDENTITY NOT FOUND IN MESH")
+    existing = db.query(WhitelistEntry).filter(WhitelistEntry.email == email).first()
+    if existing: return {"status": "ALREADY_EXISTS"}
+    
+    new_entry = WhitelistEntry(
+        email=email,
+        org_id=org_id,
+        created_at=datetime.utcnow().isoformat()
+    )
+    db.add(new_entry)
+    db.commit()
+    return {"status": "WHITELISTED", "email": email}
 
 # --- 5. FORENSIC APPROVAL ENGINE ---
 @app.get("/api/forensic/pending")
@@ -545,7 +429,7 @@ async def get_pending_pulls(current_user: dict = Depends(get_current_user), db: 
     
     # Query real ForensicRequest table for this organization
     pulls = db.query(ForensicRequest).filter(
-        ForensicRequest.org_id == current_user["org_id"],
+        ForensicRequest.hub_id == current_user["hub_id"],
         ForensicRequest.status == "PENDING"
     ).all()
     
@@ -560,9 +444,9 @@ async def approve_forensic_pull(pull_id: str, status: dict = Body(...), current_
     if not req:
         raise HTTPException(status_code=404, detail="Request not found")
     
-    # Verify owner belongs to the same org
-    if req.org_id != current_user["org_id"]:
-        raise HTTPException(status_code=403, detail="Cross-org approval forbidden")
+    # Verify owner belongs to the same hub
+    if req.hub_id != current_user["hub_id"]:
+        raise HTTPException(status_code=403, detail="Cross-hub approval forbidden")
         
     req.status = status.get("status", "APPROVED")
     db.commit()
@@ -577,10 +461,9 @@ async def approve_forensic_pull(pull_id: str, status: dict = Body(...), current_
 async def submit_telemetry(payload: IngressPayload, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """
     Receives data from the SDK/Spoke and persists only the Cryptographic Header.
-    HARDENED: Implements strict validation and transactional safety.
     """
     if not verify_entity(payload.entity_id, payload.mat, db):
-        raise HTTPException(status_code=401, detail="INVALID CRYPTOGRAPHIC SIGNATURE")
+        raise HTTPException(status_code=401, detail="INVALID HUB REGIONAL KEY")
     
     try:
         audit = payload.audit_data
@@ -599,14 +482,14 @@ async def submit_telemetry(payload: IngressPayload, background_tasks: Background
             "violation_count": len(audit.get("violations", [])),
             "decentralized": True,
             "fingerprint": audit_fingerprint,
-            "_spoke_source": payload.entity_id,
+            "_hub_source": payload.entity_id,
             "risk_classification": "HIGH" if status == "VIOLATION" else "LOW"
         }
         
         # 2. Persist Metadata-Only Header to Neon (SQLAlchemy)
         new_entry = LedgerEntry(
             id=entry_id,
-            entity_id=payload.entity_id,
+            hub_id=payload.entity_id,
             timestamp=audit.get("timestamp") or datetime.now(timezone.utc).isoformat(),
             type="runtime_violation" if status == "VIOLATION" else "runtime_check",
             chain_hash=audit.get("cryptography", {}).get("chain_hash"),
@@ -648,50 +531,34 @@ async def submit_telemetry(payload: IngressPayload, background_tasks: Background
     except Exception as e:
         logger.error(f"[!!!] INGRESS FAILURE: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail="Internal processing error in Master Node")
-
-# --- 7. TENANT-ISOLATED READ ENDPOINTS ---
-
-def _enforce_tenant_scope(current_user: dict, db: Session, entity_id: str = None):
+        raise HTTPException(status_code=500, detail="Internal processing error def _enforce_tenant_scope(current_user: dict, db: Session, hub_id: str = None):
     """
-    Enforces tenant isolation in the new v5.0 hierarchy.
-    - Global Admins: See everything.
-    - Org Admins/Owners: See all projects in their org_id.
-    - Team Members: (Future) Filter by specific project_id.
+    Enforces hub-level isolation.
     """
     if current_user["role"] in ("owner", "admin", "enterprise"):
-        org_id = current_user.get("org_id")
-        if not org_id:
-             raise HTTPException(status_code=403, detail="USER NOT LINKED TO AN ORGANIZATION")
+        user_hub_id = current_user.get("hub_id")
+        if not user_hub_id:
+             raise HTTPException(status_code=403, detail="USER NOT LINKED TO A HUB")
              
-        # If querying a specific entity, verify it belongs to this org
-        if entity_id:
-            fleet = db.query(Fleet).filter(Fleet.entity_id == entity_id, Fleet.org_id == org_id).first()
-            if not fleet:
-                raise HTTPException(status_code=403, detail="RESTRICTED: Project does not belong to your Organization.")
-            return entity_id # Return the specific project ID
+        # If querying a specific hub, verify it matches
+        if hub_id and hub_id != user_hub_id:
+            raise HTTPException(status_code=403, detail="RESTRICTED: You only have access to your assigned Hub.")
             
-        return "ORG_SCOPE"  # Signal to query all projects in the org
+        return user_hub_id
         
-    # Regulators can query any entity they have clearance for
-    return entity_id
+    return hub_id
+  return entity_id
 
 
 @app.get("/api/ledger")
-def get_entity_ledger(entity_id: str = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    """The Cryptographic Ledger: Returns flattened audit records. Filtered by Org/Project."""
-    scope = _enforce_tenant_scope(current_user, db, entity_id)
+def get_hub_ledger(hub_id: str = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    """The Cryptographic Ledger: Returns flattened audit records. Filtered by Hub."""
+    scope = _enforce_tenant_scope(current_user, db, hub_id)
 
     query = db.query(LedgerEntry).order_by(desc(LedgerEntry.timestamp))
     
-    if scope == "ORG_SCOPE":
-        # Multi-project org view: Filter ledger by all entity_ids in this org
-        org_projects = db.query(Fleet.entity_id).filter(Fleet.org_id == current_user["org_id"]).all()
-        project_ids = [p.entity_id for p in org_projects]
-        query = query.filter(LedgerEntry.entity_id.in_(project_ids))
-    elif scope:
-        # Specific project view
-        query = query.filter(LedgerEntry.entity_id == scope)
+    if scope:
+        query = query.filter(LedgerEntry.hub_id == scope)
         
     audits = query.all()
     
@@ -724,21 +591,16 @@ def get_entity_ledger(entity_id: str = None, current_user: dict = Depends(get_cu
 
 
 @app.get("/api/stats")
-def get_fleet_stats(entity_id: str = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Aggregation Engine: Calculates real-time fleet health and project-level compliance status"""
+def get_hub_stats(hub_id: str = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Aggregation Engine: Hub-level compliance status"""
     
-    # 1. Enforce Tenant Isolation
-    if current_user["role"] == "enterprise":
-        target_entity = current_user["sub"]
-    elif current_user["role"] in ("admin", "regulator", "root"):
-        target_entity = entity_id # Allow global visibility for oversight roles
-    else:
-        raise HTTPException(status_code=403, detail="ACCESS DENIED")
+    # 1. Enforce Hub Isolation
+    scope = _enforce_tenant_scope(current_user, db, hub_id)
 
     # 2. Database Query
     query = db.query(LedgerEntry)
-    if target_entity:
-        query = query.filter(LedgerEntry.entity_id == target_entity)
+    if scope:
+        query = query.filter(LedgerEntry.hub_id == scope)
     audits = query.all()
         
     # 3. Calculate Global Metrics
