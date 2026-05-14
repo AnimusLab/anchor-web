@@ -1,7 +1,35 @@
-import React, { useState, useEffect, Component } from 'react';
+import React, { useState, useEffect, useMemo, Component } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { endpoints } from './lib/api';
 import TacticalLattice from './components/dashboard/TacticalLattice';
+
+const V = {
+  primary: 'var(--text-primary)', secondary: 'var(--text-secondary)',
+  muted: 'var(--text-muted)', dim: 'var(--text-dim)',
+  card: 'var(--bg-card)', surface: 'var(--bg-surface)', void: 'var(--bg-void)',
+  border: 'var(--border)', borderLit: 'var(--border-lit)',
+  green: 'var(--green)', red: 'var(--red)', amber: 'var(--amber)',
+  accent: 'var(--accent)', cyan: 'var(--cyan)',
+};
+
+function StatCard({ label, value, sub, color, colorClass }) {
+  return (
+    <div className={`stat-card ${colorClass}`}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: V.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>{label}</div>
+      <div style={{ fontSize: 32, fontWeight: 700, color, lineHeight: 1, marginBottom: 6 }}>{value}</div>
+      <div style={{ fontSize: 12, color: V.dim, fontFamily: 'JetBrains Mono, monospace' }}>{sub}</div>
+    </div>
+  );
+}
+
+const Icon = {
+  overview: <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>,
+  lattice:  <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clipRule="evenodd"/></svg>,
+  vault:    <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/></svg>,
+  audit:    <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd"/></svg>,
+  logout:   <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd"/></svg>,
+};
 
 // --- Error Boundary ---
 class DashboardErrorBoundary extends Component {
@@ -10,12 +38,10 @@ class DashboardErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="h-screen bg-[#0a0a0f] flex flex-col items-center justify-center font-mono gap-4">
-          <div className="text-red-500 text-xs tracking-widest uppercase">DASHBOARD_CRITICAL_FAILURE</div>
-          <div className="text-slate-600 text-[10px] max-w-md text-center">{this.state.error?.message}</div>
-          <button onClick={() => window.location.reload()} className="px-6 py-2 border border-red-500/30 text-[10px] text-red-400 hover:bg-red-500/10 transition-all uppercase tracking-widest">
-            Reload System
-          </button>
+        <div style={{ height: '100vh', background: V.void, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, fontFamily: 'JetBrains Mono, monospace' }}>
+          <div style={{ fontSize: 11, color: V.red, letterSpacing: '0.2em', fontWeight: 700 }}>DASHBOARD_CRITICAL_FAILURE</div>
+          <div style={{ fontSize: 10, color: V.muted, maxWidth: 400, textAlign: 'center' }}>{this.state.error?.message}</div>
+          <button onClick={() => window.location.reload()} style={{ padding: '8px 20px', border: '1px solid rgba(239,68,68,0.2)', background: 'transparent', color: V.red, fontSize: 10, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.1em' }}>RELOAD_SYSTEM</button>
         </div>
       );
     }
@@ -25,16 +51,12 @@ class DashboardErrorBoundary extends Component {
 
 function DashboardInner() {
   const { user, token, logout } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Overview');
-  
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteStatus, setInviteStatus] = useState('');
   const [pendingPulls, setPendingPulls] = useState([]);
-
-  const isOwner = user?.role === 'owner' || user?.role === 'root' || user?.role === 'admin';
 
   useEffect(() => {
     if (!token) return;
@@ -48,10 +70,8 @@ function DashboardInner() {
         if (statsRes.ok) setStats(await statsRes.json());
         if (projectsRes.ok) setProjects(await projectsRes.json());
 
-        if (isOwner) {
-          const pullsRes = await fetch(`${endpoints.baseUrl}/api/forensic/pending`, { headers });
-          if (pullsRes.ok) setPendingPulls(await pullsRes.json());
-        }
+        const pullsRes = await fetch(`${endpoints.baseUrl}/api/forensic/pending`, { headers });
+        if (pullsRes.ok) setPendingPulls(await pullsRes.json());
       } catch (e) {
         console.error('Fetch error:', e);
       } finally {
@@ -59,26 +79,7 @@ function DashboardInner() {
       }
     };
     fetchData();
-  }, [token, isOwner]);
-
-  const handleInvite = async (e) => {
-    e.preventDefault();
-    setInviteStatus('DISPATCHING...');
-    try {
-      const res = await fetch(endpoints.createInvite, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ email: inviteEmail, department: 'AI_SAFETY', role: 'member' })
-      });
-      if (res.ok) {
-        setInviteStatus('SENT');
-        setInviteEmail('');
-        setTimeout(() => setInviteStatus(''), 3000);
-      } else {
-        setInviteStatus('FAILED');
-      }
-    } catch { setInviteStatus('ERROR'); }
-  };
+  }, [token]);
 
   const handleApproval = async (pullId, status) => {
     try {
@@ -92,232 +93,236 @@ function DashboardInner() {
   };
 
   if (loading) return (
-    <div className="h-screen bg-[#0a0a0f] flex items-center justify-center font-mono">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 border-2 border-white/5 border-t-cyan-500 rounded-full animate-spin" />
-        <div className="text-[9px] tracking-[0.4em] text-slate-500 animate-pulse uppercase">Syncing Sovereign Node</div>
-      </div>
+    <div style={{ height: '100vh', background: V.void, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+      <div style={{ width: 40, height: 40, border: '2px solid rgba(255,255,255,0.05)', borderTopColor: V.accent, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      <div style={{ fontSize: 9, letterSpacing: '0.4em', color: V.muted, textTransform: 'uppercase' }}>Syncing Sovereign Node</div>
     </div>
   );
 
   return (
-    <div className="h-screen bg-[#0a0a0f] text-[#f1f1f5] flex overflow-hidden font-sans">
+    <div style={{ height: '100vh', display: 'flex', overflow: 'hidden' }}>
       
-      {/* --- Sidebar (Oversight Style) --- */}
-      <aside className="w-64 bg-[#0d0d14] border-r border-[#1e1e2e] flex flex-col z-20">
-        <div className="p-6 mb-2">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-cyan-500 rounded flex items-center justify-center shadow-lg shadow-cyan-500/20">
-              <svg viewBox="0 0 24 24" fill="black" className="w-5 h-5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            </div>
-            <div>
-              <div className="text-sm font-bold tracking-tight">Anchor Enterprise</div>
-              <div className="text-[9px] text-cyan-500/80 font-bold uppercase tracking-widest">Sovereign Mode</div>
-            </div>
+      {/* SIDEBAR (Exact Oversight Dimensions) */}
+      <aside style={{ width: 220, minWidth: 220, background: V.sidebar, borderRight: `1px solid ${V.border}`, display: 'flex', flexDirection: 'column', overflowY: 'auto', zIndex: 10 }}>
+        
+        {/* Logo Section */}
+        <div style={{ padding: '20px 16px 16px', borderBottom: `1px solid ${V.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 30, height: 30, background: V.accent, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg viewBox="0 0 24 24" fill="white" style={{ width: 18, height: 18 }}><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
-
-          <div className="p-3 bg-[#16161f] border border-[#1e1e2e] rounded-lg">
-            <div className="text-[10px] font-bold text-[#555570] uppercase tracking-widest mb-1">Privilege: Owner</div>
-            <div className="text-[11px] text-[#9898b0] truncate font-medium">{user?.org_id || 'LOCAL_NODE'}</div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: V.primary }}>Anchor Enterprise</div>
+            <div style={{ fontSize: 10, color: V.accent-soft, letterSpacing: '0.05em', fontWeight: 500 }}>SOVEREIGN MODE</div>
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 space-y-1">
-          <div className="section-label">Operations</div>
-          {[
-            { id: 'Overview', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-            { id: 'Lattice Mesh', icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7' },
-            { id: 'Compliance Shield', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
-            { id: 'Forensic Vault', icon: 'M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z' },
-          ].map(item => (
-            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`nav-link w-full ${activeTab === item.id ? 'active' : ''}`}>
-              <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon}/></svg>
-              {item.id}
-            </button>
-          ))}
+        {/* Clearance Badge (Oversight Style) */}
+        <div style={{ margin: '12px 12px 0', padding: '8px 12px', background: 'rgba(6,182,212,0.08)', borderRadius: 6, border: '1px solid rgba(6,182,212,0.2)' }}>
+          <div style={{ fontSize: 10, color: V.cyan-soft, marginBottom: 2, fontWeight: 600 }}>PRIVILEGE: OWNER</div>
+          <div style={{ fontSize: 11, color: V.secondary, fontFamily: 'JetBrains Mono, monospace' }}>
+            {user?.org_id || 'LOCAL_NODE'}
+          </div>
+        </div>
 
-          {isOwner && (
+        {/* Navigation */}
+        <nav style={{ flex: 1, padding: '4px 8px 20px' }}>
+          <div className="section-label">OPERATIONS</div>
+          <div className={`nav-link ${activeTab === 'Overview' ? 'active' : ''}`} onClick={() => setActiveTab('Overview')}>
+            {Icon.overview} Overview
+          </div>
+          <div className={`nav-link ${activeTab === 'Lattice Mesh' ? 'active' : ''}`} onClick={() => setActiveTab('Lattice Mesh')}>
+            {Icon.lattice} Lattice Mesh
+          </div>
+          
+          <div className="section-label">GOVERNANCE</div>
+          <div className={`nav-link ${activeTab === 'Compliance' ? 'active' : ''}`} onClick={() => setActiveTab('Compliance')}>
+            {Icon.vault} Compliance Shield
+          </div>
+          <div className={`nav-link ${activeTab === 'Forensic' ? 'active' : ''}`} onClick={() => setActiveTab('Forensic')}>
+            {Icon.audit} Forensic Vault
+          </div>
+
+          {pendingPulls.length > 0 && (
             <>
-              <div className="section-label">Enforcement Queue</div>
-              <div className="px-1">
-                {pendingPulls.length > 0 ? (
-                  <div className="p-3 bg-[#1c1c28] border border-cyan-500/20 rounded-lg space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-bold text-cyan-500 uppercase tracking-widest">Pending Pulls</span>
-                      <span className="bg-cyan-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full">{pendingPulls.length}</span>
-                    </div>
-                    {pendingPulls.slice(0, 1).map(pull => (
-                      <div key={pull.id} className="text-[10px]">
-                        <div className="text-white font-medium truncate mb-1">{pull.auditor_name}</div>
-                        <div className="text-[#555570] font-mono mb-3 uppercase tracking-tighter">{pull.audit_id?.slice(0, 12)}</div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button onClick={() => handleApproval(pull.id, 'APPROVED')} className="py-1.5 bg-cyan-500 text-black font-bold rounded hover:bg-cyan-400 transition-all uppercase tracking-tighter">Grant</button>
-                          <button onClick={() => handleApproval(pull.id, 'REJECTED')} className="py-1.5 bg-[#16161f] text-[#9898b0] border border-[#2a2a3e] font-bold rounded hover:bg-[#1c1c28] transition-all uppercase tracking-tighter">Deny</button>
-                        </div>
+              <div className="section-label">ENFORCEMENT QUEUE</div>
+              <div style={{ padding: '4px 8px' }}>
+                <div style={{ padding: 12, background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)', borderRadius: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: V.accent, letterSpacing: '0.05em' }}>PENDING PULLS</span>
+                    <span style={{ background: V.accent, color: '#000', fontSize: 9, fontWeight: 800, padding: '1px 5px', borderRadius: 4 }}>{pendingPulls.length}</span>
+                  </div>
+                  {pendingPulls.slice(0, 1).map(p => (
+                    <div key={p.id}>
+                      <div style={{ fontSize: 11, color: '#fff', fontWeight: 600, marginBottom: 4 }}>{p.auditor_name}</div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button onClick={() => handleApproval(p.id, 'APPROVED')} style={{ flex: 1, padding: '5px', background: V.accent, color: '#000', border: 'none', borderRadius: 4, fontSize: 9, fontWeight: 800, cursor: 'pointer' }}>GRANT</button>
+                        <button onClick={() => handleApproval(p.id, 'REJECTED')} style={{ flex: 1, padding: '5px', background: 'transparent', color: V.muted, border: `1px solid ${V.border}`, borderRadius: 4, fontSize: 9, fontWeight: 800, cursor: 'pointer' }}>DENY</button>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-3 border border-dashed border-[#1e1e2e] rounded-lg text-center">
-                    <div className="text-[9px] text-[#35354a] font-bold uppercase tracking-widest">No Active Requests</div>
-                  </div>
-                )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </>
           )}
         </nav>
 
-        <div className="p-4 border-t border-[#1e1e2e] bg-[#0a0a0f]/50">
-          <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-2 text-[11px] font-bold text-[#555570] hover:text-white transition-all uppercase tracking-widest">
-             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-             Terminate Session
-          </button>
+        {/* Sidebar Footer */}
+        <div style={{ padding: '12px 16px', borderTop: `1px solid ${V.border}` }}>
+          <div className="nav-link" onClick={logout} style={{ color: V.muted }}>
+            {Icon.logout} Terminate Session
+          </div>
+          <div style={{ marginTop: 12, fontSize: 11, color: V.dim, fontFamily: 'JetBrains Mono, monospace' }}>
+            Anchor v5.8 — Silo
+          </div>
         </div>
       </aside>
 
-      {/* --- Main Content --- */}
-      <main className="flex-1 flex flex-col relative z-10">
+      {/* MAIN CONTENT (Exact Oversight Dimensions) */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         
-        {/* Header (Oversight Style) */}
-        <header className="h-16 border-b border-[#1e1e2e] px-8 flex justify-between items-center bg-[#0a0a0f]/80 backdrop-blur-md">
-          <div className="flex items-center gap-4">
-             <h2 className="text-sm font-bold text-white tracking-tight uppercase">{activeTab}</h2>
-             <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#10b981]" />
-                <span className="text-[10px] text-[#555570] font-bold uppercase tracking-widest">Silo Protected // {user?.region || 'GLOBAL'}</span>
-             </div>
+        {/* Header */}
+        <header style={{ height: 56, background: V.sidebar, borderBottom: `1px solid ${V.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0, zIndex: 5 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: V.primary }}>{activeTab.toUpperCase()}</div>
+            <div style={{ height: 16, width: 1, background: V.borderLit }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: V.green, boxShadow: '0 0 6px var(--green)' }} />
+              <span style={{ fontSize: 12, color: V.secondary }}>SILO PROTECTED // {user?.region || 'GLOBAL'}</span>
+            </div>
           </div>
           
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-xs font-bold text-white">{user?.display_name || user?.email}</div>
-              <div className="text-[9px] text-cyan-500 font-bold uppercase tracking-widest">Operator</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ textAlign: 'right' }}>
+               <div style={{ fontSize: 12, fontWeight: 600, color: V.primary }}>{user?.display_name || user?.email}</div>
+               <div style={{ fontSize: 9, fontWeight: 700, color: V.accent, letterSpacing: '0.05em' }}>OPERATOR</div>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#1c1c28] to-[#0a0a0f] border border-[#2a2a3e] flex items-center justify-center font-bold text-white text-xs">
-              {(user?.display_name || 'U').charAt(0).toUpperCase()}
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: V.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>
+               {(user?.display_name || user?.email || 'U').charAt(0).toUpperCase()}
             </div>
           </div>
         </header>
 
-        {/* Action Bar (Refined) */}
-        <div className="px-8 py-5 border-b border-[#1e1e2e] flex gap-3">
-          <button className="px-4 py-2 bg-cyan-500 text-black text-[10px] font-bold rounded-md hover:bg-cyan-400 transition-all uppercase tracking-widest">Provision Spoke</button>
-          <button className="px-4 py-2 bg-[#1c1c28] text-white border border-[#2a2a3e] text-[10px] font-bold rounded-md hover:bg-[#1e1e2e] transition-all uppercase tracking-widest">Regional Key</button>
-          <button className="px-4 py-2 bg-[#1c1c28] text-white border border-[#2a2a3e] text-[10px] font-bold rounded-md hover:bg-[#1e1e2e] transition-all uppercase tracking-widest">Export Ledger</button>
-          <div className="ml-auto flex items-center gap-2 px-4 py-2 bg-green-500/5 border border-green-500/20 rounded-md">
-             <span className="text-[9px] font-bold text-green-500 uppercase tracking-widest">Hub Secure:</span>
-             <span className="text-[10px] font-mono text-green-400">{user?.org_id || 'TANI-09-05-26'}</span>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+        {/* Content Area */}
+        <main style={{ flex: 1, overflowY: 'auto', background: V.void, padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
           
-          {/* Stats Row (Premium Oversight Cards) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-            {[
-              { label: 'Tactical Hub ID', value: user?.org_id?.toUpperCase() || 'TANI-NODE', sub: 'SOVEREIGN_NODE', type: 'accent' },
-              { label: 'Active Spoke Nodes', value: projects.length, sub: 'FLEET_ENUMERATION', type: 'accent' },
-              { label: 'Integrity Score', value: '100%', sub: 'MESH_CONSENSUS', type: 'green' },
-              { label: 'Access Level', value: 'OWNER', sub: 'REGIONAL_GATE', type: 'amber' },
-            ].map((m, i) => (
-              <div key={i} className={`stat-card ${m.type} slide-in`}>
-                <div className="text-[10px] text-[#555570] uppercase tracking-widest font-bold mb-4">{m.label}</div>
-                <div className="text-2xl font-bold tracking-tight text-white mb-1">{m.value}</div>
-                <div className="text-[9px] text-[#35354a] font-bold uppercase tracking-widest">{m.sub}</div>
+          {/* Quick Actions (Oversight Style) */}
+          <div className="ra-card" style={{ padding: '20px 24px' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: V.primary, marginBottom: 16 }}>System Actions</div>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              {[
+                { label: 'Provision Spoke Node', bg: V.accent },
+                { label: 'Generate Regional Key', bg: V.surface, border: V.borderLit },
+                { label: 'Export Sovereign Ledger', bg: V.surface, border: V.borderLit },
+              ].map((a, i) => (
+                <button key={i} style={{ padding: '9px 18px', borderRadius: 6, fontSize: 13, fontWeight: 600, color: '#fff', background: a.bg, border: a.border ? `1px solid ${a.border}` : 'none', cursor: 'pointer', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { if(!a.bg.startsWith('var(--accent)')) e.currentTarget.style.background = V.card; }}
+                  onMouseLeave={e => { if(!a.bg.startsWith('var(--accent)')) e.currentTarget.style.background = a.bg; }}>
+                  {a.label}
+                </button>
+              ))}
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: V.muted, letterSpacing: '0.05em' }}>HUB_SECURE</span>
+                <span style={{ fontSize: 12, color: V.green, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{user?.org_id || 'TANI-09-05-26'}</span>
               </div>
-            ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Mesh Lattice */}
-            <div className="lg:col-span-2 ra-card overflow-hidden h-[500px] relative">
-              <div className="absolute top-6 left-8 z-10">
-                 <div className="text-[10px] font-bold text-cyan-500 tracking-[0.3em] uppercase mb-1">Active Mesh Lattice</div>
-                 <div className="text-[9px] text-[#555570] font-medium">REAL_TIME_NODE_TELEMETRY</div>
+          {/* Stats Grid (Exact Oversight Parity) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+             <StatCard label="Tactical Hub ID" value={user?.org_id?.toUpperCase() || 'TANI-NODE'} sub="SOVEREIGN_NODE" color={V.accent} colorClass="accent" />
+             <StatCard label="Active Spoke Nodes" value={projects.length} sub="FLEET_ENUMERATION" color={V.accent} colorClass="accent" />
+             <StatCard label="Integrity Score" value="100%" sub="MESH_CONSENSUS" color={V.green} colorClass="green" />
+             <StatCard label="Access Level" value="OWNER" sub="REGIONAL_GATE" color={V.amber} colorClass="amber" />
+          </div>
+
+          {/* Main Visuals (Lattice + Ticker) */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: 20 }}>
+            
+            {/* Mesh Lattice Card */}
+            <div className="ra-card" style={{ height: 500, position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 20, left: 24, zIndex: 5 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: V.accent, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Active Mesh Lattice</div>
+                <div style={{ fontSize: 10, color: V.muted, marginTop: 4 }}>REAL_TIME_NODE_TELEMETRY</div>
               </div>
-              <div className="w-full h-full p-4">
-                 <TacticalLattice projects={projects} department={user?.department} />
+              <div style={{ width: '100%', height: '100%', padding: '20px' }}>
+                <TacticalLattice projects={projects} department={user?.department} />
               </div>
             </div>
 
-            {/* Violation Feed */}
-            <div className="ra-card flex flex-col h-[500px]">
-              <div className="p-4 border-b border-[#1e1e2e] flex justify-between items-center">
-                 <span className="text-[10px] font-bold tracking-widest text-[#555570] uppercase">Violation Ticker</span>
-                 <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-              </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {projects.flatMap(p => p.recent_violations || []).length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center opacity-20">
-                    <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    <div className="text-[9px] font-bold tracking-[0.4em] uppercase">No Grid Breaches</div>
-                  </div>
-                ) : (
-                  projects.flatMap(p => p.recent_violations || []).map((v, i) => (
-                    <div key={i} className="p-3 bg-[#1c1c28] border-l-2 border-red-500 rounded-r-lg group cursor-pointer hover:bg-[#252535] transition-all">
-                      <div className="flex justify-between items-start mb-1">
-                         <span className="text-[8px] text-red-500 font-bold uppercase">Critical Violation</span>
-                         <span className="text-[8px] text-[#35354a] font-mono">{v.timestamp?.slice(11, 19)}</span>
-                      </div>
-                      <div className="text-[11px] text-white font-medium mb-2">{v.summary}</div>
-                      <div className="text-[9px] text-cyan-500 font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Analyze Branch →</div>
+            {/* Violation Feed / Ticker Card */}
+            <div className="ra-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+               <div style={{ padding: '16px 20px', borderBottom: `1px solid ${V.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                 <div>
+                   <div style={{ fontSize: 15, fontWeight: 600, color: V.primary }}>Violation Ticker</div>
+                   <div style={{ fontSize: 12, color: V.muted, marginTop: 2 }}>Real-time breach monitoring</div>
+                 </div>
+                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: V.red, animation: 'pulse 2s infinite' }} />
+               </div>
+               <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                 {projects.flatMap(p => p.recent_violations || []).length === 0 ? (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifySelf: 'center', opacity: 0.15, paddingTop: 100 }}>
+                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ width: 64, height: 64, marginBottom: 16 }}><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                       <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase' }}>No Grid Breaches</div>
                     </div>
-                  ))
-                )}
-              </div>
+                 ) : (
+                    projects.flatMap(p => p.recent_violations || []).map((v, i) => (
+                      <div key={i} className="slide-in" style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.04)', borderLeft: `2px solid ${V.red}`, borderRadius: '0 4px 4px 0' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ fontSize: 9, fontWeight: 800, color: V.red, letterSpacing: '0.05em' }}>CRITICAL BREACH</span>
+                          <span style={{ fontSize: 10, color: V.dim, fontFamily: 'JetBrains Mono' }}>{v.timestamp?.slice(11, 19)}</span>
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: '#fff' }}>{v.summary}</div>
+                      </div>
+                    ))
+                 )}
+               </div>
             </div>
+
           </div>
 
-          {/* Spoke Node Inventory (Refined Grid) */}
+          {/* Spoke Node Inventory (Grid View) */}
           <div>
-             <div className="flex justify-between items-center mb-6">
-               <h4 className="text-[11px] font-bold text-[#555570] tracking-[0.2em] uppercase">Spoke Node Inventory</h4>
-               <div className="px-3 py-1 bg-[#16161f] border border-[#1e1e2e] rounded text-[9px] font-bold text-[#9898b0] uppercase">{projects.length} Provisioned</div>
-             </div>
-             
-             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {projects.map(p => (
-                  <div key={p.id} className="ra-card p-6 group cursor-pointer hover:bg-[#1c1c28] transition-all relative overflow-hidden">
-                    <div className="flex justify-between items-start mb-6">
-                      <div>
-                        <div className="text-sm font-bold text-white group-hover:text-cyan-500 transition-colors">{p.name}</div>
-                        <div className="text-[9px] text-[#35354a] font-mono mt-0.5">{p.id}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+               <div style={{ fontSize: 12, fontWeight: 700, color: V.muted, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Spoke Node Inventory</div>
+               <span className="badge badge-cyan">{projects.length} PROVISIONED</span>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+               {projects.map(p => (
+                 <div key={p.id} className="ra-card slide-in" style={{ padding: 24, cursor: 'pointer' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 16 }}>
+                     <div>
+                       <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{p.name}</div>
+                       <div style={{ fontSize: 11, color: V.dim, fontFamily: 'JetBrains Mono', marginTop: 4 }}>{p.id}</div>
+                     </div>
+                     <span className={`badge ${p.status === 'ACTIVE' ? 'badge-green' : 'badge-red'}`}>{p.status || 'ACTIVE'}</span>
+                   </div>
+                   
+                   <div style={{ marginBottom: 20 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, fontWeight: 700, color: V.muted, textTransform: 'uppercase', marginBottom: 8 }}>
+                        <span>Compliance Rate</span>
+                        <span style={{ color: '#fff' }}>{p.compliance_rate || '100%'}</span>
                       </div>
-                      <span className={`badge ${p.status === 'ACTIVE' ? 'badge-green' : 'badge-red'}`}>{p.status || 'ACTIVE'}</span>
-                    </div>
-                    
-                    <div className="space-y-2 mb-6">
-                       <div className="flex justify-between text-[9px] font-bold text-[#555570] uppercase">
-                          <span>Compliance Rate</span>
-                          <span className="text-white">{p.compliance_rate || '100%'}</span>
-                       </div>
-                       <div className="w-full h-1 bg-[#0a0a0f] rounded-full overflow-hidden">
-                          <div className="h-full bg-cyan-500 transition-all duration-1000 shadow-[0_0_8px_rgba(6,182,212,0.5)]" style={{ width: p.compliance_rate || '100%' }} />
-                       </div>
-                    </div>
-                    
-                    <button className="w-full py-2 bg-[#1c1c28] group-hover:bg-cyan-500 group-hover:text-black border border-[#2a2a3e] group-hover:border-cyan-500 rounded text-[9px] font-bold uppercase tracking-widest transition-all">
-                       Initialize Console
-                    </button>
-                    
-                    {/* Corner Decoration */}
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                ))}
-
-                {projects.length === 0 && (
-                  <div className="md:col-span-2 xl:col-span-3 h-48 border border-dashed border-[#1e1e2e] rounded-xl flex flex-col items-center justify-center opacity-30 hover:opacity-100 transition-all cursor-pointer group">
-                    <div className="w-10 h-10 rounded-full border border-[#1e1e2e] flex items-center justify-center mb-3 group-hover:border-cyan-500">
-                       <svg className="w-5 h-5 text-[#35354a] group-hover:text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
-                    </div>
-                    <div className="text-[10px] font-bold tracking-widest uppercase">Provision First Spoke Node</div>
-                  </div>
-                )}
-             </div>
+                      <div style={{ height: 4, background: V.void, borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', background: V.accent, width: p.compliance_rate || '100%', boxShadow: `0 0 8px ${V.accent-soft}` }} />
+                      </div>
+                   </div>
+                   
+                   <button style={{ width: '100%', padding: '8px', background: 'transparent', border: `1px solid ${V.borderLit}`, color: V.secondary, borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Initialize Console →</button>
+                 </div>
+               ))}
+               
+               {projects.length === 0 && (
+                 <div style={{ gridColumn: '1/-1', height: 160, border: `1px dashed ${V.border}`, borderRadius: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: 0.4 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${V.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>+</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.2em' }}>PROVISION FIRST SPOKE NODE</div>
+                 </div>
+               )}
+            </div>
           </div>
 
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
