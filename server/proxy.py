@@ -32,7 +32,7 @@ if not ANCHOR_MASTER_KEY:
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
 from database import get_db, init_db
-from models import Fleet, WebhookSubscription, LedgerEntry, EnterpriseUser, RegulatoryOfficial, Organization
+from models import Fleet, WebhookSubscription, LedgerEntry, EnterpriseUser, RegulatoryOfficial, Organization, ForensicRequest
 from security import encrypt_secret, decrypt_secret
 from dispatch_manager import dispatch_webhook
 from auth import auth_router, get_current_user, get_current_admin_user
@@ -543,20 +543,31 @@ async def get_pending_pulls(current_user: dict = Depends(get_current_user), db: 
     if current_user["role"] not in ["owner", "admin"]:
         raise HTTPException(status_code=403, detail="Only Owners can approve forensic pulls")
     
-    # Mock for demo parity - in production this queries the 'forensic_requests' table
-    return [
-        {
-            "id": "req_9921",
-            "auditor_name": "SEC_OFFICIAL_402",
-            "audit_id": "led_1715610000",
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
-    ]
+    # Query real ForensicRequest table for this organization
+    pulls = db.query(ForensicRequest).filter(
+        ForensicRequest.org_id == current_user["org_id"],
+        ForensicRequest.status == "PENDING"
+    ).all()
+    
+    return pulls
 
 @app.post("/api/forensic/approve/{pull_id}")
 async def approve_forensic_pull(pull_id: str, status: dict = Body(...), current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user["role"] not in ["owner", "admin"]:
         raise HTTPException(status_code=403, detail="Approval denied")
+    
+    req = db.query(ForensicRequest).filter(ForensicRequest.id == pull_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    # Verify owner belongs to the same org
+    if req.org_id != current_user["org_id"]:
+        raise HTTPException(status_code=403, detail="Cross-org approval forbidden")
+        
+    req.status = status.get("status", "APPROVED")
+    db.commit()
+    
+    return {"status": "success", "message": f"Request {pull_id} marked as {req.status}"}
     
     logger.info(f"[SOVEREIGN] Owner {current_user['sub']} {status.get('status')} pull {pull_id}")
     return {"status": "SUCCESS", "message": f"Forensic request {status.get('status')}"}

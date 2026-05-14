@@ -450,7 +450,7 @@ def register_auditor(
         department="ENFORCEMENT",
         jurisdiction=jurisdiction,
         totp_secret=totp_secret,
-        status="approved",
+        status="pending", # Requires ROOT ADMIN approval
         created_at=datetime.utcnow().isoformat()
     )
 

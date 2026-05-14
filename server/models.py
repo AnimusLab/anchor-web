@@ -71,7 +71,20 @@ class LedgerEntry(Base):
     fleet = relationship("Fleet", back_populates="ledger_entries")
     receipts = relationship("LedgerEntry", backref="parent", remote_side=[id])
 
-# --- 4. ENTERPRISE USERS (Silo 1) ---
+# --- 4. FORENSIC REQUESTS (Relay Bridge) ---
+class ForensicRequest(Base):
+    """Auditors request data access; Owners approve it here."""
+    __tablename__ = "forensic_requests"
+    
+    id            = Column(String, primary_key=True)               # "FR-abc123"
+    auditor_id    = Column(String, nullable=False)                  # Who is asking?
+    auditor_name  = Column(String, nullable=False)
+    org_id        = Column(String, nullable=False)                  # Which enterprise node?
+    audit_id      = Column(String, nullable=False)                  # Which ledger entry?
+    status        = Column(String, default="PENDING")               # "PENDING", "APPROVED", "REJECTED"
+    created_at    = Column(String, nullable=False)
+
+# --- 5. ENTERPRISE USERS (Silo 1) ---
 class EnterpriseUser(Base):
     """Sovereign Identities for Corporate Personnel."""
     __tablename__ = "enterprise_users"
