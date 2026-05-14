@@ -45,8 +45,13 @@ def run_migrations():
     """Idempotent schema migration — safely adds any columns that exist in the
     SQLAlchemy models but are absent from the live database table."""
     from sqlalchemy import text
+    
+    # Cross-compatible Whitelist creation
+    is_sqlite = DATABASE_URL.startswith("sqlite")
+    pk_type = "INTEGER PRIMARY KEY AUTOINCREMENT" if is_sqlite else "SERIAL PRIMARY KEY"
+    
     migrations = [
-        "CREATE TABLE IF NOT EXISTS whitelist (id SERIAL PRIMARY KEY, email VARCHAR UNIQUE, org_id VARCHAR, role VARCHAR, created_at VARCHAR)",
+        f"CREATE TABLE IF NOT EXISTS whitelist (id {pk_type}, email VARCHAR UNIQUE, org_id VARCHAR, role VARCHAR, created_at VARCHAR)",
         "ALTER TABLE hubs ADD COLUMN region VARCHAR",
         "ALTER TABLE hubs ADD COLUMN unit VARCHAR",
         "ALTER TABLE hubs ADD COLUMN is_active BOOLEAN DEFAULT FALSE",
@@ -55,14 +60,13 @@ def run_migrations():
         "ALTER TABLE enterprise_users ADD COLUMN status VARCHAR DEFAULT 'pending'",
     ]
 
-    # Run ALTER TABLE on both SQLite and Postgres
     with engine.connect() as conn:
         for stmt in migrations:
             try:
                 conn.execute(text(stmt))
                 conn.commit()
-            except Exception as e:
-                # Silently skip if column already exists (common in SQLite)
+            except Exception:
+                # Column already exists or table already exists
                 pass
     print("[BOOT] Schema migrations verified.")
 

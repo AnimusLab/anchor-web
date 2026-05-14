@@ -491,81 +491,89 @@ def provision_enterprise(
     company_name: str = Form(...),
     server_region: str = Form(...),
     department: str = Form("EXECUTIVE"),
-    hub_id: str = Form(None), # Optional from frontend
+    hub_id: str = Form(None),
     db: Session = Depends(get_db)
 ):
-    """
-    Sovereign Onboarding: 
-    Automatically creates an Organization and its first Owner user.
-    Supports multipart/form-data from the React frontend.
-    """
-    email = email.strip().lower()
-    region = server_region.strip().upper()[:2] # Normalize to 2-char code
-    
-    # 0. Check Whitelist
-    whitelist = db.query(WhitelistEntry).filter(WhitelistEntry.email == email).first()
-    if not whitelist:
-        raise HTTPException(status_code=403, detail="SECURITY_VIOLATION: Email not on authorized advance list.")
+    try:
+        email = email.strip().lower()
+        region = server_region.strip().upper()[:2]
+        domain = email.split('@')[-1]
+        
+        # 0. Check Whitelist
+        whitelist = db.query(WhitelistEntry).filter(WhitelistEntry.email == email).first()
+        if not whitelist:
+            raise HTTPException(status_code=403, detail="SECURITY_VIOLATION: Email not on authorized advance list.")
 
-    # 1. Find or Atomic-Create Organization
-    org_id_base = whitelist.org_id.strip().lower() # e.g. "jpmc"
-    org = db.query(Organization).filter(Organization.id == org_id_base).first()
-    if not org:
-        org = Organization(
-            id=org_id_base,
-            display_name=company_name,
-            domain=email.split('@')[-1],
-            region=region,
-            created_at=datetime.utcnow().isoformat()
-        )
-        db.add(org)
-        db.flush()
+        # 1. Find or Atomic-Create Organization
+        org_id_base = whitelist.org_id.strip().lower()
+        org = db.query(Organization).filter(Organization.id == org_id_base).first()
         
-        # AUTO-PROVISION PRIMARY HUB (The Spoke Node)
-        from models import Hub
-        # Generate Hub ID: [ABBR]-[REGION]-UNIT01
-        final_hub_id = _generate_hub_id(company_name, region, "UNIT01")
-        new_hub = Hub(
-            id=final_hub_id,
+        if not org:
+            # Check if domain is taken
+            existing_domain = db.query(Organization).filter(Organization.domain == domain).first()
+            if existing_domain:
+                raise HTTPException(status_code=400, detail=f"DOMAIN_CONFLICT: The domain '{domain}' is already registered.")
+
+            org = Organization(
+                id=org_id_base,
+                display_name=company_name,
+                domain=domain,
+                region=region,
+                created_at=datetime.utcnow().isoformat()
+            )
+            db.add(org)
+            db.flush()
+            
+            from models import Hub
+            final_hub_id = _generate_hub_id(company_name, region, "UNIT01")
+            new_hub = Hub(
+                id=final_hub_id,
+                org_id=org.id,
+                regional_key="PENDING_ACTIVATION",
+                display_name="Primary Sovereign Silo",
+                region=region,
+                unit="UNIT01",
+                is_active=False,
+                created_at=datetime.utcnow().isoformat()
+            )
+            db.add(new_hub)
+            db.flush()
+        
+        existing_user = db.query(EnterpriseUser).filter(EnterpriseUser.email == email).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="USER_ALREADY_PROVISIONED")
+            
+        clearance_id = _generate_clearance_id("owner", org.id, region)
+        totp_secret = pyotp.random_base32()
+        
+        new_user = EnterpriseUser(
+            id=clearance_id,
+            email=email,
+            display_name=display_name,
+            role="owner",
             org_id=org.id,
-            regional_key="PENDING_ACTIVATION",
-            display_name="Primary Sovereign Silo",
-            region=region,
-            unit="UNIT01",
-            is_active=False,
+            department=department,
+            totp_secret=totp_secret,
+            status="approved",
             created_at=datetime.utcnow().isoformat()
         )
-        db.add(new_hub)
-        db.flush()
-    
-    existing_user = db.query(EnterpriseUser).filter(EnterpriseUser.email == email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="USER ALREADY PROVISIONED")
+        db.add(new_user)
+        db.commit()
         
-    clearance_id = _generate_clearance_id("owner", org.id, region)
-    totp_secret = pyotp.random_base32()
-    
-    new_user = EnterpriseUser(
-        id=clearance_id,
-        email=email,
-        display_name=display_name,
-        role="owner",
-        org_id=org.id,
-        department=department,
-        totp_secret=totp_secret,
-        status="approved",
-        created_at=datetime.utcnow().isoformat()
-    )
-    db.add(new_user)
-    db.commit()
-    
-    return {
-        "status": "PROVISION_SUCCESS",
-        "clearance_id": clearance_id,
-        "org_id": org.id,
-        "totp_secret": totp_secret,
-        "note": "⚠️ SAVE THE TOTP SECRET IMMEDIATELY for MFA setup."
-    }
+        return {
+            "status": "PROVISION_SUCCESS",
+            "clearance_id": clearance_id,
+            "org_id": org.id,
+            "totp_secret": totp_secret,
+            "note": "⚠️ SAVE THE TOTP SECRET IMMEDIATELY for MFA setup."
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Onboarding Crash: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"INTERNAL_PROVISIONING_ERROR: {str(e)}")
 
 @auth_router.get("/me")
 def get_current_user_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
