@@ -32,7 +32,6 @@ const Icon = {
   logout:   <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd"/></svg>,
 };
 
-// --- Error Boundary ---
 class DashboardErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { hasError: false, error: null }; }
   static getDerivedStateFromError(error) { return { hasError: true, error }; }
@@ -100,10 +99,12 @@ function DashboardInner() {
     </div>
   );
 
+  const hubId = user?.org_id || 'PENDING_PROVISION';
+
   return (
     <div style={{ height: '100vh', display: 'flex', overflow: 'hidden' }}>
       
-      {/* SIDEBAR (Exact Oversight Dimensions) */}
+      {/* SIDEBAR */}
       <aside style={{ width: 220, minWidth: 220, background: V.sidebar, borderRight: `1px solid ${V.border}`, display: 'flex', flexDirection: 'column', overflowY: 'auto', zIndex: 10 }}>
         
         {/* Logo Section */}
@@ -117,11 +118,11 @@ function DashboardInner() {
           </div>
         </div>
 
-        {/* Clearance Badge (Oversight Style) */}
+        {/* Clearance Badge */}
         <div style={{ margin: '12px 12px 0', padding: '8px 12px', background: 'rgba(6,182,212,0.08)', borderRadius: 6, border: '1px solid rgba(6,182,212,0.2)' }}>
           <div style={{ fontSize: 10, color: V['cyan-soft'], marginBottom: 2, fontWeight: 600 }}>PRIVILEGE: OWNER</div>
           <div style={{ fontSize: 11, color: V.secondary, fontFamily: 'JetBrains Mono, monospace' }}>
-            {user?.org_id || 'LOCAL_NODE'}
+            {hubId}
           </div>
         </div>
 
@@ -178,7 +179,7 @@ function DashboardInner() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT (Exact Oversight Dimensions) */}
+      {/* MAIN CONTENT */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         
         {/* Header */}
@@ -188,14 +189,14 @@ function DashboardInner() {
             <div style={{ height: 16, width: 1, background: V.borderLit }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div style={{ width: 7, height: 7, borderRadius: '50%', background: V.green, boxShadow: '0 0 6px var(--green)' }} />
-              <span style={{ fontSize: 12, color: V.secondary }}>SILO PROTECTED // {user?.region || 'GLOBAL'}</span>
+              <span style={{ fontSize: 12, color: V.secondary }}>SILO PROTECTED // {user?.region || 'LOCAL'}</span>
             </div>
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ textAlign: 'right' }}>
                <div style={{ fontSize: 12, fontWeight: 600, color: V.primary }}>{user?.display_name || user?.email}</div>
-               <div style={{ fontSize: 9, fontWeight: 700, color: V.accent, letterSpacing: '0.05em' }}>OPERATOR</div>
+               <div style={{ fontSize: 9, fontWeight: 700, color: V.accent, letterSpacing: '0.05em' }}>{user?.role?.toUpperCase() || 'OPERATOR'}</div>
             </div>
             <div style={{ width: 32, height: 32, borderRadius: '50%', background: V.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>
                {(user?.display_name || user?.email || 'U').charAt(0).toUpperCase()}
@@ -206,7 +207,7 @@ function DashboardInner() {
         {/* Content Area */}
         <main style={{ flex: 1, overflowY: 'auto', background: V.void, padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
           
-          {/* Quick Actions (Oversight Style) */}
+          {/* Quick Actions */}
           <div className="ra-card" style={{ padding: '20px 24px' }}>
             <div style={{ fontSize: 15, fontWeight: 600, color: V.primary, marginBottom: 16 }}>System Actions</div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -223,23 +224,22 @@ function DashboardInner() {
               ))}
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 6 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: V.muted, letterSpacing: '0.05em' }}>HUB_SECURE</span>
-                <span style={{ fontSize: 12, color: V.green, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{user?.org_id || 'TANI-09-05-26'}</span>
+                <span style={{ fontSize: 12, color: V.green, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{hubId}</span>
               </div>
             </div>
           </div>
 
-          {/* Stats Grid (Exact Oversight Parity) */}
+          {/* Stats Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-             <StatCard label="Tactical Hub ID" value={user?.org_id?.toUpperCase() || 'TANI-NODE'} sub="SOVEREIGN_NODE" color={V.accent} colorClass="accent" />
+             <StatCard label="Tactical Hub ID" value={hubId.toUpperCase()} sub="SOVEREIGN_NODE" color={V.accent} colorClass="accent" />
              <StatCard label="Active Spoke Nodes" value={projects.length} sub="FLEET_ENUMERATION" color={V.accent} colorClass="accent" />
              <StatCard label="Integrity Score" value="100%" sub="MESH_CONSENSUS" color={V.green} colorClass="green" />
-             <StatCard label="Access Level" value="OWNER" sub="REGIONAL_GATE" color={V.amber} colorClass="amber" />
+             <StatCard label="Access Level" value={user?.role?.toUpperCase() || 'OWNER'} sub="REGIONAL_GATE" color={V.amber} colorClass="amber" />
           </div>
 
-          {/* Main Visuals (Lattice + Ticker) */}
+          {/* Main Visuals */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: 20 }}>
             
-            {/* Mesh Lattice Card */}
             <div className="ra-card" style={{ height: 500, position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 20, left: 24, zIndex: 5 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: V.accent, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Active Mesh Lattice</div>
@@ -250,7 +250,6 @@ function DashboardInner() {
               </div>
             </div>
 
-            {/* Violation Feed / Ticker Card */}
             <div className="ra-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                <div style={{ padding: '16px 20px', borderBottom: `1px solid ${V.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                  <div>
@@ -281,7 +280,7 @@ function DashboardInner() {
 
           </div>
 
-          {/* Spoke Node Inventory (Grid View) */}
+          {/* Inventory */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                <div style={{ fontSize: 12, fontWeight: 700, color: V.muted, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Spoke Node Inventory</div>
