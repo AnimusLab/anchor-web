@@ -18,7 +18,7 @@ function StatCard({ label, value, sub, color, colorClass }) {
   return (
     <div className={`stat-card ${colorClass}`}>
       <div style={{ fontSize: 12, fontWeight: 600, color: V.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>{label}</div>
-      <div style={{ fontSize: 32, fontWeight: 700, color, lineHeight: 1, marginBottom: 6 }}>{value}</div>
+      <div style={{ fontSize: 32, fontWeight: 700, color, lineHeight: 1, marginBottom: 6, wordBreak: 'break-all' }}>{value}</div>
       <div style={{ fontSize: 12, color: V.dim, fontFamily: 'JetBrains Mono, monospace' }}>{sub}</div>
     </div>
   );
@@ -53,7 +53,7 @@ function DashboardInner() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
-  const [projects, setProjects] = useState([]);
+  const [hubs, setHubs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Overview');
   const [pendingPulls, setPendingPulls] = useState([]);
@@ -63,12 +63,9 @@ function DashboardInner() {
     const fetchData = async () => {
       try {
         const headers = { Authorization: `Bearer ${token}` };
-        const [statsRes, projectsRes] = await Promise.all([
-          fetch(endpoints.stats(), { headers }),
-          fetch(endpoints.listProjects, { headers }),
-        ]);
-        if (statsRes.ok) setStats(await statsRes.json());
-        if (projectsRes.ok) setProjects(await projectsRes.json());
+        // In the new architecture, we fetch Hubs instead of projects
+        const hubsRes = await fetch(`${endpoints.baseUrl}/api/auth/hubs`, { headers });
+        if (hubsRes.ok) setHubs(await hubsRes.json());
 
         const pullsRes = await fetch(`${endpoints.baseUrl}/api/forensic/pending`, { headers });
         if (pullsRes.ok) setPendingPulls(await pullsRes.json());
@@ -95,11 +92,14 @@ function DashboardInner() {
   if (loading) return (
     <div style={{ height: '100vh', background: V.void, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
       <div style={{ width: 40, height: 40, border: '2px solid rgba(255,255,255,0.05)', borderTopColor: V.accent, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-      <div style={{ fontSize: 9, letterSpacing: '0.4em', color: V.muted, textTransform: 'uppercase' }}>Syncing Sovereign Node</div>
+      <div style={{ fontSize: 9, letterSpacing: '0.4em', color: V.muted, textTransform: 'uppercase' }}>Synchronizing Sovereign Mesh</div>
     </div>
   );
 
-  const hubId = user?.org_id || 'PENDING_PROVISION';
+  const orgId = user?.org_id || 'PENDING_ORG';
+  const clearanceId = user?.sub || 'PENDING_ID';
+  const hubId = user?.hub_id || 'PENDING_HUB';
+  const regionalKey = user?.regional_key || 'UNSET';
 
   return (
     <div style={{ height: '100vh', display: 'flex', overflow: 'hidden' }}>
@@ -114,15 +114,15 @@ function DashboardInner() {
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: V.primary }}>Anchor Enterprise</div>
-            <div style={{ fontSize: 10, color: V['accent-soft'], letterSpacing: '0.05em', fontWeight: 500 }}>SOVEREIGN MODE</div>
+            <div style={{ fontSize: 10, color: V['accent-soft'], letterSpacing: '0.05em', fontWeight: 500 }}>SOVEREIGN RELAY</div>
           </div>
         </div>
 
         {/* Clearance Badge */}
         <div style={{ margin: '12px 12px 0', padding: '8px 12px', background: 'rgba(6,182,212,0.08)', borderRadius: 6, border: '1px solid rgba(6,182,212,0.2)' }}>
-          <div style={{ fontSize: 10, color: V['cyan-soft'], marginBottom: 2, fontWeight: 600 }}>PRIVILEGE: OWNER</div>
+          <div style={{ fontSize: 10, color: V['cyan-soft'], marginBottom: 2, fontWeight: 600 }}>CLEARANCE: {clearanceId}</div>
           <div style={{ fontSize: 11, color: V.secondary, fontFamily: 'JetBrains Mono, monospace' }}>
-            {hubId}
+            ORG: {orgId}
           </div>
         </div>
 
@@ -189,14 +189,14 @@ function DashboardInner() {
             <div style={{ height: 16, width: 1, background: V.borderLit }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div style={{ width: 7, height: 7, borderRadius: '50%', background: V.green, boxShadow: '0 0 6px var(--green)' }} />
-              <span style={{ fontSize: 12, color: V.secondary }}>SILO PROTECTED // {user?.region || 'LOCAL'}</span>
+              <span style={{ fontSize: 12, color: V.secondary }}>HUB: {hubId} // {user?.region || 'LOCAL'}</span>
             </div>
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ textAlign: 'right' }}>
                <div style={{ fontSize: 12, fontWeight: 600, color: V.primary }}>{user?.display_name || user?.email}</div>
-               <div style={{ fontSize: 9, fontWeight: 700, color: V.accent, letterSpacing: '0.05em' }}>{user?.role?.toUpperCase() || 'OPERATOR'}</div>
+               <div style={{ fontSize: 9, fontWeight: 700, color: V.accent, letterSpacing: '0.05em' }}>{user?.role?.toUpperCase()}</div>
             </div>
             <div style={{ width: 32, height: 32, borderRadius: '50%', background: V.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>
                {(user?.display_name || user?.email || 'U').charAt(0).toUpperCase()}
@@ -209,11 +209,11 @@ function DashboardInner() {
           
           {/* Quick Actions */}
           <div className="ra-card" style={{ padding: '20px 24px' }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: V.primary, marginBottom: 16 }}>System Actions</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: V.primary, marginBottom: 16 }}>Sovereign Hub Actions</div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               {[
-                { label: 'Provision Spoke Node', bg: V.accent },
-                { label: 'Generate Regional Key', bg: V.surface, border: V.borderLit },
+                { label: 'Rotate Regional Key', bg: V.accent },
+                { label: 'Verify Hub Integrity', bg: V.surface, border: V.borderLit },
                 { label: 'Export Sovereign Ledger', bg: V.surface, border: V.borderLit },
               ].map((a, i) => (
                 <button key={i} style={{ padding: '9px 18px', borderRadius: 6, fontSize: 13, fontWeight: 600, color: '#fff', background: a.bg, border: a.border ? `1px solid ${a.border}` : 'none', cursor: 'pointer', transition: 'all 0.15s' }}
@@ -223,18 +223,18 @@ function DashboardInner() {
                 </button>
               ))}
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: V.muted, letterSpacing: '0.05em' }}>HUB_SECURE</span>
-                <span style={{ fontSize: 12, color: V.green, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{hubId}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: V.muted, letterSpacing: '0.05em' }}>REGIONAL_KEY</span>
+                <span style={{ fontSize: 12, color: V.green, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{regionalKey}</span>
               </div>
             </div>
           </div>
 
           {/* Stats Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-             <StatCard label="Tactical Hub ID" value={hubId.toUpperCase()} sub="SOVEREIGN_NODE" color={V.accent} colorClass="accent" />
-             <StatCard label="Active Spoke Nodes" value={projects.length} sub="FLEET_ENUMERATION" color={V.accent} colorClass="accent" />
+             <StatCard label="Spoke Node Handle" value={regionalKey} sub="REGIONAL_ACTIVATION_KEY" color={V.accent} colorClass="accent" />
+             <StatCard label="Active Hub Identity" value={hubId} sub="SOVEREIGN_UNIT_ENUM" color={V.accent} colorClass="accent" />
              <StatCard label="Integrity Score" value="100%" sub="MESH_CONSENSUS" color={V.green} colorClass="green" />
-             <StatCard label="Access Level" value={user?.role?.toUpperCase() || 'OWNER'} sub="REGIONAL_GATE" color={V.amber} colorClass="amber" />
+             <StatCard label="Access Level" value={user?.role?.toUpperCase()} sub="GATEKEEPER_STATUS" color={V.amber} colorClass="amber" />
           </div>
 
           {/* Main Visuals */}
@@ -242,11 +242,11 @@ function DashboardInner() {
             
             <div className="ra-card" style={{ height: 500, position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 20, left: 24, zIndex: 5 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: V.accent, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Active Mesh Lattice</div>
-                <div style={{ fontSize: 10, color: V.muted, marginTop: 4 }}>REAL_TIME_NODE_TELEMETRY</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: V.accent, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Silo Lattice Mesh</div>
+                <div style={{ fontSize: 10, color: V.muted, marginTop: 4 }}>REAL_TIME_HUB_TELEMETRY</div>
               </div>
               <div style={{ width: '100%', height: '100%', padding: '20px' }}>
-                <TacticalLattice projects={projects} department={user?.department} />
+                <TacticalLattice projects={hubs} department={user?.department} />
               </div>
             </div>
 
@@ -259,65 +259,46 @@ function DashboardInner() {
                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: V.red, animation: 'pulse 2s infinite' }} />
                </div>
                <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                 {projects.flatMap(p => p.recent_violations || []).length === 0 ? (
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifySelf: 'center', opacity: 0.15, paddingTop: 100 }}>
-                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ width: 64, height: 64, marginBottom: 16 }}><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                       <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase' }}>No Grid Breaches</div>
-                    </div>
-                 ) : (
-                    projects.flatMap(p => p.recent_violations || []).map((v, i) => (
-                      <div key={i} className="slide-in" style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.04)', borderLeft: `2px solid ${V.red}`, borderRadius: '0 4px 4px 0' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontSize: 9, fontWeight: 800, color: V.red, letterSpacing: '0.05em' }}>CRITICAL BREACH</span>
-                          <span style={{ fontSize: 10, color: V.dim, fontFamily: 'JetBrains Mono' }}>{v.timestamp?.slice(11, 19)}</span>
-                        </div>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: '#fff' }}>{v.summary}</div>
-                      </div>
-                    ))
-                 )}
+                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifySelf: 'center', opacity: 0.15, paddingTop: 100 }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ width: 64, height: 64, marginBottom: 16 }}><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase' }}>No Hub Breaches</div>
+                 </div>
                </div>
             </div>
 
           </div>
 
-          {/* Inventory */}
+          {/* Hub Inventory */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-               <div style={{ fontSize: 12, fontWeight: 700, color: V.muted, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Spoke Node Inventory</div>
-               <span className="badge badge-cyan">{projects.length} PROVISIONED</span>
+               <div style={{ fontSize: 12, fontWeight: 700, color: V.muted, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Regional Hub Inventory</div>
+               <span className="badge badge-cyan">{hubs.length} HUB(S) ACTIVE</span>
             </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-               {projects.map(p => (
-                 <div key={p.id} className="ra-card slide-in" style={{ padding: 24, cursor: 'pointer' }}>
+               {hubs.map(h => (
+                 <div key={h.id} className="ra-card slide-in" style={{ padding: 24, cursor: 'pointer' }}>
                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 16 }}>
                      <div>
-                       <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{p.name}</div>
-                       <div style={{ fontSize: 11, color: V.dim, fontFamily: 'JetBrains Mono', marginTop: 4 }}>{p.id}</div>
+                       <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{h.display_name}</div>
+                       <div style={{ fontSize: 11, color: V.dim, fontFamily: 'JetBrains Mono', marginTop: 4 }}>ID: {h.id}</div>
                      </div>
-                     <span className={`badge ${p.status === 'ACTIVE' ? 'badge-green' : 'badge-red'}`}>{p.status || 'ACTIVE'}</span>
+                     <span className="badge badge-green">{h.status || 'ACTIVE'}</span>
                    </div>
                    
                    <div style={{ marginBottom: 20 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, fontWeight: 700, color: V.muted, textTransform: 'uppercase', marginBottom: 8 }}>
-                        <span>Compliance Rate</span>
-                        <span style={{ color: '#fff' }}>{p.compliance_rate || '100%'}</span>
+                        <span>Silo Utilization</span>
+                        <span style={{ color: '#fff' }}>100%</span>
                       </div>
                       <div style={{ height: 4, background: V.void, borderRadius: 2, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', background: V.accent, width: p.compliance_rate || '100%', boxShadow: `0 0 8px ${V['accent-soft']}` }} />
+                        <div style={{ height: '100%', background: V.accent, width: '100%', boxShadow: `0 0 8px ${V['accent-soft']}` }} />
                       </div>
                    </div>
                    
-                   <button style={{ width: '100%', padding: '8px', background: 'transparent', border: `1px solid ${V.borderLit}`, color: V.secondary, borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Initialize Console →</button>
+                   <button style={{ width: '100%', padding: '8px', background: 'transparent', border: `1px solid ${V.borderLit}`, color: V.secondary, borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Connect to Spoke →</button>
                  </div>
                ))}
-               
-               {projects.length === 0 && (
-                 <div style={{ gridColumn: '1/-1', height: 160, border: `1px dashed ${V.border}`, borderRadius: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: 0.4 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${V.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>+</div>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.2em' }}>PROVISION FIRST SPOKE NODE</div>
-                 </div>
-               )}
             </div>
           </div>
 

@@ -451,7 +451,6 @@ def register_auditor(
         org = Organization(
             id=real_org_id,
             display_name=agency_hub_id,
-            hub_id=agency_hub_id,
             domain=f"{agency_hub_id.lower()}.gov",
             region=jurisdiction,
             org_type="regulator",
@@ -459,6 +458,18 @@ def register_auditor(
             created_at=datetime.utcnow().isoformat()
         )
         db.add(org)
+        db.flush()
+
+        # Create the agency hub
+        from models import Hub
+        hub = Hub(
+            id=agency_hub_id,
+            org_id=org.id,
+            regional_key=secrets.token_hex(16),
+            display_name=f"{agency_hub_id} Regulatory Hub",
+            created_at=datetime.utcnow().isoformat()
+        )
+        db.add(hub)
         db.flush()
 
     # 3. Provision Auditor
@@ -505,11 +516,22 @@ def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depe
             id=org_id,
             display_name=request.company_name,
             region=request.region,
-            hub_id=f"hub-{org_id.lower()}",
-            regional_key=secrets.token_hex(16),
             created_at=datetime.utcnow().isoformat()
         )
         db.add(org)
+        db.flush()
+        
+        # AUTO-PROVISION PRIMARY HUB (The Spoke Node)
+        from models import Hub
+        hub_id = f"hub-{org_id.lower()}-{secrets.token_hex(3)}"
+        new_hub = Hub(
+            id=hub_id,
+            org_id=org.id,
+            regional_key=secrets.token_hex(16), # THE REGIONAL KEY ACTS AS THE SPOKE NODE HANDLE
+            display_name="Primary Sovereign Silo",
+            created_at=datetime.utcnow().isoformat()
+        )
+        db.add(new_hub)
         db.flush()
     
     existing_user = db.query(EnterpriseUser).filter(EnterpriseUser.email == request.email).first()
@@ -533,29 +555,14 @@ def provision_enterprise(request: EnterpriseProvisionRequest, db: Session = Depe
         created_at=datetime.utcnow().isoformat()
     )
     db.add(new_user)
-    
-    # 3. AUTO-PROVISION SPOKE NODE (Zero-Touch Friction Reduction)
-    # Every Sovereign Silo needs at least one data plane (Fleet) to start logging.
-    spoke_id = f"{org.id.lower()}-primary"
-    default_fleet = Fleet(
-        entity_id=spoke_id,
-        org_id=org.id,
-        name="Primary Sovereign Silo",
-        tier="enterprise",
-        key_hash=secrets.token_hex(16), # Initial placeholder hash
-        created_at=datetime.utcnow().isoformat(),
-        provisioned_by=clearance_id
-    )
-    db.add(default_fleet)
     db.commit()
     
     return {
         "status": "PROVISION_SUCCESS",
         "clearance_id": clearance_id,
         "org_id": org.id,
-        "hub_id": org.hub_id,
         "totp_secret": totp_secret,
-        "note": "⚠️ SAVE THE TOTP SECRET IMMEDIATELY for MFA setup. Your primary Spoke Node has been auto-provisioned."
+        "note": "⚠️ SAVE THE TOTP SECRET IMMEDIATELY for MFA setup. Your primary Spoke Node (Hub) has been auto-provisioned."
     }
 
 @auth_router.get("/me")
@@ -574,13 +581,21 @@ def get_current_user_profile(current_user: dict = Depends(get_current_user), db:
     if not user:
         raise HTTPException(status_code=404, detail="USER NOT FOUND")
     org = db.query(Organization).filter(Organization.id == user.org_id).first()
+    from models import Hub
+    # Get the user's assigned hub, or the first hub in the org as fallback
+    hub = db.query(Hub).filter(Hub.id == getattr(user, 'hub_id', None)).first()
+    if not hub and org:
+        hub = db.query(Hub).filter(Hub.org_id == org.id).first()
+
     return {
         "sub": user.id,
         "email": getattr(user, 'email', None),
         "display_name": getattr(user, 'display_name', 'AUTHORIZED'),
         "role": getattr(user, 'role', 'member'),
         "org_id": getattr(user, 'org_id', None),
-        "hub_id": getattr(org, 'hub_id', 'PENDING'),
+        "hub_id": getattr(hub, 'id', 'PENDING'),
+        "hub_name": getattr(hub, 'display_name', 'Default Hub'),
+        "regional_key": getattr(hub, 'regional_key', 'UNSET'),
         "region": getattr(org, 'region', 'GLOBAL'),
         "department": getattr(user, 'department', 'OPS')
     }

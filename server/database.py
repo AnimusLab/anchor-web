@@ -46,13 +46,13 @@ def run_migrations():
     SQLAlchemy models but are absent from the live database table."""
     from sqlalchemy import text
     migrations = [
-        "ALTER TABLE organizations ADD COLUMN hub_id VARCHAR",
         "ALTER TABLE organizations ADD COLUMN region VARCHAR",
-        "ALTER TABLE organizations ADD COLUMN regional_key VARCHAR",
         "ALTER TABLE regulatory_officials ADD COLUMN org_id VARCHAR",
         "ALTER TABLE regulatory_officials ADD COLUMN department VARCHAR",
         "ALTER TABLE regulatory_officials ADD COLUMN jurisdiction VARCHAR",
         "ALTER TABLE enterprise_users ADD COLUMN department VARCHAR",
+        "ALTER TABLE enterprise_users ADD COLUMN hub_id VARCHAR",
+        "ALTER TABLE ledger ADD COLUMN hub_id VARCHAR",
         "ALTER TABLE org_invites ADD COLUMN department VARCHAR",
     ]
 
@@ -100,14 +100,23 @@ def seed_mesh_identities(db):
         if not existing:
             org = Organization(
                 id=cfg["id"],
-                hub_id=cfg["prefix"],
                 display_name=cfg["name"],
                 org_type=cfg["type"],
                 domain=f"{cfg['prefix']}.gov" if cfg["type"] == "regulator" else "animuslab.ai",
                 created_at=datetime.utcnow().isoformat()
             )
             db.add(org)
-            print(f"[SYSTEM] Mesh Node Seeded: {cfg['prefix'].upper()}")
+            # Seed a default hub for the org
+            from models import Hub
+            hub = Hub(
+                id=cfg["prefix"],
+                org_id=cfg["id"],
+                regional_key=secrets.token_hex(16),
+                display_name=f"{cfg['name']} Primary Hub",
+                created_at=datetime.utcnow().isoformat()
+            )
+            db.add(hub)
+            print(f"[SYSTEM] Mesh Node + Hub Seeded: {cfg['prefix'].upper()}")
 
     db.commit()
 
