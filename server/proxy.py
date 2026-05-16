@@ -90,11 +90,14 @@ def on_startup():
     """Genesis Sequence: Ensures schema is healed and tables are seeded."""
     init_db()
     
-    # HEALING: Ensure enterprise users are properly gated for approval
+    # HEALING: Ensure identity standards are met (v5.8)
     try:
         from database import SessionLocal
-        from models import EnterpriseUser
         db = SessionLocal()
+        # Fix Hub IDs (ANIM-IN-UNIT01 -> AL-IN-MUM01)
+        db.execute(text("UPDATE hubs SET id = 'AL-IN-MUM01', unit = 'MUM01' WHERE id = 'ANIM-IN-UNIT01'"))
+        db.execute(text("UPDATE enterprise_users SET hub_id = 'AL-IN-MUM01' WHERE hub_id = 'ANIM-IN-UNIT01'"))
+        
         # Move inadvertently approved users back to pending for review
         db.execute(text("UPDATE enterprise_users SET status = 'pending' WHERE status = 'approved' AND role = 'owner'"))
         db.commit()
