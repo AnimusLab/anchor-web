@@ -14,75 +14,100 @@ extend({ MeshLineGeometry, MeshLineMaterial });
 /**
  * Generates a high-fidelity dynamic texture for the Auditor Badge.
  */
+/**
+ * Generates a high-fidelity dynamic texture for the Auditor Badge.
+ */
 function createBadgeTexture(name, agency, clearanceId) {
   const canvas = document.createElement('canvas');
-  canvas.width = 1200; // Increased width for better fit
-  canvas.height = 1536;
+  canvas.width = 1600; 
+  canvas.height = 1000;
   const ctx = canvas.getContext('2d');
+
+  const primaryColor = '#10B981'; // Emerald
 
   // 1. Dark Background with subtle grid
   ctx.fillStyle = '#08080C';
-  ctx.fillRect(0, 0, 1200, 1536);
+  ctx.fillRect(0, 0, 1600, 1000);
   
+  // Grid
   ctx.strokeStyle = 'rgba(16, 185, 129, 0.05)';
   ctx.lineWidth = 1;
-  for (let i = 0; i < 1200; i += 40) {
-    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 1536); ctx.stroke();
+  for (let i = 0; i < 1600; i += 50) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 1000); ctx.stroke();
   }
-  for (let i = 0; i < 1536; i += 40) {
-    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(1200, i); ctx.stroke();
+  for (let i = 0; i < 1000; i += 50) {
+    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(1600, i); ctx.stroke();
   }
 
-  // 2. Agency Header Block
-  const headerColor = '#10B981'; // Anchor Emerald
-  ctx.fillStyle = headerColor;
-  ctx.fillRect(0, 0, 1200, 220);
-
-  // 3. Agency Text
-  ctx.fillStyle = '#000000';
-  ctx.font = 'bold 90px Courier New, monospace';
+  // 2. Left Accent Bar (Oversight Status)
+  ctx.fillStyle = primaryColor;
+  ctx.fillRect(0, 0, 60, 1000);
+  
+  // Vertical Text on bar
+  ctx.save();
+  ctx.translate(40, 500);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = '#000';
+  ctx.font = 'bold 30px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(agency.toUpperCase(), 600, 140);
+  ctx.fillText('OFFICIAL OVERSIGHT OFFICER // ANCHOR CORE', 0, 0);
+  ctx.restore();
 
-  // 4. "OFFICIAL AUDITOR" label
-  ctx.fillStyle = '#64748B';
-  ctx.font = '40px monospace';
-  ctx.letterSpacing = '10px';
-  ctx.fillText('IDENTITY VERIFIED // AUTHORIZED', 600, 320);
-
-  // 5. Photo Area / Shield Icon
+  // 3. Photo Area (Left Side)
   ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)';
   ctx.lineWidth = 4;
-  ctx.strokeRect(400, 420, 400, 500);
+  ctx.strokeRect(120, 150, 450, 550);
   
-  // Abstract "User" Icon
   ctx.fillStyle = '#111827';
-  ctx.fillRect(402, 422, 396, 496);
-  ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';
-  ctx.beginPath();
-  ctx.arc(600, 600, 120, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(600, 970, 240, Math.PI, 0);
-  ctx.fill();
+  ctx.fillRect(124, 154, 442, 542);
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
+  ctx.beginPath(); ctx.arc(345, 350, 110, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(345, 750, 220, Math.PI, 0); ctx.fill();
 
-  // 6. Name
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 85px monospace';
-  ctx.fillText(name.toUpperCase(), 600, 1080);
-
-  // 7. Clearance ID (The Star of the Show)
-  ctx.fillStyle = headerColor;
-  ctx.font = 'bold 115px Courier New, monospace';
+  // 4. Clearance ID (Below Photo)
+  ctx.fillStyle = primaryColor;
+  ctx.font = 'bold 85px Courier New, monospace';
+  ctx.textAlign = 'center';
   ctx.shadowColor = 'rgba(16, 185, 129, 0.5)';
-  ctx.shadowBlur = 20;
-  ctx.fillText(clearanceId.toUpperCase(), 600, 1240);
+  ctx.shadowBlur = 15;
+  ctx.fillText(clearanceId.toUpperCase(), 345, 850);
   ctx.shadowBlur = 0;
 
-  // 8. Footer
+  // 5. Right Section: Details
+  ctx.textAlign = 'left';
+  
+  // Agency Header
+  ctx.fillStyle = primaryColor;
+  ctx.font = 'bold 45px monospace';
+  ctx.letterSpacing = '5px';
+  ctx.fillText('REGULATORY AGENCY', 650, 180);
+  
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 110px Courier New, monospace';
+  ctx.fillText(agency.toUpperCase(), 650, 300);
+
+  // Officer Name
+  ctx.fillStyle = primaryColor;
+  ctx.font = 'bold 40px monospace';
+  ctx.fillText('OFFICER NAME', 650, 450);
+  
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 90px monospace';
+  ctx.fillText(name.toUpperCase(), 650, 550);
+
+  // Authority Level
+  ctx.fillStyle = primaryColor;
+  ctx.font = 'bold 40px monospace';
+  ctx.fillText('JURISDICTIONAL CLEARANCE', 650, 700);
+  
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = 'bold 60px monospace';
+  ctx.fillText('FULL ACCESS // FORENSIC AUDITOR', 650, 780);
+
+  // Footer / Mesh Metadata
   ctx.fillStyle = '#334155';
-  ctx.font = '32px monospace';
-  ctx.fillText('ANCHOR GOVERNANCE MESH // v5.1 Protocol', 600, 1460);
+  ctx.font = '28px monospace';
+  ctx.fillText('ANCHOR GOVERNANCE MESH // REGULATORY GATEWAY: ACTIVE', 650, 930);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.anisotropy = 16;
@@ -100,7 +125,7 @@ export default function AuditorBadge({ name = "Unknown", agency = "PENDING", cle
         gl={{ alpha: true, antialias: true }}
         dpr={[1, 2]}
       >
-        <ambientLight intensity={0.6} />
+        <ambientLight intensity={0.7} />
         <pointLight position={[10, 10, 10]} intensity={1.5} />
         <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={1.2} />
         
@@ -128,11 +153,11 @@ function Lanyard({ name, agency, clearanceId }) {
 
   const texture = useMemo(() => createBadgeTexture(name, agency, clearanceId), [name, agency, clearanceId]);
   
-  // Create Rounded Geometry
+  // Create Rounded Geometry (LANDSCAPE)
   const roundedCardGeometry = useMemo(() => {
-    const width = 2.0; // Increased width
-    const height = 2.6;
-    const radius = 0.15; // Smooth edges
+    const width = 3.2; // Wider for landscape
+    const height = 2.0;
+    const radius = 0.15;
     const shape = new THREE.Shape();
     shape.moveTo(-width / 2 + radius, -height / 2);
     shape.lineTo(width / 2 - radius, -height / 2);
@@ -169,7 +194,7 @@ function Lanyard({ name, agency, clearanceId }) {
   useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 0.8]);
   useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 0.8]);
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 0.8]);
-  useSphericalJoint(j3, card, [[0, 0, 0], [0, 1.4, 0]]);
+  useSphericalJoint(j3, card, [[0, 0, 0], [0, 1.1, 0]]); // Adjusted connection point for landscape
 
   useFrame((state) => {
     if (dragged) {
@@ -211,7 +236,7 @@ function Lanyard({ name, agency, clearanceId }) {
           onPointerDown={() => setDragged(true)}
           onPointerUp={() => setDragged(false)}
         >
-          <CuboidCollider args={[1.0, 1.3, 0.05]} />
+          <CuboidCollider args={[1.6, 1.0, 0.05]} />
           
           {/* Card Body */}
           <mesh castShadow receiveShadow geometry={roundedCardGeometry}>
@@ -225,7 +250,7 @@ function Lanyard({ name, agency, clearanceId }) {
           </mesh>
 
           {/* Metal Clip */}
-          <mesh position={[0, 1.4, 0]}>
+          <mesh position={[0, 1.1, 0]}>
             <cylinderGeometry args={[0.12, 0.12, 0.2, 16]} rotation={[Math.PI / 2, 0, 0]} />
             <meshStandardMaterial color="#444" metalness={1} roughness={0.1} />
           </mesh>
