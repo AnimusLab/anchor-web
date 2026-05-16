@@ -11,73 +11,78 @@ extend({ MeshLineGeometry, MeshLineMaterial });
 /**
  * Generates a high-fidelity dynamic texture for the Auditor Badge.
  */
+/**
+ * Generates a high-fidelity dynamic texture for the Auditor Badge.
+ */
 function createBadgeTexture(name, agency, clearanceId) {
   const canvas = document.createElement('canvas');
-  canvas.width = 1024;
+  canvas.width = 1200; // Increased width for better fit
   canvas.height = 1536;
   const ctx = canvas.getContext('2d');
 
   // 1. Dark Background with subtle grid
   ctx.fillStyle = '#08080C';
-  ctx.fillRect(0, 0, 1024, 1536);
+  ctx.fillRect(0, 0, 1200, 1536);
   
   ctx.strokeStyle = 'rgba(16, 185, 129, 0.05)';
   ctx.lineWidth = 1;
-  for (let i = 0; i < 1024; i += 40) {
+  for (let i = 0; i < 1200; i += 40) {
     ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 1536); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(1024, i); ctx.stroke();
+  }
+  for (let i = 0; i < 1536; i += 40) {
+    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(1200, i); ctx.stroke();
   }
 
   // 2. Agency Header Block
   const headerColor = '#10B981'; // Anchor Emerald
   ctx.fillStyle = headerColor;
-  ctx.fillRect(0, 0, 1024, 200);
+  ctx.fillRect(0, 0, 1200, 220);
 
   // 3. Agency Text
   ctx.fillStyle = '#000000';
   ctx.font = 'bold 90px Courier New, monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(agency.toUpperCase(), 512, 130);
+  ctx.fillText(agency.toUpperCase(), 600, 140);
 
   // 4. "OFFICIAL AUDITOR" label
   ctx.fillStyle = '#64748B';
   ctx.font = '40px monospace';
   ctx.letterSpacing = '10px';
-  ctx.fillText('IDENTITY VERIFIED // AUTHORIZED', 512, 300);
+  ctx.fillText('IDENTITY VERIFIED // AUTHORIZED', 600, 320);
 
   // 5. Photo Area / Shield Icon
   ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)';
   ctx.lineWidth = 4;
-  ctx.strokeRect(312, 400, 400, 500);
+  ctx.strokeRect(400, 420, 400, 500);
   
   // Abstract "User" Icon
   ctx.fillStyle = '#111827';
-  ctx.fillRect(314, 402, 396, 496);
+  ctx.fillRect(402, 422, 396, 496);
   ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';
   ctx.beginPath();
-  ctx.arc(512, 580, 120, 0, Math.PI * 2);
+  ctx.arc(600, 600, 120, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(512, 950, 240, Math.PI, 0);
+  ctx.arc(600, 970, 240, Math.PI, 0);
   ctx.fill();
 
   // 6. Name
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 80px monospace';
-  ctx.fillText(name.toUpperCase(), 512, 1050);
+  ctx.font = 'bold 85px monospace';
+  ctx.fillText(name.toUpperCase(), 600, 1080);
 
   // 7. Clearance ID (The Star of the Show)
   ctx.fillStyle = headerColor;
-  ctx.font = 'bold 110px Courier New, monospace';
+  ctx.font = 'bold 115px Courier New, monospace';
   ctx.shadowColor = 'rgba(16, 185, 129, 0.5)';
   ctx.shadowBlur = 20;
-  ctx.fillText(clearanceId.toUpperCase(), 512, 1200);
+  ctx.fillText(clearanceId.toUpperCase(), 600, 1240);
   ctx.shadowBlur = 0;
 
   // 8. Footer
   ctx.fillStyle = '#334155';
-  ctx.font = '30px monospace';
-  ctx.fillText('ANCHOR GOVERNANCE MESH // v5.1 Protocol', 512, 1450);
+  ctx.font = '32px monospace';
+  ctx.fillText('ANCHOR GOVERNANCE MESH // v5.1 Protocol', 600, 1460);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.anisotropy = 16;
@@ -95,9 +100,9 @@ export default function AuditorBadge({ name = "Unknown", agency = "PENDING", cle
         gl={{ alpha: true, antialias: true }}
         dpr={[1, 2]}
       >
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
-        <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
+        <ambientLight intensity={0.6} />
+        <pointLight position={[10, 10, 10]} intensity={1.5} />
+        <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={1.2} />
         
         <Physics gravity={[0, -20, 0]}>
           <Lanyard name={name} agency={agency} clearanceId={clearanceId} />
@@ -120,9 +125,28 @@ function Lanyard({ name, agency, clearanceId }) {
   const band = useRef();
 
   const [dragged, setDragged] = useState(false);
-  const [hovered, setHovered] = useState(false);
 
   const texture = useMemo(() => createBadgeTexture(name, agency, clearanceId), [name, agency, clearanceId]);
+  
+  // Create Rounded Geometry
+  const roundedCardGeometry = useMemo(() => {
+    const width = 2.0; // Increased width
+    const height = 2.6;
+    const radius = 0.15; // Smooth edges
+    const shape = new THREE.Shape();
+    shape.moveTo(-width / 2 + radius, -height / 2);
+    shape.lineTo(width / 2 - radius, -height / 2);
+    shape.quadraticCurveTo(width / 2, -height / 2, width / 2, -height / 2 + radius);
+    shape.lineTo(width / 2, height / 2 - radius);
+    shape.quadraticCurveTo(width / 2, height / 2, width / 2 - radius, height / 2);
+    shape.lineTo(-width / 2 + radius, height / 2);
+    shape.quadraticCurveTo(-width / 2, height / 2, -width / 2, height / 2 - radius);
+    shape.lineTo(-width / 2, -height / 2 + radius);
+    shape.quadraticCurveTo(-width / 2, -height / 2, -width / 2 + radius, -height / 2);
+    
+    return new THREE.ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: false });
+  }, []);
+
   const lanyardTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 64; canvas.height = 64;
@@ -147,7 +171,7 @@ function Lanyard({ name, agency, clearanceId }) {
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 0.8]);
   useSphericalJoint(j3, card, [[0, 0, 0], [0, 1.4, 0]]);
 
-  useFrame((state, delta) => {
+  useFrame((state) => {
     if (dragged) {
         const vec = new THREE.Vector3(state.pointer.x, state.pointer.y, 0.5).unproject(state.camera);
         const dir = vec.clone().sub(state.camera.position).normalize();
@@ -184,16 +208,13 @@ function Lanyard({ name, agency, clearanceId }) {
           {...segmentProps} 
           type={dragged ? 'kinematicPosition' : 'dynamic'}
           colliders={false}
-          onPointerOver={() => setHovered(true)}
-          onPointerOut={() => setHovered(false)}
           onPointerDown={() => setDragged(true)}
           onPointerUp={() => setDragged(false)}
         >
-          <CuboidCollider args={[0.8, 1.2, 0.05]} />
+          <CuboidCollider args={[1.0, 1.3, 0.05]} />
           
           {/* Card Body */}
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={[1.6, 2.4, 0.08]} />
+          <mesh castShadow receiveShadow geometry={roundedCardGeometry}>
             <meshPhysicalMaterial 
               map={texture} 
               clearcoat={1} 
@@ -204,9 +225,9 @@ function Lanyard({ name, agency, clearanceId }) {
           </mesh>
 
           {/* Metal Clip */}
-          <mesh position={[0, 1.3, 0]}>
-            <cylinderGeometry args={[0.1, 0.1, 0.2, 16]} rotation={[Math.PI / 2, 0, 0]} />
-            <meshStandardMaterial color="#888" metalness={1} roughness={0.2} />
+          <mesh position={[0, 1.4, 0]}>
+            <cylinderGeometry args={[0.12, 0.12, 0.2, 16]} rotation={[Math.PI / 2, 0, 0]} />
+            <meshStandardMaterial color="#444" metalness={1} roughness={0.1} />
           </mesh>
         </RigidBody>
       </group>
