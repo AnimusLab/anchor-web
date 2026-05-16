@@ -86,8 +86,8 @@ function HubActivation({ user, token, onActivated }) {
           <div className="fade-in">
             <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${V.border}`, borderRadius: 8, padding: 24, height: 240, overflowY: 'hidden', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {logs.map((log, i) => (
-                <div key={i} style={{ fontSize: 11, color: log.includes('OK') ? V.green : V.muted }}>
-                  {">"} {log}
+                <div key={i} style={{ fontSize: 11, color: log?.includes('OK') ? V.green : V.muted }}>
+                  {">"} {log || "..."}
                 </div>
               ))}
               {step === 'ready' && (

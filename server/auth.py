@@ -748,3 +748,9 @@ def debug_db_schema(provision: bool = False, db: Session = Depends(get_db)):
         "schema": schema_details,
         "required_tables_present": all(t in tables for t in ["organizations", "enterprise_users"])
     }
+
+@auth_router.get("/hubs")
+def get_user_hubs(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Returns all active hubs for the user's organization."""
+    from models import Hub
+    return db.query(Hub).filter(Hub.org_id == current_user["org_id"]).all()
