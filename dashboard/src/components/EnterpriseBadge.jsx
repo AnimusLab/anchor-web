@@ -22,89 +22,87 @@ function createBadgeTexture(name, company, clearanceId) {
 
   const primaryColor = '#06B6D4'; // Cyan
 
-  // 1. Sleek Dark Background
+  // 1. Base Layout (Dual Tone)
+  // Right Section (Registry)
   ctx.fillStyle = '#050505';
   ctx.fillRect(0, 0, 1600, 1000);
   
-  // Grid
-  ctx.strokeStyle = 'rgba(6, 182, 212, 0.05)';
+  // Left Section (Identity)
+  ctx.fillStyle = primaryColor;
+  ctx.fillRect(0, 0, 600, 1000);
+
+  // Grid on Right Section
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
   ctx.lineWidth = 1;
-  for (let i = 0; i < 1600; i += 50) {
+  for (let i = 600; i < 1600; i += 50) {
     ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 1000); ctx.stroke();
   }
   for (let i = 0; i < 1000; i += 50) {
-    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(1600, i); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(600, i); ctx.lineTo(1600, i); ctx.stroke();
   }
 
-  // 2. Left Accent Bar
-  ctx.fillStyle = primaryColor;
-  ctx.fillRect(0, 0, 60, 1000);
-  
-  // Vertical Text on bar
-  ctx.save();
-  ctx.translate(40, 500);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillStyle = '#000';
-  ctx.font = 'bold 30px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText('SOVEREIGN IDENTITY VERIFIED // MESH v5.8', 0, 0);
-  ctx.restore();
-
-  // 3. Photo Area (Left Side)
-  ctx.strokeStyle = 'rgba(6, 182, 212, 0.3)';
-  ctx.lineWidth = 4;
-  ctx.strokeRect(120, 150, 450, 550);
+  // 2. Left Identity Panel
+  // Profile Photo
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+  ctx.lineWidth = 8;
+  ctx.beginPath(); ctx.arc(300, 350, 180, 0, Math.PI * 2); ctx.stroke();
   
   ctx.fillStyle = '#0F172A';
-  ctx.fillRect(124, 154, 442, 542);
-  ctx.fillStyle = 'rgba(6, 182, 212, 0.15)';
-  ctx.beginPath(); ctx.arc(345, 350, 110, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(345, 750, 220, Math.PI, 0); ctx.fill();
+  ctx.beginPath(); ctx.arc(300, 350, 176, 0, Math.PI * 2); ctx.fill();
+  
+  ctx.fillStyle = 'rgba(6, 182, 212, 0.3)';
+  ctx.beginPath(); ctx.arc(300, 320, 80, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(300, 600, 160, Math.PI, 0); ctx.fill();
 
-  // 4. Clearance ID (Below Photo)
-  ctx.fillStyle = primaryColor;
-  ctx.font = 'bold 85px Courier New, monospace';
+  // Identification Label
+  ctx.fillStyle = '#000000';
+  ctx.font = 'bold 35px monospace';
   ctx.textAlign = 'center';
-  ctx.shadowColor = 'rgba(6, 182, 212, 0.5)';
-  ctx.shadowBlur = 15;
-  ctx.fillText(clearanceId.toUpperCase(), 345, 850);
-  ctx.shadowBlur = 0;
+  ctx.letterSpacing = '5px';
+  ctx.fillText('TACTICAL CLEARANCE', 300, 650);
 
-  // 5. Right Section: Details
+  // Clearance ID
+  ctx.fillStyle = '#000000';
+  ctx.font = 'bold 95px Courier New, monospace';
+  ctx.fillText(clearanceId.toUpperCase(), 300, 780);
+
+  // Status Bar
+  ctx.fillStyle = 'rgba(0,0,0,0.8)';
+  ctx.fillRect(50, 880, 500, 70);
+  ctx.fillStyle = primaryColor;
+  ctx.font = 'bold 30px monospace';
+  ctx.fillText('IDENTITY VERIFIED // ACTIVE', 300, 925);
+
+  // 3. Right Registry Panel
   ctx.textAlign = 'left';
   
-  // Organization Header
-  ctx.fillStyle = primaryColor;
-  ctx.font = 'bold 45px monospace';
-  ctx.letterSpacing = '5px';
-  ctx.fillText('ORGANIZATION', 650, 180);
-  
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 110px Courier New, monospace';
-  ctx.fillText(company.toUpperCase(), 650, 300);
-
-  // User Name
+  // Organization Details
   ctx.fillStyle = primaryColor;
   ctx.font = 'bold 40px monospace';
-  ctx.fillText('PERSONNEL NAME', 650, 450);
+  ctx.letterSpacing = '10px';
+  ctx.fillText('ORGANIZATION', 700, 200);
   
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 90px monospace';
-  ctx.fillText(name.toUpperCase(), 650, 550);
+  ctx.font = 'bold 120px Courier New, monospace';
+  ctx.fillText(company.toUpperCase(), 700, 330);
 
-  // Role / Status
+  // Personnel Details
   ctx.fillStyle = primaryColor;
   ctx.font = 'bold 40px monospace';
-  ctx.fillText('CLEARANCE LEVEL', 650, 700);
+  ctx.fillText('PERSONNEL NAME', 700, 500);
+  
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 100px monospace';
+  ctx.fillText(name.toUpperCase(), 700, 620);
+
+  // Node Authority
+  ctx.fillStyle = primaryColor;
+  ctx.font = 'bold 40px monospace';
+  ctx.fillText('GOVERNANCE LEVEL', 700, 780);
   
   ctx.fillStyle = '#94A3B8';
-  ctx.font = 'bold 60px monospace';
-  ctx.fillText('MASTER NODE OWNER // LVL_01', 650, 780);
-
-  // Footer / Mesh Metadata
-  ctx.fillStyle = '#374151';
-  ctx.font = '28px monospace';
-  ctx.fillText('ANCHOR GOVERNANCE RELAY // REGIONAL HUB: AUTH_ACTIVE', 650, 930);
+  ctx.font = 'bold 65px monospace';
+  ctx.fillText('MASTER NODE OWNER', 700, 880);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.anisotropy = 16;
@@ -143,23 +141,20 @@ function Lanyard({ name, company, clearanceId }) {
 
   const texture = useMemo(() => createBadgeTexture(name, company, clearanceId), [name, company, clearanceId]);
   
-  // Create Rounded Geometry (LANDSCAPE)
-  const roundedCardGeometry = useMemo(() => {
-    const width = 3.2; // Wider for landscape
-    const height = 2.0;
-    const radius = 0.15;
-    const shape = new THREE.Shape();
-    shape.moveTo(-width / 2 + radius, -height / 2);
-    shape.lineTo(width / 2 - radius, -height / 2);
-    shape.quadraticCurveTo(width / 2, -height / 2, width / 2, -height / 2 + radius);
-    shape.lineTo(width / 2, height / 2 - radius);
-    shape.quadraticCurveTo(width / 2, height / 2, width / 2 - radius, height / 2);
-    shape.lineTo(-width / 2 + radius, height / 2);
-    shape.quadraticCurveTo(-width / 2, height / 2, -width / 2, height / 2 - radius);
-    shape.lineTo(-width / 2, -height / 2 + radius);
-    shape.quadraticCurveTo(-width / 2, -height / 2, -width / 2 + radius, -height / 2);
-    
-    return new THREE.ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: false });
+  // Back texture (simplified)
+  const backTexture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1600; canvas.height = 1000;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(0, 0, 1600, 1000);
+    ctx.fillStyle = '#111';
+    ctx.fillRect(50, 50, 1500, 900);
+    ctx.fillStyle = '#06B6D4';
+    ctx.font = 'bold 80px Courier New, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('SOVEREIGN GOVERNANCE RELAY', 800, 520);
+    return new THREE.CanvasTexture(canvas);
   }, []);
 
   const lanyardTexture = useMemo(() => {
@@ -181,7 +176,7 @@ function Lanyard({ name, company, clearanceId }) {
   useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 0.8]);
   useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 0.8]);
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 0.8]);
-  useSphericalJoint(j3, card, [[0, 0, 0], [0, 1.1, 0]]); // Adjusted connection point for landscape
+  useSphericalJoint(j3, card, [[0, 0, 0], [0, 1.1, 0]]);
 
   useFrame((state) => {
     if (dragged) {
@@ -209,9 +204,18 @@ function Lanyard({ name, company, clearanceId }) {
         <RigidBody position={[0.6, 0, 0]} ref={j3} {...segmentProps}><BallCollider args={[0.05]} /></RigidBody>
         <RigidBody ref={card} {...segmentProps} type={dragged ? 'kinematicPosition' : 'dynamic'} colliders={false} onPointerDown={() => setDragged(true)} onPointerUp={() => setDragged(false)}>
           <CuboidCollider args={[1.6, 1.0, 0.05]} />
-          <mesh castShadow receiveShadow geometry={roundedCardGeometry}>
-            <meshPhysicalMaterial map={texture} clearcoat={1} clearcoatRoughness={0.1} metalness={0.2} roughness={0.5} />
+          
+          {/* Card Body - Multi-Material for perfect mapping */}
+          <mesh castShadow receiveShadow>
+            <boxGeometry args={[3.2, 2.0, 0.08]} />
+            <meshPhysicalMaterial attach="material-0" color="#111" />
+            <meshPhysicalMaterial attach="material-1" color="#111" />
+            <meshPhysicalMaterial attach="material-2" color="#111" />
+            <meshPhysicalMaterial attach="material-3" color="#111" />
+            <meshPhysicalMaterial attach="material-4" map={texture} clearcoat={1} clearcoatRoughness={0.1} metalness={0.2} roughness={0.5} />
+            <meshPhysicalMaterial attach="material-5" map={backTexture} clearcoat={1} clearcoatRoughness={0.1} metalness={0.2} roughness={0.5} />
           </mesh>
+          
           {/* Top Clip Hole Holder */}
           <mesh position={[0, 1.1, 0]}>
             <cylinderGeometry args={[0.12, 0.12, 0.2, 16]} rotation={[Math.PI / 2, 0, 0]} />
