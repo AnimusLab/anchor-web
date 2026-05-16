@@ -224,7 +224,7 @@ export default function AuthPortal({ isInvite = false }) {
       } catch (e) {
         if (e.name !== 'AbortError') setScanStatus('not_found');
       }
-    }, 250); // 250ms debounce — fast enough to feel instant
+    }, 100); // Slashed from 250ms to 100ms for near-instant response
 
     return () => {
       clearTimeout(timer);

@@ -106,20 +106,20 @@ function createBadgeTexture(name, company, clearanceId, hubId) {
   ctx.fillText(titleName, leftX, 450, 800);
   drawDivider(480);
 
-  // Section 3: IDs (Side by Side)
+  // Section 3: IDs (Side by Side with Increased Spacing)
   ctx.fillStyle = primaryColor;
   ctx.font = 'bold 32px monospace';
   ctx.fillText('CLEARANCE ID', leftX, 550);
   ctx.fillStyle = '#FFFFFF';
   ctx.font = 'bold 50px Courier New, monospace';
-  ctx.fillText(clearanceId.toUpperCase(), leftX, 610);
+  ctx.fillText(clearanceId.toUpperCase(), leftX, 610, 550); // Added width constraint
 
   ctx.fillStyle = primaryColor;
   ctx.font = 'bold 32px monospace';
-  ctx.fillText('HUB ID', leftX + 450, 550);
+  ctx.fillText('HUB ID', leftX + 580, 550); // Increased spacing from 450 to 580
   ctx.fillStyle = '#FFFFFF';
   ctx.font = 'bold 50px Courier New, monospace';
-  ctx.fillText(hubId.toUpperCase(), leftX + 450, 610);
+  ctx.fillText(hubId.toUpperCase(), leftX + 580, 610, 300);
   drawDivider(640);
 
   // Section 4: Level
@@ -279,12 +279,12 @@ function Lanyard({ name, company, clearanceId, hubId }) {
           <mesh castShadow receiveShadow geometry={roundedCardGeometry}>
              <meshPhysicalMaterial 
                 map={texture} 
-                clearcoat={1} 
-                clearcoatRoughness={0.1} 
-                metalness={0.2} 
-                roughness={0.5} 
-                emissive={isPopulated ? '#06B6D4' : '#000'}
-                emissiveIntensity={isPopulated ? 0.15 : 0}
+                clearcoat={1.5} 
+                clearcoatRoughness={0.05} 
+                metalness={0.1} 
+                roughness={0.4} 
+                emissive={isPopulated ? '#10B981' : '#000'}
+                emissiveIntensity={isPopulated ? 0.02 : 0} // Slashed intensity to prevent blue-tinting
              />
           </mesh>
           
