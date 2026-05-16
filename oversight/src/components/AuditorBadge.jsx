@@ -46,12 +46,12 @@ function createBadgeTexture(name, agency, clearanceId, hubId) {
   ctx.beginPath(); ctx.arc(300, 320, 80, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(300, 600, 160, Math.PI, 0); ctx.fill();
 
-  // Identification Label (Enlarged & Bold)
+  // Identification Label (Professional & Bold)
   ctx.fillStyle = '#000000';
   ctx.font = 'bold 40px monospace';
   ctx.textAlign = 'center';
   ctx.letterSpacing = '2px';
-  ctx.fillText('REGULATORY CLEARANCE', 300, 650);
+  ctx.fillText('OFFICIAL CREDENTIAL', 300, 650);
 
   // Clearance ID (With Safe Padding)
   ctx.fillStyle = '#000000';
@@ -124,7 +124,7 @@ function createBadgeTexture(name, agency, clearanceId, hubId) {
   
   ctx.fillStyle = '#94A3B8';
   ctx.font = 'bold 60px monospace';
-  ctx.fillText('FORENSIC AUDITOR // FULL ACCESS', leftX, 810);
+  ctx.fillText('OVERSIGHT OFFICER // FULL ACCESS', leftX, 810);
   drawDivider(840);
 
   // Section 5: Status

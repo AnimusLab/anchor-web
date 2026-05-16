@@ -448,7 +448,7 @@ export default function AuthPortal({ isInvite = false }) {
                 background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)',
                 color: '#f87171', fontSize: 13, lineHeight: 1.5,
               }}>
-                <div style={{ fontSize: 10, fontWeight: 800, marginBottom: 4, letterSpacing: '0.1em' }}>✗ SECURITY_EXCEPTION</div>
+                <div style={{ fontSize: 10, fontWeight: 800, marginBottom: 4, letterSpacing: '0.1em' }}>✗ AUTHORIZATION_ERROR</div>
                 {typeof error === 'object' ? JSON.stringify(error) : error}
               </div>
             )}
@@ -462,7 +462,7 @@ export default function AuthPortal({ isInvite = false }) {
                       <div style={{ fontSize: 22, fontWeight: 700, color: '#f9fafb', marginBottom: 6 }}>Welcome back</div>
                       <div style={{ fontSize: 14, color: '#6b7280' }}>Enter your identity credentials to proceed.</div>
                     </div>
-                    <Field label="Tactical Clearance ID">
+                    <Field label="Access Authorization ID">
                       <input required autoFocus autoComplete="off" type="text" name="clearanceId" value={formData.clearanceId} onChange={handleInputChange}
                         placeholder="e.g. OWN-AN-MUM-042"
                         style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace', borderColor: focusedField === 'clearanceId' ? '#10b981' : scanStatus === 'not_found' ? '#ef4444' : scanStatus === 'found' ? '#10b981' : '#1f2937' }}

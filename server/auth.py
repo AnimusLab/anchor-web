@@ -65,6 +65,7 @@ PUBLIC_DOMAINS = {
     "me.com", "live.com", "msn.com", "aol.com", "protonmail.com", "zoho.com"
 }
 
+# Operational Callsign Standard (v6.0.1)
 NATO_PHONETIC = [
     "ALFA", "BRAVO", "CHARLIE", "DELTA", "ECHO", "FOXTROT", "GOLF", "HOTEL", 
     "INDIA", "JULIETT", "KILO", "LIMA", "MIKE", "NOVEMBER", "OSCAR", "PAPA", 
@@ -595,9 +596,9 @@ def provision_enterprise(
             sequence = existing_city_hubs + 1
             hub_unit = f"{city_code}{sequence:02d}" # e.g. MUM01, MUM02
             
-            # Tactical Naming: [Company] [City] Fleet ([Callsign])
+            # Hybrid Branding: [Company] [City] Branch ([Callsign])
             callsign = secrets.choice(NATO_PHONETIC)
-            tactical_name = f"{company_name} {city.strip().title()} Fleet ({callsign})"
+            tactical_name = f"{company_name} {city.strip().title()} Branch ({callsign})"
 
             final_hub_id = _generate_hub_id(company_name, region, hub_unit)
             new_hub = Hub(
