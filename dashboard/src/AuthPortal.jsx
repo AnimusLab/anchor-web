@@ -155,22 +155,35 @@ export default function AuthPortal({ isInvite = false }) {
         if (!formData.totpCode || formData.totpCode.length < 6) {
           throw new Error('Please enter a valid 6-digit verification code.');
         }
+        const payload = {
+          email: formData.email, 
+          hub_id: formData.orgId,
+          totp_code: formData.totpCode, 
+          intent_token: intentToken
+        };
+
+        // Guard: Ensure payload is fully formed
+        const missingFields = Object.keys(payload).filter(k => !payload[k]);
+        if (missingFields.length > 0) {
+          throw new Error(`Incomplete identity payload. Missing: ${missingFields.join(', ')}`);
+        }
+
         const res = await fetch(endpoints.verifyTotp, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: formData.email, 
-            hub_id: formData.orgId,
-            totp_code: formData.totpCode, 
-            intent_token: intentToken
-          })
+          body: JSON.stringify(payload)
         });
         const data = await safeJson(res);
         if (!res.ok) {
-          // Flatten FastAPI validation errors if present
+          // Flatten FastAPI validation errors with location context
           const detail = data.detail;
           let msg = 'Invalid verification code';
-          if (Array.isArray(detail)) msg = detail.map(d => d.msg || JSON.stringify(d)).join(', ');
+          if (Array.isArray(detail)) {
+            msg = detail.map(d => {
+              const loc = d.loc ? d.loc[d.loc.length - 1] : 'unknown';
+              return `${loc}: ${d.msg || 'validation error'}`;
+            }).join(' | ');
+          }
           else if (typeof detail === 'string') msg = detail;
           else if (detail) msg = JSON.stringify(detail);
           throw new Error(msg);
