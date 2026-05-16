@@ -23,6 +23,7 @@ class Organization(Base):
     domain         = Column(String, unique=True, index=True)        # "jpmc.com"
     region         = Column(String, nullable=True)                  # "GL", "IN", "US"
     org_type       = Column(String, default="enterprise")           # "enterprise", "regulator"
+    status         = Column(String, default="pending")              # "pending", "approved"
     created_at     = Column(String, nullable=False)
 
     hubs               = relationship("Hub", back_populates="organization")

@@ -438,7 +438,9 @@ def approve_user(target_entity_id: str = Form(...), current_admin: dict = Depend
         raise HTTPException(status_code=404, detail="Identity not found.")
         
     user.status = "approved"
+    db.add(user) # Re-add to session just in case
     db.commit()
+    db.refresh(user) # Lock it in
     
     # DISPATCH CREDENTIALS VIA SOVEREIGN GATEKEEPER
     try:
@@ -576,6 +578,7 @@ def provision_enterprise(
                 display_name=company_name,
                 domain=domain,
                 region=region,
+                status="approved", # Explicitly set status
                 created_at=datetime.utcnow().isoformat()
             )
             db.add(org)
@@ -588,12 +591,16 @@ def provision_enterprise(
             city = CITY_MAP.get(region, "HQ")
             hub_unit = f"{city}01"
             
+            # Tactical Naming: [Org] [City] Fleet ([Callsign])
+            callsign = secrets.choice(NATO_PHONETIC)
+            tactical_name = f"{company_name} {city.strip().upper()} Fleet ({callsign})"
+
             final_hub_id = _generate_hub_id(company_name, region, hub_unit)
             new_hub = Hub(
                 id=final_hub_id,
                 org_id=org.id,
                 regional_key="PENDING_ACTIVATION",
-                display_name="Primary Sovereign Silo",
+                display_name=tactical_name,
                 region=region,
                 unit=hub_unit,
                 is_active=False,

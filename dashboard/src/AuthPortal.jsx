@@ -282,7 +282,7 @@ export default function AuthPortal({ isInvite = false }) {
       payload.append('email', formData.email);
       payload.append('password', 'DUMMY_UNUSED');
       payload.append('server_region', formData.serverRegion);
-      payload.append('department', formData.department);
+      payload.append('department', 'EXECUTIVE');
       const res = await fetch(endpoints.registerOrg, { method: 'POST', body: payload });
       const data = await safeJson(res);
       if (!res.ok) {
