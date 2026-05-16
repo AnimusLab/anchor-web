@@ -23,11 +23,9 @@ function createBadgeTexture(name, company, clearanceId) {
   const primaryColor = '#06B6D4'; // Cyan
 
   // 1. Base Layout (Dual Tone)
-  // Right Section (Registry)
   ctx.fillStyle = '#050505';
   ctx.fillRect(0, 0, 1600, 1000);
   
-  // Left Section (Identity)
   ctx.fillStyle = primaryColor;
   ctx.fillRect(0, 0, 600, 1000);
 
@@ -43,34 +41,34 @@ function createBadgeTexture(name, company, clearanceId) {
 
   // 2. Left Identity Panel
   // Profile Photo
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-  ctx.lineWidth = 8;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+  ctx.lineWidth = 6;
   ctx.beginPath(); ctx.arc(300, 350, 180, 0, Math.PI * 2); ctx.stroke();
   
   ctx.fillStyle = '#0F172A';
-  ctx.beginPath(); ctx.arc(300, 350, 176, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(300, 350, 177, 0, Math.PI * 2); ctx.fill();
   
-  ctx.fillStyle = 'rgba(6, 182, 212, 0.3)';
+  ctx.fillStyle = 'rgba(6, 182, 212, 0.25)';
   ctx.beginPath(); ctx.arc(300, 320, 80, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(300, 600, 160, Math.PI, 0); ctx.fill();
 
   // Identification Label
   ctx.fillStyle = '#000000';
-  ctx.font = 'bold 35px monospace';
+  ctx.font = 'bold 32px monospace';
   ctx.textAlign = 'center';
   ctx.letterSpacing = '5px';
   ctx.fillText('TACTICAL CLEARANCE', 300, 650);
 
-  // Clearance ID
+  // Clearance ID (With Safe Padding)
   ctx.fillStyle = '#000000';
-  ctx.font = 'bold 95px Courier New, monospace';
-  ctx.fillText(clearanceId.toUpperCase(), 300, 780);
+  ctx.font = 'bold 82px Courier New, monospace';
+  ctx.fillText(clearanceId.toUpperCase(), 300, 780, 500); // 500px maxWidth for safety
 
   // Status Bar
-  ctx.fillStyle = 'rgba(0,0,0,0.8)';
-  ctx.fillRect(50, 880, 500, 70);
+  ctx.fillStyle = 'rgba(0,0,0,0.85)';
+  ctx.fillRect(80, 880, 440, 70); // Centered with padding
   ctx.fillStyle = primaryColor;
-  ctx.font = 'bold 30px monospace';
+  ctx.font = 'bold 28px monospace';
   ctx.fillText('IDENTITY VERIFIED // ACTIVE', 300, 925);
 
   // 3. Right Registry Panel
@@ -83,7 +81,7 @@ function createBadgeTexture(name, company, clearanceId) {
   ctx.fillText('ORGANIZATION', 700, 200);
   
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 120px Courier New, monospace';
+  ctx.font = 'bold 110px Courier New, monospace';
   ctx.fillText(company.toUpperCase(), 700, 330);
 
   // Personnel Details
@@ -92,7 +90,7 @@ function createBadgeTexture(name, company, clearanceId) {
   ctx.fillText('PERSONNEL NAME', 700, 500);
   
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 100px monospace';
+  ctx.font = 'bold 95px monospace';
   ctx.fillText(name.toUpperCase(), 700, 620);
 
   // Node Authority
@@ -141,7 +139,7 @@ function Lanyard({ name, company, clearanceId }) {
 
   const texture = useMemo(() => createBadgeTexture(name, company, clearanceId), [name, company, clearanceId]);
   
-  // Back texture (simplified)
+  // Back texture
   const backTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 1600; canvas.height = 1000;
@@ -155,6 +153,35 @@ function Lanyard({ name, company, clearanceId }) {
     ctx.textAlign = 'center';
     ctx.fillText('SOVEREIGN GOVERNANCE RELAY', 800, 520);
     return new THREE.CanvasTexture(canvas);
+  }, []);
+
+  // Create Rounded Geometry (LANDSCAPE)
+  const roundedCardGeometry = useMemo(() => {
+    const width = 3.2;
+    const height = 2.0;
+    const radius = 0.2; // Smooth edges
+    const shape = new THREE.Shape();
+    shape.moveTo(-width / 2 + radius, -height / 2);
+    shape.lineTo(width / 2 - radius, -height / 2);
+    shape.quadraticCurveTo(width / 2, -height / 2, width / 2, -height / 2 + radius);
+    shape.lineTo(width / 2, height / 2 - radius);
+    shape.quadraticCurveTo(width / 2, height / 2, width / 2 - radius, height / 2);
+    shape.lineTo(-width / 2 + radius, height / 2);
+    shape.quadraticCurveTo(-width / 2, height / 2, -width / 2, height / 2 - radius);
+    shape.lineTo(-width / 2, -height / 2 + radius);
+    shape.quadraticCurveTo(-width / 2, -height / 2, -width / 2 + radius, -height / 2);
+    
+    const geometry = new THREE.ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: false });
+    
+    // Fix UVs for ExtrudeGeometry
+    const pos = geometry.attributes.position;
+    const uv = geometry.attributes.uv;
+    for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i);
+        const y = pos.getY(i);
+        uv.setXY(i, (x + width / 2) / width, (y + height / 2) / height);
+    }
+    return geometry;
   }, []);
 
   const lanyardTexture = useMemo(() => {
@@ -205,15 +232,9 @@ function Lanyard({ name, company, clearanceId }) {
         <RigidBody ref={card} {...segmentProps} type={dragged ? 'kinematicPosition' : 'dynamic'} colliders={false} onPointerDown={() => setDragged(true)} onPointerUp={() => setDragged(false)}>
           <CuboidCollider args={[1.6, 1.0, 0.05]} />
           
-          {/* Card Body - Multi-Material for perfect mapping */}
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={[3.2, 2.0, 0.08]} />
-            <meshPhysicalMaterial attach="material-0" color="#111" />
-            <meshPhysicalMaterial attach="material-1" color="#111" />
-            <meshPhysicalMaterial attach="material-2" color="#111" />
-            <meshPhysicalMaterial attach="material-3" color="#111" />
-            <meshPhysicalMaterial attach="material-4" map={texture} clearcoat={1} clearcoatRoughness={0.1} metalness={0.2} roughness={0.5} />
-            <meshPhysicalMaterial attach="material-5" map={backTexture} clearcoat={1} clearcoatRoughness={0.1} metalness={0.2} roughness={0.5} />
+          {/* Card Body - Extrude with custom UV mapping */}
+          <mesh castShadow receiveShadow geometry={roundedCardGeometry}>
+             <meshPhysicalMaterial map={texture} clearcoat={1} clearcoatRoughness={0.1} metalness={0.2} roughness={0.5} />
           </mesh>
           
           {/* Top Clip Hole Holder */}

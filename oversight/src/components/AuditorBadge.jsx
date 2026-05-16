@@ -20,11 +20,9 @@ function createBadgeTexture(name, agency, clearanceId) {
   const primaryColor = '#10B981'; // Emerald
 
   // 1. Base Layout (Dual Tone)
-  // Right Section (Registry)
   ctx.fillStyle = '#08080C';
   ctx.fillRect(0, 0, 1600, 1000);
   
-  // Left Section (Oversight)
   ctx.fillStyle = primaryColor;
   ctx.fillRect(0, 0, 600, 1000);
 
@@ -40,34 +38,34 @@ function createBadgeTexture(name, agency, clearanceId) {
 
   // 2. Left Oversight Panel
   // Officer Silhouette
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-  ctx.lineWidth = 8;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+  ctx.lineWidth = 6;
   ctx.beginPath(); ctx.arc(300, 350, 180, 0, Math.PI * 2); ctx.stroke();
   
   ctx.fillStyle = '#111827';
-  ctx.beginPath(); ctx.arc(300, 350, 176, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(300, 350, 177, 0, Math.PI * 2); ctx.fill();
   
-  ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.25)';
   ctx.beginPath(); ctx.arc(300, 320, 80, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(300, 600, 160, Math.PI, 0); ctx.fill();
 
   // Identification Label
   ctx.fillStyle = '#000000';
-  ctx.font = 'bold 35px monospace';
+  ctx.font = 'bold 32px monospace';
   ctx.textAlign = 'center';
   ctx.letterSpacing = '5px';
   ctx.fillText('REGULATORY CLEARANCE', 300, 650);
 
-  // Clearance ID
+  // Clearance ID (With Safe Padding)
   ctx.fillStyle = '#000000';
-  ctx.font = 'bold 95px Courier New, monospace';
-  ctx.fillText(clearanceId.toUpperCase(), 300, 780);
+  ctx.font = 'bold 82px Courier New, monospace';
+  ctx.fillText(clearanceId.toUpperCase(), 300, 780, 500); // 500px maxWidth
 
   // Status Bar
-  ctx.fillStyle = 'rgba(0,0,0,0.8)';
-  ctx.fillRect(50, 880, 500, 70);
+  ctx.fillStyle = 'rgba(0,0,0,0.85)';
+  ctx.fillRect(80, 880, 440, 70); // Centered with padding
   ctx.fillStyle = primaryColor;
-  ctx.font = 'bold 30px monospace';
+  ctx.font = 'bold 28px monospace';
   ctx.fillText('OVERSIGHT OFFICER // ACTIVE', 300, 925);
 
   // 3. Right Agency Panel
@@ -80,7 +78,7 @@ function createBadgeTexture(name, agency, clearanceId) {
   ctx.fillText('REGULATORY AGENCY', 700, 200);
   
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 120px Courier New, monospace';
+  ctx.font = 'bold 110px Courier New, monospace';
   ctx.fillText(agency.toUpperCase(), 700, 330);
 
   // Officer Name
@@ -89,7 +87,7 @@ function createBadgeTexture(name, agency, clearanceId) {
   ctx.fillText('OFFICER NAME', 700, 500);
   
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 100px monospace';
+  ctx.font = 'bold 95px monospace';
   ctx.fillText(name.toUpperCase(), 700, 620);
 
   // Authority Level
@@ -111,20 +109,13 @@ export default function AuditorBadge({ name = "Unknown", agency = "PENDING", cle
 
   return (
     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1 }}>
-      <Canvas
-        style={{ pointerEvents: 'auto', width: '100%', height: '100%' }}
-        camera={{ position: [0, 0, 15], fov: 25 }}
-        gl={{ alpha: true, antialias: true }}
-        dpr={[1, 2]}
-      >
+      <Canvas style={{ pointerEvents: 'auto', width: '100%', height: '100%' }} camera={{ position: [0, 0, 15], fov: 25 }} gl={{ alpha: true, antialias: true }} dpr={[1, 2]}>
         <ambientLight intensity={0.7} />
         <pointLight position={[10, 10, 10]} intensity={1.5} />
         <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={1.2} />
-        
         <Physics gravity={[0, -20, 0]}>
           <Lanyard name={name} agency={agency} clearanceId={clearanceId} />
         </Physics>
-
         <Environment preset="city" />
         <ContactShadows opacity={0.4} scale={10} blur={2} far={4.5} />
       </Canvas>
@@ -145,7 +136,7 @@ function Lanyard({ name, agency, clearanceId }) {
 
   const texture = useMemo(() => createBadgeTexture(name, agency, clearanceId), [name, agency, clearanceId]);
   
-  // Back texture (simplified)
+  // Back texture
   const backTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 1600; canvas.height = 1000;
@@ -161,15 +152,42 @@ function Lanyard({ name, agency, clearanceId }) {
     return new THREE.CanvasTexture(canvas);
   }, []);
 
+  // Create Rounded Geometry (LANDSCAPE)
+  const roundedCardGeometry = useMemo(() => {
+    const width = 3.2;
+    const height = 2.0;
+    const radius = 0.2; // Smooth edges
+    const shape = new THREE.Shape();
+    shape.moveTo(-width / 2 + radius, -height / 2);
+    shape.lineTo(width / 2 - radius, -height / 2);
+    shape.quadraticCurveTo(width / 2, -height / 2, width / 2, -height / 2 + radius);
+    shape.lineTo(width / 2, height / 2 - radius);
+    shape.quadraticCurveTo(width / 2, height / 2, width / 2 - radius, height / 2);
+    shape.lineTo(-width / 2 + radius, height / 2);
+    shape.quadraticCurveTo(-width / 2, height / 2, -width / 2, height / 2 - radius);
+    shape.lineTo(-width / 2, -height / 2 + radius);
+    shape.quadraticCurveTo(-width / 2, -height / 2, -width / 2 + radius, -height / 2);
+    
+    const geometry = new THREE.ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: false });
+    
+    // Fix UVs for ExtrudeGeometry
+    const pos = geometry.attributes.position;
+    const uv = geometry.attributes.uv;
+    for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i);
+        const y = pos.getY(i);
+        uv.setXY(i, (x + width / 2) / width, (y + height / 2) / height);
+    }
+    return geometry;
+  }, []);
+
   const lanyardTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 64; canvas.height = 64;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#10B981'; // Emerald glow
+    ctx.fillStyle = '#10B981';
     ctx.fillRect(0, 0, 64, 64);
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-    ctx.lineWidth = 8;
-    ctx.strokeRect(0, 0, 64, 64);
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 8; ctx.strokeRect(0, 0, 64, 64);
     return new THREE.CanvasTexture(canvas);
   }, []);
 
@@ -179,7 +197,6 @@ function Lanyard({ name, agency, clearanceId }) {
 
   const segmentProps = { type: 'dynamic', canSleep: false, colliders: false, angularDamping: 2, linearDamping: 2 };
 
-  // Physics Joints
   useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 0.8]);
   useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 0.8]);
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 0.8]);
@@ -193,7 +210,6 @@ function Lanyard({ name, agency, clearanceId }) {
         card.current?.wakeUp();
         card.current?.setNextKinematicTranslation({ x: vec.x, y: vec.y, z: vec.z });
     }
-
     if (fixed.current && j1.current && j2.current && j3.current) {
         curve.points[0].copy(j3.current.translation());
         curve.points[1].copy(j2.current.translation());
@@ -207,37 +223,17 @@ function Lanyard({ name, agency, clearanceId }) {
     <>
       <group position={[viewport.width / 4, 4, 0]}>
         <RigidBody ref={fixed} type="fixed" />
-        <RigidBody position={[0.2, 0, 0]} ref={j1} {...segmentProps}>
-          <BallCollider args={[0.05]} />
-        </RigidBody>
-        <RigidBody position={[0.4, 0, 0]} ref={j2} {...segmentProps}>
-          <BallCollider args={[0.05]} />
-        </RigidBody>
-        <RigidBody position={[0.6, 0, 0]} ref={j3} {...segmentProps}>
-          <BallCollider args={[0.05]} />
-        </RigidBody>
-
-        <RigidBody 
-          ref={card} 
-          {...segmentProps} 
-          type={dragged ? 'kinematicPosition' : 'dynamic'}
-          colliders={false}
-          onPointerDown={() => setDragged(true)}
-          onPointerUp={() => setDragged(false)}
-        >
+        <RigidBody position={[0.2, 0, 0]} ref={j1} {...segmentProps}><BallCollider args={[0.05]} /></RigidBody>
+        <RigidBody position={[0.4, 0, 0]} ref={j2} {...segmentProps}><BallCollider args={[0.05]} /></RigidBody>
+        <RigidBody position={[0.6, 0, 0]} ref={j3} {...segmentProps}><BallCollider args={[0.05]} /></RigidBody>
+        <RigidBody ref={card} {...segmentProps} type={dragged ? 'kinematicPosition' : 'dynamic'} colliders={false} onPointerDown={() => setDragged(true)} onPointerUp={() => setDragged(false)}>
           <CuboidCollider args={[1.6, 1.0, 0.05]} />
           
-          {/* Card Body - Multi-Material for perfect mapping */}
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={[3.2, 2.0, 0.08]} />
-            <meshPhysicalMaterial attach="material-0" color="#111" />
-            <meshPhysicalMaterial attach="material-1" color="#111" />
-            <meshPhysicalMaterial attach="material-2" color="#111" />
-            <meshPhysicalMaterial attach="material-3" color="#111" />
-            <meshPhysicalMaterial attach="material-4" map={texture} clearcoat={1} clearcoatRoughness={0.1} metalness={0.2} roughness={0.5} />
-            <meshPhysicalMaterial attach="material-5" map={backTexture} clearcoat={1} clearcoatRoughness={0.1} metalness={0.2} roughness={0.5} />
+          {/* Card Body - Extrude with custom UV mapping */}
+          <mesh castShadow receiveShadow geometry={roundedCardGeometry}>
+             <meshPhysicalMaterial map={texture} clearcoat={1} clearcoatRoughness={0.1} metalness={0.2} roughness={0.5} />
           </mesh>
-
+          
           {/* Metal Clip */}
           <mesh position={[0, 1.1, 0]}>
             <cylinderGeometry args={[0.12, 0.12, 0.2, 16]} rotation={[Math.PI / 2, 0, 0]} />
@@ -245,17 +241,9 @@ function Lanyard({ name, agency, clearanceId }) {
           </mesh>
         </RigidBody>
       </group>
-
       <mesh ref={band}>
         <meshLineGeometry />
-        <meshLineMaterial 
-          transparent 
-          lineWidth={0.15} 
-          color="#10B981" 
-          map={lanyardTexture} 
-          repeat={[-20, 1]} 
-          depthTest={false}
-        />
+        <meshLineMaterial transparent lineWidth={0.15} color="#10B981" map={lanyardTexture} repeat={[-20, 1]} depthTest={false} />
       </mesh>
     </>
   );
