@@ -3,28 +3,18 @@ from models import Organization, Hub, EnterpriseUser, RegulatoryOfficial, Ledger
 from sqlalchemy import text
 
 def wipe_data():
-    print("[RESET] Starting Sovereign Mesh Data Purge...")
+    print("[RESET] Starting Deep Sovereign Mesh Purge...")
     
+    from database import Base, engine
     with engine.connect() as conn:
-        # Disable foreign key checks for the wipe
         if str(engine.url).startswith("sqlite"):
             conn.execute(text("PRAGMA foreign_keys = OFF;"))
         
-        tables = [
-            "ledger", "forensic_requests", "enforcement_notices", 
-            "auditor_trail", "enterprise_users", "regulatory_officials", 
-            "hubs", "organizations", "whitelist"
-        ]
-        
-        for table in tables:
-            try:
-                print(f"[RESET] Truncating {table}...")
-                conn.execute(text(f"DELETE FROM {table};"))
-            except Exception as e:
-                print(f"[RESET] Skip {table}: {e}")
-        
+        # Deep Clean: Drop all tables to clear legacy columns (like hub_id in organizations)
+        print("[RESET] Dropping all tables for schema sync...")
+        Base.metadata.drop_all(bind=engine)
         conn.commit()
-        print("[RESET] Data Purge Complete.")
+        print("[RESET] Deep Purge Complete.")
 
 def seed_whitelist():
     db = SessionLocal()

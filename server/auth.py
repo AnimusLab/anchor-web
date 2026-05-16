@@ -277,7 +277,9 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
             "type": "auth_intent", 
             "exp": intent_exp
         }, ANCHOR_MASTER_KEY, algorithm="HS256")
-
+        from models import Organization
+        org = db.query(Organization).filter(Organization.id == user.org_id).first()
+        
         return {
             "status": "CHALLENGE_AUTHORIZED", 
             "intent_token": intent_token, 
