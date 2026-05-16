@@ -129,7 +129,6 @@ export default function AuthPortal({ isInvite = false }) {
     setIsLoading(true);
     try {
       if (loginStep === 'identify') {
-        // Guard: Validate email format before proceeding
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email)) {
           setError('Invalid email address. Please check and re-enter your corporate email.');
@@ -146,25 +145,41 @@ export default function AuthPortal({ isInvite = false }) {
           })
         });
         const data = await safeJson(res);
-        if (!res.ok) throw new Error(data.detail || 'Identity lookup failed');
+        if (!res.ok) {
+          const msg = data.detail ? (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)) : 'Identity lookup failed';
+          throw new Error(msg);
+        }
         setIntentToken(data.intent_token);
         setLoginStep('verify');
       } else {
+        if (!formData.totpCode || formData.totpCode.length < 6) {
+          throw new Error('Please enter a valid 6-digit verification code.');
+        }
         const res = await fetch(endpoints.verifyTotp, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: formData.email, hub_id: formData.orgId,
-            totp_code: formData.totpCode, intent_token: intentToken
+            email: formData.email, 
+            hub_id: formData.orgId,
+            totp_code: formData.totpCode, 
+            intent_token: intentToken
           })
         });
         const data = await safeJson(res);
-        if (!res.ok) throw new Error(data.detail || 'Invalid verification code');
+        if (!res.ok) {
+          // Flatten FastAPI validation errors if present
+          const detail = data.detail;
+          let msg = 'Invalid verification code';
+          if (Array.isArray(detail)) msg = detail.map(d => d.msg || JSON.stringify(d)).join(', ');
+          else if (typeof detail === 'string') msg = detail;
+          else if (detail) msg = JSON.stringify(detail);
+          throw new Error(msg);
+        }
         const role = await completeRelayLogin(data.access_token);
         if (role) navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.message || String(err));
     } finally {
       setIsLoading(false);
     }
@@ -413,7 +428,8 @@ export default function AuthPortal({ isInvite = false }) {
                 background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)',
                 color: '#f87171', fontSize: 13, lineHeight: 1.5,
               }}>
-                ✗ {typeof error === 'object' ? JSON.stringify(error) : error}
+                <div style={{ fontSize: 10, fontWeight: 800, marginBottom: 4, letterSpacing: '0.1em' }}>✗ SECURITY_EXCEPTION</div>
+                {typeof error === 'object' ? JSON.stringify(error) : error}
               </div>
             )}
 
