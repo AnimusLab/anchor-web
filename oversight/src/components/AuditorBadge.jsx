@@ -275,10 +275,10 @@ function Lanyard({ name, agency, clearanceId, hubId }) {
                 map={texture} 
                 clearcoat={1.5} 
                 clearcoatRoughness={0.05} 
-                metalness={0.1} 
-                roughness={0.4} 
-                emissive={isPopulated ? '#10B981' : '#000'}
-                emissiveIntensity={isPopulated ? 0.02 : 0} // Prevent blue-tinting
+                metalness={0.05} 
+                roughness={0.45} 
+                emissive="#000"
+                emissiveIntensity={0} 
              />
           </mesh>
           
