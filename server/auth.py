@@ -115,14 +115,17 @@ def generate_company_abbr(company_name: str) -> str:
     if not company_name:
         return "UNK"
     
-    words = company_name.strip().upper().split()
-    if len(words) == 1:
-        abbr = words[0][:4]  # Take first 4 letters if single word
-    else:
-        # Take first letter of each word, max 4 letters
-        abbr = "".join(w[0] for w in words[:4])
-    
-    return abbr[:4]  # Ensure max 4 characters
+    # Handle camelCase or PascalCase for single words (e.g. AnimusLab -> AL)
+    clean_name = company_name.strip()
+    if " " not in clean_name:
+        # Find all uppercase letters
+        capitals = "".join([c for c in clean_name if c.isupper()])
+        if len(capitals) >= 2:
+            return capitals[:4]
+        return clean_name[:2].upper()
+        
+    words = clean_name.upper().split()
+    return "".join(w[0] for w in words[:4])
 
 def _issue_jwt(user):
     exp = datetime.utcnow() + timedelta(days=1)
@@ -142,24 +145,19 @@ def _generate_hub_id(company_name: str, region: str, unit: str):
     abbr = generate_company_abbr(company_name)
     return f"{abbr}-{region.strip().upper()}-{unit.strip().upper()}"
 
-def _generate_clearance_id(role: str, org_id: str, region: str, agency: str = None):
+def _generate_clearance_id(role: str, company_name: str, city: str):
     """
-    Format: OWN-JPMC-MUM-042
-    Format (Auditor): AUD-RBI-009
+    Format: OWN-AL-MUM-042
     """
     role_map = {
         "owner": "OWN", "admin": "ADM", "dev": "DEV", "developer": "DEV",
         "auditor": "AUD", "regulator": "AUD", "root": "ROOT"
     }
     role_code = role_map.get(role.lower(), "USR")
+    abbr = generate_company_abbr(company_name)
     serial = secrets.randbelow(900) + 100 # 100-999
     
-    if role_code == "AUD" and agency:
-        return f"AUD-{agency.strip().upper()}-{serial:03d}"
-    
-    # Standard: [ROLE]-[ORG]-[REGION_PREFIX]-[SERIAL]
-    region_prefix = region.strip().upper()[:3]
-    return f"{role_code}-{org_id.strip().upper()}-{region_prefix}-{serial:03d}"
+    return f"{role_code}-{abbr}-{city.strip().upper()}-{serial:03d}"
 
 def _generate_regulator_id(bureau: str, user_name: str, region: str = "GL"):
     """
@@ -583,14 +581,20 @@ def provision_enterprise(
             db.flush()
             
             from models import Hub
-            final_hub_id = _generate_hub_id(company_name, region, "UNIT01")
+            
+            # City Mapping for v5.8 IDs
+            CITY_MAP = {"IN": "MUM", "US": "NYC", "UK": "LDN", "EU": "BRU", "SG": "SNG", "AE": "DXB"}
+            city = CITY_MAP.get(region, "HQ")
+            hub_unit = f"{city}01"
+            
+            final_hub_id = _generate_hub_id(company_name, region, hub_unit)
             new_hub = Hub(
                 id=final_hub_id,
                 org_id=org.id,
                 regional_key="PENDING_ACTIVATION",
                 display_name="Primary Sovereign Silo",
                 region=region,
-                unit="UNIT01",
+                unit=hub_unit,
                 is_active=False,
                 created_at=datetime.utcnow().isoformat()
             )
@@ -601,7 +605,12 @@ def provision_enterprise(
         if existing_user:
             raise HTTPException(status_code=400, detail="USER_ALREADY_PROVISIONED")
             
-        clearance_id = _generate_clearance_id("owner", org.id, region)
+        # Refetch city mapping if org already existed
+        if 'city' not in locals():
+            CITY_MAP = {"IN": "MUM", "US": "NYC", "UK": "LDN", "EU": "BRU", "SG": "SNG", "AE": "DXB"}
+            city = CITY_MAP.get(region, "HQ")
+            
+        clearance_id = _generate_clearance_id(role="owner", company_name=company_name, city=city)
         totp_secret = pyotp.random_base32()
         
         new_user = EnterpriseUser(
