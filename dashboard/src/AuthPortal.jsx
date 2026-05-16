@@ -378,6 +378,7 @@ export default function AuthPortal({ isInvite = false }) {
           name={formData.displayName || "Owner"}
           company={formData.companyName || "PENDING"}
           clearanceId={formData.clearanceId || "ID_PENDING"}
+          hubId={formData.orgId || "PENDING"}
         />
 
         {/* Left Side: Handshake Form */}
@@ -412,7 +413,7 @@ export default function AuthPortal({ isInvite = false }) {
                 background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)',
                 color: '#f87171', fontSize: 13, lineHeight: 1.5,
               }}>
-                ✗ {error}
+                ✗ {typeof error === 'object' ? JSON.stringify(error) : error}
               </div>
             )}
 
@@ -427,7 +428,7 @@ export default function AuthPortal({ isInvite = false }) {
                     </div>
                     <Field label="Tactical Clearance ID">
                       <input required autoFocus autoComplete="off" type="text" name="clearanceId" value={formData.clearanceId} onChange={handleInputChange}
-                        placeholder="e.g. OWN-JPMC-IN-214"
+                        placeholder="e.g. OWN-AN-MUM-042"
                         style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace', borderColor: focusedField === 'clearanceId' ? '#10b981' : scanStatus === 'not_found' ? '#ef4444' : scanStatus === 'found' ? '#10b981' : '#1f2937' }}
                         onFocus={() => setFocusedField('clearanceId')} onBlur={() => setFocusedField(null)}
                       />
@@ -497,11 +498,14 @@ export default function AuthPortal({ isInvite = false }) {
                   </>
                 )}
                 <button type="submit" disabled={isLoading} style={{
-                  width: '100%', padding: '13px', borderRadius: 8, fontSize: 14,
+                  width: '100%', padding: '14px', borderRadius: 8, fontSize: 15,
                   fontWeight: 700, border: 'none', cursor: isLoading ? 'not-allowed' : 'pointer',
-                  background: '#10b981', color: '#fff', opacity: isLoading ? 0.6 : 1,
-                  transition: 'opacity 0.15s',
+                  background: loginStep === 'identify' ? '#10b981' : 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
+                  color: '#fff', opacity: isLoading ? 0.6 : 1,
+                  transition: 'all 0.2s ease',
                   letterSpacing: '0.04em',
+                  boxShadow: loginStep === 'verify' ? '0 4px 15px rgba(16,185,129,0.25)' : 'none',
+                  marginTop: 10,
                 }}>
                   {isLoading ? 'Authenticating...' : loginStep === 'identify' ? 'Continue →' : 'Establish Session →'}
                 </button>

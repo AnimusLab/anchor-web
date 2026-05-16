@@ -14,7 +14,7 @@ extend({ MeshLineGeometry, MeshLineMaterial });
 /**
  * Generates a high-fidelity dynamic texture for the Enterprise Badge.
  */
-function createBadgeTexture(name, company, clearanceId) {
+function createBadgeTexture(name, company, clearanceId, hubId) {
   const canvas = document.createElement('canvas');
   canvas.width = 1600; 
   canvas.height = 1000;
@@ -35,9 +35,6 @@ function createBadgeTexture(name, company, clearanceId) {
   for (let i = 600; i < 1600; i += 50) {
     ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 1000); ctx.stroke();
   }
-  for (let i = 0; i < 1000; i += 50) {
-    ctx.beginPath(); ctx.moveTo(600, i); ctx.lineTo(1600, i); ctx.stroke();
-  }
 
   // 2. Left Identity Panel
   // Profile Photo
@@ -52,62 +49,106 @@ function createBadgeTexture(name, company, clearanceId) {
   ctx.beginPath(); ctx.arc(300, 320, 80, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(300, 600, 160, Math.PI, 0); ctx.fill();
 
-  // Identification Label
+  // Identification Label (Enlarged & Bold)
   ctx.fillStyle = '#000000';
-  ctx.font = 'bold 32px monospace';
+  ctx.font = 'bold 40px monospace';
   ctx.textAlign = 'center';
-  ctx.letterSpacing = '5px';
+  ctx.letterSpacing = '2px';
   ctx.fillText('TACTICAL CLEARANCE', 300, 650);
 
   // Clearance ID (With Safe Padding)
   ctx.fillStyle = '#000000';
   ctx.font = 'bold 82px Courier New, monospace';
-  ctx.fillText(clearanceId.toUpperCase(), 300, 780, 500); // 500px maxWidth for safety
+  ctx.fillText(clearanceId.toUpperCase(), 300, 780, 520);
 
-  // Status Bar
+  // Status Bar (Fix Padding)
   ctx.fillStyle = 'rgba(0,0,0,0.85)';
-  ctx.fillRect(80, 880, 440, 70); // Centered with padding
+  ctx.fillRect(60, 870, 480, 80); 
   ctx.fillStyle = primaryColor;
-  ctx.font = 'bold 28px monospace';
-  ctx.fillText('IDENTITY VERIFIED // ACTIVE', 300, 925);
+  ctx.font = 'bold 32px monospace';
+  ctx.fillText('IDENTITY VERIFIED // ACTIVE', 300, 920);
 
   // 3. Right Registry Panel
   ctx.textAlign = 'left';
+  const leftX = 700;
   
-  // Organization Details
+  // Helper to draw dividers
+  const drawDivider = (y) => {
+    ctx.strokeStyle = 'rgba(6, 182, 212, 0.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(leftX, y); ctx.lineTo(1500, y); ctx.stroke();
+  };
+
+  // Section 1: Organization
   ctx.fillStyle = primaryColor;
-  ctx.font = 'bold 40px monospace';
-  ctx.letterSpacing = '10px';
-  ctx.fillText('ORGANIZATION', 700, 200);
+  ctx.font = 'bold 32px monospace';
+  ctx.letterSpacing = '8px';
+  ctx.fillText('ORGANIZATION', leftX, 150);
   
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 110px Courier New, monospace';
-  ctx.fillText(company.toUpperCase(), 700, 330);
+  ctx.font = 'bold 100px Courier New, monospace';
+  ctx.fillText(company.toUpperCase(), leftX, 250, 800);
+  drawDivider(280);
 
-  // Personnel Details
+  // Section 2: Personnel (With Font Scaling)
   ctx.fillStyle = primaryColor;
-  ctx.font = 'bold 40px monospace';
-  ctx.fillText('PERSONNEL NAME', 700, 500);
+  ctx.font = 'bold 32px monospace';
+  ctx.letterSpacing = '2px';
+  ctx.fillText('PERSONNEL NAME', leftX, 350);
   
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 95px monospace';
-  ctx.fillText(name.toUpperCase(), 700, 620);
+  let nameSize = 90;
+  if (name.length > 15) nameSize = 70;
+  if (name.length > 20) nameSize = 55;
+  ctx.font = `bold ${nameSize}px monospace`;
+  ctx.fillText(name.toUpperCase(), leftX, 450, 800);
+  drawDivider(480);
 
-  // Node Authority
+  // Section 3: IDs (Side by Side)
   ctx.fillStyle = primaryColor;
-  ctx.font = 'bold 40px monospace';
-  ctx.fillText('GOVERNANCE LEVEL', 700, 780);
+  ctx.font = 'bold 32px monospace';
+  ctx.fillText('CLEARANCE ID', leftX, 550);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 50px Courier New, monospace';
+  ctx.fillText(clearanceId.toUpperCase(), leftX, 610);
+
+  ctx.fillStyle = primaryColor;
+  ctx.font = 'bold 32px monospace';
+  ctx.fillText('HUB ID', leftX + 450, 550);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 50px Courier New, monospace';
+  ctx.fillText(hubId.toUpperCase(), leftX + 450, 610);
+  drawDivider(640);
+
+  // Section 4: Level
+  ctx.fillStyle = primaryColor;
+  ctx.font = 'bold 32px monospace';
+  ctx.fillText('CLEARANCE LEVEL', leftX, 720);
   
   ctx.fillStyle = '#94A3B8';
-  ctx.font = 'bold 65px monospace';
-  ctx.fillText('MASTER NODE OWNER', 700, 880);
+  ctx.font = 'bold 60px monospace';
+  ctx.fillText('MASTER NODE OWNER', leftX, 810);
+  drawDivider(840);
+
+  // Section 5: Status
+  ctx.fillStyle = primaryColor;
+  ctx.font = 'bold 32px monospace';
+  ctx.fillText('STATUS', leftX, 920);
+  
+  // Status Dot
+  ctx.fillStyle = '#10B981'; // Green
+  ctx.beginPath(); ctx.arc(leftX + 160, 910, 12, 0, Math.PI * 2); ctx.fill();
+  
+  ctx.fillStyle = '#10B981';
+  ctx.font = 'bold 32px monospace';
+  ctx.fillText('IDENTITY VERIFIED', leftX + 190, 920);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.anisotropy = 16;
   return texture;
 }
 
-export default function EnterpriseBadge({ name = "Unknown", company = "PENDING", clearanceId = "ID_PENDING", active = true }) {
+export default function EnterpriseBadge({ name = "Unknown", company = "PENDING", clearanceId = "ID_PENDING", hubId = "PENDING", active = true }) {
   if (!active) return null;
 
   return (
@@ -117,7 +158,7 @@ export default function EnterpriseBadge({ name = "Unknown", company = "PENDING",
         <pointLight position={[10, 10, 10]} intensity={1.5} />
         <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={1.2} />
         <Physics gravity={[0, -20, 0]}>
-          <Lanyard name={name} company={company} clearanceId={clearanceId} />
+          <Lanyard name={name} company={company} clearanceId={clearanceId} hubId={hubId} />
         </Physics>
         <Environment preset="city" />
         <ContactShadows opacity={0.4} scale={10} blur={2} far={4.5} />
@@ -126,7 +167,7 @@ export default function EnterpriseBadge({ name = "Unknown", company = "PENDING",
   );
 }
 
-function Lanyard({ name, company, clearanceId }) {
+function Lanyard({ name, company, clearanceId, hubId }) {
   const { viewport } = useThree();
   const fixed = useRef();
   const j1 = useRef();
@@ -137,7 +178,7 @@ function Lanyard({ name, company, clearanceId }) {
 
   const [dragged, setDragged] = useState(false);
 
-  const texture = useMemo(() => createBadgeTexture(name, company, clearanceId), [name, company, clearanceId]);
+  const texture = useMemo(() => createBadgeTexture(name, company, clearanceId, hubId), [name, company, clearanceId, hubId]);
   
   // Back texture
   const backTexture = useMemo(() => {
@@ -173,7 +214,6 @@ function Lanyard({ name, company, clearanceId }) {
     
     const geometry = new THREE.ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: false });
     
-    // Fix UVs for ExtrudeGeometry
     const pos = geometry.attributes.position;
     const uv = geometry.attributes.uv;
     for (let i = 0; i < pos.count; i++) {
@@ -222,6 +262,8 @@ function Lanyard({ name, company, clearanceId }) {
     }
   });
 
+  const isPopulated = clearanceId !== "ID_PENDING";
+
   return (
     <>
       <group position={[viewport.width / 4, 4, 0]}>
@@ -232,12 +274,18 @@ function Lanyard({ name, company, clearanceId }) {
         <RigidBody ref={card} {...segmentProps} type={dragged ? 'kinematicPosition' : 'dynamic'} colliders={false} onPointerDown={() => setDragged(true)} onPointerUp={() => setDragged(false)}>
           <CuboidCollider args={[1.6, 1.0, 0.05]} />
           
-          {/* Card Body - Extrude with custom UV mapping */}
           <mesh castShadow receiveShadow geometry={roundedCardGeometry}>
-             <meshPhysicalMaterial map={texture} clearcoat={1} clearcoatRoughness={0.1} metalness={0.2} roughness={0.5} />
+             <meshPhysicalMaterial 
+                map={texture} 
+                clearcoat={1} 
+                clearcoatRoughness={0.1} 
+                metalness={0.2} 
+                roughness={0.5} 
+                emissive={isPopulated ? '#06B6D4' : '#000'}
+                emissiveIntensity={isPopulated ? 0.15 : 0}
+             />
           </mesh>
           
-          {/* Top Clip Hole Holder */}
           <mesh position={[0, 1.1, 0]}>
             <cylinderGeometry args={[0.12, 0.12, 0.2, 16]} rotation={[Math.PI / 2, 0, 0]} />
             <meshStandardMaterial color="#444" metalness={1} roughness={0.1} />

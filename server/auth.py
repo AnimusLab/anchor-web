@@ -115,16 +115,14 @@ def generate_company_abbr(company_name: str) -> str:
     if not company_name:
         return "UNK"
     
-    # Handle camelCase or PascalCase for single words (e.g. AnimusLab -> AL)
-    clean_name = company_name.strip()
+    clean_name = company_name.strip().upper()
     if " " not in clean_name:
-        # Find all uppercase letters
-        capitals = "".join([c for c in clean_name if c.isupper()])
-        if len(capitals) >= 2:
-            return capitals[:4]
-        return clean_name[:2].upper()
+        # For single words like "AnimusLab", use first two letters (e.g., AN)
+        # unless it has clear CamelCase that the user prefers (already handled by clean_name)
+        # The user specifically wants "AN" for "AnimusLab"
+        return clean_name[:2]
         
-    words = clean_name.upper().split()
+    words = clean_name.split()
     return "".join(w[0] for w in words[:4])
 
 def _issue_jwt(user):
@@ -147,7 +145,7 @@ def _generate_hub_id(company_name: str, region: str, unit: str):
 
 def _generate_clearance_id(role: str, company_name: str, city: str):
     """
-    Format: OWN-AL-MUM-042
+    Format: OWN-AN-MUM-042
     """
     role_map = {
         "owner": "OWN", "admin": "ADM", "dev": "DEV", "developer": "DEV",
@@ -155,7 +153,7 @@ def _generate_clearance_id(role: str, company_name: str, city: str):
     }
     role_code = role_map.get(role.lower(), "USR")
     abbr = generate_company_abbr(company_name)
-    serial = secrets.randbelow(900) + 100 # 100-999
+    serial = secrets.randbelow(999) + 1 # 001-999
     
     return f"{role_code}-{abbr}-{city.strip().upper()}-{serial:03d}"
 
@@ -166,7 +164,7 @@ def _generate_regulator_id(bureau: str, user_name: str, region: str = "GL"):
     """
     bureau_code = bureau.strip().upper()[:6]
     region_code = region.strip().upper()[:2] if region else "GL"
-    sequence = secrets.randbelow(900) + 100
+    sequence = secrets.randbelow(999) + 1
     return f"AUD-{bureau_code}-{region_code}-{sequence:03d}"
 
 def _validate_slug(slug: str, type_name: str = "ID"):
