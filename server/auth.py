@@ -569,7 +569,12 @@ def provision_enterprise(
         # 1. Find or Atomic-Create Organization
         org_id_base = whitelist.org_id.strip().lower()
         org = db.query(Organization).filter(Organization.id == org_id_base).first()
-        
+        if not org:
+            # Check if domain is taken
+            existing_domain = db.query(Organization).filter(Organization.domain == domain).first()
+            if existing_domain:
+                raise HTTPException(status_code=400, detail=f"DOMAIN_CONFLICT: The domain '{domain}' is already registered.")
+
             org = Organization(
                 id=org_id_base,
                 display_name=company_name,
