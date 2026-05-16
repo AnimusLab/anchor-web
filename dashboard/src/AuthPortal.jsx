@@ -145,6 +145,12 @@ export default function AuthPortal({ isInvite = false }) {
           })
         });
         const data = await safeJson(res);
+        
+        // Handle Forensic 200-OK Errors (status: "ERROR")
+        if (data.status === 'ERROR') {
+          throw new Error(data.detail || 'Identity lookup failed');
+        }
+
         if (!res.ok) {
           const msg = data.detail ? (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)) : 'Identity lookup failed';
           throw new Error(msg);
