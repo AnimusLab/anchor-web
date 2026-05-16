@@ -11,68 +11,73 @@ extend({ MeshLineGeometry, MeshLineMaterial });
 /**
  * Generates a high-fidelity dynamic texture for the Enterprise Badge.
  */
+/**
+ * Generates a high-fidelity dynamic texture for the Enterprise Badge.
+ */
 function createBadgeTexture(name, company, clearanceId) {
   const canvas = document.createElement('canvas');
-  canvas.width = 1024;
+  canvas.width = 1200; // Increased width for better fit
   canvas.height = 1536;
   const ctx = canvas.getContext('2d');
 
   // 1. Sleek Dark Background
   ctx.fillStyle = '#050505';
-  ctx.fillRect(0, 0, 1024, 1536);
+  ctx.fillRect(0, 0, 1200, 1536);
   
   ctx.strokeStyle = 'rgba(6, 182, 212, 0.05)';
   ctx.lineWidth = 1;
-  for (let i = 0; i < 1024; i += 40) {
+  for (let i = 0; i < 1200; i += 40) {
     ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 1536); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(1024, i); ctx.stroke();
+  }
+  for (let i = 0; i < 1536; i += 40) {
+    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(1200, i); ctx.stroke();
   }
 
   // 2. Cyan Header Block
   const primaryColor = '#06B6D4'; // Cyan
   ctx.fillStyle = primaryColor;
-  ctx.fillRect(0, 0, 1024, 200);
+  ctx.fillRect(0, 0, 1200, 220);
 
   // 3. Company Text
   ctx.fillStyle = '#000000';
   ctx.font = 'bold 90px Courier New, monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(company.toUpperCase(), 512, 130);
+  ctx.fillText(company.toUpperCase(), 600, 140);
 
   // 4. Label
   ctx.fillStyle = '#4B5563';
   ctx.font = '40px monospace';
   ctx.letterSpacing = '10px';
-  ctx.fillText('ENTERPRISE NODE OWNER // MASTER', 512, 300);
+  ctx.fillText('ENTERPRISE NODE OWNER // MASTER', 600, 320);
 
   // 5. Profile Icon
   ctx.strokeStyle = 'rgba(6, 182, 212, 0.3)';
   ctx.lineWidth = 4;
-  ctx.strokeRect(312, 400, 400, 500);
+  ctx.strokeRect(400, 420, 400, 500);
   
   ctx.fillStyle = '#0F172A';
-  ctx.fillRect(314, 402, 396, 496);
+  ctx.fillRect(402, 422, 396, 496);
   ctx.fillStyle = 'rgba(6, 182, 212, 0.2)';
-  ctx.beginPath(); ctx.arc(512, 580, 120, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(512, 950, 240, Math.PI, 0); ctx.fill();
+  ctx.beginPath(); ctx.arc(600, 600, 120, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(600, 970, 240, Math.PI, 0); ctx.fill();
 
   // 6. Name
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 80px monospace';
-  ctx.fillText(name.toUpperCase(), 512, 1050);
+  ctx.font = 'bold 85px monospace';
+  ctx.fillText(name.toUpperCase(), 600, 1080);
 
   // 7. Tactical Clearance ID
   ctx.fillStyle = primaryColor;
-  ctx.font = 'bold 110px Courier New, monospace';
+  ctx.font = 'bold 115px Courier New, monospace';
   ctx.shadowColor = 'rgba(6, 182, 212, 0.5)';
   ctx.shadowBlur = 20;
-  ctx.fillText(clearanceId.toUpperCase(), 512, 1200);
+  ctx.fillText(clearanceId.toUpperCase(), 600, 1240);
   ctx.shadowBlur = 0;
 
   // 8. Footer
   ctx.fillStyle = '#374151';
-  ctx.font = '30px monospace';
-  ctx.fillText('ANCHOR GOVERNANCE MESH // v5.1 Protocol', 512, 1450);
+  ctx.font = '32px monospace';
+  ctx.fillText('ANCHOR GOVERNANCE MESH // v5.1 Protocol', 600, 1460);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.anisotropy = 16;
@@ -85,9 +90,9 @@ export default function EnterpriseBadge({ name = "Unknown", company = "PENDING",
   return (
     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1 }}>
       <Canvas style={{ pointerEvents: 'auto', width: '100%', height: '100%' }} camera={{ position: [0, 0, 15], fov: 25 }} gl={{ alpha: true, antialias: true }} dpr={[1, 2]}>
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
-        <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
+        <ambientLight intensity={0.6} />
+        <pointLight position={[10, 10, 10]} intensity={1.5} />
+        <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={1.2} />
         <Physics gravity={[0, -20, 0]}>
           <Lanyard name={name} company={company} clearanceId={clearanceId} />
         </Physics>
@@ -110,11 +115,31 @@ function Lanyard({ name, company, clearanceId }) {
   const [dragged, setDragged] = useState(false);
 
   const texture = useMemo(() => createBadgeTexture(name, company, clearanceId), [name, company, clearanceId]);
+  
+  // Create Rounded Geometry
+  const roundedCardGeometry = useMemo(() => {
+    const width = 2.0; // Increased width
+    const height = 2.6;
+    const radius = 0.15; // Smooth edges
+    const shape = new THREE.Shape();
+    shape.moveTo(-width / 2 + radius, -height / 2);
+    shape.lineTo(width / 2 - radius, -height / 2);
+    shape.quadraticCurveTo(width / 2, -height / 2, width / 2, -height / 2 + radius);
+    shape.lineTo(width / 2, height / 2 - radius);
+    shape.quadraticCurveTo(width / 2, height / 2, width / 2 - radius, height / 2);
+    shape.lineTo(-width / 2 + radius, height / 2);
+    shape.quadraticCurveTo(-width / 2, height / 2, -width / 2, height / 2 - radius);
+    shape.lineTo(-width / 2, -height / 2 + radius);
+    shape.quadraticCurveTo(-width / 2, -height / 2, -width / 2 + radius, -height / 2);
+    
+    return new THREE.ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: false });
+  }, []);
+
   const lanyardTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 64; canvas.height = 64;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#06B6D4'; // Cyan glow
+    ctx.fillStyle = '#06B6D4';
     ctx.fillRect(0, 0, 64, 64);
     ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 8; ctx.strokeRect(0, 0, 64, 64);
     return new THREE.CanvasTexture(canvas);
@@ -156,14 +181,14 @@ function Lanyard({ name, company, clearanceId }) {
         <RigidBody position={[0.4, 0, 0]} ref={j2} {...segmentProps}><BallCollider args={[0.05]} /></RigidBody>
         <RigidBody position={[0.6, 0, 0]} ref={j3} {...segmentProps}><BallCollider args={[0.05]} /></RigidBody>
         <RigidBody ref={card} {...segmentProps} type={dragged ? 'kinematicPosition' : 'dynamic'} colliders={false} onPointerDown={() => setDragged(true)} onPointerUp={() => setDragged(false)}>
-          <CuboidCollider args={[0.8, 1.2, 0.05]} />
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={[1.6, 2.4, 0.08]} />
+          <CuboidCollider args={[1.0, 1.3, 0.05]} />
+          <mesh castShadow receiveShadow geometry={roundedCardGeometry}>
             <meshPhysicalMaterial map={texture} clearcoat={1} clearcoatRoughness={0.1} metalness={0.2} roughness={0.5} />
           </mesh>
-          <mesh position={[0, 1.3, 0]}>
-            <cylinderGeometry args={[0.1, 0.1, 0.2, 16]} rotation={[Math.PI / 2, 0, 0]} />
-            <meshStandardMaterial color="#888" metalness={1} roughness={0.2} />
+          {/* Top Clip Hole Holder */}
+          <mesh position={[0, 1.4, 0]}>
+            <cylinderGeometry args={[0.12, 0.12, 0.2, 16]} rotation={[Math.PI / 2, 0, 0]} />
+            <meshStandardMaterial color="#444" metalness={1} roughness={0.1} />
           </mesh>
         </RigidBody>
       </group>
