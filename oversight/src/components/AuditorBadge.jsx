@@ -59,11 +59,12 @@ function createBadgeTexture(name, agency, clearanceId, hubId) {
   ctx.fillText(clearanceId.toUpperCase(), 300, 780, 520);
 
   // Status Bar
+  const isPending = clearanceId === "ID_PENDING";
   ctx.fillStyle = 'rgba(0,0,0,0.85)';
-  ctx.fillRect(60, 870, 480, 80); 
-  ctx.fillStyle = primaryColor;
-  ctx.font = 'bold 32px monospace';
-  ctx.fillText('OVERSIGHT OFFICER // ACTIVE', 300, 920);
+  ctx.fillRect(30, 870, 540, 80); 
+  ctx.fillStyle = isPending ? 'rgba(0,0,0,0.4)' : primaryColor;
+  ctx.font = 'bold 24px monospace';
+  ctx.fillText(isPending ? 'OFFICER PENDING // SCANNING' : 'OVERSIGHT OFFICER // ACTIVE', 300, 920);
 
   // 3. Right Agency Panel
   ctx.textAlign = 'left';
@@ -131,12 +132,12 @@ function createBadgeTexture(name, agency, clearanceId, hubId) {
   ctx.font = 'bold 32px monospace';
   ctx.fillText('STATUS', leftX, 920);
   
-  ctx.fillStyle = '#10B981';
+  ctx.fillStyle = isPending ? '#4B5563' : '#10B981';
   ctx.beginPath(); ctx.arc(leftX + 160, 910, 12, 0, Math.PI * 2); ctx.fill();
   
-  ctx.fillStyle = '#10B981';
+  ctx.fillStyle = isPending ? '#4B5563' : '#10B981';
   ctx.font = 'bold 32px monospace';
-  ctx.fillText('IDENTITY VERIFIED', leftX + 190, 920);
+  ctx.fillText(isPending ? 'AWAITING IDENTIFICATION' : 'IDENTITY VERIFIED', leftX + 190, 920);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.anisotropy = 16;
