@@ -86,17 +86,18 @@ function createBadgeTexture(name, agency, clearanceId, hubId) {
   ctx.fillText(agency.toUpperCase(), leftX, 250, 800);
   drawDivider(280);
 
-  // Section 2: Officer Name
+  // Section 2: Officer Name (With Title Case & Font Scaling)
   ctx.fillStyle = primaryColor;
   ctx.font = 'bold 32px monospace';
   ctx.letterSpacing = '2px';
   ctx.fillText('OFFICER NAME', leftX, 350);
   
+  const titleName = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   ctx.fillStyle = '#FFFFFF';
   let nameSize = 90;
-  if (name.length > 15) nameSize = 70;
+  if (titleName.length > 15) nameSize = 70;
   ctx.font = `bold ${nameSize}px monospace`;
-  ctx.fillText(name.toUpperCase(), leftX, 450, 800);
+  ctx.fillText(titleName, leftX, 450, 800);
   drawDivider(480);
 
   // Section 3: IDs
