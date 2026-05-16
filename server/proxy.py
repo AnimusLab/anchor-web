@@ -96,7 +96,14 @@ def on_startup():
         db = SessionLocal()
         # Fix Hub IDs (ANIM-IN-UNIT01 -> AL-IN-MUM01)
         db.execute(text("UPDATE hubs SET id = 'AL-IN-MUM01', unit = 'MUM01' WHERE id = 'ANIM-IN-UNIT01'"))
-        db.execute(text("UPDATE enterprise_users SET hub_id = 'AL-IN-MUM01' WHERE hub_id = 'ANIM-IN-UNIT01'"))
+        db.execute(text("UPDATE enterprise_users SET hub_id = 'AL-IN-MUM01' WHERE hub_id = 'ANIM-IN-UNIT01' OR org_id = 'animuslab'"))
+        
+        # Backfill any missing hub_ids for other owners
+        db.execute(text("""
+            UPDATE enterprise_users 
+            SET hub_id = (SELECT id FROM hubs WHERE hubs.org_id = enterprise_users.org_id LIMIT 1)
+            WHERE hub_id IS NULL OR hub_id = ''
+        """))
         
         # Move inadvertently approved users back to pending for review
         db.execute(text("UPDATE enterprise_users SET status = 'pending' WHERE status = 'approved' AND role = 'owner'"))

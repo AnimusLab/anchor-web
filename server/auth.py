@@ -337,7 +337,7 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
             org = db.query(Organization).filter(Organization.id == user.org_id).first()
             return {
                 "email": getattr(user, 'email', 'UNKNOWN'),
-                "hub_id": getattr(user, 'hub_id', 'PENDING'),
+                "hub_id": user.hub_id or "PENDING",
                 "display_name": getattr(user, 'display_name', 'AUTHORIZED PERSON'),
                 "org_name": getattr(org, 'display_name', 'PENDING'),
                 "region": getattr(org, 'region', 'GLOBAL'),
@@ -613,12 +613,16 @@ def provision_enterprise(
         clearance_id = _generate_clearance_id(role="owner", company_name=company_name, city=city)
         totp_secret = pyotp.random_base32()
         
+        # Extract hub_id for the owner
+        final_hub_id = db.query(Hub).filter(Hub.org_id == org.id).first().id
+        
         new_user = EnterpriseUser(
             id=clearance_id,
             email=email,
             display_name=display_name,
             role="owner",
             org_id=org.id,
+            hub_id=final_hub_id,
             department=department,
             totp_secret=totp_secret,
             status="pending",
