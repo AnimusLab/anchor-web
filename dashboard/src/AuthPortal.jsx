@@ -85,7 +85,7 @@ export default function AuthPortal({ isInvite = false }) {
   const [scanStatus, setScanStatus] = useState(''); // 'scanning' | 'found' | 'not_found' | ''
   const [formData, setFormData] = useState({
     email: '', orgId: '', clearanceId: '', totpCode: '',
-    entityPrefix: '', serverRegion: 'IN', jurisdiction: '',
+    entityPrefix: '', serverRegion: 'IN', city: '', jurisdiction: '',
     displayName: '', companyName: '',
   });
 
@@ -280,8 +280,9 @@ export default function AuthPortal({ isInvite = false }) {
       payload.append('display_name', formData.displayName);
       payload.append('company_name', formData.companyName);
       payload.append('email', formData.email);
-      payload.append('password', 'DUMMY_UNUSED');
       payload.append('server_region', formData.serverRegion);
+      payload.append('city', formData.city); // New geographic field
+      payload.append('password', 'DUMMY_UNUSED');
       payload.append('department', 'EXECUTIVE');
       const res = await fetch(endpoints.registerOrg, { method: 'POST', body: payload });
       const data = await safeJson(res);
@@ -573,6 +574,14 @@ export default function AuthPortal({ isInvite = false }) {
                 <Field label="Company Name">
                   <input required type="text" name="companyName" value={formData.companyName} onChange={handleInputChange}
                     placeholder="e.g. Global Bank"
+                    style={{ ...inputStyle, borderColor: '#1f2937' }}
+                    onFocus={e => e.target.style.borderColor = '#10b981'}
+                    onBlur={e => e.target.style.borderColor = '#1f2937'}
+                  />
+                </Field>
+                <Field label="City of Branch">
+                  <input required type="text" name="city" value={formData.city} onChange={handleInputChange}
+                    placeholder="e.g. Mumbai"
                     style={{ ...inputStyle, borderColor: '#1f2937' }}
                     onFocus={e => e.target.style.borderColor = '#10b981'}
                     onBlur={e => e.target.style.borderColor = '#1f2937'}

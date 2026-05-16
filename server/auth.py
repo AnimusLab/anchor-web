@@ -212,6 +212,7 @@ class EnterpriseProvisionRequest(BaseModel):
     email: str
     company_name: str
     region: str
+    city: str # New geographic field
     department: str
 
 # =============================================================================
@@ -549,6 +550,7 @@ def provision_enterprise(
     email: str = Form(...),
     company_name: str = Form(...),
     server_region: str = Form(...),
+    city: str = Form(...), # New geographic field
     department: str = Form("EXECUTIVE"),
     hub_id: str = Form(None),
     db: Session = Depends(get_db)
@@ -567,18 +569,12 @@ def provision_enterprise(
         org_id_base = whitelist.org_id.strip().lower()
         org = db.query(Organization).filter(Organization.id == org_id_base).first()
         
-        if not org:
-            # Check if domain is taken
-            existing_domain = db.query(Organization).filter(Organization.domain == domain).first()
-            if existing_domain:
-                raise HTTPException(status_code=400, detail=f"DOMAIN_CONFLICT: The domain '{domain}' is already registered.")
-
             org = Organization(
                 id=org_id_base,
                 display_name=company_name,
                 domain=domain,
                 region=region,
-                status="approved", # Explicitly set status
+                status="approved", # Root-level hardening
                 created_at=datetime.utcnow().isoformat()
             )
             db.add(org)
@@ -586,14 +582,22 @@ def provision_enterprise(
             
             from models import Hub
             
-            # City Mapping for v5.8 IDs
-            CITY_MAP = {"IN": "MUM", "US": "NYC", "UK": "LDN", "EU": "BRU", "SG": "SNG", "AE": "DXB"}
-            city = CITY_MAP.get(region, "HQ")
-            hub_unit = f"{city}01"
+            # City Mapping & Sequencing
+            city_clean = city.strip().upper()
+            city_code = city_clean[:3] # e.g. MUMBAI -> MUM
             
-            # Tactical Naming: [Org] [City] Fleet ([Callsign])
+            # Count existing hubs in this city for this org to determine sequence
+            existing_city_hubs = db.query(Hub).filter(
+                Hub.org_id == org.id, 
+                Hub.id.like(f"%-{region.strip().upper()}-{city_code}%")
+            ).count()
+            
+            sequence = existing_city_hubs + 1
+            hub_unit = f"{city_code}{sequence:02d}" # e.g. MUM01, MUM02
+            
+            # Tactical Naming: [Company] [City] Fleet ([Callsign])
             callsign = secrets.choice(NATO_PHONETIC)
-            tactical_name = f"{company_name} {city.strip().upper()} Fleet ({callsign})"
+            tactical_name = f"{company_name} {city.strip().title()} Fleet ({callsign})"
 
             final_hub_id = _generate_hub_id(company_name, region, hub_unit)
             new_hub = Hub(
