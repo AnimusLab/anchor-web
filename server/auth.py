@@ -250,14 +250,17 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
         if getattr(user, 'role', None) not in allowed_roles:
             raise HTTPException(status_code=403, detail="ROLE NOT AUTHORIZED")
 
-        # 3. Verify Organizational Hub ID (Case-Insensitive Handshake)
-        org = db.query(Organization).filter(Organization.id == getattr(user, 'org_id', None)).first()
+        # 3. Verify Organizational Hub ID (Relational Forensic Check)
+        from models import Hub
         submitted_hub_id = hub_id.strip().upper()
         
-        stored_hub_id = (getattr(org, 'hub_id', '') or '').strip().upper()
-        stored_org_id = (getattr(org, 'id', '') or '').strip().upper()
+        # Check if the submitted hub exists and belongs to the user's organization
+        valid_hub = db.query(Hub).filter(Hub.id == submitted_hub_id, Hub.org_id == user.org_id).first()
         
-        if not org or (submitted_hub_id != stored_hub_id and submitted_hub_id != stored_org_id):
+        # Fallback: Check if the user is using the base Org ID as their hub handle
+        is_base_org = submitted_hub_id == user.org_id.strip().upper()
+        
+        if not valid_hub and not is_base_org:
             raise HTTPException(status_code=401, detail="ORGANIZATIONAL ACCESS DENIED")
         
         if getattr(user, 'status', None) == "revoked":
