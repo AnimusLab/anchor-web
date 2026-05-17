@@ -444,9 +444,15 @@ async def get_pending_pulls(current_user: dict = Depends(get_current_user), db: 
     if current_user["role"] not in ["owner", "admin"]:
         raise HTTPException(status_code=403, detail="Only Owners can approve forensic pulls")
     
-    # Query real ForensicRequest table for this organization
+    # Fetch the user to get their assigned hub_id
+    from models import EnterpriseUser
+    user = db.query(EnterpriseUser).filter(EnterpriseUser.email == current_user.get("sub")).first()
+    if not user or not user.hub_id:
+        raise HTTPException(status_code=403, detail="User is not assigned to a Hub")
+
+    # Query real ForensicRequest table for this organization's hub
     pulls = db.query(ForensicRequest).filter(
-        ForensicRequest.hub_id == current_user["hub_id"],
+        ForensicRequest.hub_id == user.hub_id,
         ForensicRequest.status == "PENDING"
     ).all()
     
