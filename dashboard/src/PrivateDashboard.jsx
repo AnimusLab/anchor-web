@@ -179,11 +179,17 @@ function HubActivation({ user, token, onActivated }) {
 }
 
 function StatCard({ label, value, sub, color, colorClass }) {
+  // Dynamically scale font size for long cryptographic keys so they don't break the sleek layout
+  const isLong = typeof value === 'string' && value.length > 15;
+  const valueSize = isLong ? 18 : 32;
+  
   return (
-    <div className={`stat-card ${colorClass}`}>
-      <div style={{ fontSize: 12, fontWeight: 600, color: V.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>{label}</div>
-      <div style={{ fontSize: 32, fontWeight: 700, color, lineHeight: 1, marginBottom: 6, wordBreak: 'break-all' }}>{value}</div>
-      <div style={{ fontSize: 12, color: V.dim, fontFamily: 'JetBrains Mono, monospace' }}>{sub}</div>
+    <div className={`stat-card ${colorClass}`} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px 20px', minHeight: 110 }}>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: V.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>{label}</div>
+        <div style={{ fontSize: valueSize, fontWeight: 700, color, lineHeight: 1.2, marginBottom: 12, wordBreak: 'break-all' }}>{value}</div>
+      </div>
+      <div style={{ fontSize: 11, color: V.dim, fontFamily: 'JetBrains Mono, monospace' }}>{sub}</div>
     </div>
   );
 }
