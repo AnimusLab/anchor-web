@@ -12,7 +12,11 @@ def wipe_data():
         
         # Deep Clean: Drop all tables to clear legacy columns (like hub_id in organizations)
         print("[RESET] Dropping all tables for schema sync...")
-        Base.metadata.drop_all(bind=engine)
+        if str(engine.url).startswith("postgres"):
+            for table in Base.metadata.tables.keys():
+                conn.execute(text(f"DROP TABLE IF EXISTS {table} CASCADE;"))
+        else:
+            Base.metadata.drop_all(bind=engine)
         conn.commit()
         print("[RESET] Deep Purge Complete.")
 
