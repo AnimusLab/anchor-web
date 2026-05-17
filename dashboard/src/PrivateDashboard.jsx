@@ -220,12 +220,9 @@ class DashboardErrorBoundary extends Component {
 }
 
 function DashboardInner() {
-  const { user, token, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user, token } = useAuth();
   const [hubs, setHubs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('Overview');
-  const [pendingPulls, setPendingPulls] = useState([]);
 
   useEffect(() => {
     if (!token) return;
@@ -234,9 +231,6 @@ function DashboardInner() {
         const headers = { Authorization: `Bearer ${token}` };
         const hubsRes = await fetch(`${endpoints.baseUrl}/api/auth/hubs`, { headers });
         if (hubsRes.ok) setHubs(await hubsRes.json());
-
-        const pullsRes = await fetch(`${endpoints.baseUrl}/api/forensic/pending`, { headers });
-        if (pullsRes.ok) setPendingPulls(await pullsRes.json());
       } catch (e) {
         console.error('Fetch error:', e);
       } finally {
@@ -264,119 +258,37 @@ function DashboardInner() {
   const regionalKey = user?.regional_key || 'UNSET';
 
   return (
-    <div style={{ height: '100vh', display: 'flex', overflow: 'hidden' }}>
+    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
       
-      {/* SIDEBAR */}
-      <aside style={{ width: 220, minWidth: 220, background: V.sidebar, borderRight: `1px solid ${V.border}`, display: 'flex', flexDirection: 'column', overflowY: 'auto', zIndex: 10 }}>
-        
-        {/* Logo Section */}
-        <div style={{ padding: '20px 16px 16px', borderBottom: `1px solid ${V.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 30, height: 30, background: V.accent, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg viewBox="0 0 24 24" fill="white" style={{ width: 18, height: 18 }}><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      {/* Stats Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+         <StatCard label="Spoke Node Handle" value={regionalKey} sub="REGIONAL_ACTIVATION_KEY" color={V.accent} colorClass="accent" />
+         <StatCard label="Active Hub Identity" value={hubId} sub="SOVEREIGN_UNIT_ENUM" color={V.accent} colorClass="accent" />
+         <StatCard label="Integrity Score" value="100%" sub="MESH_CONSENSUS" color={V.green} colorClass="green" />
+         <StatCard label="Access Level" value={user?.role?.toUpperCase()} sub="GATEKEEPER_STATUS" color={V.amber} colorClass="amber" />
+      </div>
+
+      {/* Main Visuals */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: 20 }}>
+        <div className="ra-card" style={{ height: 500, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 20, left: 24, zIndex: 5 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: V.accent, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Silo Lattice Mesh</div>
+            <div style={{ fontSize: 10, color: V.muted, marginTop: 4 }}>REAL_TIME_HUB_TELEMETRY</div>
           </div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: V.primary }}>Anchor Enterprise</div>
-            <div style={{ fontSize: 10, color: V['accent-soft'], letterSpacing: '0.05em', fontWeight: 500 }}>SOVEREIGN RELAY</div>
+          <div style={{ width: '100%', height: '100%', padding: '20px' }}>
+            <TacticalLattice projects={hubs} department={user?.department} />
           </div>
         </div>
-
-        {/* Clearance Badge */}
-        <div style={{ margin: '12px 12px 0', padding: '8px 12px', background: 'rgba(6,182,212,0.08)', borderRadius: 6, border: '1px solid rgba(6,182,212,0.2)' }}>
-          <div style={{ fontSize: 10, color: V['cyan-soft'], marginBottom: 2, fontWeight: 600 }}>CLEARANCE: {clearanceId}</div>
-          <div style={{ fontSize: 11, color: V.secondary, fontFamily: 'JetBrains Mono, monospace' }}>
-            ORG: {orgId}
-          </div>
+        <div className="ra-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+           <div style={{ padding: '16px 20px', borderBottom: `1px solid ${V.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+             <div style={{ fontSize: 15, fontWeight: 600, color: V.primary }}>Violation Ticker</div>
+             <div style={{ width: 8, height: 8, borderRadius: '50%', background: V.red, animation: 'pulse 2s infinite' }} />
+           </div>
+           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifySelf: 'center', opacity: 0.15, paddingTop: 100 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ width: 64, height: 64, marginBottom: 16 }}><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase' }}>No Hub Breaches</div>
+           </div>
         </div>
-
-        {/* Navigation */}
-        <nav style={{ flex: 1, padding: '4px 8px 20px' }}>
-          <div className="section-label">OPERATIONS</div>
-          <div className={`nav-link ${activeTab === 'Overview' ? 'active' : ''}`} onClick={() => setActiveTab('Overview')}>
-            {Icon.overview} Overview
-          </div>
-          <div className={`nav-link ${activeTab === 'Lattice Mesh' ? 'active' : ''}`} onClick={() => setActiveTab('Lattice Mesh')}>
-            {Icon.lattice} Lattice Mesh
-          </div>
-          
-          <div className="section-label">GOVERNANCE</div>
-          <div className={`nav-link ${activeTab === 'Compliance' ? 'active' : ''}`} onClick={() => setActiveTab('Compliance')}>
-            {Icon.vault} Compliance Shield
-          </div>
-          <div className={`nav-link ${activeTab === 'Forensic' ? 'active' : ''}`} onClick={() => setActiveTab('Forensic')}>
-            {Icon.audit} Forensic Vault
-          </div>
-        </nav>
-
-        {/* Sidebar Footer */}
-        <div style={{ padding: '12px 16px', borderTop: `1px solid ${V.border}` }}>
-          <div className="nav-link" onClick={logout} style={{ color: V.muted }}>
-            {Icon.logout} Terminate Session
-          </div>
-          <div style={{ marginTop: 12, fontSize: 11, color: V.dim, fontFamily: 'JetBrains Mono, monospace' }}>
-            Anchor v5.8 — Silo
-          </div>
-        </div>
-      </aside>
-
-      {/* MAIN CONTENT */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        
-        {/* Header */}
-        <header style={{ height: 56, background: V.sidebar, borderBottom: `1px solid ${V.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0, zIndex: 5 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: V.primary }}>{activeTab.toUpperCase()}</div>
-            <div style={{ height: 16, width: 1, background: V.borderLit }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: V.green, boxShadow: '0 0 6px var(--green)' }} />
-              <span style={{ fontSize: 12, color: V.secondary }}>HUB: {hubId} // {user?.region || 'GLOBAL'}</span>
-            </div>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ textAlign: 'right' }}>
-               <div style={{ fontSize: 12, fontWeight: 600, color: V.primary }}>{user?.display_name || user?.email}</div>
-               <div style={{ fontSize: 9, fontWeight: 700, color: V.accent, letterSpacing: '0.05em' }}>{user?.role?.toUpperCase()}</div>
-            </div>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', background: V.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>
-               {(user?.display_name || user?.email || 'U').charAt(0).toUpperCase()}
-            </div>
-          </div>
-        </header>
-
-        {/* Content Area */}
-        <main style={{ flex: 1, overflowY: 'auto', background: V.void, padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
-          
-          {/* Stats Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-             <StatCard label="Spoke Node Handle" value={regionalKey} sub="REGIONAL_ACTIVATION_KEY" color={V.accent} colorClass="accent" />
-             <StatCard label="Active Hub Identity" value={hubId} sub="SOVEREIGN_UNIT_ENUM" color={V.accent} colorClass="accent" />
-             <StatCard label="Integrity Score" value="100%" sub="MESH_CONSENSUS" color={V.green} colorClass="green" />
-             <StatCard label="Access Level" value={user?.role?.toUpperCase()} sub="GATEKEEPER_STATUS" color={V.amber} colorClass="amber" />
-          </div>
-
-          {/* Main Visuals */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: 20 }}>
-            <div className="ra-card" style={{ height: 500, position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 20, left: 24, zIndex: 5 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: V.accent, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Silo Lattice Mesh</div>
-                <div style={{ fontSize: 10, color: V.muted, marginTop: 4 }}>REAL_TIME_HUB_TELEMETRY</div>
-              </div>
-              <div style={{ width: '100%', height: '100%', padding: '20px' }}>
-                <TacticalLattice projects={hubs} department={user?.department} />
-              </div>
-            </div>
-            <div className="ra-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-               <div style={{ padding: '16px 20px', borderBottom: `1px solid ${V.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                 <div style={{ fontSize: 15, fontWeight: 600, color: V.primary }}>Violation Ticker</div>
-                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: V.red, animation: 'pulse 2s infinite' }} />
-               </div>
-               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifySelf: 'center', opacity: 0.15, paddingTop: 100 }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ width: 64, height: 64, marginBottom: 16 }}><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase' }}>No Hub Breaches</div>
-               </div>
-            </div>
-          </div>
-        </main>
       </div>
     </div>
   );
