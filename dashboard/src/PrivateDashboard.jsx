@@ -48,22 +48,51 @@ function HubActivation({ user, token, onActivated }) {
   const handleActivate = async () => {
     setStep('generating');
     try {
-      const res = await fetch(`${endpoints.baseUrl}/api/activate/hub`, {
+      // Setup a timeout controller to prevent infinite hangs
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      
+      const res = await fetch(`${endpoints.baseUrl}/api/auth/activate/hub`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+      
       const data = await res.json();
-      if (data.status === 'ACTIVATED' || data.status === 'ALREADY_ACTIVE') {
+      if (res.ok && (data.status === 'ACTIVATED' || data.status === 'ALREADY_ACTIVE')) {
         setTimeout(() => {
           setKey(data.regional_key || data.key);
           setStep('complete');
-        }, 2000);
+        }, 1500); // Small artificial delay for the premium feel
+      } else {
+        throw new Error(data.detail || "Activation rejected");
       }
     } catch (e) {
-      setLogs(prev => [...prev, "CRITICAL_ERROR: ACTIVATION_FAILED"]);
-      setStep('initial');
+      console.error(e);
+      setLogs(prev => [...prev, `CRITICAL_ERROR: ${e.name === 'AbortError' ? 'TIMEOUT' : 'ACTIVATION_FAILED'}`]);
+      setStep('ready'); // Fallback to ready instead of initial so they can try again
     }
   };
+
+  // Progress animation state for the generating step
+  const [progressMsg, setProgressMsg] = useState("ESTABLISHING_SECURE_TUNNEL...");
+  useEffect(() => {
+    if (step === 'generating') {
+      const messages = [
+        "ESTABLISHING_SECURE_TUNNEL...",
+        "NEGOTIATING_CRYPTOGRAPHIC_HANDSHAKE...",
+        "GENERATING_SPOKE_RSA_KEYPAIR...",
+        "ANCHORING_TO_SOVEREIGN_MESH..."
+      ];
+      let i = 0;
+      const interval = setInterval(() => {
+        i = (i + 1) % messages.length;
+        setProgressMsg(messages[i]);
+      }, 1500);
+      return () => clearInterval(interval);
+    }
+  }, [step]);
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'JetBrains Mono, monospace' }}>
@@ -100,11 +129,14 @@ function HubActivation({ user, token, onActivated }) {
         )}
 
         {step === 'generating' && (
-          <div className="fade-in" style={{ textAlign: 'center' }}>
-            <div className="pulse" style={{ width: 100, height: 100, borderRadius: '50%', background: 'rgba(6,182,212,0.1)', border: `1px solid ${V.accent}`, margin: '0 auto 30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-               <div style={{ width: 40, height: 40, border: '2px solid transparent', borderTopColor: V.accent, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          <div className="fade-in" style={{ textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: `1px solid ${V.border}`, padding: '40px 20px', borderRadius: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 24 }}>
+               <div className="loader-bar" style={{ animationDelay: '0s' }} />
+               <div className="loader-bar" style={{ animationDelay: '0.2s' }} />
+               <div className="loader-bar" style={{ animationDelay: '0.4s' }} />
             </div>
-            <div style={{ fontSize: 12, color: V.accent, letterSpacing: '0.2em' }}>ASSEMBLING_SOVEREIGN_KEY...</div>
+            <div style={{ fontSize: 13, color: '#fff', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 8 }}>ASSEMBLING_SOVEREIGN_KEY</div>
+            <div style={{ fontSize: 10, color: V.accent, letterSpacing: '0.05em', height: 14 }}>{progressMsg}</div>
           </div>
         )}
 
@@ -139,6 +171,8 @@ function HubActivation({ user, token, onActivated }) {
         .pulse { animation: pulse 2s infinite; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .loader-bar { width: 4px; height: 24px; background: ${V.accent}; border-radius: 2px; animation: bounce 1s ease-in-out infinite; }
+        @keyframes bounce { 0%, 100% { transform: scaleY(0.5); opacity: 0.5; } 50% { transform: scaleY(1.5); opacity: 1; } }
       `}</style>
     </div>
   );
