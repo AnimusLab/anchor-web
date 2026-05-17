@@ -110,7 +110,7 @@ function ProjectNode({ node }) {
         font="monospace"
         anchorX="center"
       >
-        {node.name.toUpperCase()}
+        {(node.display_name || node.id || 'NODE').toUpperCase()}
       </Text>
     </Float>
   );
