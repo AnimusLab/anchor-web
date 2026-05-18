@@ -47,7 +47,7 @@ function HubActivityGrid() {
           <span>Fri</span>
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: \`repeat(\${cols}, 1fr)\`, gap: 4, width: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 4, width: '100%' }}>
             {activity.map((val, i) => (
               <div key={i} style={{ aspectRatio: '1/1', background: colors[val], borderRadius: 2 }} />
             ))}
