@@ -140,6 +140,7 @@ export default function LoginPage() {
           email: prev.email ? prev.email : data.email,
           agencyId: data.hub_id || prev.agencyId,
           displayName: data.display_name || prev.displayName,
+          agencyName: data.org_name || prev.agencyName,
         }));
         setScanStatus('found');
         setTimeout(() => setScanStatus(''), 2000);
@@ -177,7 +178,7 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`${endpoints.baseUrl}/api/oversight/identify`, {
+      const res = await fetch(endpoints.identify, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -241,7 +242,7 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`${endpoints.baseUrl}/api/oversight/login`, {
+      const res = await fetch(endpoints.verifyTotp, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
