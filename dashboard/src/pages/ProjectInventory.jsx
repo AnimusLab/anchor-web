@@ -6,6 +6,21 @@ const MOCK_PROJECTS = [
   { id: 'prj_fraud_detect', name: 'Fraud Detection Mesh', repo: 'animus/fraud-mesh', desc: 'Distributed transaction anomaly detection system spanning 4 regional zones.', status: 'COMPLIANT', agents: 5, lastAudit: '1 day ago', lang: 'Go', color: '#00ADD8' },
 ];
 
+const Sparkline = ({ color }) => {
+  // Generate a random-looking but static sparkline
+  const seed = color.charCodeAt(1);
+  const pts = Array.from({length: 15}).map((_, i) => {
+    const y = 18 - (Math.sin(i + seed) * 6 + Math.cos(i * 2) * 4 + 8);
+    return `${i * 8},${Math.max(2, y)}`;
+  }).join(' ');
+  
+  return (
+    <svg width="120" height="20" viewBox="0 0 120 20" style={{ opacity: 0.8 }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+};
+
 export default function ProjectInventory() {
   const [projects] = useState(MOCK_PROJECTS);
 
@@ -67,14 +82,19 @@ export default function ProjectInventory() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <button style={{ padding: '6px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-lit)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>
-                  Settings
-                </button>
-                <button style={{ padding: '6px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-lit)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 14, height: 14 }}><path fillRule="evenodd" d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0113.25 15H2.75A1.75 1.75 0 011 13.25V2.75zm1.75-.25a.25.25 0 00-.25.25v10.5c0 .138.112.25.25.25h10.5a.25.25 0 00.25-.25V2.75a.25.25 0 00-.25-.25H2.75zM8 4a.75.75 0 01.75.75v2.5h2.5a.75.75 0 010 1.5h-2.5v2.5a.75.75 0 01-1.5 0v-2.5h-2.5a.75.75 0 010-1.5h2.5v-2.5A.75.75 0 018 4z"/></svg>
-                  Mesh Log
-                </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                <div style={{ display: 'none', '@media (min-width: 768px)': { display: 'block' } }}>
+                   <Sparkline color={p.status === 'COMPLIANT' ? 'var(--green)' : 'var(--red)'} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <button style={{ padding: '6px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-lit)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>
+                    Settings
+                  </button>
+                  <button style={{ padding: '6px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-lit)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 14, height: 14 }}><path fillRule="evenodd" d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0113.25 15H2.75A1.75 1.75 0 011 13.25V2.75zm1.75-.25a.25.25 0 00-.25.25v10.5c0 .138.112.25.25.25h10.5a.25.25 0 00.25-.25V2.75a.25.25 0 00-.25-.25H2.75zM8 4a.75.75 0 01.75.75v2.5h2.5a.75.75 0 010 1.5h-2.5v2.5a.75.75 0 01-1.5 0v-2.5h-2.5a.75.75 0 010-1.5h2.5v-2.5A.75.75 0 018 4z"/></svg>
+                    Mesh Log
+                  </button>
+                </div>
               </div>
 
             </div>
