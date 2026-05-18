@@ -178,16 +178,75 @@ function HubActivation({ user, token, onActivated }) {
   );
 }
 
-function StatCard({ label, value, sub, color, colorClass }) {
+// --- REGIONAL KEY SETTINGS MODAL ---
+function RegionalKeyModal({ keyVal, onClose }) {
+  // Convert standard internal key to Sovereign Custom Format
+  const customKey = typeof keyVal === 'string' ? keyVal.replace('sk_live_', 'AN-SPK-LIVE-') : 'UNSET';
+  const [showKey, setShowKey] = useState(false);
+  
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="ra-card scale-in" style={{ width: 500, padding: 32, background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>Regional Key Settings</div>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 16 }}>✕</button>
+        </div>
+        
+        <div style={{ background: 'var(--bg-void)', padding: 16, borderRadius: 8, border: '1px solid var(--border)', marginBottom: 24 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sovereign Node Handle</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--accent)', fontSize: 14 }}>
+              {showKey ? customKey : `AN-SPK-LIVE-••••••••••••-${customKey.slice(-4)}`}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setShowKey(!showKey)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-lit)', color: '#fff', padding: '6px 10px', borderRadius: 4, fontSize: 10, cursor: 'pointer', transition: 'all 0.15s' }}>
+                {showKey ? 'HIDE' : 'REVEAL'}
+              </button>
+              <button onClick={() => navigator.clipboard.writeText(customKey)} style={{ background: 'var(--accent)', border: 'none', color: '#000', padding: '6px 10px', borderRadius: 4, fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>
+                COPY
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 16 }}>Active Mesh Projects</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+           <div style={{ padding: 12, border: '1px solid var(--border)', borderRadius: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+             <div>
+               <div style={{ fontSize: 13, color: '#fff', marginBottom: 2 }}>Credit Scoring Engine v4</div>
+               <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>US-East Region • 3 Active Agents</div>
+             </div>
+             <div style={{ fontSize: 10, color: 'var(--green)', background: 'rgba(16,185,129,0.1)', padding: '4px 8px', borderRadius: 4, fontWeight: 600 }}>BOUND</div>
+           </div>
+           <div style={{ padding: 12, border: '1px solid var(--border)', borderRadius: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+             <div>
+               <div style={{ fontSize: 13, color: '#fff', marginBottom: 2 }}>Fraud Detection Mesh</div>
+               <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Global Region • 5 Active Agents</div>
+             </div>
+             <div style={{ fontSize: 10, color: 'var(--green)', background: 'rgba(16,185,129,0.1)', padding: '4px 8px', borderRadius: 4, fontWeight: 600 }}>BOUND</div>
+           </div>
+        </div>
+        
+        <div style={{ marginTop: 24, fontSize: 11, color: 'var(--amber)', lineHeight: 1.5, padding: 12, background: 'rgba(245, 158, 11, 0.05)', borderRadius: 6, border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+          <strong style={{ display: 'block', marginBottom: 4 }}>⚠️ Security Warning</strong>
+          Rotating or revoking this key will instantly sever the connection between the Sovereign Relay and all bound local projects.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, sub, color, colorClass, action }) {
   // Dynamically scale font size for long cryptographic keys so they don't break the sleek layout
   const isLong = typeof value === 'string' && value.length > 15;
   const valueSize = isLong ? 18 : 32;
   
   return (
-    <div className={`stat-card ${colorClass}`} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px 20px', minHeight: 110 }}>
+    <div className={`stat-card ${colorClass}`} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px 20px', minHeight: 110, position: 'relative' }}>
+      {action && <div style={{ position: 'absolute', top: 16, right: 16 }}>{action}</div>}
       <div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: V.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>{label}</div>
-        <div style={{ fontSize: valueSize, fontWeight: 700, color, lineHeight: 1.2, marginBottom: 12, wordBreak: 'break-all' }}>{value}</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: V.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, maxWidth: action ? '80%' : '100%' }}>{label}</div>
+        <div style={{ fontSize: valueSize, fontWeight: 700, color, lineHeight: 1.2, marginBottom: 12, wordBreak: 'break-all', fontFamily: isLong ? 'JetBrains Mono, monospace' : 'inherit' }}>{value}</div>
       </div>
       <div style={{ fontSize: 11, color: V.dim, fontFamily: 'JetBrains Mono, monospace' }}>{sub}</div>
     </div>
@@ -224,6 +283,8 @@ function DashboardInner() {
   const [hubs, setHubs] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [showKeyModal, setShowKeyModal] = useState(false);
+
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -255,14 +316,33 @@ function DashboardInner() {
   const orgId = user?.org_id || 'PENDING_ORG';
   const clearanceId = user?.sub || 'PENDING_ID';
   const hubId = user?.hub_id || 'PENDING_HUB';
-  const regionalKey = user?.regional_key || 'UNSET';
+  const regionalKeyRaw = user?.regional_key || 'UNSET';
+  
+  // Custom Masked Format for the Dashboard Overview
+  const customKeyFull = regionalKeyRaw !== 'UNSET' ? regionalKeyRaw.replace('sk_live_', 'AN-SPK-LIVE-') : 'UNSET';
+  const maskedKey = customKeyFull !== 'UNSET' ? `AN-SPK-••••-${customKeyFull.slice(-4)}` : 'UNSET';
 
   return (
     <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {showKeyModal && <RegionalKeyModal keyVal={regionalKeyRaw} onClose={() => setShowKeyModal(false)} />}
       
       {/* Stats Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-         <StatCard label="Spoke Node Handle" value={regionalKey} sub="REGIONAL_ACTIVATION_KEY" color={V.accent} colorClass="accent" />
+         <StatCard 
+            label="Spoke Node Handle" 
+            value={maskedKey} 
+            sub="REGIONAL_ACTIVATION_KEY" 
+            color={V.accent} 
+            colorClass="accent" 
+            action={
+              <button 
+                onClick={() => setShowKeyModal(true)}
+                style={{ background: 'transparent', border: '1px solid var(--border-lit)', borderRadius: 4, padding: '4px 8px', color: 'var(--text-muted)', fontSize: 10, cursor: 'pointer' }}
+              >
+                ⚙️ SETTINGS
+              </button>
+            }
+         />
          <StatCard label="Active Hub Identity" value={hubId} sub="SOVEREIGN_UNIT_ENUM" color={V.accent} colorClass="accent" />
          <StatCard label="Integrity Score" value="100%" sub="MESH_CONSENSUS" color={V.green} colorClass="green" />
          <StatCard label="Access Level" value={user?.role?.toUpperCase()} sub="GATEKEEPER_STATUS" color={V.amber} colorClass="amber" />
