@@ -336,8 +336,35 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
         raise HTTPException(status_code=401, detail="INVALID CODE")
         
     exp = datetime.utcnow() + timedelta(days=1)
-    token = jwt.encode({"sub": user.email, "role": user.role, "org_id": user.org_id, "exp": exp}, ANCHOR_MASTER_KEY, algorithm="HS256")
-    return {"access_token": token, "token_type": "bearer", "user": {"id": user.id, "email": user.email, "role": user.role, "org_id": user.org_id}}
+    is_oversight = "auditor" in allowed_roles or "regulator" in allowed_roles
+    
+    if is_oversight:
+        session_id = secrets.token_hex(8)
+        # Standard oversight JWT claims format
+        token = jwt.encode({
+            "sub":          user.id,             # Clearance ID
+            "name":         user.display_name,
+            "regulator":    user.department or "Oversight",
+            "access_level": "READ_ONLY",
+            "session_id":   session_id,
+            "role":         "regulator",
+            "portal":       "oversight",
+            "exp":          exp,
+        }, ANCHOR_MASTER_KEY, algorithm="HS256")
+        
+        return {
+            "status":       "AUTHENTICATED",
+            "access_token": token,
+            "token_type":   "bearer",
+            "entity_id":    user.id,
+            "display_name": user.display_name,
+            "regulator":    user.department or "Oversight",
+            "session_id":   session_id,
+            "expires_in":   24 * 3600,
+        }
+    else:
+        token = jwt.encode({"sub": user.email, "role": user.role, "org_id": user.org_id, "exp": exp}, ANCHOR_MASTER_KEY, algorithm="HS256")
+        return {"access_token": token, "token_type": "bearer", "user": {"id": user.id, "email": user.email, "role": user.role, "org_id": user.org_id}}
 
 # =============================================================================
 # Public Routes
