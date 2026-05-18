@@ -199,7 +199,7 @@ function RegionalKeyModal({ keyVal, onClose }) {
               {showKey ? customKey : `AN-SPK-LIVE-••••••••••••-${customKey.slice(-4)}`}
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setShowKey(!showKey)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-lit)', color: '#fff', padding: '6px 10px', borderRadius: 4, fontSize: 10, cursor: 'pointer', transition: 'all 0.15s' }}>
+              <button onMouseDown={() => setShowKey(!showKey)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-lit)', color: '#fff', padding: '6px 10px', borderRadius: 4, fontSize: 10, cursor: 'pointer', userSelect: 'none' }}>
                 {showKey ? 'HIDE' : 'REVEAL'}
               </button>
               <button onClick={() => navigator.clipboard.writeText(customKey)} style={{ background: 'var(--accent)', border: 'none', color: '#000', padding: '6px 10px', borderRadius: 4, fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>
