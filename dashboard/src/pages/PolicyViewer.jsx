@@ -1,15 +1,27 @@
 import React, { useState } from 'react';
 
-const MOCK_POLICY = `[ANCHOR_CONSTITUTION]
-Version: 5.8
-Hash: 9a7b...8f21
-Enforcement: STRICT
+const MOCK_CONSTITUTION = `[ANCHOR_FOUNDATION_NODE]
+# IMMUTABLE CRYPTOGRAPHIC LEDGER
+# This file defines the core, uneditable sovereign rules of the Anchor Engine.
+# Modifications are restricted to Anchor Core Members via Multi-Sig consensus.
 
-[RULES]
-1. No unencrypted PII leaves the isolated runtime.
-2. All model drifts > 5% require Owner approval.
-3. Chatbots must enforce content safety filters (Level: High).
-4. Raw data pulls require manual Auditor justification.
+Network_ID: ANCHOR-ROOT-001
+Consensus_Protocol: PROOF_OF_INTEGRITY
+Version_Hash: 9a7b5c3d2e1f...8f21
+
+[CORE_DIRECTIVES]
+0x01: NODE_ISOLATION_ENFORCED
+0x02: ZERO_KNOWLEDGE_PROOFS_REQUIRED
+0x03: UNAUTHORIZED_PII_EGRESS_FATAL
+0x04: AUDIT_LEDGER_APPEND_ONLY
+`;
+
+const MOCK_POLICY = `[ENTERPRISE_HUB_POLICY]
+# Local Hub settings synced from Anchor Root. Read Only.
+
+Max_Agent_Count: 50
+Telemetry_Ping_Rate: 30s
+Forensic_Retention: 365_DAYS
 `;
 
 export default function PolicyViewer() {
@@ -34,7 +46,7 @@ export default function PolicyViewer() {
             Hub Configuration
           </div>
           <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {['constitution.anchor', 'policy.anchor', 'mesh_rules.json'].map(file => (
+            {['constitution.anchor', 'policy.anchor'].map(file => (
               <div 
                 key={file}
                 onClick={() => setActiveFile(file)}
@@ -58,13 +70,11 @@ export default function PolicyViewer() {
             <div style={{ fontSize: 13, fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-primary)' }}>
               {activeFile}
             </div>
-            <button style={{ padding: '6px 16px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 4, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-              Propose Edit
-            </button>
+            <span className="badge badge-purple">READ ONLY</span>
           </div>
           <div style={{ flex: 1, padding: 20, overflowY: 'auto', background: '#0D1117' }}>
             <pre style={{ margin: 0, fontFamily: 'JetBrains Mono, monospace', fontSize: 14, color: '#C9D1D9', lineHeight: 1.6 }}>
-              {activeFile === 'constitution.anchor' ? MOCK_POLICY : `// Contents of ${activeFile}\n\n// Awaiting sync from Hub...`}
+              {activeFile === 'constitution.anchor' ? MOCK_CONSTITUTION : MOCK_POLICY}
             </pre>
           </div>
         </div>

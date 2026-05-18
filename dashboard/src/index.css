@@ -152,6 +152,34 @@ body::before {
   padding: 8px 14px;
   outline: none;
 }
+.ra-select option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.ra-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ra-table th {
+  text-align: left;
+  padding: 12px 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+.ra-table td {
+  text-align: left;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.ra-table tr:last-child td {
+  border-bottom: none;
+}
 
 @keyframes slideIn {
   from { opacity: 0; transform: translateY(8px); }

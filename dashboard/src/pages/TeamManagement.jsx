@@ -79,7 +79,8 @@ export default function TeamManagement() {
               <select 
                 value={inviteRole}
                 onChange={e => setInviteRole(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 13, outline: 'none' }}
+                className="ra-select"
+                style={{ width: '100%', padding: '10px 12px' }}
               >
                 <option value="owner">Owner (Full Node Control)</option>
                 <option value="lead">Lead (Project Admin)</option>
