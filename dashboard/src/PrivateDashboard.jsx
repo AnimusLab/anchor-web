@@ -14,56 +14,48 @@ const V = {
   cyan: 'var(--cyan)', 'cyan-soft': 'var(--cyan-soft)',
 };
 
-// --- GITHUB STYLE ACTIVITY GRID ---
-function HubActivityGrid() {
-  const cols = 52;
-  const rows = 7;
-  const activity = useMemo(() => Array.from({ length: cols * rows }).map(() => {
-    const r = Math.random();
-    if (r > 0.8) return Math.floor(Math.random() * 4) + 1;
-    if (r > 0.6) return 1;
-    return 0;
+// --- TELEMETRY PULSE BARCODE ---
+function TelemetryPulse() {
+  const dataPoints = 90; // Last 90 days
+  const activity = useMemo(() => Array.from({ length: dataPoints }).map(() => {
+    return Math.random() * 100;
   }), []);
 
-  const colors = [
-    'var(--bg-surface)', 
-    'rgba(16, 185, 129, 0.2)',
-    'rgba(16, 185, 129, 0.4)',
-    'rgba(16, 185, 129, 0.7)',
-    'var(--green)'
-  ];
-
   return (
-    <div className="ra-card" style={{ padding: '24px 28px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>1,024 Mesh Telemetry Events in the last year</div>
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Hub-Wide Aggregation</div>
-      </div>
-      
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)', paddingBottom: 20, paddingTop: 10 }}>
-          <span>Mon</span>
-          <span>Wed</span>
-          <span>Fri</span>
+    <div className="ra-card" style={{ padding: '20px 24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Mesh Telemetry Pulse</div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Event volume over last 90 days</div>
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 4, width: '100%' }}>
-            {activity.map((val, i) => (
-              <div key={i} style={{ aspectRatio: '1/1', background: colors[val], borderRadius: 2 }} />
-            ))}
-          </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+           <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace' }}>12.4k</span>
+           <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>EVENTS</span>
         </div>
       </div>
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, fontSize: 11, color: 'var(--text-muted)' }}>
-        <div>Activity heat map across all projects & agents within this Sovereign Hub.</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span>Less</span>
-          {colors.map((c, i) => (
-            <div key={i} style={{ width: 10, height: 10, background: c, borderRadius: 2 }} />
-          ))}
-          <span>More</span>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 60, width: '100%' }}>
+        {activity.map((val, i) => {
+          const isHigh = val > 85;
+          return (
+            <div 
+              key={i} 
+              style={{ 
+                flex: 1, 
+                height: `${Math.max(15, val)}%`, 
+                background: isHigh ? 'var(--cyan)' : 'var(--accent)',
+                opacity: isHigh ? 1 : (val / 100) * 0.5 + 0.1,
+                borderRadius: '2px 2px 0 0',
+                transition: 'all 0.3s'
+              }} 
+            />
+          );
+        })}
+      </div>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <span>90 Days Ago</span>
+        <span>Today</span>
       </div>
     </div>
   );
@@ -347,7 +339,7 @@ function DashboardInner() {
       </div>
 
       {/* Contribution Grid */}
-      <HubActivityGrid />
+      <TelemetryPulse />
     </div>
   );
 }
