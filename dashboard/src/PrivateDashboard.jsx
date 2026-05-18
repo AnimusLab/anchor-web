@@ -76,77 +76,81 @@ function HubActivation({ user, token, onActivated }) {
   };
 
   // Progress animation state for the generating step
-  const [progressMsg, setProgressMsg] = useState("ESTABLISHING_SECURE_TUNNEL...");
+  const [progressMsg, setProgressMsg] = useState("ESTABLISHING_LATTICE_CONNECTION...");
   useEffect(() => {
     if (step === 'generating') {
       const messages = [
-        "ESTABLISHING_SECURE_TUNNEL...",
-        "NEGOTIATING_CRYPTOGRAPHIC_HANDSHAKE...",
-        "GENERATING_SPOKE_RSA_KEYPAIR...",
-        "ANCHORING_TO_SOVEREIGN_MESH..."
+        "ESTABLISHING_LATTICE_CONNECTION...",
+        "GENERATING_REGIONAL_KEY...",
+        "PROVISIONING_PRIVATE_SPOKE...",
+        "FINALIZING_CRYPTOGRAPHIC_BOUNDARY..."
       ];
       let i = 0;
       const interval = setInterval(() => {
-        i = (i + 1) % messages.length;
-        setProgressMsg(messages[i]);
+        i++;
+        if (i < messages.length) {
+          setProgressMsg(messages[i]);
+        }
       }, 1500);
       return () => clearInterval(interval);
     }
   }, [step]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'JetBrains Mono, monospace' }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#010409', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'JetBrains Mono, monospace', overflow: 'hidden' }}>
       
-      {/* Background Ambience */}
-      <div style={{ position: 'absolute', inset: 0, opacity: 0.05, background: `radial-gradient(circle at 50% 50%, ${V.accent}, transparent)` }} />
-      
-      <div style={{ width: '100%', maxWidth: 500, padding: 40, position: 'relative' }}>
-        
-        {step === 'initial' && (
-          <div className="fade-in" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 11, color: V.accent, letterSpacing: '0.4em', marginBottom: 20 }}>SOVEREIGN_HUB_INIT</div>
-            <h1 style={{ fontSize: 24, color: '#fff', fontWeight: 700, marginBottom: 12 }}>Activate Your Silo</h1>
-            <p style={{ fontSize: 13, color: V.muted, lineHeight: 1.6, marginBottom: 32 }}>Your identity has been verified by the Root Admin. You must now activate your Sovereign Hub to generate your unique Spoke handle.</p>
-            <button onClick={() => setStep('booting')} style={{ padding: '14px 40px', background: V.accent, border: 'none', color: '#000', fontWeight: 800, fontSize: 12, letterSpacing: '0.1em', cursor: 'pointer', borderRadius: 4 }}>BEGIN_HANDSHAKE</button>
-          </div>
-        )}
+      {/* Animated Hexagonal Grid Background */}
+      <div style={{ position: 'absolute', inset: 0, opacity: 0.15, backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='103.92304845413263' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 103.92304845413263L0 86.60254037844386L0 51.96152422706631L30 34.64101615137754L60 51.96152422706631L60 86.60254037844386Z' fill='none' stroke='%2306b6d4' stroke-width='1'/%3E%3C/svg%3E")`, backgroundSize: '60px 103.9px', animation: 'panBackground 20s linear infinite' }} />
+      <style>{`
+        @keyframes panBackground { from { background-position: 0 0; } to { background-position: 60px 103.9px; } }
+        @keyframes lockIn { 0% { transform: scale(2) rotate(45deg); opacity: 0; } 70% { transform: scale(0.9) rotate(-5deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+        .icon-lock { animation: lockIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .typing-effect { overflow: hidden; white-space: nowrap; animation: typing 1s steps(30, end); }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+      `}</style>
 
-        {(step === 'booting' || step === 'ready') && (
-          <div className="fade-in">
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${V.border}`, borderRadius: 8, padding: 24, height: 240, overflowY: 'hidden', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {logs.map((log, i) => (
-                <div key={i} style={{ fontSize: 11, color: log?.includes('OK') ? V.green : V.muted }}>
-                  {">"} {log || "..."}
-                </div>
-              ))}
-              {step === 'ready' && (
-                <div className="blink" style={{ marginTop: 20, textAlign: 'center' }}>
-                   <button onClick={handleActivate} style={{ padding: '10px 24px', background: 'transparent', border: `1px solid ${V.accent}`, color: V.accent, fontWeight: 700, fontSize: 11, cursor: 'pointer', borderRadius: 4 }}>ACTIVATE_REGIONAL_HUB</button>
-                </div>
-              )}
-            </div>
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        
+        {/* Central Anchor Icon */}
+        <div className="icon-lock" style={{ width: 80, height: 80, background: step === 'complete' ? 'var(--green)' : 'var(--bg-surface)', border: `2px solid ${step === 'complete' ? 'var(--green)' : 'var(--accent)'}`, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 40, transition: 'all 0.5s', boxShadow: step === 'complete' ? '0 0 40px rgba(16,185,129,0.4)' : '0 0 30px rgba(6,182,212,0.2)' }}>
+          <svg viewBox="0 0 24 24" fill={step === 'complete' ? '#000' : 'var(--accent)'} style={{ width: 40, height: 40, transition: 'fill 0.5s' }}><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+
+        {step === 'initial' && (
+          <div className="fade-in" style={{ textAlign: 'center', background: 'rgba(255,255,255,0.02)', padding: 40, borderRadius: 12, border: '1px solid var(--border)' }}>
+            <h1 style={{ fontSize: 24, color: '#fff', fontWeight: 700, marginBottom: 12, fontFamily: 'Inter, sans-serif' }}>Activate Your Silo</h1>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 32, fontFamily: 'Inter, sans-serif' }}>Your identity has been verified. You must now activate your Sovereign Hub to generate your unique Spoke handle.</p>
+            <button onClick={handleActivate} style={{ width: '100%', padding: '14px', background: 'var(--accent)', border: 'none', color: '#000', fontWeight: 800, fontSize: 12, letterSpacing: '0.1em', cursor: 'pointer', borderRadius: 4, transition: 'all 0.2s' }}>BEGIN_HANDSHAKE</button>
           </div>
         )}
 
         {step === 'generating' && (
-          <div className="fade-in" style={{ textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: `1px solid ${V.border}`, padding: '40px 20px', borderRadius: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 24 }}>
-               <div className="loader-bar" style={{ animationDelay: '0s' }} />
-               <div className="loader-bar" style={{ animationDelay: '0.2s' }} />
-               <div className="loader-bar" style={{ animationDelay: '0.4s' }} />
+          <div className="fade-in" style={{ textAlign: 'center', width: '100%' }}>
+            <div style={{ position: 'relative', width: 64, height: 64, margin: '0 auto 32px' }}>
+               {/* Progress Ring */}
+               <svg style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }} viewBox="0 0 100 100">
+                 <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" strokeWidth="8" />
+                 <circle cx="50" cy="50" r="46" fill="none" stroke="var(--accent)" strokeWidth="8" strokeDasharray="289" strokeDashoffset="289" style={{ animation: 'fillRing 6s linear forwards' }} />
+               </svg>
+               <style>{`@keyframes fillRing { to { stroke-dashoffset: 0; } }`}</style>
             </div>
-            <div style={{ fontSize: 13, color: '#fff', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 8 }}>ASSEMBLING_SOVEREIGN_KEY</div>
-            <div style={{ fontSize: 10, color: V.accent, letterSpacing: '0.05em', height: 14 }}>{progressMsg}</div>
+            
+            <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid var(--border-lit)', padding: '16px 24px', borderRadius: 8, display: 'inline-block', minWidth: 320 }}>
+              <div key={progressMsg} className="typing-effect" style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.05em' }}>
+                {">"} {progressMsg}
+              </div>
+            </div>
           </div>
         )}
 
         {step === 'complete' && (
-          <div className="scale-in" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 10, color: V.green, letterSpacing: '0.4em', marginBottom: 16 }}>SYSTEM_LIVE</div>
-            <h2 style={{ fontSize: 20, color: '#fff', marginBottom: 24 }}>Silo Activated</h2>
+          <div className="scale-in" style={{ textAlign: 'center', width: '100%' }}>
+            <div style={{ fontSize: 24, color: '#fff', fontWeight: 700, marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>Sovereign Hub Activated</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 32, fontFamily: 'Inter, sans-serif' }}>Cryptographic boundary established successfully.</div>
             
-            <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', padding: 24, borderRadius: 8, marginBottom: 32 }}>
-               <div style={{ fontSize: 9, color: V.green, fontWeight: 700, letterSpacing: '0.1em', marginBottom: 12 }}>YOUR_SPOKE_HANDLE (REGIONAL_KEY)</div>
+            <button onClick={() => window.location.reload()} style={{ width: '100%', padding: '14px', background: 'var(--green)', border: 'none', color: '#000', fontWeight: 800, fontSize: 12, letterSpacing: '0.1em', cursor: 'pointer', borderRadius: 4, boxShadow: '0 4px 14px rgba(16,185,129,0.3)' }}>ENTER COMMAND CENTER →</button>
+          </div>
+        )}
                <div style={{ fontSize: 14, color: '#fff', fontFamily: 'JetBrains Mono', wordBreak: 'break-all', marginBottom: 20 }}>{key}</div>
                <button onClick={() => { navigator.clipboard.writeText(key); setIsCopied(true); }} style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 10, borderRadius: 4, cursor: 'pointer' }}>
                  {isCopied ? 'COPIED_TO_CLIPBOARD' : 'COPY_KEY'}
@@ -323,11 +327,12 @@ function DashboardInner() {
   const maskedKey = customKeyFull !== 'UNSET' ? `AN-SPK-••••-${customKeyFull.slice(-4)}` : 'UNSET';
 
   return (
-    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 28, fontFamily: 'Inter, sans-serif' }}>
       {showKeyModal && <RegionalKeyModal keyVal={regionalKeyRaw} onClose={() => setShowKeyModal(false)} />}
       
-      {/* Stats Grid */}
+      {/* Section 1: KPI Grid (2 Rows of 4 Cards) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+         {/* Row 1: Identity & Security */}
          <StatCard 
             label="Spoke Node Handle" 
             value={maskedKey} 
@@ -337,37 +342,105 @@ function DashboardInner() {
             action={
               <button 
                 onClick={() => setShowKeyModal(true)}
-                style={{ background: 'transparent', border: '1px solid var(--border-lit)', borderRadius: 4, padding: '4px 8px', color: 'var(--text-muted)', fontSize: 10, cursor: 'pointer' }}
+                style={{ background: 'transparent', border: '1px solid var(--border-lit)', borderRadius: 4, padding: '4px 8px', color: 'var(--text-muted)', fontSize: 10, cursor: 'pointer', transition: 'all 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'var(--accent)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-lit)' }}
               >
                 ⚙️ SETTINGS
               </button>
             }
          />
          <StatCard label="Active Hub Identity" value={hubId} sub="SOVEREIGN_UNIT_ENUM" color={V.accent} colorClass="accent" />
-         <StatCard label="Integrity Score" value="100%" sub="MESH_CONSENSUS" color={V.green} colorClass="green" />
+         <StatCard label="Integrity Score" value="99.4%" sub="ALL CLEAR" color={V.green} colorClass="green" />
          <StatCard label="Access Level" value={user?.role?.toUpperCase()} sub="GATEKEEPER_STATUS" color={V.amber} colorClass="amber" />
+         
+         {/* Row 2: Metrics */}
+         <StatCard label="Decisions Audited" value="48,291" sub="+12% THIS WEEK" color={V.cyan} colorClass="cyan" />
+         <StatCard label="Active Projects" value="7" sub="3 NEED ATTENTION" color={V.amber} colorClass="amber" />
+         <StatCard label="Pending Forensic Pulls" value="2" sub="REQUIRES ATTENTION" color={V.amber} colorClass="amber" />
+         <StatCard label="Violations (30d)" value="14" sub="11 RESOLVED" color={V.red} colorClass="red" />
       </div>
 
-      {/* Main Visuals */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: 20 }}>
-        <div className="ra-card" style={{ height: 500, position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 20, left: 24, zIndex: 5 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: V.accent, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Silo Lattice Mesh</div>
-            <div style={{ fontSize: 10, color: V.muted, marginTop: 4 }}>REAL_TIME_HUB_TELEMETRY</div>
+      {/* Section 2: Main Content (Two Columns) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.1fr', gap: 24 }}>
+        
+        {/* Left: Lattice Mesh */}
+        <div className="ra-card" style={{ height: 420, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 20, left: 24, right: 24, zIndex: 5, pointerEvents: 'none', display: 'flex', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 4 }}>Silo Lattice Mesh • Live</div>
+              <div style={{ fontSize: 10, color: V.accent, letterSpacing: '0.1em' }}>PROTOCOL_v5.2 // ACTIVE</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>3 / 3 Nodes Online</div>
+              <div style={{ fontSize: 10, color: V.muted, marginTop: 2 }}>Last sync: just now</div>
+            </div>
           </div>
-          <div style={{ width: '100%', height: '100%', padding: '20px' }}>
+          <div style={{ width: '100%', height: '100%', padding: '10px' }}>
             <TacticalLattice projects={hubs} department={user?.department} />
           </div>
         </div>
-        <div className="ra-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-           <div style={{ padding: '16px 20px', borderBottom: `1px solid ${V.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-             <div style={{ fontSize: 15, fontWeight: 600, color: V.primary }}>Violation Ticker</div>
-             <div style={{ width: 8, height: 8, borderRadius: '50%', background: V.red, animation: 'pulse 2s infinite' }} />
+
+        {/* Right: Violation Ticker */}
+        <div className="ra-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', height: 420 }}>
+           <div style={{ padding: '20px 24px', borderBottom: `1px solid ${V.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)' }}>
+             <div style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>Recent Violations</div>
+             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+               <div style={{ fontSize: 11, color: V.muted, fontWeight: 600 }}>LIVE</div>
+               <div style={{ width: 8, height: 8, borderRadius: '50%', background: V.red, animation: 'pulse 2s infinite' }} />
+             </div>
            </div>
-           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifySelf: 'center', opacity: 0.15, paddingTop: 100 }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ width: 64, height: 64, marginBottom: 16 }}><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase' }}>No Hub Breaches</div>
+           
+           <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+             {[
+               { id: 1, proj: 'Retail Chatbot', rule: 'PII_EXPOSURE', time: '10m ago', status: 'CRITICAL' },
+               { id: 2, proj: 'Credit Engine', rule: 'BIAS_THRESHOLD', time: '2h ago', status: 'WARNING' },
+               { id: 3, proj: 'HR Screening', rule: 'DATA_SOVEREIGNTY', time: '5h ago', status: 'WARNING' },
+               { id: 4, proj: 'Retail Chatbot', rule: 'RATE_LIMIT_EXCEEDED', time: '1d ago', status: 'RESOLVED' },
+               { id: 5, proj: 'Fraud Mesh', rule: 'UNAUTHORIZED_ACCESS', time: '2d ago', status: 'RESOLVED' }
+             ].map(v => (
+               <div key={v.id} style={{ padding: '14px 16px', border: `1px solid ${V.border}`, borderRadius: 8, background: 'var(--bg-surface)', transition: 'transform 0.15s, border-color 0.15s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-lit)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                   <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{v.proj}</div>
+                   <div style={{ fontSize: 11, color: V.muted }}>{v.time}</div>
+                 </div>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                   <div style={{ fontSize: 10, color: v.status === 'CRITICAL' ? V.red : (v.status === 'WARNING' ? V.amber : V.muted), background: v.status === 'CRITICAL' ? 'rgba(239,68,68,0.1)' : (v.status === 'WARNING' ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.05)'), padding: '4px 8px', borderRadius: 4, fontWeight: 700, letterSpacing: '0.05em' }}>
+                     {v.rule}
+                   </div>
+                   <div style={{ color: V.accent, fontSize: 11, fontWeight: 600 }}>Review →</div>
+                 </div>
+               </div>
+             ))}
            </div>
+        </div>
+      </div>
+
+      {/* Section 3: Quick Projects */}
+      <div>
+        <h2 style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 16 }}>Active Projects & Agents</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          {[
+            { name: 'Credit Scoring Engine v4', agents: 3, region: 'US-East', status: 'COMPLIANT' },
+            { name: 'Retail Chatbot', agents: 12, region: 'EU-West', status: 'VIOLATION' },
+            { name: 'Fraud Detection Mesh', agents: 5, region: 'Global', status: 'COMPLIANT' }
+          ].map((p, i) => (
+            <div key={i} className="ra-card" style={{ padding: 20, transition: 'border-color 0.15s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-lit)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 6, background: 'var(--bg-surface)', border: `1px solid ${V.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke={V.muted} strokeWidth="2" style={{ width: 16, height: 16 }}><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                </div>
+                <div style={{ fontSize: 10, fontWeight: 700, padding: '4px 8px', borderRadius: 4, background: p.status === 'COMPLIANT' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: p.status === 'COMPLIANT' ? V.green : V.red }}>
+                  {p.status}
+                </div>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{p.name}</div>
+              <div style={{ fontSize: 12, color: V.muted, marginBottom: 20 }}>{p.region} • {p.agents} Active Agents</div>
+              <button style={{ width: '100%', padding: '10px', background: 'var(--bg-surface)', border: `1px solid ${V.border}`, borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-surface)'}>
+                Manage Integration
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>
