@@ -354,7 +354,7 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
             org = db.query(Organization).filter(Organization.id == official.org_id).first()
             return {
                 "email": getattr(official, 'email', 'UNKNOWN'),
-                "hub_id": getattr(org, 'hub_id', official.id.split('-')[0].lower()) or "PENDING",
+                "hub_id": official.org_id,
                 "display_name": getattr(official, 'display_name', 'OVERSIGHT OFFICER'),
                 "org_name": getattr(org, 'display_name', 'PENDING'),
                 "region": getattr(org, 'region', 'GLOBAL'),
