@@ -151,17 +151,7 @@ function HubActivation({ user, token, onActivated }) {
             <button onClick={() => window.location.reload()} style={{ width: '100%', padding: '14px', background: 'var(--green)', border: 'none', color: '#000', fontWeight: 800, fontSize: 12, letterSpacing: '0.1em', cursor: 'pointer', borderRadius: 4, boxShadow: '0 4px 14px rgba(16,185,129,0.3)' }}>ENTER COMMAND CENTER →</button>
           </div>
         )}
-               <div style={{ fontSize: 14, color: '#fff', fontFamily: 'JetBrains Mono', wordBreak: 'break-all', marginBottom: 20 }}>{key}</div>
-               <button onClick={() => { navigator.clipboard.writeText(key); setIsCopied(true); }} style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 10, borderRadius: 4, cursor: 'pointer' }}>
-                 {isCopied ? 'COPIED_TO_CLIPBOARD' : 'COPY_KEY'}
-               </button>
-            </div>
 
-            <div style={{ fontSize: 11, color: V.amber, marginBottom: 24 }}>⚠️ Store this key securely. It is the only handle to your Sovereign Spoke.</div>
-            
-            <button onClick={() => window.location.reload()} style={{ padding: '14px 40px', background: V.accent, border: 'none', color: '#000', fontWeight: 800, fontSize: 12, letterSpacing: '0.1em', cursor: 'pointer', borderRadius: 4 }}>ENTER_GOVERNANCE_PORTAL</button>
-          </div>
-        )}
 
       </div>
 
