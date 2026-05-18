@@ -82,6 +82,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(null)
   const [focused, setFocused] = useState(null)
+  const [scanStatus, setScanStatus] = useState('')
   const [jurisdictionData, setJurisdictionData] = useState([])
 
   useEffect(() => {
@@ -108,14 +109,17 @@ export default function LoginPage() {
 
     if (id.length === 0) {
       setForm(prev => ({ ...prev, email: '', agencyId: '' }));
+      setScanStatus('');
       return;
     }
 
     if (id.length < 5 || activeTab !== 'login' || stage !== 'identify') {
+      setScanStatus('');
       return;
     }
 
     const controller = new AbortController();
+    setScanStatus('scanning');
 
     const timer = setTimeout(async () => {
       try {
@@ -126,10 +130,10 @@ export default function LoginPage() {
           signal: controller.signal
         });
 
-        if (!res.ok) return;
+        if (!res.ok) { setScanStatus('not_found'); return; }
 
         const data = await res.json();
-        if (data.status === 'ERROR' || !data.email) return;
+        if (data.status === 'ERROR' || !data.email) { setScanStatus('not_found'); return; }
 
         setForm(prev => ({
           ...prev,
@@ -137,14 +141,17 @@ export default function LoginPage() {
           agencyId: data.hub_id || prev.agencyId,
           displayName: data.display_name || prev.displayName,
         }));
+        setScanStatus('found');
+        setTimeout(() => setScanStatus(''), 2000);
       } catch (e) {
-        // ignore aborts
+        if (e.name !== 'AbortError') setScanStatus('not_found');
       }
     }, 150);
 
     return () => {
       clearTimeout(timer);
       controller.abort();
+      setScanStatus('');
     };
   }, [form.clearanceId, activeTab, stage]);
 
@@ -175,6 +182,7 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           clearance_id: form.clearanceId.trim().toUpperCase(),
+          hub_id:       form.agencyId.trim().toUpperCase(),
           email:        form.email.trim().toLowerCase(),
         })
       })
@@ -197,44 +205,7 @@ export default function LoginPage() {
     }
   }
 
-  // --- Auto-fill logic ---
-  useEffect(() => {
-    const id = form.clearanceId.trim().toUpperCase()
-    // Trigger lookup when ID matches tactical pattern (e.g. SEC-ALFA-9)
-    if (id.length >= 5 && stage === 'identify') {
-      const timer = setTimeout(async () => {
-        try {
-          const res = await fetch(endpoints.identifyFirst, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ clearance_id: id })
-          })
-          if (res.ok) {
-            const data = await res.json()
-            setForm(prev => {
-              const dName = data.display_name || "AUTHORIZED AUDITOR";
-              let aName = data.org_name || "REGULATORY BUREAU";
-              
-              if (aName.toUpperCase() === dName.toUpperCase()) {
-                aName = "VERIFIED AGENCY";
-              }
-              
-              return {
-                ...prev,
-                agencyId: data.hub_id || prev.agencyId,
-                email: data.email || prev.email,
-                displayName: dName,
-                agencyName: aName
-              };
-            })
-          }
-        } catch (e) { /* silent fail for auto-fill */ }
-      }, 600)
-      return () => clearTimeout(timer)
-    } else if (id.length === 0) {
-       setForm(prev => ({ ...prev, email: '', agencyId: '' }));
-    }
-  }, [form.clearanceId, stage])
+
 
   const handleRegister = async (e) => {
     e.preventDefault()
@@ -372,7 +343,8 @@ export default function LoginPage() {
           active={true} 
           name={form.displayName || "AUDITOR"} 
           agency={form.agencyName || "PENDING"} 
-          clearanceId={form.clearanceId || "ID_PENDING"} 
+          clearanceId={form.clearanceId || "ID_PENDING"}
+          hubId={form.agencyId || "PENDING"}
         />
 
         {/* Left Side: Handshake Form */}
@@ -390,7 +362,12 @@ export default function LoginPage() {
               <form onSubmit={stage === 'identify' ? handleIdentify : handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {stage === 'identify' ? (
                   <>
-                    <Field label="Tactical Clearance ID"><input required autoComplete="off" type="text" value={form.clearanceId} onChange={set('clearanceId')} onFocus={fo('clearanceId')} onBlur={bl} placeholder="E.G. SEC-ALFA-9" style={f('clearanceId')} /></Field>
+                    <Field label="Tactical Clearance ID">
+                      <input required autoComplete="off" type="text" value={form.clearanceId} onChange={set('clearanceId')} onFocus={fo('clearanceId')} onBlur={bl} placeholder="E.G. SEC-ALFA-9" style={f('clearanceId')} />
+                      {scanStatus === 'scanning' && <div style={{ fontSize: 10, color: TOKEN.amber, letterSpacing: '0.15em', marginTop: 4, fontFamily: TOKEN.mono, animation: 'pulse 1s infinite' }}>⟳ SCANNING MESH...</div>}
+                      {scanStatus === 'found' && <div style={{ fontSize: 10, color: TOKEN.green, letterSpacing: '0.15em', marginTop: 4, fontFamily: TOKEN.mono }}>✓ IDENTITY LOCATED — CREDENTIALS AUTO-FILLED</div>}
+                      {scanStatus === 'not_found' && <div style={{ fontSize: 10, color: TOKEN.red, letterSpacing: '0.15em', marginTop: 4, fontFamily: TOKEN.mono }}>✗ ID NOT FOUND IN MESH — CHECK AND RE-ENTER</div>}
+                    </Field>
                     <Field label="Agency Hub ID"><input required autoComplete="off" type="text" value={form.agencyId} onChange={set('agencyId')} onFocus={fo('agencyId')} onBlur={bl} placeholder="SEC, RBI, NIST..." style={f('agencyId')} /></Field>
                     <Field label="Your Official Email"><input required autoComplete="off" type="email" value={form.email} onChange={set('email')} onFocus={fo('email')} onBlur={bl} placeholder="auditor@regulator.gov" style={f('email')} /></Field>
                   </>
