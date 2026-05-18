@@ -75,7 +75,8 @@ export default function LoginPage() {
     totp: '',
     displayName: '', 
     agencyName: '',
-    jurisdiction: 'US' 
+    jurisdiction: 'US',
+    intentToken: ''
   })
   const [stage, setStage] = useState('identify')   // 'identify' | 'verify'
   const [loading, setLoading] = useState(false)
@@ -193,7 +194,8 @@ export default function LoginPage() {
           ...prev, 
           displayName: data.display_name,
           agencyId: data.agency_hub_id || prev.agencyId,
-          email: data.email || prev.email
+          email: data.email || prev.email,
+          intentToken: data.intent_token || ''
         }))
         setStage('verify')
       } else {
@@ -250,6 +252,7 @@ export default function LoginPage() {
           hub_id:       form.agencyId.trim().toUpperCase(),
           email:        form.email.trim().toLowerCase(),
           totp_code:    form.totp.trim(),
+          intent_token: form.intentToken
         }),
       })
       const data = await safeJson(res);
