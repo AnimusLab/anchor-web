@@ -1,5 +1,5 @@
 // src/lib/api.js — Oversight portal API client
-export const API_BASE = import.meta.env.VITE_API_URL || ''
+export const API_BASE = import.meta.env.VITE_API_URL || 'https://animuslab-anchor.hf.space'
 
 export const endpoints = {
   baseUrl: API_BASE,
