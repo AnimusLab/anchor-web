@@ -103,6 +103,51 @@ export default function LoginPage() {
       });
   }, [])
 
+  useEffect(() => {
+    const id = form.clearanceId.trim().toUpperCase();
+
+    if (id.length === 0) {
+      setForm(prev => ({ ...prev, email: '', agencyId: '' }));
+      return;
+    }
+
+    if (id.length < 5 || activeTab !== 'login' || stage !== 'identify') {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${endpoints.baseUrl}/api/auth/identify-first`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clearance_id: id }),
+          signal: controller.signal
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.status === 'ERROR' || !data.email) return;
+
+        setForm(prev => ({
+          ...prev,
+          email: prev.email ? prev.email : data.email,
+          agencyId: data.hub_id || prev.agencyId,
+          displayName: data.display_name || prev.displayName,
+        }));
+      } catch (e) {
+        // ignore aborts
+      }
+    }, 150);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [form.clearanceId, activeTab, stage]);
+
   const f = (field) => ({
     ...iBase,
     borderColor: focused === field ? TOKEN.amber : TOKEN.border,
