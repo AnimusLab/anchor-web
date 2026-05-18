@@ -46,7 +46,7 @@ export default function Profile() {
     { label: 'Sovereign Hub', value: user?.hub_id || '—' },
     { label: 'Organization',  value: user?.org_id || '—' },
     { label: 'Access Level',  value: (user?.role || 'VIEWER').toUpperCase() },
-    { label: 'Portal',        value: 'enterprise.anchorgovernance.tech' },
+    { label: 'Portal',        value: 'app.anchorgovernance.tech' },
     { label: 'Token Scope',   value: 'owner_relay' },
   ];
 
