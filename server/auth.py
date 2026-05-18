@@ -38,6 +38,17 @@ security = HTTPBearer(auto_error=False)
 def auth_ping():
     return {"status": "PONG", "module": "auth_router"}
 
+@auth_router.get("/jurisdictions")
+def get_jurisdictions():
+    import json
+    import os
+    try:
+        file_path = os.path.join(os.path.dirname(__file__), "jurisdictions.json")
+        with open(file_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        return {"jurisdictions": []}
+
 ANCHOR_MASTER_KEY = os.getenv("ANCHOR_MASTER_KEY")
 if not ANCHOR_MASTER_KEY:
     raise RuntimeError("CRITICAL: ANCHOR_MASTER_KEY missing from environment.")
