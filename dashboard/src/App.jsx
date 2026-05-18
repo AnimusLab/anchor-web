@@ -12,6 +12,7 @@ import ViolationFeed from './pages/ViolationFeed';
 import ForensicQueue from './pages/ForensicQueue';
 import PolicyViewer from './pages/PolicyViewer';
 import ReportsExport from './pages/ReportsExport';
+import LatticeMesh from './pages/LatticeMesh';
 import EnterpriseLayout from './components/EnterpriseLayout';
 
 // Placeholder components for MVP routes
@@ -35,7 +36,7 @@ export default function App() {
           {/* Protected Enterprise Routes */}
           <Route path="/dashboard" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><PrivateDashboard /></EnterpriseLayout></PrivateRoute>} />
           <Route path="/projects" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><ProjectInventory /></EnterpriseLayout></PrivateRoute>} />
-          <Route path="/mesh" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><Placeholder title="Lattice Mesh Visualization" /></EnterpriseLayout></PrivateRoute>} />
+          <Route path="/mesh" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><LatticeMesh /></EnterpriseLayout></PrivateRoute>} />
           
           <Route path="/violations" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><ViolationFeed /></EnterpriseLayout></PrivateRoute>} />
           <Route path="/forensic" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><ForensicQueue /></EnterpriseLayout></PrivateRoute>} />
