@@ -519,7 +519,7 @@ def register_auditor(
         db.flush()
 
     # 3. Provision Auditor with Final ID Standard
-    clearance_id = _generate_clearance_id("auditor", org.id, jurisdiction, agency_id)
+    clearance_id = _generate_clearance_id("auditor", org.id, jurisdiction)
     totp_secret = pyotp.random_base32()
 
     new_official = RegulatoryOfficial(
