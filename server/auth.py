@@ -538,11 +538,11 @@ def register_auditor(
     db.add(new_official)
     db.commit()
 
-    print(f"[ONBOARD] Regulator Provisioned: {clearance_id} ({email}) for {agency_hub_id}")
+    print(f"[ONBOARD] Regulator Provisioned: {clearance_id} ({email}) for {agency_id}")
     
     return {
         "status": "APPROVED",
-        "message": f"Welcome Auditor {display_name}. Your tactical ID {clearance_id} is now active on the {agency_hub_id} hub.",
+        "message": f"Welcome Auditor {display_name}. Your tactical ID {clearance_id} is now active on the {agency_id} hub.",
         "clearance_id": clearance_id,
         "totp_secret": totp_secret
     }
