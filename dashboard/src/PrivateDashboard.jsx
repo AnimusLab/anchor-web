@@ -17,9 +17,19 @@ const V = {
 // --- TELEMETRY PULSE BARCODE ---
 function TelemetryPulse() {
   const dataPoints = 90; // Last 90 days
-  const activity = useMemo(() => Array.from({ length: dataPoints }).map(() => {
-    return Math.random() * 100;
+  const [hoverIndex, setHoverIndex] = useState(null);
+  
+  const activity = useMemo(() => Array.from({ length: dataPoints }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (dataPoints - 1 - i));
+    const isHigh = Math.random() > 0.85;
+    return {
+      val: Math.floor(Math.random() * (isHigh ? 100 : 40)),
+      date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    };
   }), []);
+
+  const totalEvents = activity.reduce((acc, a) => acc + a.val, 0);
 
   return (
     <div className="ra-card" style={{ padding: '20px 24px' }}>
@@ -29,24 +39,53 @@ function TelemetryPulse() {
           <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Event volume over last 90 days</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-           <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace' }}>12.4k</span>
+           <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace' }}>{totalEvents.toLocaleString()}</span>
            <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>EVENTS</span>
         </div>
       </div>
       
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 60, width: '100%' }}>
-        {activity.map((val, i) => {
-          const isHigh = val > 85;
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 60, width: '100%', position: 'relative' }}>
+        {hoverIndex !== null && (
+          <div style={{
+            position: 'absolute',
+            bottom: '100%',
+            left: `${(hoverIndex / dataPoints) * 100}%`,
+            transform: 'translateX(-50%)',
+            marginBottom: 12,
+            background: 'var(--text-primary)',
+            color: 'var(--bg-void)',
+            padding: '6px 12px',
+            borderRadius: 6,
+            fontSize: 11,
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            zIndex: 10,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+          }}>
+            {activity[hoverIndex].val} events on {activity[hoverIndex].date}
+            <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', border: '5px solid transparent', borderTopColor: 'var(--text-primary)' }} />
+          </div>
+        )}
+        
+        {activity.map((a, i) => {
+          const isHigh = a.val > 60;
+          const isHovered = hoverIndex === i;
           return (
             <div 
               key={i} 
+              onMouseEnter={() => setHoverIndex(i)}
+              onMouseLeave={() => setHoverIndex(null)}
               style={{ 
                 flex: 1, 
-                height: `${Math.max(15, val)}%`, 
-                background: isHigh ? 'var(--cyan)' : 'var(--accent)',
-                opacity: isHigh ? 1 : (val / 100) * 0.5 + 0.1,
+                height: `${Math.max(15, (a.val / 100) * 100)}%`, 
+                background: isHovered ? '#fff' : (isHigh ? 'var(--cyan)' : 'var(--accent)'),
+                opacity: isHovered ? 1 : (isHigh ? 0.9 : (a.val / 100) * 0.5 + 0.1),
                 borderRadius: '2px 2px 0 0',
-                transition: 'all 0.3s'
+                transition: 'all 0.15s',
+                cursor: 'crosshair',
+                transform: isHovered ? 'scaleY(1.1)' : 'scaleY(1)',
+                transformOrigin: 'bottom'
               }} 
             />
           );
