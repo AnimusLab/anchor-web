@@ -7,7 +7,7 @@ export default function Profile() {
   const [preview, setPreview] = useState(null);
   const [saved, setSaved]     = useState(false);
   const fileRef               = useRef(null);
-  const avatarKey             = `anchor_avatar_${user?.sub}`;
+  const avatarKey             = `anchor_avatar_${user?.email || user?.sub}`;
 
   useEffect(() => {
     const stored = localStorage.getItem(avatarKey);

@@ -63,11 +63,12 @@ export default function EnterpriseLayout({ children }) {
   const hubId = user?.hub_id || 'PENDING_HUB';
 
   useEffect(() => {
-    if (user?.sub) {
-      const stored = localStorage.getItem(`anchor_avatar_${user.sub}`);
+    const key = `anchor_avatar_${user?.email || user?.sub}`;
+    if (user?.email || user?.sub) {
+      const stored = localStorage.getItem(key);
       if (stored) setAvatar(stored);
     }
-  }, [user?.sub]);
+  }, [user?.email, user?.sub]);
 
   useEffect(() => {
     const handler = (e) => { if (e.key?.startsWith('anchor_avatar_')) setAvatar(e.newValue); };
