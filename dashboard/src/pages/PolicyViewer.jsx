@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
-const MOCK_CONSTITUTION = `[ANCHOR_FOUNDATION_NODE]
+export default function PolicyViewer() {
+  const { user } = useAuth();
+  const [activeFile, setActiveFile] = useState('constitution.anchor');
+
+  const compiledConstitution = `[ANCHOR_FOUNDATION_NODE]
 # IMMUTABLE CRYPTOGRAPHIC LEDGER
 # This file defines the core, uneditable sovereign rules of the Anchor Engine.
 # Modifications are restricted to Anchor Core Members via Multi-Sig consensus.
 
-Network_ID: ANCHOR-ROOT-001
+Network_ID: ANCHOR-ROOT-${(user?.org_id || 'AN').toUpperCase()}
 Consensus_Protocol: PROOF_OF_INTEGRITY
-Version_Hash: 9a7b5c3d2e1f...8f21
+Sovereign_Jurisdiction: ${(user?.region || 'GLOBAL').toUpperCase()}
+Active_Spoke_Handle: ${(user?.sub || 'PENDING')}
 
 [CORE_DIRECTIVES]
 0x01: NODE_ISOLATION_ENFORCED
@@ -16,16 +22,17 @@ Version_Hash: 9a7b5c3d2e1f...8f21
 0x04: AUDIT_LEDGER_APPEND_ONLY
 `;
 
-const MOCK_POLICY = `[ENTERPRISE_HUB_POLICY]
+  const compiledPolicy = `[${(user?.hub_id || 'ENTERPRISE_HUB').toUpperCase()}_POLICY]
 # Local Hub settings synced from Anchor Root. Read Only.
 
+Hub_Callsign: ${user?.hub_name || 'AN-IN-SOL01 animuslab Solapur Branch'}
+Organization: ${user?.org_id || 'animuslab'}
+Sovereign_Region: ${user?.region || 'IN'}
 Max_Agent_Count: 50
 Telemetry_Ping_Rate: 30s
 Forensic_Retention: 365_DAYS
+Silo_Activation_Key: ${(user?.regional_key || 'sk_live_...').slice(0, 16)}... [SECURE]
 `;
-
-export default function PolicyViewer() {
-  const [activeFile, setActiveFile] = useState('constitution.anchor');
 
   return (
     <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24, height: '100%', overflow: 'hidden' }}>
@@ -74,7 +81,7 @@ export default function PolicyViewer() {
           </div>
           <div style={{ flex: 1, padding: 20, overflowY: 'auto', background: '#0D1117' }}>
             <pre style={{ margin: 0, fontFamily: 'JetBrains Mono, monospace', fontSize: 14, color: '#C9D1D9', lineHeight: 1.6 }}>
-              {activeFile === 'constitution.anchor' ? MOCK_CONSTITUTION : MOCK_POLICY}
+              {activeFile === 'constitution.anchor' ? compiledConstitution : compiledPolicy}
             </pre>
           </div>
         </div>
