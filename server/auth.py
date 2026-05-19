@@ -363,7 +363,7 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
             "expires_in":   24 * 3600,
         }
     else:
-        token = jwt.encode({"sub": user.email, "role": user.role, "org_id": user.org_id, "exp": exp}, ANCHOR_MASTER_KEY, algorithm="HS256")
+        token = jwt.encode({"sub": user.email, "role": user.role, "org_id": user.org_id, "hub_id": user.hub_id, "exp": exp}, ANCHOR_MASTER_KEY, algorithm="HS256")
         return {"access_token": token, "token_type": "bearer", "user": {"id": user.id, "email": user.email, "role": user.role, "org_id": user.org_id}}
 
 # =============================================================================
