@@ -1,16 +1,45 @@
-import React, { useState } from 'react';
-
-const MOCK_VIOLATIONS = [
-  { id: 'v_9921', project: 'Retail Customer Chatbot', severity: 'CRITICAL', time: '2026-05-18 14:02:11 UTC', title: 'Unapproved PII Access Pattern detected in Chat Handler.', status: 'OPEN' },
-  { id: 'v_9918', project: 'Credit Scoring Engine v4', severity: 'WARNING', time: '2026-05-18 11:45:00 UTC', title: 'Model drift threshold exceeded on bias metric.', status: 'ACKNOWLEDGED' },
-  { id: 'v_9850', project: 'Fraud Detection Mesh', severity: 'CRITICAL', time: '2026-05-17 09:12:33 UTC', title: 'Cryptographic signature mismatch on node sync.', status: 'RESOLVED' },
-  { id: 'v_9841', project: 'Retail Customer Chatbot', severity: 'WARNING', time: '2026-05-16 16:20:00 UTC', title: 'Latency spike in sentiment analysis module.', status: 'RESOLVED' },
-];
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { endpoints } from '../lib/api';
 
 export default function ViolationFeed() {
-  const [violations] = useState(MOCK_VIOLATIONS);
-  const [selected, setSelected] = useState(MOCK_VIOLATIONS[0]);
+  const { token } = useAuth();
+  const [violations, setViolations] = useState([]);
+  const [selected, setSelected] = useState(null);
   const [chatMsg, setChatMsg] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${endpoints.baseUrl}/api/ledger`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          // Filter out violations
+          const filtered = data
+            .filter(e => e.type === 'runtime_violation')
+            .map(e => {
+              const p = e.payload || {};
+              return {
+                id: e.id,
+                project: p.project_name || p.project || 'Unknown Project',
+                severity: p.severity || 'CRITICAL',
+                time: e.timestamp || 'Just now',
+                title: p.reason || p.message || 'Unapproved execution policy violation.',
+                status: p.status || 'OPEN'
+              };
+            });
+          setViolations(filtered);
+          if (filtered.length > 0) {
+            setSelected(filtered[0]);
+          }
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [token]);
 
   // Group violations by project
   const groupedViolations = violations.reduce((acc, v) => {
@@ -18,6 +47,8 @@ export default function ViolationFeed() {
     acc[v.project].push(v);
     return acc;
   }, {});
+
+  const criticalCount = violations.filter(v => v.severity === 'CRITICAL').length;
 
   return (
     <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24, height: '100%', overflow: 'hidden' }}>
@@ -28,9 +59,11 @@ export default function ViolationFeed() {
           <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Violation Feed & Relay</div>
           <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Live incident response and secure threaded communication.</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--red)', animation: 'pulse 1.5s infinite' }} />
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--red-soft)', letterSpacing: '0.05em' }}>1 CRITICAL ALARM</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: criticalCount > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', border: `1px solid ${criticalCount > 0 ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}`, borderRadius: 6 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: criticalCount > 0 ? 'var(--red)' : 'var(--green)', animation: criticalCount > 0 ? 'pulse 1.5s infinite' : 'none' }} />
+          <span style={{ fontSize: 11, fontWeight: 700, color: criticalCount > 0 ? 'var(--red-soft)' : 'var(--green)', letterSpacing: '0.05em' }}>
+            {criticalCount} CRITICAL ALARMS
+          </span>
         </div>
       </div>
 
@@ -43,7 +76,15 @@ export default function ViolationFeed() {
           </div>
           
           <div style={{ flex: 1, overflowY: 'auto', padding: 12, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {Object.entries(groupedViolations).map(([project, projViolations]) => (
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-dim)' }}>
+                Loading incidents...
+              </div>
+            ) : Object.keys(groupedViolations).length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-dim)', fontSize: 14 }}>
+                No active violations or compliance incident reports recorded on this Hub. Systems operating at 100% integrity.
+              </div>
+            ) : Object.entries(groupedViolations).map(([project, projViolations]) => (
               <div key={project} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: 4 }}>
                   {project}
@@ -89,11 +130,10 @@ export default function ViolationFeed() {
                 Thread opened automatically by Anchor Engine
               </div>
               
-              {/* Fake message from Auditor */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: '85%' }}>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>M. Chen (Auditor) • 10 mins ago</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Compliance Watchdog • Just now</div>
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: '10px 14px', borderRadius: '0 8px 8px 8px', fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-                  The chatbot is routing customer prompts directly to the un-sanitized LLM endpoint. We need to implement the PII scrubber middleware ASAP before this triggers a GDPR violation.
+                  Telemetry reported a runtime exception or un-scrubbed PII signature pattern. Please remediate the source endpoint parameters.
                 </div>
               </div>
               
@@ -117,7 +157,7 @@ export default function ViolationFeed() {
           </div>
         ) : (
           <div className="ra-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', fontSize: 13 }}>
-            Select an incident to view relay thread.
+            No incident selected.
           </div>
         )}
       </div>

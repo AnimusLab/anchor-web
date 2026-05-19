@@ -1,14 +1,27 @@
-import React, { useState } from 'react';
-
-const MOCK_TEAM = [
-  { id: 'usr_8f92a', name: 'Dr. Evelyn Vance', role: 'owner', email: 'vance@animus.dev', status: 'ACTIVE' },
-  { id: 'usr_2b11c', name: 'Marcus Chen', role: 'lead', email: 'mchen@animus.dev', status: 'ACTIVE' },
-  { id: 'usr_7x991', name: 'Sarah Connor', role: 'developer', email: 'sconnor@animus.dev', status: 'PENDING' },
-];
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { endpoints } from '../lib/api';
 
 export default function TeamManagement() {
-  const [team] = useState(MOCK_TEAM);
+  const { token } = useAuth();
+  const [team, setTeam] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [inviteRole, setInviteRole] = useState('developer');
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${endpoints.baseUrl}/api/auth/team`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setTeam(data);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [token]);
 
   return (
     <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -40,10 +53,16 @@ export default function TeamManagement() {
               </tr>
             </thead>
             <tbody>
-              {team.map((member, i) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={4} style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-dim)' }}>
+                    Syncing identity roster...
+                  </td>
+                </tr>
+              ) : team.map((member, i) => (
                 <tr key={i}>
                   <td>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{member.name}</div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{member.display_name}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-dim)', fontFamily: 'JetBrains Mono, monospace' }}>{member.email}</div>
                   </td>
                   <td>
@@ -52,7 +71,7 @@ export default function TeamManagement() {
                     </span>
                   </td>
                   <td>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: member.status === 'ACTIVE' ? 'var(--green)' : 'var(--amber)', letterSpacing: '0.05em' }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: member.status?.toLowerCase() === 'approved' || member.status?.toLowerCase() === 'active' ? 'var(--green)' : 'var(--amber)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                       {member.status}
                     </span>
                   </td>

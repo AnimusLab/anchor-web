@@ -1,15 +1,43 @@
-import React, { useState } from 'react';
-
-const MOCK_REQUESTS = [
-  { id: 'req_881', auditor: 'M. Chen', scope: 'Retail Chatbot PII Logs', reason: 'Investigating potential data leak in customer service routing.', time: '2 hours ago', status: 'PENDING' },
-  { id: 'req_875', auditor: 'J. Smith', scope: 'Credit Score Weights', reason: 'Routine fair lending audit for Q3 compliance.', time: '1 day ago', status: 'APPROVED' },
-];
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { endpoints } from '../lib/api';
 
 export default function ForensicQueue() {
-  const [requests, setRequests] = useState(MOCK_REQUESTS);
+  const { token } = useAuth();
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAction = (id, action) => {
-    setRequests(reqs => reqs.map(r => r.id === id ? { ...r, status: action } : r));
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${endpoints.baseUrl}/api/forensic/pending`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setRequests(data);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  const handleAction = async (id, action) => {
+    try {
+      const res = await fetch(`${endpoints.baseUrl}/api/forensic/approve/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: action })
+      });
+      if (res.ok) {
+        setRequests(reqs => reqs.map(r => r.id === id ? { ...r, status: action } : r));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
@@ -32,28 +60,30 @@ export default function ForensicQueue() {
             <tr>
               <th>Request ID</th>
               <th>Auditor / Authority</th>
-              <th>Data Scope</th>
-              <th>Justification</th>
+              <th>Hub / Spoke</th>
               <th>Time</th>
               <th style={{ textAlign: 'center' }}>Decision</th>
             </tr>
           </thead>
           <tbody>
-            {requests.map(req => (
+            {loading ? (
+              <tr>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-dim)' }}>
+                  Loading forensic requests...
+                </td>
+              </tr>
+            ) : requests.map(req => (
               <tr key={req.id}>
                 <td style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'var(--text-secondary)' }}>
                   {req.id}
                 </td>
                 <td>
-                  <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{req.auditor}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{req.auditor_name} (ID: {req.auditor_id})</div>
                 </td>
                 <td>
-                  <span className="badge badge-purple">{req.scope}</span>
+                  <span className="badge badge-purple">{req.hub_id}</span>
                 </td>
-                <td style={{ maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 13, color: 'var(--text-dim)' }}>
-                  {req.reason}
-                </td>
-                <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{req.time}</td>
+                <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{req.created_at}</td>
                 <td style={{ textAlign: 'center' }}>
                   {req.status === 'PENDING' ? (
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
@@ -72,9 +102,9 @@ export default function ForensicQueue() {
                 </td>
               </tr>
             ))}
-            {requests.length === 0 && (
+            {!loading && requests.length === 0 && (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-dim)' }}>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-dim)' }}>
                   No forensic pulls pending.
                 </td>
               </tr>

@@ -1,16 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { endpoints } from '../lib/api';
 import TacticalLattice from '../components/dashboard/TacticalLattice';
 
 export default function LatticeMesh() {
+  const { token, user } = useAuth();
   const [selectedNode, setSelectedNode] = useState(null);
+  const [hubs, setHubs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock nodes to feed into TacticalLattice
-  const mockHubs = [
-    { id: 'AN-ROOT-01', type: 'ROOT', name: 'Anchor Core', region: 'Global', status: 'ACTIVE' },
-    { id: 'AN-SPOKE-02', type: 'SPOKE', name: 'Credit Scoring Engine', region: 'US-East', status: 'ACTIVE' },
-    { id: 'AN-SPOKE-03', type: 'SPOKE', name: 'Retail Chatbot', region: 'EU-West', status: 'VIOLATION' },
-    { id: 'AN-SPOKE-04', type: 'SPOKE', name: 'Fraud Mesh', region: 'AP-South', status: 'ACTIVE' },
-  ];
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${endpoints.baseUrl}/api/auth/hubs`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setHubs(data);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  const formattedHubs = hubs.map(h => ({
+    id: h.id,
+    type: h.id === user?.hub_id ? 'ROOT' : 'SPOKE',
+    name: h.display_name,
+    region: h.region,
+    status: h.is_active ? 'ACTIVE' : 'INACTIVE'
+  }));
 
   return (
     <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
@@ -40,8 +60,18 @@ export default function LatticeMesh() {
             <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>PROTOCOL_v5.8 // PROOF_OF_INTEGRITY</div>
           </div>
           
-          <div style={{ flex: 1, position: 'relative', cursor: 'crosshair' }} onClick={() => setSelectedNode(mockHubs[1])}>
-             <TacticalLattice projects={mockHubs} department="Governance" />
+          <div style={{ flex: 1, position: 'relative', cursor: 'crosshair' }}>
+             {loading ? (
+               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-dim)' }}>
+                 Syncing Lattice Mesh...
+               </div>
+             ) : formattedHubs.length === 0 ? (
+               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-dim)' }}>
+                 No nodes bound to lattice mesh. Activate a Hub to begin.
+               </div>
+             ) : (
+               <TacticalLattice projects={formattedHubs} department={user?.department || 'Governance'} onNodeSelect={setSelectedNode} />
+             )}
           </div>
         </div>
 

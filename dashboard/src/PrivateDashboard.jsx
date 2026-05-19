@@ -276,6 +276,15 @@ function DashboardInner() {
   const { user, token } = useAuth();
   const [hubs, setHubs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    active_projects: 0,
+    total_audits: 0,
+    total_violations: 0,
+    compliance_rate: 100,
+    project_health: [],
+    recent: []
+  });
+  const [pendingPulls, setPendingPulls] = useState([]);
 
   const [showKeyModal, setShowKeyModal] = useState(false);
 
@@ -286,6 +295,12 @@ function DashboardInner() {
         const headers = { Authorization: `Bearer ${token}` };
         const hubsRes = await fetch(`${endpoints.baseUrl}/api/auth/hubs`, { headers });
         if (hubsRes.ok) setHubs(await hubsRes.json());
+
+        const statsRes = await fetch(`${endpoints.baseUrl}/api/stats`, { headers });
+        if (statsRes.ok) setStats(await statsRes.json());
+
+        const pendingRes = await fetch(`${endpoints.baseUrl}/api/forensic/pending`, { headers });
+        if (pendingRes.ok) setPendingPulls(await pendingRes.json());
       } catch (e) {
         console.error('Fetch error:', e);
       } finally {
@@ -341,14 +356,14 @@ function DashboardInner() {
             }
          />
          <StatCard label="Active Hub Identity" value={hubId} sub="SOVEREIGN_UNIT_ENUM" color={V.accent} colorClass="accent" />
-         <StatCard label="Integrity Score" value="99.4%" sub="ALL CLEAR" color={V.green} colorClass="green" />
+         <StatCard label="Integrity Score" value={`${stats.compliance_rate}%`} sub="ALL CLEAR" color={V.green} colorClass="green" />
          <StatCard label="Access Level" value={user?.role?.toUpperCase()} sub="GATEKEEPER_STATUS" color={V.amber} colorClass="amber" />
          
          {/* Row 2: Metrics */}
-         <StatCard label="Decisions Audited" value="48,291" sub="+12% THIS WEEK" color={V.cyan} colorClass="cyan" />
-         <StatCard label="Active Projects" value="7" sub="3 NEED ATTENTION" color={V.amber} colorClass="amber" />
-         <StatCard label="Pending Forensic Pulls" value="2" sub="REQUIRES ATTENTION" color={V.amber} colorClass="amber" />
-         <StatCard label="Violations (30d)" value="14" sub="11 RESOLVED" color={V.red} colorClass="red" />
+         <StatCard label="Decisions Audited" value={stats.total_audits} sub="+0% THIS WEEK" color={V.cyan} colorClass="cyan" />
+         <StatCard label="Active Projects" value={stats.active_projects} sub="0 NEED ATTENTION" color={V.amber} colorClass="amber" />
+         <StatCard label="Pending Forensic Pulls" value={pendingPulls.length} sub="REQUIRES ATTENTION" color={V.amber} colorClass="amber" />
+         <StatCard label="Violations (30d)" value={stats.total_violations} sub="0 RESOLVED" color={V.red} colorClass="red" />
       </div>
 
       {/* Section 2: Main Content (Two Columns) */}
@@ -362,7 +377,7 @@ function DashboardInner() {
               <div style={{ fontSize: 10, color: V.accent, letterSpacing: '0.1em' }}>PROTOCOL_v5.2 // ACTIVE</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>3 / 3 Nodes Online</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>{hubs.length} / {hubs.length} Nodes Online</div>
               <div style={{ fontSize: 10, color: V.muted, marginTop: 2 }}>Last sync: just now</div>
             </div>
           </div>
@@ -377,28 +392,26 @@ function DashboardInner() {
              <div style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>Recent Violations</div>
              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                <div style={{ fontSize: 11, color: V.muted, fontWeight: 600 }}>LIVE</div>
-               <div style={{ width: 8, height: 8, borderRadius: '50%', background: V.red, animation: 'pulse 2s infinite' }} />
+               <div style={{ width: 8, height: 8, borderRadius: '50%', background: stats.total_violations > 0 ? V.red : V.green, animation: stats.total_violations > 0 ? 'pulse 2s infinite' : 'none' }} />
              </div>
            </div>
            
            <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-             {[
-               { id: 1, proj: 'Retail Chatbot', rule: 'PII_EXPOSURE', time: '10m ago', status: 'CRITICAL' },
-               { id: 2, proj: 'Credit Engine', rule: 'BIAS_THRESHOLD', time: '2h ago', status: 'WARNING' },
-               { id: 3, proj: 'HR Screening', rule: 'DATA_SOVEREIGNTY', time: '5h ago', status: 'WARNING' },
-               { id: 4, proj: 'Retail Chatbot', rule: 'RATE_LIMIT_EXCEEDED', time: '1d ago', status: 'RESOLVED' },
-               { id: 5, proj: 'Fraud Mesh', rule: 'UNAUTHORIZED_ACCESS', time: '2d ago', status: 'RESOLVED' }
-             ].map(v => (
-               <div key={v.id} style={{ padding: '14px 16px', border: `1px solid ${V.border}`, borderRadius: 8, background: 'var(--bg-surface)', transition: 'transform 0.15s, border-color 0.15s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-lit)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+             {stats.recent.length === 0 ? (
+               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: V.dim, fontSize: 13 }}>
+                 No recent violations recorded.
+               </div>
+             ) : stats.recent.map((v, idx) => (
+               <div key={idx} style={{ padding: '14px 16px', border: `1px solid ${V.border}`, borderRadius: 8, background: 'var(--bg-surface)', transition: 'transform 0.15s, border-color 0.15s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-lit)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                   <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{v.proj}</div>
-                   <div style={{ fontSize: 11, color: V.muted }}>{v.time}</div>
+                   <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{v.project}</div>
+                   <div style={{ fontSize: 11, color: V.muted }}>Commit: {v.commit}</div>
                  </div>
                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                   <div style={{ fontSize: 10, color: v.status === 'CRITICAL' ? V.red : (v.status === 'WARNING' ? V.amber : V.muted), background: v.status === 'CRITICAL' ? 'rgba(239,68,68,0.1)' : (v.status === 'WARNING' ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.05)'), padding: '4px 8px', borderRadius: 4, fontWeight: 700, letterSpacing: '0.05em' }}>
-                     {v.rule}
+                   <div style={{ fontSize: 10, color: v.status === 'VIOLATION' ? V.red : (v.status === 'RESOLVED' ? V.green : V.muted), background: v.status === 'VIOLATION' ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: 4, fontWeight: 700, letterSpacing: '0.05em' }}>
+                     {v.status}
                    </div>
-                   <div style={{ color: V.accent, fontSize: 11, fontWeight: 600 }}>Review →</div>
+                   <div style={{ color: V.accent, fontSize: 11, fontWeight: 600 }}>Hash: {v.hash}</div>
                  </div>
                </div>
              ))}
@@ -410,11 +423,11 @@ function DashboardInner() {
       <div>
         <h2 style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 16 }}>Active Projects & Agents</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-          {[
-            { name: 'Credit Scoring Engine v4', agents: 3, region: 'US-East', status: 'COMPLIANT' },
-            { name: 'Retail Chatbot', agents: 12, region: 'EU-West', status: 'VIOLATION' },
-            { name: 'Fraud Detection Mesh', agents: 5, region: 'Global', status: 'COMPLIANT' }
-          ].map((p, i) => (
+          {stats.project_health.length === 0 ? (
+            <div style={{ gridColumn: '1/-1', textAlign: 'center', color: V.dim, fontSize: 13, padding: '40px 0', border: `1px solid ${V.border}`, borderRadius: 8, background: 'var(--bg-surface)' }}>
+              No active projects registered on this Hub yet. Use your Regional Key in your SDK configurations.
+            </div>
+          ) : stats.project_health.map((p, i) => (
             <div key={i} className="ra-card" style={{ padding: 20, transition: 'border-color 0.15s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-lit)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
                 <div style={{ width: 32, height: 32, borderRadius: 6, background: 'var(--bg-surface)', border: `1px solid ${V.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -425,7 +438,7 @@ function DashboardInner() {
                 </div>
               </div>
               <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{p.name}</div>
-              <div style={{ fontSize: 12, color: V.muted, marginBottom: 20 }}>{p.region} • {p.agents} Active Agents</div>
+              <div style={{ fontSize: 12, color: V.muted, marginBottom: 20 }}>{p.audits} Audited Decisions • {p.violations} Violations</div>
               <button style={{ width: '100%', padding: '10px', background: 'var(--bg-surface)', border: `1px solid ${V.border}`, borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-surface)'}>
                 Manage Integration
               </button>

@@ -792,3 +792,19 @@ def get_user_hubs(current_user: dict = Depends(get_current_user), db: Session = 
     """Returns all active hubs for the user's organization."""
     from models import Hub
     return db.query(Hub).filter(Hub.org_id == current_user["org_id"]).all()
+
+@auth_router.get("/team")
+def get_user_team(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Returns all users belonging to the same organization."""
+    users = db.query(EnterpriseUser).filter(EnterpriseUser.org_id == current_user["org_id"]).all()
+    return [
+        {
+            "id": u.id,
+            "display_name": u.display_name,
+            "email": u.email,
+            "role": u.role,
+            "department": u.department,
+            "status": u.status or "approved"
+        }
+        for u in users
+    ]
