@@ -5,33 +5,104 @@ export default function PolicyViewer() {
   const { user } = useAuth();
   const [activeFile, setActiveFile] = useState('constitution.anchor');
 
-  const compiledConstitution = `[ANCHOR_FOUNDATION_NODE]
-# IMMUTABLE CRYPTOGRAPHIC LEDGER
-# This file defines the core, uneditable sovereign rules of the Anchor Engine.
-# Modifications are restricted to Anchor Core Members via Multi-Sig consensus.
+  const compiledConstitution = `type: manifest
+version: 5.0.4
+anchor_version: '>=5.0.0'
+name: Anchor Constitutional Root
 
-Network_ID: ANCHOR-ROOT-${(user?.org_id || 'AN').toUpperCase()}
-Consensus_Protocol: PROOF_OF_INTEGRITY
-Sovereign_Jurisdiction: ${(user?.region || 'GLOBAL').toUpperCase()}
-Active_Spoke_Handle: ${(user?.sub || 'PENDING')}
+core_domains:
+  - path: domains/security.anchor
+    namespace: SEC
+    required: true
+    active: true
+  - path: domains/ethics.anchor
+    namespace: ETH
+    required: true
+    active: true
+  - path: domains/shared.anchor
+    namespace: SHR
+    required: true
+    active: true
+  - path: domains/alignment.anchor
+    namespace: ALN
+    required: true
+    active: true
+  - path: domains/agentic.anchor
+    namespace: AGT
+    required: true
+    active: true
+  - path: domains/privacy.anchor
+    namespace: PRV
+    required: true
+    active: true
 
-[CORE_DIRECTIVES]
-0x01: NODE_ISOLATION_ENFORCED
-0x02: ZERO_KNOWLEDGE_PROOFS_REQUIRED
-0x03: UNAUTHORIZED_PII_EGRESS_FATAL
-0x04: AUDIT_LEDGER_APPEND_ONLY
+frameworks:
+  - path: frameworks/FINOS_Framework.anchor
+    namespace: FINOS
+    source: FINOS AI Governance Framework
+    active: true
+  - path: frameworks/OWASP_LLM.anchor
+    namespace: OWASP
+    source: OWASP LLM Top 10 2025
+    active: true
+
+regulators:
+  - path: government/RBI_Regulations.anchor
+    namespace: RBI
+    source: RBI FREE-AI Report August 2025
+    active: true
+  - path: government/EU_AI_Act.anchor
+    namespace: EU
+    source: EU AI Act 2024/1689
+    active: true
+
+policy:
+  path: policy.anchor
+  enforce_raise_only: true
+  allow_custom_rules: true
+  custom_rule_prefix: INTERNAL
 `;
 
-  const compiledPolicy = `[${(user?.hub_id || 'ENTERPRISE_HUB').toUpperCase()}_POLICY]
-# Local Hub settings synced from Anchor Root. Read Only.
+  const compiledPolicy = `# =============================================================================
+# POLICY — Project Policy
+# =============================================================================
+# This is FORGE project-specific sovereign rules.
+# Automatically loaded by the Anchor Governance Engine.
+#
 
-Hub_Callsign: ${user?.hub_name || 'AN-IN-SOL01 animuslab Solapur Branch'}
-Organization: ${user?.org_id || 'animuslab'}
-Sovereign_Region: ${user?.region || 'IN'}
-Max_Agent_Count: 50
-Telemetry_Ping_Rate: 30s
-Forensic_Retention: 365_DAYS
-Silo_Activation_Key: ${(user?.regional_key || 'sk_live_...').slice(0, 16)}... [SECURE]
+version: "4.0"
+
+metadata:
+  project: "forge"
+  org: "${(user?.org_id || 'animuslab')}"
+  maintainer: "ciso@${(user?.org_id || 'animuslab')}.com"
+  spoke_handle: "${(user?.sub || 'OWN-AN-SOLAPUR-990')}"
+  hub_id: "${(user?.hub_id || 'AN-IN-SOL01')}"
+
+custom_rules:
+  - id: INTERNAL-001
+    name: "Vault Access Outside Approved Namespace"
+    severity: blocker
+    category: security
+    description: >
+      Vault read operations must only access the approved_keys
+      namespace. Broad vault access exposes all secrets.
+    detection:
+      method: regex
+      pattern: 'vault\\.read\\((?!approved_keys)'
+      context_required: code_execution
+
+  - id: INTERNAL-002
+    name: "Unapproved AI Model Endpoint"
+    severity: blocker
+    category: security
+    description: >
+      Only approved internal model endpoints may be called.
+      External endpoints bypass the governed proxy layer.
+    detection:
+      method: regex
+      pattern: 'model_endpoint.*(?!approved-models\\.internal)'
+      context_required: code_execution
 `;
 
   return (
