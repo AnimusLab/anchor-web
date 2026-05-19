@@ -98,6 +98,7 @@ class LedgerEntry(Base):
     timestamp  = Column(String)
     payload    = Column(Text)
     chain_hash = Column(String)
+    type       = Column(String, nullable=True)
 
     hub = relationship("Hub", back_populates="ledger_entries")
 

@@ -59,6 +59,7 @@ def run_migrations():
         "ALTER TABLE regulatory_officials ADD COLUMN status VARCHAR DEFAULT 'pending'",
         "ALTER TABLE enterprise_users ADD COLUMN status VARCHAR DEFAULT 'pending'",
         "ALTER TABLE enterprise_users ADD COLUMN hub_id VARCHAR",
+        "ALTER TABLE ledger ADD COLUMN type VARCHAR",
     ]
 
     with engine.connect() as conn:
