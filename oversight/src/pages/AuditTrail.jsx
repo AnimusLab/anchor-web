@@ -104,7 +104,20 @@ export default function AuditTrail() {
     fetch(`${endpoints.baseUrl}/api/oversight/audit-trail?limit=${limit}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(r => r.json()).then(setEntries).catch(console.error).finally(() => setLoading(false));
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setEntries(data);
+        } else {
+          setEntries([]);
+          console.warn('AuditTrail: Expected array but received', data);
+        }
+      })
+      .catch(err => {
+        console.error('AuditTrail fetch error:', err);
+        setEntries([]);
+      })
+      .finally(() => setLoading(false));
   }, [token, limit]);
 
   const filtered = filterAction === 'ALL'
