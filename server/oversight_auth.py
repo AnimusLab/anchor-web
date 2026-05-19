@@ -491,7 +491,7 @@ def get_jurisdiction_summary(
                 LedgerEntry.chain_hash,
                 Hub.id.label("hub_id"),
                 Hub.id.label("entity_name"), # Reuse ID as name for now
-                Organization.name.label("org_name"),
+                Organization.display_name.label("org_name"),
                 Organization.id.label("org_id")
             )
             .outerjoin(Hub,          Hub.id            == LedgerEntry.hub_id)
