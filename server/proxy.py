@@ -684,6 +684,18 @@ def get_hub_stats(hub_id: str = None, current_user: dict = Depends(get_current_u
             payload = json.loads(a.payload)
         except:
             payload = {}
+            
+    remediated_parent_ids = set()
+    for e in audits:
+        if e.type == "remediation":
+            try:
+                p = json.loads(e.payload)
+                parent_id = p.get("parent_entry_id") or p.get("violation_id") or p.get("entry_id")
+                if parent_id:
+                    remediated_parent_ids.add(parent_id)
+            except:
+                pass
+                
     total_audits = 0
     total_violations = 0
 
