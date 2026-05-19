@@ -573,6 +573,53 @@ def _enforce_tenant_scope(current_user: dict, db: Session, hub_id: str = None):
         
     return hub_id
 
+class ZKSyncPayload(BaseModel):
+    entity_id: str
+    timestamp: str
+    chain_hash: str
+    signature: str
+    status: str
+
+@app.post("/api/ledger")
+async def sync_zk_ledger(payload: ZKSyncPayload, db: Session = Depends(get_db)):
+    """
+    Receives ZK proof from CLI client and registers it on the ledger.
+    """
+    try:
+        from models import Hub, LedgerEntry
+        import time
+        is_violation = (payload.status == "VIOLATION")
+        
+        header_payload = {
+            "project_name": "Forge Repository",
+            "is_compliant": not is_violation,
+            "rule_id": "SEC-004" if is_violation else "CLEAN",
+            "violation_count": 1 if is_violation else 0,
+            "decentralized": True,
+            "fingerprint": payload.chain_hash,
+            "_hub_source": payload.entity_id,
+            "risk_classification": "HIGH" if is_violation else "LOW"
+        }
+        
+        entry_id = f"led_{int(time.time()*1000)}"
+        new_entry = LedgerEntry(
+            id=entry_id,
+            hub_id=payload.entity_id,
+            timestamp=payload.timestamp,
+            type="runtime_violation" if is_violation else "runtime_check",
+            chain_hash=payload.chain_hash,
+            signature=payload.signature,
+            payload=json.dumps(header_payload)
+        )
+        db.add(new_entry)
+        db.commit()
+        print(f"[ZK SYNC] Successful from Hub: {payload.entity_id} | Hash: {payload.chain_hash[:12]}")
+        return {"status": "ACKNOWLEDGED", "entry_id": entry_id}
+    except Exception as e:
+        print(f"[ZK SYNC ERROR] {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/ledger")
 def get_hub_ledger(hub_id: str = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """The Cryptographic Ledger: Returns flattened audit records. Filtered by Hub."""
