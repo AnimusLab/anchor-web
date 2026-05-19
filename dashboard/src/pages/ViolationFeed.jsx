@@ -17,20 +17,19 @@ export default function ViolationFeed() {
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) {
-          // Filter out violations
-          const filtered = data
-            .filter(e => e.type === 'runtime_violation')
-            .map(e => {
-              const p = e.payload || {};
-              return {
-                id: e.id,
-                project: p.project_name || p.project || 'Unknown Project',
-                severity: p.severity || 'CRITICAL',
-                time: e.timestamp || 'Just now',
-                title: p.reason || p.message || 'Unapproved execution policy violation.',
-                status: p.status || 'OPEN'
-              };
-            });
+          const filtered = data.map(e => {
+            const p = e.raw_payload || {};
+            const compliant = e.is_compliant;
+            return {
+              id: e.entry_id || e.id,
+              project: e.project_name || p.project_name || 'Unknown Project',
+              severity: compliant ? 'CLEAN' : 'CRITICAL',
+              time: e.timestamp || 'Just now',
+              title: compliant ? 'Compliance Verification: Systems operate at 100% integrity.' : (p.reason || p.message || 'Unapproved execution policy violation.'),
+              status: compliant ? 'VERIFIED' : (p.status || 'OPEN'),
+              compliant: compliant
+            };
+          });
           setViolations(filtered);
           if (filtered.length > 0) {
             setSelected(filtered[0]);
@@ -101,7 +100,7 @@ export default function ViolationFeed() {
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
-                      <span className={`badge ${v.severity === 'CRITICAL' ? 'badge-red' : 'badge-amber'}`}>{v.severity}</span>
+                      <span className={`badge ${v.severity === 'CRITICAL' ? 'badge-red' : 'badge-green'}`}>{v.severity}</span>
                       <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'JetBrains Mono, monospace' }}>{v.time}</span>
                     </div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>{v.title}</div>
@@ -133,7 +132,9 @@ export default function ViolationFeed() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: '85%' }}>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Compliance Watchdog • Just now</div>
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: '10px 14px', borderRadius: '0 8px 8px 8px', fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-                  Telemetry reported a runtime exception or un-scrubbed PII signature pattern. Please remediate the source endpoint parameters.
+                  {selected.compliant ? 
+                    "Zero-Knowledge compliance proof successfully generated and verified against Constitutional manifest. No policy violations detected." : 
+                    "Telemetry reported a runtime exception or un-scrubbed PII signature pattern. Please remediate the source endpoint parameters."}
                 </div>
               </div>
               
