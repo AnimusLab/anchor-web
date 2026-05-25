@@ -20,7 +20,17 @@ export default function AuditorManagement() {
   const [message, setMessage] = useState(null);
 
   const [form, setForm] = useState({
-    display_name: '', email: '', regulator: 'SEC', department: '', jurisdiction: 'USA'
+    display_name: '', 
+    email: '', 
+    regulator: 'SEC', 
+    department: '', 
+    jurisdiction: 'India',
+    
+    // v6.1 Institutional Governance Defaults
+    identity_subtype: 'REGULATORY_AUDITOR',
+    entity_visibility_scope: 'ai_agent,gateway',
+    governance_scope: 'jurisdiction_wide',
+    clearance_level: 3
   });
 
   const handleProvision = async () => {
@@ -129,6 +139,40 @@ export default function AuditorManagement() {
                 onChange={e => setForm({ ...form, department: e.target.value })}
               />
             </Field>
+
+            {/* v6.1 Institutional Governance Fields */}
+            <div style={{ padding: '16px 0 0 0', borderTop: '1px solid var(--border)', marginTop: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--amber-soft)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                Governance Architecture (v6.1 Patch)
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <Field label="Identity Subtype">
+                  <select className="ra-select" value={form.identity_subtype} onChange={e => setForm({ ...form, identity_subtype: e.target.value })}>
+                    <option value="REGULATORY_AUDITOR">REGULATORY_AUDITOR</option>
+                    <option value="FORENSIC_OPERATOR">FORENSIC_OPERATOR</option>
+                    <option value="POLICY_ENFORCER">POLICY_ENFORCER</option>
+                  </select>
+                </Field>
+
+                <Field label="Clearance Level">
+                  <select className="ra-select" value={form.clearance_level} onChange={e => setForm({ ...form, clearance_level: parseInt(e.target.value) })}>
+                    <option value={1}>L1: Observations</option>
+                    <option value={2}>L2: Restricted Audit</option>
+                    <option value={3}>L3: Forensic Access</option>
+                    <option value={4}>L4: Sovereign Root</option>
+                  </select>
+                </Field>
+              </div>
+
+              <div style={{ marginTop: 14 }}>
+                <Field label="Entity Visibility Scope">
+                  <input className="ra-input" placeholder="ai_agent,gateway"
+                    value={form.entity_visibility_scope}
+                    onChange={e => setForm({ ...form, entity_visibility_scope: e.target.value })} />
+                </Field>
+              </div>
+            </div>
 
             <button
               className="btn-primary"

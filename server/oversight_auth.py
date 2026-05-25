@@ -65,6 +65,12 @@ class ProvisionRequest(BaseModel):
     jurisdiction: str = "GLO" # "US", "IN", "EU"
     access_level: str = "READ_ONLY"
 
+    # v6.1 Institutional Governance Fields
+    identity_subtype: Optional[str] = "REGULATORY_AUDITOR"
+    entity_visibility_scope: Optional[str] = "ai_agent,gateway"
+    governance_scope: Optional[str] = "jurisdiction_wide"
+    clearance_level: Optional[int] = 3
+
 
 class RevokeRequest(BaseModel):
     entity_id: str
@@ -74,20 +80,25 @@ class RevokeRequest(BaseModel):
 # JWT helpers (oversight-scoped)
 # ---------------------------------------------------------------------------
 
-def _issue_oversight_jwt(entity_id: str, display_name: str, regulator: str,
-                          access_level: str, session_id: str) -> str:
+def _issue_oversight_jwt(user: RegulatoryOfficial, session_id: str) -> str:
     """Issues a short-lived oversight JWT — separate from the main auth tokens."""
     exp = datetime.now(timezone.utc) + timedelta(hours=OVERSIGHT_JWT_TTL)
     return jwt.encode(
         {
-            "sub":          entity_id,
-            "name":         display_name,
-            "regulator":    regulator,
-            "access_level": access_level,
+            "sub":          user.id,
+            "name":         user.display_name,
+            "regulator":    user.department,
+            "access_level": "READ_ONLY",
             "session_id":   session_id,
             "role":         "regulator",
             "portal":       "oversight",
             "exp":          exp,
+            
+            # v6.1 Institutional Metadata
+            "subtype":      user.identity_subtype,
+            "entity_scope": user.entity_visibility_scope,
+            "jurisdiction": user.jurisdiction_scope,
+            "clearance":    user.clearance_level
         },
         ANCHOR_MASTER_KEY,
         algorithm="HS256",
@@ -208,10 +219,7 @@ def oversight_login(body: OversightLoginRequest, db: Session = Depends(get_db), 
 
     # 4. Issue oversight-scoped JWT
     token = _issue_oversight_jwt(
-        entity_id    = user.id,
-        display_name = user.display_name,
-        regulator    = user.jurisdiction or "Oversight",
-        access_level = "READ_ONLY", # Default for now
+        user         = user,
         session_id   = session_id,
     )
 
@@ -235,12 +243,18 @@ def oversight_login(body: OversightLoginRequest, db: Session = Depends(get_db), 
 def oversight_me(current_user: dict = Depends(get_oversight_user)):
     """Returns the auditor's profile from the JWT claims."""
     return {
-        "entity_id":    current_user["sub"],
-        "display_name": current_user["name"],
-        "regulator":    current_user["regulator"],
-        "access_level": current_user["access_level"],
-        "session_id":   current_user["session_id"],
+        "entity_id":    current_user.get("sub"),
+        "display_name": current_user.get("name"),
+        "regulator":    current_user.get("regulator"),
+        "access_level": current_user.get("access_level"),
+        "session_id":   current_user.get("session_id"),
         "role":         "regulator",
+        
+        # v6.1 Institutional Metadata
+        "subtype":      current_user.get("subtype"),
+        "entity_scope": current_user.get("entity_scope"),
+        "jurisdiction": current_user.get("jurisdiction"),
+        "clearance":    current_user.get("clearance")
     }
 
 
@@ -293,7 +307,16 @@ def provision_new_auditor(
         totp_secret=totp_secret,
         status="approved",
         email_verified=True,
-        created_at=datetime.now(timezone.utc).isoformat()
+        created_at=datetime.now(timezone.utc).isoformat(),
+        
+        # v6.1 Institutional Governance Identity
+        identity_subtype=body.identity_subtype,
+        jurisdiction_scope=body.jurisdiction, # Map jurisdiction to scope
+        entity_visibility_scope=body.entity_visibility_scope,
+        governance_scope=body.governance_scope,
+        institutional_origin=body.regulator,
+        clearance_level=body.clearance_level,
+        delegation_rights=True if body.clearance_level and body.clearance_level >= 3 else False
     )
     db.add(user)
     db.commit()

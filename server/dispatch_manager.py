@@ -98,20 +98,25 @@ async def dispatch_webhook(hub_id: str, audit_data: dict, db: Session):
         context=p.get("context", "unknown"),
         authority=p.get("authority", "unknown"),
         flow=p.get("flow", "unknown"),
-        entry_id=audit_dict.get("entry_id"),
-        timestamp=audit_dict.get("timestamp"),
-        project_name=audit_dict.get("project_name", "N/A"),
-        git_commit=audit_dict.get("git_commit", "N/A"),
-        status=audit_dict.get("governance_status", {}).get("status", "VIOLATION"),
-        rule_id=audit_dict.get("governance_status", {}).get("rule_id"),
-        findings_hash=audit_dict.get("cryptography", {}).get("findings_hash", ""),
-        chain_hash=audit_dict.get("cryptography", {}).get("chain_hash", ""),
-        signature=audit_dict.get("cryptography", {}).get("signature", ""),
-        telemetry=audit_dict.get("telemetry", {})
+        entry_id=audit_data.get("entry_id"),
+        timestamp=audit_data.get("timestamp"),
+        project_name=audit_data.get("project_name", "N/A"),
+        git_commit=audit_data.get("git_commit", "N/A"),
+        status=audit_data.get("governance_status", {}).get("status", "VIOLATION"),
+        rule_id=audit_data.get("governance_status", {}).get("rule_id"),
+        findings_hash=audit_data.get("cryptography", {}).get("findings_hash", ""),
+        chain_hash=audit_data.get("cryptography", {}).get("chain_hash", ""),
+        signature=audit_data.get("cryptography", {}).get("signature", ""),
+        telemetry=audit_data.get("telemetry", {})
     )
 
     # 3. Fire regional webhooks
-    for sub in fleet.subscriptions:
+    # NOTE: Subscriptions model not yet implemented; guard for forward-compatibility.
+    hub_subscriptions = getattr(hub, 'subscriptions', [])
+    if not hub_subscriptions:
+        logger.info(f"[DISPATCH] No subscriptions configured for hub {hub_id}. Skipping webhook dispatch.")
+        return
+    for sub in hub_subscriptions:
         if not sub.is_active:
             continue
             
@@ -127,8 +132,8 @@ async def dispatch_webhook(hub_id: str, audit_data: dict, db: Session):
             # Dispatch
             response = await send_regional_webhook(sub.webhook_url, secret, regional_payload)
             logger.info(f"[DISPATCH] Success for {sub.branch_name}")
-            _log_receipt(db, audit_dict.get("entry_id"), f"DELIVERED:{sub.branch_name}", response.text)
+            _log_receipt(db, audit_data.get("entry_id"), f"DELIVERED:{sub.branch_name}", response.text)
             
         except Exception as e:
             logger.error(f"[ERROR] Final dispatch failure for {sub.branch_name}: {str(e)}")
-            _log_receipt(db, audit_dict.get("entry_id"), f"FAILED:{sub.branch_name}")
+            _log_receipt(db, audit_data.get("entry_id"), f"FAILED:{sub.branch_name}")

@@ -15,6 +15,12 @@ import ReportsExport from './pages/ReportsExport';
 import LatticeMesh from './pages/LatticeMesh';
 import EnterpriseLayout from './components/EnterpriseLayout';
 
+// New high-fidelity views
+import RuntimeRegistry from './pages/RuntimeRegistry';
+import ConstitutionEditor from './pages/ConstitutionEditor';
+import GovernanceFlows from './pages/GovernanceFlows';
+import ReplayChainViewer from './pages/ReplayChainViewer';
+
 // Placeholder components for MVP routes
 const Placeholder = ({ title }) => (
   <div style={{ padding: 28 }}>
@@ -43,6 +49,13 @@ export default function App() {
           <Route path="/policy" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><PolicyViewer /></EnterpriseLayout></PrivateRoute>} />
           <Route path="/reports" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><ReportsExport /></EnterpriseLayout></PrivateRoute>} />
           
+          {/* New institutional routes */}
+          <Route path="/runtimes" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><RuntimeRegistry /></EnterpriseLayout></PrivateRoute>} />
+          <Route path="/constitution" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><ConstitutionEditor /></EnterpriseLayout></PrivateRoute>} />
+          <Route path="/diagrams" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><GovernanceFlows /></EnterpriseLayout></PrivateRoute>} />
+          <Route path="/replay/:entryId" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><ReplayChainViewer /></EnterpriseLayout></PrivateRoute>} />
+          <Route path="/replay" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><ReplayChainViewer /></EnterpriseLayout></PrivateRoute>} />
+
           <Route path="/team" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><TeamManagement /></EnterpriseLayout></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute requiredRole={["owner", "enterprise", "root", "lead", "admin"]}><EnterpriseLayout><Profile /></EnterpriseLayout></PrivateRoute>} />
 

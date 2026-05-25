@@ -15,12 +15,16 @@ import time
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
+import logging
 
 # --- 0. VAULT GATE (Environment Sync) ---
 # Load the local server/.env file
 load_dotenv()
+
+logger = logging.getLogger("anchor.proxy")
+logging.basicConfig(level=logging.INFO)
 
 ANCHOR_MASTER_KEY = os.getenv("ANCHOR_MASTER_KEY")
 if not ANCHOR_MASTER_KEY:
@@ -32,14 +36,19 @@ if not ANCHOR_MASTER_KEY:
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, text
 from database import get_db, init_db, SessionLocal
-from models import Hub, LedgerEntry, EnterpriseUser, RegulatoryOfficial, Organization, ForensicRequest, WhitelistEntry
+from models import Hub, LedgerEntry, EnterpriseUser, RegulatoryOfficial, Organization, ForensicRequest, WhitelistEntry, ReplayAccessLog, RuntimeRegistry
 from security import encrypt_secret, decrypt_secret
 from dispatch_manager import dispatch_webhook
-from auth import auth_router, get_current_user, get_current_admin_user
+from auth import auth_router, get_current_user, get_current_admin_user, ANCHOR_MASTER_KEY
 from oversight_auth import oversight_router
+from governance import gov_router, seal_artifact, initialize_governance_engine
 
 # --- 1. INITIALIZE FASTAPI & CORS ---
 app = FastAPI(title="Anchor Master Node", version="5.0.0")
+
+# Pre-declare managers to avoid name errors in bridge closure
+manager = None
+spoke_registry = None
 
 # --- AUTHENTICATION ENGINE ---
 app.include_router(auth_router)
@@ -47,9 +56,22 @@ app.include_router(auth_router)
 # --- OVERSIGHT ENGINE (Auditor TOTP Auth) ---
 app.include_router(oversight_router)
 
-# --- ROOT GATEWAY STATUS ---
-@app.get("/")
-def get_system_status():
+# --- GOVERNANCE ENGINE (v6.1 Activation) ---
+app.include_router(gov_router)
+
+# --- GOVERNANCE MANIFESTS (v6.0 Dynamic Loading) ---
+@app.get("/api/governance/constitution")
+def get_constitution(current_user: dict = Depends(get_current_user)):
+    """Serves the signed constitution.anchor manifest."""
+    try:
+        path = os.path.join(os.path.dirname(__file__), "constitution.anchor")
+        if not os.path.exists(path):
+            raise HTTPException(status_code=404, detail="Constitution NOT FOUND")
+        with open(path, "r") as f:
+            content = f.read()
+        return {"content": content, "status": "SEALED", "version": "6.0.1"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     """Health check and system status for the Master Node."""
     return {
         "status": "ACTIVE",
@@ -271,6 +293,15 @@ class SpokeRegistry:
     def is_online(self, hub_id: str) -> bool:
         return hub_id in self._spokes
 
+    async def push_event(self, hub_id: str, message: RelayMessage):
+        """Pushes a governance event to a specific Spoke Node."""
+        ws = self._spokes.get(hub_id)
+        if ws:
+            try:
+                await ws.send_text(message.to_json())
+            except Exception as e:
+                logger.error(f"[RELAY] Failed to push event to Spoke {hub_id}: {e}")
+
     async def pull_forensics(self, hub_id: str, entry_id: str,
                                clearance_id: str, timeout: float = 15.0) -> dict:
         """
@@ -321,7 +352,47 @@ class SpokeRegistry:
 
 
 spoke_registry = SpokeRegistry()
-import asyncio
+
+# --- GOVERNANCE EVENT BUS (Phase 4 Propagation) ---
+async def governance_event_bridge(event_type: str, payload: dict):
+    """
+    Sovereign Event Bus:
+    Bridges internal governance events to Dashboards AND Enterprise Spoke Nodes.
+    """
+    hub_id = payload.get("hub_id", "GLOBAL_SYSTEM")
+    
+    # 1. Update Real-time Dashboards (React)
+    dashboard_msg = {
+        "type": "GOVERNANCE_EVENT",
+        "event_type": event_type,
+        "timestamp": datetime.utcnow().isoformat(),
+        "payload": payload
+    }
+    await manager.broadcast(hub_id, dashboard_msg)
+
+    # 2. Propagate to Enterprise Spoke Nodes (WebSocket Relay)
+    if hub_id != "GLOBAL_SYSTEM":
+        update_type = "POLICY_RELOAD"
+        if event_type == "GOV_REQUEST_APPROVED":
+            update_type = "TGT_ISSUED"
+        
+        gov_upd = RelayMessage(
+            type=MessageType.GOVERNANCE_UPDATE,
+            hub_id=hub_id,
+            payload={
+                "update_type": update_type,
+                "request_id": payload.get("request_id"),
+                "capability": payload.get("capability"),
+                "requester_id": payload.get("requester_id"),
+                "expires_at": payload.get("expires_at"),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+        # Push to the specific spoke if online
+        await spoke_registry.push_event(hub_id, gov_upd)
+
+# --- INITIALIZE GOVERNANCE PROTOCOL ---
+initialize_governance_engine(get_current_user, ANCHOR_MASTER_KEY, governance_event_bridge)
 
 # --- 3. DATABASE SETUP ---
 # All legacy sqlite3 init_db logic removed. Switching exclusively to SQLAlchemy + Alembic.
@@ -374,7 +445,51 @@ class ResolveRequest(BaseModel):
     query: str
     root_key: str
 
+class InstitutionalIdentityUpdateRequest(BaseModel):
+    identity_subtype: Optional[str] = None
+    jurisdiction_scope: Optional[str] = None
+    entity_visibility_scope: Optional[str] = None
+    governance_scope: Optional[str] = None
+    institutional_origin: Optional[str] = None
+    clearance_level: Optional[int] = None
+    delegation_rights: Optional[bool] = None
+
 # --- 5. ADMIN API (Provisioning & Secret Management) ---
+@app.post("/api/admin/institutional/update/{user_id}")
+def update_institutional_identity(
+    user_id: str,
+    body: InstitutionalIdentityUpdateRequest,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    [Root/Admin Only] Institutional Provisioning Terminal.
+    Updates governance characteristics for an Enterprise or Regulatory identity.
+    """
+    if current_user.get("role") != "root":
+        raise HTTPException(status_code=403, detail="ROOT ENFORCEMENT CLEARANCE REQUIRED")
+
+    # Search in both identity tables
+    user = db.query(EnterpriseUser).filter(EnterpriseUser.id == user_id).first()
+    if not user:
+        user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.id == user_id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="IDENTITY_NOT_FOUND")
+
+    # Update fields if provided
+    for key, value in body.model_dump(exclude_unset=True).items():
+        setattr(user, key, value)
+    
+    db.commit()
+    
+    return {
+        "status": "PROVISIONED",
+        "user_id": user_id,
+        "identity_subtype": user.identity_subtype,
+        "entity_scope": user.entity_visibility_scope
+    }
+
 # Legacy Admin APIs (Placeholder for migration)
 @app.post("/api/admin/hub/provision")
 def provision_hub_manual(org_id: str, region: str, unit: str, current_user: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
@@ -440,27 +555,140 @@ def delete_from_whitelist(id: int, current_user: dict = Depends(get_current_admi
 # --- 5. FORENSIC APPROVAL ENGINE ---
 @app.get("/api/forensic/pending")
 async def get_pending_pulls(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Owners see requests from auditors here."""
-    if current_user["role"] not in ["owner", "admin"]:
-        raise HTTPException(status_code=403, detail="Only Owners can approve forensic pulls")
+    """
+    Institutional Approval Queue:
+    Aggregates v5 legacy forensic pulls and v6.1 Governance Access Requests.
+    """
+    if current_user["role"] not in ["owner", "admin", "root"]:
+        raise HTTPException(status_code=403, detail="HIGHER_CLEARANCE_REQUIRED")
     
-    # Fetch the user to get their assigned hub_id
-    from models import EnterpriseUser
-    user = db.query(EnterpriseUser).filter(EnterpriseUser.email == current_user.get("sub")).first()
-    if not user or not user.hub_id:
-        raise HTTPException(status_code=403, detail="User is not assigned to a Hub")
+    # Root sees all
+    if current_user["role"] == "root":
+        hub_filter = None
+    else:
+        user = db.query(EnterpriseUser).filter(EnterpriseUser.email == current_user.get("sub")).first()
+        if not user or not user.hub_id:
+            raise HTTPException(status_code=403, detail="User is not assigned to a Hub")
+        hub_filter = user.hub_id
 
-    # Query real ForensicRequest table for this organization's hub
-    pulls = db.query(ForensicRequest).filter(
-        ForensicRequest.hub_id == user.hub_id,
-        ForensicRequest.status == "PENDING"
-    ).all()
+    # 1. Fetch v5 Legacy Pulls
+    v5_query = db.query(ForensicRequest).filter(ForensicRequest.status == "PENDING")
+    if hub_filter:
+        v5_query = v5_query.filter(ForensicRequest.hub_id == hub_filter)
+    v5_pulls = v5_query.all()
+
+    # 2. Fetch v6.1 Governance Requests (The formal ontology layer)
+    from models import GovernanceAccessRequest
+    v6_query = db.query(GovernanceAccessRequest).filter(GovernanceAccessRequest.status == "PENDING")
+    if hub_filter:
+        v6_query = v6_query.filter(GovernanceAccessRequest.target_hub_id == hub_filter)
+    v6_pulls = v6_query.all()
     
-    return pulls
+    # Unified output format
+    unified = []
+    for p in v5_pulls:
+        unified.append({
+            "id": p.id,
+            "type": "LEGACY_PULL",
+            "requester": p.auditor_name,
+            "hub_id": p.hub_id,
+            "purpose": "Forensic Data Retrieval (Legacy)",
+            "justification": "N/A (Legacy)",
+            "capability": "can_replay",
+            "created_at": p.created_at
+        })
+    
+    for p in v6_pulls:
+        unified.append({
+            "id": p.id,
+            "type": "GOVERNANCE_ACTIVATION",
+            "requester": p.requester_name,
+            "hub_id": p.target_hub_id,
+            "purpose": p.purpose_classification,
+            "justification": p.justification,
+            "capability": p.requested_capability,
+            "created_at": p.created_at,
+            "governance_v": p.governance_v
+        })
+
+    return unified
+
+class ForensicRequestCreate(BaseModel):
+    hub_id: str
+    entry_id: str
+
+@app.post("/api/forensic/request")
+async def create_forensic_request(
+    body: ForensicRequestCreate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Filing a new forensic pull request by an authorized auditor.
+    """
+    if current_user.get("role") not in ("admin", "regulator", "auditor"):
+        raise HTTPException(status_code=403, detail="AUDITOR OR REGULATOR PRIVILEGES REQUIRED")
+        
+    auditor_id = current_user.get("sub")
+    # Fetch auditor info
+    official = db.query(RegulatoryOfficial).filter((RegulatoryOfficial.id == auditor_id) | (RegulatoryOfficial.email == auditor_id)).first()
+    auditor_name = official.display_name if official else current_user.get("name", "Regulatory Official")
+    actual_auditor_id = official.id if official else auditor_id
+    
+    # Unique pull_id using formatted pattern
+    pull_id = f"pull_{body.entry_id}_{secrets.token_hex(4)}"
+    
+    req = ForensicRequest(
+        id=pull_id,
+        auditor_id=actual_auditor_id,
+        auditor_name=auditor_name,
+        hub_id=body.hub_id,
+        status="PENDING",
+        created_at=datetime.now(timezone.utc).isoformat()
+    )
+    db.add(req)
+    db.commit()
+    
+    return {
+        "status": "PENDING",
+        "pull_id": pull_id,
+        "message": "Forensic pull request registered. Awaiting Hub Owner approval."
+    }
+
+@app.get("/api/forensic/requests")
+async def list_forensic_requests(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Lists forensic pull requests.
+    - Owners/admins see requests for their assigned hub.
+    - Auditors see requests they have created.
+    """
+    role = current_user.get("role")
+    sub = current_user.get("sub")
+    
+    if role in ("admin", "regulator", "auditor"):
+        # Auditor: see their own requests (by email or ID)
+        official = db.query(RegulatoryOfficial).filter((RegulatoryOfficial.id == sub) | (RegulatoryOfficial.email == sub)).first()
+        auditor_id = official.id if official else sub
+        reqs = db.query(ForensicRequest).filter((ForensicRequest.auditor_id == auditor_id) | (ForensicRequest.auditor_id == sub)).order_by(desc(ForensicRequest.created_at)).all()
+        return reqs
+    elif role in ("owner", "enterprise"):
+        # Owner/admin: see requests for their hub
+        from models import EnterpriseUser
+        user = db.query(EnterpriseUser).filter(EnterpriseUser.email == sub).first()
+        hub_id = user.hub_id if user else current_user.get("hub_id")
+        if not hub_id:
+            raise HTTPException(status_code=403, detail="User not assigned to a Hub")
+        reqs = db.query(ForensicRequest).filter(ForensicRequest.hub_id == hub_id).order_by(desc(ForensicRequest.created_at)).all()
+        return reqs
+    else:
+        raise HTTPException(status_code=403, detail="Unauthorized")
 
 @app.post("/api/forensic/approve/{pull_id}")
 async def approve_forensic_pull(pull_id: str, status: dict = Body(...), current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user["role"] not in ["owner", "admin"]:
+    if current_user.get("role") not in ["owner", "admin", "root"]:
         raise HTTPException(status_code=403, detail="Approval denied")
     
     req = db.query(ForensicRequest).filter(ForensicRequest.id == pull_id).first()
@@ -468,16 +696,162 @@ async def approve_forensic_pull(pull_id: str, status: dict = Body(...), current_
         raise HTTPException(status_code=404, detail="Request not found")
     
     # Verify owner belongs to the same hub
-    if req.hub_id != current_user["hub_id"]:
+    user_hub_id = current_user.get("hub_id")
+    if not user_hub_id:
+        from models import EnterpriseUser
+        user = db.query(EnterpriseUser).filter(EnterpriseUser.email == current_user.get("sub")).first()
+        if user:
+            user_hub_id = user.hub_id
+            
+    if req.hub_id != user_hub_id and current_user.get("role") != "root":
         raise HTTPException(status_code=403, detail="Cross-hub approval forbidden")
         
-    req.status = status.get("status", "APPROVED")
+    new_status = status.get("status", "APPROVED")
+    req.status = new_status
+    
+    if new_status == "APPROVED":
+        # Generate 5-minute transient JWT token
+        now = datetime.now(timezone.utc)
+        expires_at = now + timedelta(minutes=5)
+        
+        token_payload = {
+            "pull_id": req.id,
+            "hub_id": req.hub_id,
+            "auditor_id": req.auditor_id,
+            "exp": int(expires_at.timestamp())
+        }
+        temp_token = jwt.encode(token_payload, ANCHOR_MASTER_KEY, algorithm="HS256")
+        
+        req.temporary_token = temp_token
+        req.expires_at = expires_at.isoformat()
+    
     db.commit()
     
-    return {"status": "success", "message": f"Request {pull_id} marked as {req.status}"}
+    return {
+        "status": "success", 
+        "message": f"Request {pull_id} marked as {req.status}",
+        "temporary_token": req.temporary_token if req.status == "APPROVED" else None
+    }
+
+@app.get("/api/forensic/replay/{pull_id}")
+async def replay_forensics(
+    pull_id: str,
+    token: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Brokered retrieval endpoint.
+    Validates the 5-minute single-use token, checks single-use status,
+    invokes spoke_registry.pull_forensics(), logs in ReplayAccessLog,
+    appends a sealed replay_access ledger entry, and serves decrypted payload.
+    """
+    # 1. Validate request and find the ForensicRequest in DB
+    req = db.query(ForensicRequest).filter(ForensicRequest.id == pull_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Forensic request not found.")
+        
+    # 2. Check token mismatch
+    if req.temporary_token != token:
+        raise HTTPException(status_code=401, detail="INVALID_TOKEN: Token mismatch.")
+        
+    # 3. Decode and validate JWT token
+    try:
+        payload = jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
+        if payload.get("pull_id") != pull_id:
+            raise HTTPException(status_code=401, detail="INVALID_TOKEN: Request ID mismatch.")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="TOKEN_EXPIRED: The 5-minute replay window has expired.")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="INVALID_TOKEN: Signature verification failed.")
+        
+    # 4. Enforce Single-Use validation
+    if req.replayed_at is not None:
+        raise HTTPException(status_code=403, detail="TOKEN_ALREADY_USED: Single-use forensic token has already been consumed.")
+        
+    # 5. Extract entry_id from pull_id (which is formatted as pull_{entry_id}_{rand})
+    parts = pull_id.split("_")
+    if len(parts) >= 3 and parts[1] == "led":
+        entry_id = f"led_{parts[2]}"
+    else:
+        entry_id = pull_id
+        
+    # 6. Call Spoke Node over persistent WebSocket
+    logger.info(f"[FORENSIC] Brokering pull for {entry_id} from Spoke {req.hub_id}")
+    decrypted_payload = await spoke_registry.pull_forensics(
+        hub_id=req.hub_id,
+        entry_id=entry_id,
+        clearance_id=req.auditor_id
+    )
     
-    logger.info(f"[SOVEREIGN] Owner {current_user['sub']} {status.get('status')} pull {pull_id}")
-    return {"status": "SUCCESS", "message": f"Forensic request {status.get('status')}"}
+    # 7. Update ForensicRequest replayed metadata
+    now_str = datetime.now(timezone.utc).isoformat()
+    req.replayed_at = now_str
+    req.replayed_by = req.auditor_id
+    
+    # 8. Record in ReplayAccessLog
+    access_log_id = f"acc_{int(time.time()*1000)}"
+    
+    # Seal the access event into the DAC by hashing (pull_id + accessed_by + accessed_at)
+    seal_raw = f"{pull_id}:{req.auditor_id}:{now_str}"
+    seal_hash = hashlib.sha256(seal_raw.encode('utf-8')).hexdigest()
+    
+    replay_log = ReplayAccessLog(
+        id=access_log_id,
+        pull_id=pull_id,
+        accessed_by=req.auditor_id,
+        accessed_at=now_str,
+        chain_hash=seal_hash
+    )
+    db.add(replay_log)
+    
+    # 9. Seal type `replay_access` record into the main LedgerEntry
+    # v6.1: Elevate to Evidence Artifact with Institutional Continuity Proof
+    artifact = seal_artifact(
+        payload={
+            "project_name": "Audit Logs Integrity Seal",
+            "is_compliant": True,
+            "decentralized": True,
+            "fingerprint": seal_hash,
+            "_hub_source": req.hub_id,
+            "access_event": {
+                "pull_id": pull_id,
+                "accessed_by": req.auditor_id,
+                "accessed_at": now_str
+            }
+        },
+        classification="forensic",
+        origin="MASTER-NODE",
+        session_id=getattr(req, "session_lineage_id", None) or f"SES-{int(time.time())}",
+        prev_hash=entry_id # Link to the trigger event
+    )
+
+    ledger_entry_id = f"led_acc_{int(time.time()*1000)}"
+    # Generate signature for the ledger entry using ANCHOR_MASTER_KEY
+    sig_raw = f"{ledger_entry_id}:{artifact.lineage.jurisdictional_seal}"
+    signature = hashlib.sha256(f"{sig_raw}:{ANCHOR_MASTER_KEY}".encode('utf-8')).hexdigest()
+    
+    new_ledger = LedgerEntry(
+        id=ledger_entry_id,
+        hub_id=req.hub_id,
+        timestamp=now_str,
+        type="replay_access",
+        chain_hash=artifact.lineage.jurisdictional_seal,
+        signature=signature,
+        evidence_lineage=artifact.lineage.model_dump_json(),
+        evidence_classification="forensic",
+        payload=json.dumps(artifact.payload)
+    )
+    db.add(new_ledger)
+    db.commit()
+    
+    logger.info(f"[FORENSIC] Forensic pull successful for {pull_id}. Access sealed as {ledger_entry_id}")
+    return {
+        "status": "FORENSIC_RETRIEVED",
+        "entry_id": entry_id,
+        "source": "SPOKE_RELAY",
+        "data": decrypted_payload,
+        "integrity_seal": seal_hash
+    }
 
 # --- 6. SOVEREIGN INGRESS (Metadata-Only Hub) ---
 @app.post("/api/ingress")
@@ -485,7 +859,7 @@ async def submit_telemetry(payload: IngressPayload, background_tasks: Background
     """
     Receives data from the SDK/Spoke and persists only the Cryptographic Header.
     """
-    if not verify_entity(payload.entity_id, payload.mat, db):
+    if not verify_entity(payload.hub_id, payload.mat, db):
         raise HTTPException(status_code=401, detail="INVALID HUB REGIONAL KEY")
     
     try:
@@ -505,19 +879,30 @@ async def submit_telemetry(payload: IngressPayload, background_tasks: Background
             "violation_count": len(audit.get("violations", [])),
             "decentralized": True,
             "fingerprint": audit_fingerprint,
-            "_hub_source": payload.entity_id,
+            "_hub_source": payload.hub_id,
             "risk_classification": "HIGH" if status == "VIOLATION" else "LOW"
         }
         
         # 2. Persist Metadata-Only Header to Neon (SQLAlchemy)
+        # v6.1: Elevate to Evidence Artifact with Institutional Continuity Proof
+        artifact = seal_artifact(
+            payload=header_payload,
+            classification="runtime" if status != "VIOLATION" else "violation",
+            origin="SPOKE-NODE",
+            session_id=None, # System heartbeat doesn't require TGT
+            prev_hash=None # Root of check chain
+        )
+
         new_entry = LedgerEntry(
             id=entry_id,
-            hub_id=payload.entity_id,
+            hub_id=payload.hub_id,
             timestamp=audit.get("timestamp") or datetime.now(timezone.utc).isoformat(),
             type="runtime_violation" if status == "VIOLATION" else "runtime_check",
-            chain_hash=audit.get("cryptography", {}).get("chain_hash"),
+            chain_hash=artifact.lineage.jurisdictional_seal,
             signature=audit.get("cryptography", {}).get("signature"),
-            payload=json.dumps(header_payload)
+            evidence_lineage=artifact.lineage.model_dump_json(),
+            evidence_classification="runtime" if status != "VIOLATION" else "violation",
+            payload=json.dumps(artifact.payload)
         )
         
         db.add(new_entry)
@@ -525,12 +910,12 @@ async def submit_telemetry(payload: IngressPayload, background_tasks: Background
         
         # 3. Resilient Background Handshake (Alerts)
         if status == "VIOLATION":
-            background_tasks.add_task(dispatch_webhook, payload.entity_id, audit, db)
+            background_tasks.add_task(dispatch_webhook, payload.hub_id, audit, db)
             
             # 4. Real-time NOC Broadcast (Summary only)
             background_tasks.add_task(
                 manager.broadcast,
-                payload.entity_id,
+                payload.hub_id,
                 {
                     "type": "VIOLATION_ALERT",
                     "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -541,7 +926,7 @@ async def submit_telemetry(payload: IngressPayload, background_tasks: Background
                 }
             )
         
-        logger.info(f"[SOVEREIGN] Ingress Accepted | Spoke: {payload.entity_id} | Fingerprint: {audit_fingerprint[:12]}...")
+        logger.info(f"[SOVEREIGN] Ingress Accepted | Spoke: {payload.hub_id} | Fingerprint: {audit_fingerprint[:12]}...")
 
         return {
             "status": "ACKNOWLEDGED", 
@@ -558,10 +943,82 @@ async def submit_telemetry(payload: IngressPayload, background_tasks: Background
 
 def _enforce_tenant_scope(current_user: dict, db: Session, hub_id: str = None):
     """
-    Enforces hub-level isolation.
+    Enforces hub-level isolation and auditor scoping (v6.0).
+    Respects regulatory visibility and entity taxonomy.
     """
-    if current_user["role"] in ("owner", "admin", "enterprise"):
-        user_hub_id = current_user.get("hub_id")
+    role = current_user.get("role")
+    sub = current_user.get("sub")
+    
+    # 1. Root/Master bypass: Unrestricted
+    if role == "root":
+        return hub_id
+        
+    # 2. Check if the user is a Regulatory Official
+    official = db.query(RegulatoryOfficial).filter((RegulatoryOfficial.id == sub) | (RegulatoryOfficial.email == sub)).first()
+    if official:
+        aud_type = official.auditor_type or "HUB_AUDITOR"
+        
+        # Base filter for regulators: Only see what is marked as regulatory_visible
+        reg_base_query = db.query(Hub).filter(Hub.regulatory_visible == True)
+        
+        # v6.1 Institutional Scope Enforcement
+        # Priority: explicit entity_visibility_scope > hardcoded defaults
+        if official.entity_visibility_scope:
+            allowed_types = [t.strip() for t in official.entity_visibility_scope.split(",") if t.strip()]
+        else:
+            # Default institutional scope for legacy accounts
+            allowed_types = ["ai_agent", "gateway", "mesh_node"]
+            
+        reg_base_query = reg_base_query.filter(Hub.entity_type.in_(allowed_types))
+
+        if aud_type == "HUB_AUDITOR":
+            assigned_str = official.assigned_hub_ids or ""
+            assigned_ids = [h.strip() for h in assigned_str.split(",") if h.strip()]
+            if not assigned_ids:
+                raise HTTPException(status_code=403, detail="HUB_AUDITOR has no assigned hubs.")
+            
+            # Filter assigned IDs by regulatory visibility
+            visible_hubs = reg_base_query.filter(Hub.id.in_(assigned_ids)).all()
+            visible_ids = [h.id for h in visible_hubs]
+
+            if hub_id:
+                if hub_id in visible_ids:
+                    return hub_id
+                else:
+                    raise HTTPException(status_code=403, detail="RESTRICTED: Hub is either not assigned or visibility is restricted.")
+            return visible_ids
+            
+        elif aud_type == "CROSS_HUB_AUDITOR":
+            org_hubs = reg_base_query.filter(Hub.org_id == official.org_id).all()
+            org_hub_ids = [h.id for h in org_hubs]
+            if not org_hub_ids:
+                raise HTTPException(status_code=403, detail="CROSS_HUB_AUDITOR has no visible hubs in this organization.")
+            if hub_id:
+                if hub_id in org_hub_ids:
+                    return hub_id
+                else:
+                    raise HTTPException(status_code=403, detail="RESTRICTED: Visibility restricted for this entity.")
+            return org_hub_ids
+            
+        elif aud_type == "REGULATOR_AUDITOR":
+            juris = official.jurisdiction or "GL"
+            juris_hubs = reg_base_query.filter(Hub.region == juris).all()
+            juris_hub_ids = [h.id for h in juris_hubs]
+            if not juris_hub_ids:
+                raise HTTPException(status_code=403, detail=f"No visible hubs found in jurisdiction: {juris}")
+            if hub_id:
+                if hub_id in juris_hub_ids:
+                    return hub_id
+                else:
+                    raise HTTPException(status_code=403, detail="RESTRICTED: Visibility restricted.")
+            return juris_hub_ids
+            
+        return hub_id
+
+    # 3. Enterprise user isolation
+    if role in ("owner", "admin", "enterprise"):
+        user = db.query(EnterpriseUser).filter((EnterpriseUser.id == sub) | (EnterpriseUser.email == sub)).first()
+        user_hub_id = user.hub_id if user else current_user.get("hub_id")
         if not user_hub_id:
              raise HTTPException(status_code=403, detail="USER NOT LINKED TO A HUB")
              
@@ -628,7 +1085,10 @@ def get_hub_ledger(hub_id: str = None, current_user: dict = Depends(get_current_
     query = db.query(LedgerEntry).order_by(desc(LedgerEntry.timestamp))
     
     if scope:
-        query = query.filter(LedgerEntry.hub_id == scope)
+        if isinstance(scope, list):
+            query = query.filter(LedgerEntry.hub_id.in_(scope))
+        else:
+            query = query.filter(LedgerEntry.hub_id == scope)
         
     audits = query.all()
     
@@ -670,7 +1130,10 @@ def get_hub_stats(hub_id: str = None, current_user: dict = Depends(get_current_u
     # 2. Database Query
     query = db.query(LedgerEntry)
     if scope:
-        query = query.filter(LedgerEntry.hub_id == scope)
+        if isinstance(scope, list):
+            query = query.filter(LedgerEntry.hub_id.in_(scope))
+        else:
+            query = query.filter(LedgerEntry.hub_id == scope)
     audits = query.all()
         
     # 3. Calculate Global Metrics
@@ -764,7 +1227,7 @@ def get_fleet_ledger(entity_id: str, current_user: dict = Depends(get_current_us
     if current_user["role"] not in ("admin", "regulator", "root"):
         raise HTTPException(status_code=403, detail="AUDITOR OR ADMIN PRIVILEGES REQUIRED")
     
-    entries = db.query(LedgerEntry).filter(LedgerEntry.entity_id == entity_id).order_by(desc(LedgerEntry.timestamp)).all()
+    entries = db.query(LedgerEntry).filter(LedgerEntry.hub_id == entity_id).order_by(desc(LedgerEntry.timestamp)).all()
     return entries
 
 @app.get("/api/audit/{entity_id}/verify")
@@ -773,7 +1236,7 @@ def verify_fleet_chain(entity_id: str, current_user: dict = Depends(get_current_
     if current_user["role"] not in ("admin", "regulator", "root"):
         raise HTTPException(status_code=403, detail="AUDITOR OR ADMIN PRIVILEGES REQUIRED")
     
-    entries = db.query(LedgerEntry).filter(LedgerEntry.entity_id == entity_id).order_by(LedgerEntry.timestamp).all()
+    entries = db.query(LedgerEntry).filter(LedgerEntry.hub_id == entity_id).order_by(LedgerEntry.timestamp).all()
     
     chain_status = []
     for e in entries:
@@ -805,7 +1268,7 @@ def get_compliance_trend(
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
 
     entries = db.query(LedgerEntry).filter(
-        LedgerEntry.entity_id == entity_id,
+        LedgerEntry.hub_id == entity_id,
         LedgerEntry.timestamp >= cutoff,
     ).order_by(LedgerEntry.timestamp.asc()).all()
 
@@ -870,7 +1333,7 @@ def get_translated_entry(entity_id: str, entry_id: str, dialect: str = "RBI",
 
     entry = db.query(LedgerEntry).filter(
         LedgerEntry.id == entry_id,
-        LedgerEntry.entity_id == entity_id
+        LedgerEntry.hub_id == entity_id
     ).first()
     if not entry:
         raise HTTPException(status_code=404, detail="ENTRY NOT FOUND")
@@ -1197,6 +1660,47 @@ async def forensic_relay(
         "source": "SPOKE_RELAY",
         "data": decrypted,
     }
+
+
+class RuntimeRegisterRequest(BaseModel):
+    runtime_id: str
+    name: str
+    status: str
+    ip_address: str
+    region: str
+    system_load: float
+
+@app.post("/api/admin/runtime/register")
+def register_runtime(body: RuntimeRegisterRequest, db: Session = Depends(get_db)):
+    """Registers or updates a runtime node's health and topology details."""
+    existing = db.query(RuntimeRegistry).filter(RuntimeRegistry.runtime_id == body.runtime_id).first()
+    now_str = datetime.now(timezone.utc).isoformat()
+    if existing:
+        existing.name = body.name
+        existing.status = body.status
+        existing.ip_address = body.ip_address
+        existing.region = body.region
+        existing.system_load = body.system_load
+        existing.last_heartbeat = now_str
+    else:
+        new_runtime = RuntimeRegistry(
+            runtime_id=body.runtime_id,
+            name=body.name,
+            status=body.status,
+            ip_address=body.ip_address,
+            region=body.region,
+            system_load=body.system_load,
+            last_heartbeat=now_str
+        )
+        db.add(new_runtime)
+    db.commit()
+    return {"status": "SUCCESS", "message": f"Runtime {body.runtime_id} heartbeat recorded."}
+
+@app.get("/api/admin/runtimes")
+def get_runtimes(db: Session = Depends(get_db)):
+    """Returns all registered runtimes for the topology dashboard."""
+    runtimes = db.query(RuntimeRegistry).all()
+    return runtimes
 
 
 if __name__ == "__main__":

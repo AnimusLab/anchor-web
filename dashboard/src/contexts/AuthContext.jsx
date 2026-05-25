@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { endpoints } from '../lib/api';
+import { AvatarVault } from '../lib/AvatarVault';
 
 const AuthContext = createContext(null);
 
@@ -18,7 +19,11 @@ export function AuthProvider({ children }) {
                 if (res.ok) return res.json();
                 throw new Error('Session Expired');
             })
-            .then((data) => setUser(data))
+            .then(async (data) => {
+                // Enrich user with local avatar if it exists
+                const avatar = await AvatarVault.getAvatar(data.id || data.sub);
+                setUser({ ...data, avatar });
+            })
             .catch(() => {
                 setToken(null);
                 localStorage.removeItem('anchor_token');
@@ -36,27 +41,38 @@ export function AuthProvider({ children }) {
         localStorage.setItem('anchor_token', newToken);
         
         try {
-            // Step 2: Decode JWT and set user IMMEDIATELY so PrivateRoute doesn't kick back
+            // Step 2: Decode JWT and set user IMMEDIATELY
             const payload = JSON.parse(atob(newToken.split('.')[1]));
+            const fingerprint = payload.uid || payload.sub;
+            const localAvatar = await AvatarVault.getAvatar(fingerprint);
+
             const immediateUser = {
+                id: payload.uid,
                 sub: payload.sub,
-                email: payload.sub, // sub is email
+                email: payload.sub,
                 role: payload.role || 'member',
                 org_id: payload.org_id || null,
-                display_name: 'LOADING...',
-                hub_id: 'PENDING',
+                display_name: 'HYDRATING...',
+                hub_id: payload.hub_id || 'PENDING',
+                capabilities: payload.capabilities || {},
+                avatar: localAvatar
             };
-            setUser(immediateUser); // <-- Set NOW, before navigate() fires
+            setUser(immediateUser);
             
             // Step 3: Enrich with full profile in background
             fetch(endpoints.me, { headers: { Authorization: `Bearer ${newToken}` } })
                 .then(res => res.ok ? res.json() : null)
-                .then(data => { if (data) setUser(data); })
+                .then(async data => { 
+                    if (data) {
+                        const avatar = await AvatarVault.getAvatar(data.id || data.sub);
+                        setUser(prev => ({ ...prev, ...data, avatar }));
+                    }
+                })
                 .catch(() => {});
             
             return payload.role || 'member';
         } catch (err) {
-            console.error("JWT decode failed:", err);
+            console.error("Governance Handshake Failed:", err);
             return null;
         }
     };

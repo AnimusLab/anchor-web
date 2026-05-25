@@ -28,6 +28,8 @@ class MessageType(str, Enum):
     # Hub → Spoke: Acknowledgement (success or rejection)
     HUB_ACK           = "HUB_ACK"
     HUB_REJECT        = "HUB_REJECT"
+    # Hub → Spoke: Propagate governance state (v6.1 Institutional Persistence)
+    GOVERNANCE_UPDATE = "GOVERNANCE_UPDATE"
     # Either direction: Keepalive
     PING              = "PING"
     PONG              = "PONG"
@@ -96,6 +98,17 @@ class ForensicResponsePayload(BaseModel):
     entry_id:          str
     encrypted_payload: str   # Base64-encoded AES-256-GCM ciphertext
     nonce:             str   # Base64-encoded 96-bit GCM nonce
+
+class GovernanceUpdatePayload(BaseModel):
+    """
+    Hub → Spoke: Propagates a governance policy change or an active TGT.
+    """
+    update_type: str  # "TGT_ISSUED", "TGT_REVOKED", "POLICY_RELOAD"
+    request_id: Optional[str] = None
+    capability: Optional[str] = None
+    requester_id: Optional[str] = None
+    expires_at: Optional[str] = None
+    timestamp: str = ""
 
 
 class HubAckPayload(BaseModel):

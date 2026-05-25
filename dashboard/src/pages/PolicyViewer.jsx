@@ -1,67 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { endpoints } from '../lib/api';
 
 export default function PolicyViewer() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [activeFile, setActiveFile] = useState('constitution.anchor');
+  const [constitution, setConstitution] = useState('Loading governance manifest...');
 
-  const compiledConstitution = `type: manifest
-version: 5.0.4
-anchor_version: '>=5.0.0'
-name: Anchor Constitutional Root
-
-core_domains:
-  - path: domains/security.anchor
-    namespace: SEC
-    required: true
-    active: true
-  - path: domains/ethics.anchor
-    namespace: ETH
-    required: true
-    active: true
-  - path: domains/shared.anchor
-    namespace: SHR
-    required: true
-    active: true
-  - path: domains/alignment.anchor
-    namespace: ALN
-    required: true
-    active: true
-  - path: domains/agentic.anchor
-    namespace: AGT
-    required: true
-    active: true
-  - path: domains/privacy.anchor
-    namespace: PRV
-    required: true
-    active: true
-
-frameworks:
-  - path: frameworks/FINOS_Framework.anchor
-    namespace: FINOS
-    source: FINOS AI Governance Framework
-    active: true
-  - path: frameworks/OWASP_LLM.anchor
-    namespace: OWASP
-    source: OWASP LLM Top 10 2025
-    active: true
-
-regulators:
-  - path: government/RBI_Regulations.anchor
-    namespace: RBI
-    source: RBI FREE-AI Report August 2025
-    active: true
-  - path: government/EU_AI_Act.anchor
-    namespace: EU
-    source: EU AI Act 2024/1689
-    active: true
-
-policy:
-  path: policy.anchor
-  enforce_raise_only: true
-  allow_custom_rules: true
-  custom_rule_prefix: INTERNAL
-`;
+  useEffect(() => {
+    if (activeFile === 'constitution.anchor') {
+      fetch(`${endpoints.baseUrl}/api/governance/constitution`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(r => r.json())
+      .then(data => setConstitution(data.content || 'Error loading manifest.'))
+      .catch(() => setConstitution('Failed to connect to Governance Hub.'));
+    }
+  }, [activeFile, token]);
 
   const compiledPolicy = `# =============================================================================
 # POLICY — Project Policy
@@ -151,8 +106,8 @@ custom_rules:
             <span className="badge badge-purple">READ ONLY</span>
           </div>
           <div style={{ flex: 1, padding: 20, overflowY: 'auto', background: '#0D1117' }}>
-            <pre style={{ margin: 0, fontFamily: 'JetBrains Mono, monospace', fontSize: 14, color: '#C9D1D9', lineHeight: 1.6 }}>
-              {activeFile === 'constitution.anchor' ? compiledConstitution : compiledPolicy}
+            <pre style={{ margin: 0, fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: '#C9D1D9', lineHeight: 1.6 }}>
+              {activeFile === 'constitution.anchor' ? constitution : compiledPolicy}
             </pre>
           </div>
         </div>

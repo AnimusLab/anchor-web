@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PortalLayout from '../components/PortalLayout';
 import { useAuth } from '../contexts/AuthContext';
+import { translateToRegulatory } from '../lib/RegulatoryMapper';
 import { endpoints } from '../lib/api';
 import { useAuditLog } from '../hooks/useAuditLog';
 
@@ -44,7 +45,18 @@ export default function DecisionLedger() {
     try { meta = JSON.parse(entry.payload || '{}'); } catch(e) {}
 
     setVault({ ...entry, meta });
-    setTranslated(null);
+    
+    // Immediate local mapping to avoid generic "Translating..."
+    const localMap = translateToRegulatory(entry.action_type || 'unknown', dialect);
+    setTranslated({ 
+      translation: { 
+        "deterministic_mapping": localMap.clause,
+        "dialect": localMap.dialectName,
+        "status": "AWAITING_LIVE_VERIFICATION",
+        "timestamp": localMap.timestamp
+      } 
+    });
+
     log('VAULT_VIEW', { target_id: entry.entry_id, target_name: entry.project_name, detail: entry.is_compliant ? 'COMPLIANT' : 'VIOLATION' });
     
     // If it's a legacy record (or not decentralized), try the standard translation route

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { AvatarVault } from '../lib/AvatarVault';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -7,12 +8,15 @@ export default function Profile() {
   const [preview, setPreview] = useState(null);
   const [saved, setSaved]     = useState(false);
   const fileRef               = useRef(null);
-  const avatarKey             = `anchor_avatar_${user?.email || user?.sub}`;
+  const fingerprint           = user?.id || user?.sub;
 
   useEffect(() => {
-    const stored = localStorage.getItem(avatarKey);
-    if (stored) { setAvatar(stored); setPreview(stored); }
-  }, [avatarKey]);
+    if (fingerprint) {
+      AvatarVault.getAvatar(fingerprint).then(stored => {
+        if (stored) { setAvatar(stored); setPreview(stored); }
+      });
+    }
+  }, [fingerprint]);
 
   const handleFile = (e) => {
     const file = e.target.files?.[0];
@@ -22,18 +26,19 @@ export default function Profile() {
     reader.readAsDataURL(file);
   };
 
-  const saveAvatar = () => {
-    if (!preview) return;
-    localStorage.setItem(avatarKey, preview);
+  const saveAvatar = async () => {
+    if (!preview || !fingerprint) return;
+    await AvatarVault.saveAvatar(fingerprint, preview);
     setAvatar(preview);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-    // Notify EnterpriseLayout in same tab
+    // Notify layouts
     window.dispatchEvent(new CustomEvent('anchor_avatar_update', { detail: preview }));
   };
 
-  const removeAvatar = () => {
-    localStorage.removeItem(avatarKey);
+  const removeAvatar = async () => {
+    if (!fingerprint) return;
+    await AvatarVault.removeAvatar(fingerprint);
     setAvatar(null); setPreview(null);
     window.dispatchEvent(new CustomEvent('anchor_avatar_update', { detail: null }));
   };

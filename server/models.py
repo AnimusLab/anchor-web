@@ -33,8 +33,8 @@ class Organization(Base):
 # --- 3. HUB (The Spoke Node / Sovereign Silo) ---
 class Hub(Base):
     """
-    v5.8 Final ID Standard:
-    ID format: [ORG]-[REGION]-[UNIT] (e.g. JPMC-IN-MUM01)
+    Representing a Sovereign Hub (Enterprise Silo or Mesh Node).
+    Includes Governance Classification Taxonomy (v6.0).
     """
     __tablename__ = "hubs"
 
@@ -44,6 +44,13 @@ class Hub(Base):
     display_name   = Column(String, nullable=False)                 # "Mumbai Office"
     region         = Column(String, nullable=False)                  # "IN"
     unit           = Column(String, nullable=False)                  # "MUM01"
+    
+    # Governance Taxonomy (v6.0)
+    entity_type         = Column(String, default="ai_agent")         # ai_agent, codebase, gateway, mesh_node
+    visibility_class    = Column(String, default="INTERNAL")        # PUBLIC, INTERNAL, RESTRICTED
+    regulatory_visible  = Column(Boolean, default=True)
+    requires_escalation = Column(Boolean, default=False)
+
     is_active      = Column(Boolean, default=False)                 # Activation status
     created_at     = Column(String, nullable=False)
 
@@ -68,6 +75,15 @@ class EnterpriseUser(Base):
     status       = Column(String, default="pending")              # "pending", "approved"
     created_at   = Column(String, nullable=False)
 
+    # v6.1 Institutional Governance Identity
+    identity_subtype         = Column(String, nullable=True)      # INTERNAL_AUDITOR, LEAD_OWNER
+    jurisdiction_scope       = Column(String, nullable=True)      # "GLO", "RBI", "EU"
+    entity_visibility_scope  = Column(String, nullable=True)      # "ai_agent,decision_system"
+    governance_scope         = Column(String, nullable=True)      # "enterprise_wide", "hub_specific"
+    institutional_origin     = Column(String, nullable=True)      # Parent institution name
+    clearance_level          = Column(Integer, default=1)         # 1-4
+    delegation_rights        = Column(Boolean, default=False)
+
     organization = relationship("Organization", back_populates="enterprise_members")
 
 class RegulatoryOfficial(Base):
@@ -81,11 +97,22 @@ class RegulatoryOfficial(Base):
     org_id       = Column(String, ForeignKey("organizations.id")) 
     display_name = Column(String, nullable=False)
     role         = Column(String, default="regulator")
+    auditor_type = Column(String, default="HUB_AUDITOR")          # "HUB_AUDITOR", "CROSS_HUB_AUDITOR", "REGULATOR_AUDITOR"
+    assigned_hub_ids = Column(String, nullable=True)              # Comma-separated Hub IDs
     totp_secret  = Column(String, nullable=True)                  
     department   = Column(String, nullable=True)
     jurisdiction = Column(String, nullable=True)                  # Region code
     status       = Column(String, default="pending")
     created_at   = Column(String, nullable=False)
+
+    # v6.1 Institutional Governance Identity
+    identity_subtype         = Column(String, nullable=True)      # REGULATORY_AUDITOR, FORENSIC_OPERATOR
+    jurisdiction_scope       = Column(String, nullable=True)      # "RBI", "EU", "SEC"
+    entity_visibility_scope  = Column(String, nullable=True)      # "ai_agent,gateway"
+    governance_scope         = Column(String, nullable=True)      # "jurisdiction_wide"
+    institutional_origin     = Column(String, nullable=True)      # "RBI Central", "EU Oversight"
+    clearance_level          = Column(Integer, default=3)         # 1-4
+    delegation_rights        = Column(Boolean, default=True)
 
     organization = relationship("Organization", back_populates="regulatory_members")
 
@@ -100,18 +127,26 @@ class LedgerEntry(Base):
     chain_hash = Column(String)
     type       = Column(String, nullable=True)
     signature  = Column(String, nullable=True)
+    
+    # v6.1 Evidence Lineage fields
+    evidence_lineage = Column(Text, nullable=True) # JSON blob of ContinuityProof
+    evidence_classification = Column(String, default="operational") # operational, regulatory, forensic, sealed
 
     hub = relationship("Hub", back_populates="ledger_entries")
 
 class ForensicRequest(Base):
     __tablename__ = "forensic_requests"
     
-    id            = Column(String, primary_key=True)
-    auditor_id    = Column(String, nullable=False)
-    auditor_name  = Column(String, nullable=False)
-    hub_id        = Column(String, nullable=False)
-    status        = Column(String, default="PENDING")
-    created_at    = Column(String, nullable=False)
+    id              = Column(String, primary_key=True)
+    auditor_id      = Column(String, nullable=False)
+    auditor_name    = Column(String, nullable=False)
+    hub_id          = Column(String, nullable=False)
+    status          = Column(String, default="PENDING")
+    temporary_token = Column(String, nullable=True)
+    expires_at      = Column(String, nullable=True)
+    replayed_at     = Column(String, nullable=True)
+    replayed_by     = Column(String, nullable=True)
+    created_at      = Column(String, nullable=False)
 
 # --- 6. REGULATORY OVERSIGHT (Notices & Internal Audits) ---
 class EnforcementNotice(Base):
@@ -135,3 +170,64 @@ class AuditTrailEntry(Base):
     action       = Column(String, nullable=False)
     target_id    = Column(String, nullable=True) # ID of the Hub or Entry inspected
     timestamp    = Column(String, nullable=False)
+
+# --- 7. INSTITUTIONAL GOVERNANCE (v6.1 Activation & Intent) ---
+class GovernanceAccessRequest(Base):
+    """
+    Anchor v6.1: Institutional Access Control Model.
+    Moves 'Replay' and 'Export' from open features to governed privileges.
+    """
+    __tablename__ = "governance_access_requests"
+
+    id                    = Column(String, primary_key=True)
+    requester_id          = Column(String, nullable=False) # sub/id
+    requester_name        = Column(String, nullable=False) 
+    
+    # Intent & Purpose (Mandatory for institutional accountability)
+    purpose_classification = Column(String, nullable=False) # e.g., 'Forensic Audit', 'Incident Investigation'
+    investigation_reference = Column(String, nullable=True) 
+    justification          = Column(Text, nullable=False)
+    
+    # Scoping
+    requested_capability   = Column(String, nullable=False) # e.g., 'can_replay'
+    target_hub_id          = Column(String, nullable=False)
+    requested_duration_sec = Column(Integer, default=3600)
+    
+    # State Machine
+    status                 = Column(String, default="PENDING") # PENDING, APPROVED, DENIED, REVOKED, EXPIRED
+    approving_authority    = Column(String, nullable=True)
+    denial_reason          = Column(String, nullable=True)
+    revocation_reason      = Column(String, nullable=True)
+    
+    # Tokens & Lineage
+    temporary_token        = Column(String, nullable=True) # Short-lived session token
+    session_lineage_id     = Column(String, nullable=True) # Links multiple actions in one session
+    governance_v           = Column(String, default="6.1.1") # Constitutional version at time of request
+    
+    created_at             = Column(String, nullable=False)
+    expires_at             = Column(String, nullable=True)
+    activated_at           = Column(String, nullable=True)
+
+
+# --- 7. RUNTIME TOPOLOGY REGISTRY & AUDIT-OF-AUDITORS ACCESS LOGS ---
+class RuntimeRegistry(Base):
+    """Maps sovereign governance execution surfaces & namespaces."""
+    __tablename__ = "runtime_registry"
+    
+    id             = Column(String, primary_key=True)               # e.g., "WEALTH-AGENT-01"
+    hub_id         = Column(String, ForeignKey("hubs.id"))
+    policy_chain   = Column(String, nullable=False)                 # e.g., "FINANCE-STRICT"
+    dac_namespace  = Column(String, nullable=False)                 # e.g., "FINANCE"
+    relay_identity = Column(String, nullable=False)                 # e.g., "LOCAL-SOVEREIGN"
+    created_at     = Column(String, nullable=False)
+
+
+class ReplayAccessLog(Base):
+    """Seals forensic pull events into a replayable, tamper-proof DAC log."""
+    __tablename__ = "replay_access_log"
+    
+    id          = Column(String, primary_key=True)                 # "acc_..."
+    pull_id     = Column(String, ForeignKey("forensic_requests.id"))
+    accessed_by = Column(String, nullable=False)                   # Auditor ID
+    accessed_at = Column(String, nullable=False)
+    chain_hash  = Column(String, nullable=False)                   # Seals the event into the DAC

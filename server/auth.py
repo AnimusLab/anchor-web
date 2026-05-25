@@ -26,6 +26,7 @@ from mail import (
     send_approval_notification, 
     send_admin_access_code
 )
+from governance.registry_engine import compile_governance_profile
 
 # =============================================================================
 # Router & Security Setup
@@ -137,14 +138,66 @@ def generate_company_abbr(company_name: str) -> str:
     words = clean_name.split()
     return "".join(w[0] for w in words[:4])
 
-def _issue_jwt(user):
+def _issue_jwt(user, is_provisional=False):
+    """
+    Anchor Governance Token (v6.1)
+    Capabilities are now compiled FROM the formal Governance Registry.
+    This ensures that token rights are derived from institutional ontology.
+    """
     exp = datetime.utcnow() + timedelta(days=1)
-    return jwt.encode({
-        "sub": user.email, 
-        "role": user.role, 
-        "org_id": user.org_id, 
+    
+    # 1. Base identity
+    payload = {
+        "sub": user.email,
+        "uid": user.id,
+        "role": user.role,
+        "org_id": user.org_id,
         "exp": exp
-    }, ANCHOR_MASTER_KEY, algorithm="HS256")
+    }
+
+    # v6.1 Institutional Identity Characteristics
+    subtype = getattr(user, "identity_subtype", None)
+    jurisdiction_scope = getattr(user, "jurisdiction_scope", "GLO")
+    entity_scope = getattr(user, "entity_visibility_scope", None)
+    clearance = getattr(user, "clearance_level", 1)
+
+    payload.update({
+        "subtype": subtype,
+        "jurisdiction_scope": jurisdiction_scope,
+        "entity_scope": entity_scope,
+        "institutional_origin": getattr(user, "institutional_origin", None),
+        "clearance_level": clearance
+    })
+
+    # 2. Institutional Governance Compilation
+    user_jurisdiction = getattr(user, "jurisdiction", "GLOBAL")
+    
+    # The compiler derives effective capabilities from role + context
+    # Note: Returning a tuple of (capabilities, inferred_entity_scope)
+    compiled_caps = compile_governance_profile(user.role, user_jurisdiction)
+    
+    # Inject metadata & ephemeral state
+    compiled_caps.update({
+        "jurisdiction": user_jurisdiction,
+        "is_provisional": is_provisional,
+        "visibility": "ORG_WIDE" if user.role in ["owner", "admin"] else "HUB_ONLY"
+    })
+
+    payload["capabilities"] = compiled_caps
+    
+    # Final Visibility Boundary (v6.1)
+    # If entity_scope is explicitly set on user, use it. 
+    # Otherwise, rely on the compiler's derivation for that identity type.
+    if not payload.get("entity_scope"):
+        # Default scope derivation based on role
+        if user.role == "regulator":
+            payload["entity_scope"] = "ai_agent,gateway"
+        elif user.role == "root":
+            payload["entity_scope"] = "ai_agent,gateway,mesh_node,codebase"
+        else:
+            payload["entity_scope"] = "ai_agent,gateway,mesh_node"
+
+    return jwt.encode(payload, ANCHOR_MASTER_KEY, algorithm="HS256")
 
 # =============================================================================
 # Final ID Standard Generators (v5.8)
@@ -332,7 +385,7 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
         raise HTTPException(status_code=401, detail="SECURITY NOT PROVISIONED")
     
     totp = pyotp.TOTP(user.totp_secret)
-    if request.totp_code != "999999" and not totp.verify(request.totp_code, valid_window=1):
+    if not totp.verify(request.totp_code, valid_window=1):
         raise HTTPException(status_code=401, detail="INVALID CODE")
         
     exp = datetime.utcnow() + timedelta(days=1)
@@ -340,17 +393,8 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
     
     if is_oversight:
         session_id = secrets.token_hex(8)
-        # Standard oversight JWT claims format
-        token = jwt.encode({
-            "sub":          user.id,             # Clearance ID
-            "name":         user.display_name,
-            "regulator":    user.department or "Oversight",
-            "access_level": "READ_ONLY",
-            "session_id":   session_id,
-            "role":         "regulator",
-            "portal":       "oversight",
-            "exp":          exp,
-        }, ANCHOR_MASTER_KEY, algorithm="HS256")
+        # Anchor v6: Scoped Governance Token
+        token = _issue_jwt(user, is_provisional=True)
         
         return {
             "status":       "AUTHENTICATED",
@@ -360,11 +404,22 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
             "display_name": user.display_name,
             "regulator":    user.department or "Oversight",
             "session_id":   session_id,
+            "capabilities": jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"]).get("capabilities"),
             "expires_in":   24 * 3600,
         }
     else:
-        token = jwt.encode({"sub": user.email, "role": user.role, "org_id": user.org_id, "hub_id": user.hub_id, "exp": exp}, ANCHOR_MASTER_KEY, algorithm="HS256")
-        return {"access_token": token, "token_type": "bearer", "user": {"id": user.id, "email": user.email, "role": user.role, "org_id": user.org_id}}
+        token = _issue_jwt(user, is_provisional=True)
+        return {
+            "access_token": token, 
+            "token_type": "bearer", 
+            "user": {
+                "id": user.id, 
+                "email": user.email, 
+                "role": user.role, 
+                "org_id": user.org_id,
+                "capabilities": jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"]).get("capabilities")
+            }
+        }
 
 # =============================================================================
 # Public Routes

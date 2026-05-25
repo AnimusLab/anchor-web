@@ -23,6 +23,10 @@ const Icon = {
   users:    <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>,
   document: <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd"/></svg>,
   download: <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd"/></svg>,
+  cpu:      <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H9V3a1 1 0 00-2 0v1H6V3a1 1 0 00-1-1zm1 5v2h6V7H7zm6 4H7v2h6v-2z" clipRule="evenodd"/></svg>,
+  scroll:   <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M2 3a1 1 0 011-1h10a1 1 0 011 1v1a1 1 0 001 1h2a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm2 2v10h12V7h-2a2 2 0 01-2-2H4z" clipRule="evenodd"/></svg>,
+  graph:    <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 11.586 14.586 8H12z" clipRule="evenodd"/></svg>,
+  key:      <svg viewBox="0 0 20 20" fill="currentColor" className="icon"><path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clipRule="evenodd"/></svg>,
 };
 
 const NAV = [
@@ -30,6 +34,7 @@ const NAV = [
     section: 'OPERATIONS',
     items: [
       { label: 'Overview',          icon: Icon.overview, path: '/dashboard' },
+      { label: 'Runtime Interceptor', icon: Icon.cpu,     path: '/runtimes' },
       { label: 'Project Inventory', icon: Icon.lattice,  path: '/projects' },
       { label: 'Lattice Mesh',      icon: Icon.lattice,  path: '/mesh' },
     ]
@@ -39,14 +44,17 @@ const NAV = [
     items: [
       { label: 'Violation Feed',    icon: Icon.vault,    path: '/violations' },
       { label: 'Forensic Queue',    icon: Icon.audit,    path: '/forensic' },
+      { label: 'Constitution Editor', icon: Icon.scroll,  path: '/constitution' },
+      { label: 'Governance Flows',  icon: Icon.graph,    path: '/diagrams' },
+      { label: 'Cryptographic Replay', icon: Icon.key,    path: '/replay', capability: 'can_replay' },
       { label: 'Policy Viewer',     icon: Icon.document, path: '/policy' },
-      { label: 'Reports & Export',  icon: Icon.download, path: '/reports' },
+      { label: 'Reports & Export',  icon: Icon.download, path: '/reports', capability: 'can_export' },
     ]
   },
   {
     section: 'ADMINISTRATION',
     items: [
-      { label: 'Team Management',   icon: Icon.users,    path: '/team' },
+      { label: 'Team Management',   icon: Icon.users,    path: '/team', role: ['owner', 'admin'] },
       { label: 'My Profile',        icon: Icon.profile,  path: '/profile' },
     ]
   },
@@ -56,19 +64,15 @@ export default function EnterpriseLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [avatar, setAvatar] = useState(null);
+  const [avatar, setAvatar] = useState(user?.avatar || null);
 
   const orgId = user?.org_id || 'PENDING_ORG';
   const clearanceId = user?.sub || 'PENDING_ID';
   const hubId = user?.hub_id || 'PENDING_HUB';
 
   useEffect(() => {
-    const key = `anchor_avatar_${user?.email || user?.sub}`;
-    if (user?.email || user?.sub) {
-      const stored = localStorage.getItem(key);
-      if (stored) setAvatar(stored);
-    }
-  }, [user?.email, user?.sub]);
+    if (user?.avatar) setAvatar(user.avatar);
+  }, [user?.avatar]);
 
   useEffect(() => {
     const handler = (e) => { if (e.key?.startsWith('anchor_avatar_')) setAvatar(e.newValue); };
@@ -107,21 +111,30 @@ export default function EnterpriseLayout({ children }) {
 
         {/* Navigation */}
         <nav style={{ flex: 1, padding: '4px 8px 20px' }}>
-          {NAV.map(group => (
-            <div key={group.section}>
-              <div className="section-label">{group.section}</div>
-              {group.items.map(item => (
-                <div
-                  key={item.path}
-                  className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
-                  onClick={() => navigate(item.path)}
-                >
-                  {item.icon}
-                  {item.label}
-                </div>
-              ))}
-            </div>
-          ))}
+          {NAV.map(group => {
+            const visibleItems = group.items.filter(item => {
+              if (item.capability && !user?.capabilities?.[item.capability]) return false;
+              if (item.role && !item.role.includes(user?.role)) return false;
+              return true;
+            });
+            if (visibleItems.length === 0) return null;
+
+            return (
+              <div key={group.section}>
+                <div className="section-label">{group.section}</div>
+                {visibleItems.map(item => (
+                  <div
+                    key={item.path}
+                    className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
+                    onClick={() => navigate(item.path)}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+            )
+          })}
         </nav>
 
         {/* Sidebar Footer */}

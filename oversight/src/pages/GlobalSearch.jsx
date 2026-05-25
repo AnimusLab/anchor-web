@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import PortalLayout from '../components/PortalLayout';
 import { useAuth } from '../contexts/AuthContext';
+import { translateToRegulatory } from '../lib/RegulatoryMapper';
 import { endpoints } from '../lib/api';
 
 export default function GlobalSearch() {
@@ -32,7 +33,19 @@ export default function GlobalSearch() {
   useEffect(() => { inputRef.current?.focus(); }, []);
 
   const openVault = async (entry) => {
-    setVault(entry); setTranslated(null);
+    setVault(entry); 
+    
+    // Immediate local mapping to avoid generic "Translating..."
+    const localMap = translateToRegulatory(entry.action_type || 'unknown', dialect);
+    setTranslated({ 
+      translation: { 
+        "deterministic_mapping": localMap.clause,
+        "dialect": localMap.dialectName,
+        "status": "AWAITING_LIVE_VERIFICATION",
+        "timestamp": localMap.timestamp
+      } 
+    });
+
     try {
       const r = await fetch(`${endpoints.baseUrl}/api/audit/${entry.entity_id}/entry/${entry.entry_id}?dialect=${dialect}`, { headers: { Authorization: `Bearer ${token}` } });
       setTranslated(await r.json());

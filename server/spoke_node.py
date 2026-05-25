@@ -195,6 +195,12 @@ async def relay_loop():
                         )
                         await handle_forensic_pull(ws, pull)
 
+                    elif msg.type == MessageType.GOVERNANCE_UPDATE:
+                        logger.info("[RELAY] GOVERNANCE_UPDATE received: %s", msg.payload.get("update_type"))
+                        # In Phase 4, we simply log the propagation. 
+                        # In Phase 5+, this will update local enforcement caches.
+                        pass
+
                     elif msg.type == MessageType.PING:
                         pong = RelayMessage(type=MessageType.PONG, hub_id=HUB_ID)
                         await ws.send(pong.to_json())

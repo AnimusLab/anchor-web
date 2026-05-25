@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import PortalLayout from '../components/PortalLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { endpoints } from '../lib/api';
+import { translateToRegulatory } from '../lib/RegulatoryMapper';
 
 const V = {
   primary: 'var(--text-primary)', secondary: 'var(--text-secondary)',
@@ -81,10 +82,23 @@ export default function Dashboard() {
   }, [active, token]);
 
   const openVault = async (entry) => {
-    setVault(entry); setTranslated(null);
+    setVault(entry); 
+    
+    // Immediate local mapping to avoid generic "Translating..."
+    const localMap = translateToRegulatory(entry.action_type || 'unknown', dialect);
+    setTranslated({ 
+      translation: { 
+        "deterministic_mapping": localMap.clause,
+        "dialect": localMap.dialectName,
+        "status": "AWAITING_LIVE_VERIFICATION",
+        "timestamp": localMap.timestamp
+      } 
+    });
+
     try {
       const r = await fetch(`${endpoints.baseUrl}/api/audit/${active.id}/entry/${entry.entry_id}?dialect=${dialect}`, { headers: { Authorization: `Bearer ${token}` } });
-      setTranslated(await r.json());
+      const data = await r.json();
+      setTranslated(data);
     } catch (e) { console.error(e); }
   };
 

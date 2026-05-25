@@ -1,0 +1,37 @@
+type: manifest
+version: 6.0.1
+anchor_version: '>=6.0.0'
+name: Anchor Constitutional Root (Sovereign Edition)
+status: SEALED
+hash: 0x8f3c...f2e1
+signed_by: anchor-root-authority
+
+core_domains:
+  - path: domains/security.anchor
+    namespace: SEC
+    required: true
+    active: true
+  - path: domains/ethics.anchor
+    namespace: ETH
+    required: true
+    active: true
+  - path: domains/privacy.anchor
+    namespace: PRV
+    required: true
+    active: true
+
+frameworks:
+  - path: frameworks/FINOS_Framework.anchor
+    namespace: FINOS
+    active: true
+  - path: frameworks/OWASP_LLM.anchor
+    namespace: OWASP
+    active: true
+
+regulators:
+  - path: government/RBI_Regulations.anchor
+    namespace: RBI
+    active: true
+  - path: government/SEC_Regulations.anchor
+    namespace: SEC
+    active: true
