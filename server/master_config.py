@@ -166,17 +166,18 @@ def provision_auditor(
     jurisdiction: str = "GLO",
     access_level: str = "READ_ONLY",
     provisioned_by: str = "root",
+    identity_subtype: str = "standard_auditor",
+    provisioned_capabilities: str = "",
 ) -> dict:
     """
-    Provisions a new auditor. Generates entity_id + TOTP secret.
-    Returns the full auditor record INCLUDING the raw TOTP secret
-    (shown once to admin for QR code display, then never again).
+    Provisions a new auditor (Anchor v6.2). 
+    Generates entity_id + TOTP secret.
     """
     import pyotp  # lazy import — not needed at server startup
 
     config     = load_config()
     entity_id  = generate_entity_id(display_name, regulator, config)
-    raw_secret = pyotp.random_base32()   # TOTP secret — shown once, not stored raw
+    raw_secret = pyotp.random_base32()
 
     record = {
         "entity_id":      entity_id,
@@ -185,12 +186,16 @@ def provision_auditor(
         "regulator":      regulator.upper(),
         "jurisdiction":   jurisdiction.upper(),
         "access_level":   access_level,
-        "totp_secret":    raw_secret,    # encrypted implicitly by save_config
+        "totp_secret":    raw_secret,
         "provisioned_at": _now(),
         "provisioned_by": provisioned_by,
         "status":         "ACTIVE",
         "last_login":     None,
         "session_count":  0,
+        
+        # v6.2 Institutional Extensions
+        "identity_subtype":         identity_subtype,
+        "provisioned_capabilities": provisioned_capabilities
     }
 
     config["auditors"][entity_id] = record

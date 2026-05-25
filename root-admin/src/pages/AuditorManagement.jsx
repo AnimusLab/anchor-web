@@ -26,11 +26,12 @@ export default function AuditorManagement() {
     department: '', 
     jurisdiction: 'India',
     
-    // v6.1 Institutional Governance Defaults
-    identity_subtype: 'REGULATORY_AUDITOR',
+    // v6.2 Institutional Governance Defaults
+    identity_subtype: 'government_auditor',
+    provisioned_capabilities: 'can_replay,can_export',
     entity_visibility_scope: 'ai_agent,gateway',
     governance_scope: 'jurisdiction_wide',
-    clearance_level: 3
+    clearance_level: 1 // DEPRECATED
   });
 
   const handleProvision = async () => {
@@ -140,28 +141,25 @@ export default function AuditorManagement() {
               />
             </Field>
 
-            {/* v6.1 Institutional Governance Fields */}
+            {/* v6.2 Institutional Governance Fields */}
             <div style={{ padding: '16px 0 0 0', borderTop: '1px solid var(--border)', marginTop: 10 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--amber-soft)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                Governance Architecture (v6.1 Patch)
+                Governance Architecture (v6.2 Institutional)
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <Field label="Identity Subtype">
                   <select className="ra-select" value={form.identity_subtype} onChange={e => setForm({ ...form, identity_subtype: e.target.value })}>
-                    <option value="REGULATORY_AUDITOR">REGULATORY_AUDITOR</option>
-                    <option value="FORENSIC_OPERATOR">FORENSIC_OPERATOR</option>
-                    <option value="POLICY_ENFORCER">POLICY_ENFORCER</option>
+                    <option value="government_auditor">Government Auditor</option>
+                    <option value="standard_auditor">Standard Auditor</option>
+                    <option value="cross_hub_auditor">Cross-Hub Auditor</option>
                   </select>
                 </Field>
 
-                <Field label="Clearance Level">
-                  <select className="ra-select" value={form.clearance_level} onChange={e => setForm({ ...form, clearance_level: parseInt(e.target.value) })}>
-                    <option value={1}>L1: Observations</option>
-                    <option value={2}>L2: Restricted Audit</option>
-                    <option value={3}>L3: Forensic Access</option>
-                    <option value={4}>L4: Sovereign Root</option>
-                  </select>
+                <Field label="Capability Overrides (CSV)">
+                  <input className="ra-input" placeholder="can_replay, can_export"
+                    value={form.provisioned_capabilities}
+                    onChange={e => setForm({ ...form, provisioned_capabilities: e.target.value })} />
                 </Field>
               </div>
 

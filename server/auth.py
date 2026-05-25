@@ -15,6 +15,7 @@ import pyotp
 import qrcode
 import base64
 from io import BytesIO
+from typing import List, Dict, Optional, Any
 from database import get_db, SessionLocal
 from models import EnterpriseUser, RegulatoryOfficial, Organization, Hub, WhitelistEntry
 from security import encrypt_secret
@@ -116,6 +117,24 @@ def get_current_admin_user(user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="ROOT CLEARANCE REQUIRED")
     return user
 
+def require_subtypes(allowed_subtypes: List[str]):
+    """
+    Subtype Guard (Anchor v6.2).
+    Enforces that the current user has one of the allowed institutional subtypes.
+    """
+    def subtype_checker(user: dict = Depends(get_current_user)):
+        user_subtype = user.get("subtype")
+        if not user_subtype or user_subtype not in allowed_subtypes:
+            # Root always bypasses institutional subtype checks
+            if user.get("role") == "root":
+                return user
+            raise HTTPException(
+                status_code=403, 
+                detail=f"INSTITUTIONAL_ACCESS_DENIED: Required one of {allowed_subtypes}. Found: {user_subtype}"
+            )
+        return user
+    return subtype_checker
+
 # =============================================================================
 # Utility Helpers
 # =============================================================================
@@ -169,12 +188,26 @@ def _issue_jwt(user, is_provisional=False):
         "clearance_level": clearance
     })
 
-    # 2. Institutional Governance Compilation
+    # 2. Institutional Governance Compilation (Anchor v6.2)
     user_jurisdiction = getattr(user, "jurisdiction", "GLOBAL")
+    raw_overrides = getattr(user, "provisioned_capabilities", "")
     
-    # The compiler derives effective capabilities from role + context
-    # Note: Returning a tuple of (capabilities, inferred_entity_scope)
-    compiled_caps = compile_governance_profile(user.role, user_jurisdiction)
+    # Parse structured capability manifest (v6.2 supports JSON or CSV)
+    capability_manifest = []
+    if raw_overrides:
+        try:
+            import json
+            capability_manifest = json.loads(raw_overrides)
+        except:
+            # Fallback to simple CSV list
+            capability_manifest = raw_overrides
+    
+    # The compiler derives effective capabilities from identity subtype + overrides
+    compiled_caps = compile_governance_profile(
+        role=user.role, 
+        subtype=subtype, 
+        overrides=capability_manifest
+    )
     
     # Inject metadata & ephemeral state
     compiled_caps.update({
@@ -269,16 +302,22 @@ class AdminAccessRequest(BaseModel):
 class AuditorProvisionRequest(BaseModel):
     display_name: str
     email: str
-    jurisdiction: str
+    regulator: str
     department: str
+    jurisdiction: str
+    identity_subtype: str = "government_auditor"
+    provisioned_capabilities: str = "can_replay,can_export"
+    entity_visibility_scope: str = "ai_agent,gateway"
+    governance_scope: str = "jurisdiction_wide"
+    clearance_level: int = 1
 
 class EnterpriseProvisionRequest(BaseModel):
     display_name: str
     email: str
     company_name: str
     region: str
-    city: str # New geographic field
-    department: str
+    city: str = "Mumbai"
+    department: str = "EXECUTIVE"
 
 # =============================================================================
 # Identity Logic (FORENSIC VERSION)
@@ -520,6 +559,149 @@ def list_pending_approvals(current_admin: dict = Depends(get_current_admin_user)
         })
         
     return results
+
+@auth_router.post("/admin/provision/auditor")
+def admin_provision_auditor(
+    body: AuditorProvisionRequest, 
+    current_admin: dict = Depends(get_current_admin_user), 
+    db: Session = Depends(get_db)
+):
+    """
+    [ROOT ADMIN ONLY] Direct Provisioning of a Regulatory Official (Anchor v6.2).
+    """
+    # 1. Deduplicate
+    official = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.email == body.email.strip().lower()).first()
+    if official:
+        raise HTTPException(status_code=400, detail="OFFICIAL_ALREADY_EXISTS")
+    
+    # 2. Find/Create Regulator Org
+    agency_id = body.regulator.strip().upper()
+    org = db.query(Organization).filter(Organization.id == agency_id.lower()).first()
+    if not org:
+        org = Organization(
+            id=agency_id.lower(),
+            display_name=agency_id,
+            domain=f"{agency_id.lower()}.gov",
+            region=body.jurisdiction,
+            org_type="regulator",
+            status="approved",
+            created_at=datetime.utcnow().isoformat()
+        )
+        db.add(org)
+        db.flush()
+
+    # 3. Provision with Institutional Metadata
+    clearance_id = _generate_clearance_id("auditor", org.id, body.jurisdiction)
+    totp_secret = pyotp.random_base32()
+
+    new_official = RegulatoryOfficial(
+        id=clearance_id,
+        org_id=org.id,
+        display_name=body.display_name,
+        email=body.email.strip().lower(),
+        role="regulator",
+        department=body.department or "ENFORCEMENT",
+        jurisdiction=body.jurisdiction,
+        totp_secret=totp_secret,
+        status="approved", 
+        created_at=datetime.utcnow().isoformat(),
+        
+        # v6.1+ Institutional Fields
+        identity_subtype=body.identity_subtype,
+        provisioned_capabilities=body.provisioned_capabilities,
+        entity_visibility_scope=body.entity_visibility_scope,
+        governance_scope=body.governance_scope,
+        jurisdiction_scope=body.jurisdiction,
+        institutional_origin=agency_id,
+        clearance_level=body.clearance_level,
+        delegation_rights=True if body.clearance_level >= 3 else False
+    )
+
+    db.add(new_official)
+    db.commit()
+
+    return {
+        "status": "SUCCESS",
+        "entity_id": clearance_id,
+        "totp_secret": totp_secret
+    }
+
+@auth_router.post("/admin/provision/enterprise")
+def admin_provision_enterprise(
+    body: EnterpriseProvisionRequest, 
+    current_admin: dict = Depends(get_current_admin_user), 
+    db: Session = Depends(get_db)
+):
+    """
+    [ROOT ADMIN ONLY] Direct Provisioning of a Corporate Enterprise Node.
+    """
+    try:
+        email = body.email.strip().lower()
+        region = body.region.strip().upper()[:2]
+        domain = email.split('@')[-1]
+        
+        org_id_base = body.company_name.lower().replace(" ", "")
+        org = db.query(Organization).filter(Organization.id == org_id_base).first()
+        if not org:
+            org = Organization(
+                id=org_id_base,
+                display_name=body.company_name,
+                domain=domain,
+                region=region,
+                status="approved",
+                created_at=datetime.utcnow().isoformat()
+            )
+            db.add(org)
+            db.flush()
+            
+            from models import Hub
+            city_code = body.city[:3].upper()
+            sequence = db.query(Hub).filter(Hub.org_id == org.id).count() + 1
+            hub_unit = f"{city_code}{sequence:02d}"
+            
+            final_hub_id = _generate_hub_id(body.company_name, region, hub_unit)
+            new_hub = Hub(
+                id=final_hub_id,
+                org_id=org.id,
+                regional_key=secrets.token_urlsafe(32), 
+                display_name=f"{body.company_name} {body.city} Branch",
+                region=region,
+                unit=hub_unit,
+                is_active=True,
+                created_at=datetime.utcnow().isoformat()
+            )
+            db.add(new_hub)
+            db.flush()
+        
+        clearance_id = _generate_clearance_id(role="owner", company_name=body.company_name, city=body.city)
+        totp_secret = pyotp.random_base32()
+        
+        final_hub_id = db.query(Hub).filter(Hub.org_id == org.id).first().id
+        
+        new_user = EnterpriseUser(
+            id=clearance_id,
+            email=email,
+            display_name=body.display_name,
+            role="owner",
+            org_id=org.id,
+            hub_id=final_hub_id,
+            department=body.department,
+            totp_secret=totp_secret,
+            status="approved",
+            created_at=datetime.utcnow().isoformat()
+        )
+        db.add(new_user)
+        db.commit()
+        
+        return {
+            "status": "SUCCESS",
+            "entity_id": clearance_id,
+            "hub_id": final_hub_id,
+            "totp_secret": totp_secret
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @auth_router.post("/approve")
 def approve_user(target_entity_id: str = Form(...), current_admin: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):

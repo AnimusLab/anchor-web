@@ -75,13 +75,14 @@ class EnterpriseUser(Base):
     status       = Column(String, default="pending")              # "pending", "approved"
     created_at   = Column(String, nullable=False)
 
-    # v6.1 Institutional Governance Identity
-    identity_subtype         = Column(String, nullable=True)      # INTERNAL_AUDITOR, LEAD_OWNER
+    # v6.1 Institutional Governance Identity (Anchor v6.2 Refinements)
+    identity_subtype         = Column(String, nullable=True)      # government_auditor, standard_auditor, cross_hub_auditor
+    provisioned_capabilities = Column(String, nullable=True)      # Comma-separated: can_export, can_replay, etc.
     jurisdiction_scope       = Column(String, nullable=True)      # "GLO", "RBI", "EU"
-    entity_visibility_scope  = Column(String, nullable=True)      # "ai_agent,decision_system"
-    governance_scope         = Column(String, nullable=True)      # "enterprise_wide", "hub_specific"
+    entity_visibility_scope  = Column(String, nullable=True)      # "ai_agent,gateway"
+    governance_scope         = Column(String, nullable=True)      # "jurisdiction_wide", "hub_specific"
     institutional_origin     = Column(String, nullable=True)      # Parent institution name
-    clearance_level          = Column(Integer, default=1)         # 1-4
+    clearance_level          = Column(Integer, default=1)         # [DEPRECATED in v6.2]
     delegation_rights        = Column(Boolean, default=False)
 
     organization = relationship("Organization", back_populates="enterprise_members")
@@ -105,13 +106,14 @@ class RegulatoryOfficial(Base):
     status       = Column(String, default="pending")
     created_at   = Column(String, nullable=False)
 
-    # v6.1 Institutional Governance Identity
-    identity_subtype         = Column(String, nullable=True)      # REGULATORY_AUDITOR, FORENSIC_OPERATOR
+    # v6.1 Institutional Governance Identity (Anchor v6.2 Refinements)
+    identity_subtype         = Column(String, nullable=True)      # government_auditor, standard_auditor, cross_hub_auditor
+    provisioned_capabilities = Column(String, nullable=True)      # JSON Manifest or CSV: {"capability": "can_replay", "expires_at": "...", "reason": "..."}
     jurisdiction_scope       = Column(String, nullable=True)      # "RBI", "EU", "SEC"
     entity_visibility_scope  = Column(String, nullable=True)      # "ai_agent,gateway"
     governance_scope         = Column(String, nullable=True)      # "jurisdiction_wide"
     institutional_origin     = Column(String, nullable=True)      # "RBI Central", "EU Oversight"
-    clearance_level          = Column(Integer, default=3)         # 1-4
+    clearance_level          = Column(Integer, default=3)         # [DEPRECATED in v6.2]
     delegation_rights        = Column(Boolean, default=True)
 
     organization = relationship("Organization", back_populates="regulatory_members")

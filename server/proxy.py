@@ -39,7 +39,10 @@ from database import get_db, init_db, SessionLocal
 from models import Hub, LedgerEntry, EnterpriseUser, RegulatoryOfficial, Organization, ForensicRequest, WhitelistEntry, ReplayAccessLog, RuntimeRegistry
 from security import encrypt_secret, decrypt_secret
 from dispatch_manager import dispatch_webhook
-from auth import auth_router, get_current_user, get_current_admin_user, ANCHOR_MASTER_KEY
+from auth import (
+    auth_router, get_current_user, get_current_admin_user, 
+    require_subtypes, ANCHOR_MASTER_KEY
+)
 from oversight_auth import oversight_router
 from governance import gov_router, seal_artifact, initialize_governance_engine
 
@@ -620,15 +623,12 @@ class ForensicRequestCreate(BaseModel):
 @app.post("/api/forensic/request")
 async def create_forensic_request(
     body: ForensicRequestCreate,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_subtypes(["government_auditor", "standard_auditor", "cross_hub_auditor"])),
     db: Session = Depends(get_db)
 ):
     """
-    Filing a new forensic pull request by an authorized auditor.
+    Filing a new forensic pull request by an authorized auditor (v6.2 Institutional).
     """
-    if current_user.get("role") not in ("admin", "regulator", "auditor"):
-        raise HTTPException(status_code=403, detail="AUDITOR OR REGULATOR PRIVILEGES REQUIRED")
-        
     auditor_id = current_user.get("sub")
     # Fetch auditor info
     official = db.query(RegulatoryOfficial).filter((RegulatoryOfficial.id == auditor_id) | (RegulatoryOfficial.email == auditor_id)).first()
@@ -956,28 +956,27 @@ def _enforce_tenant_scope(current_user: dict, db: Session, hub_id: str = None):
     # 2. Check if the user is a Regulatory Official
     official = db.query(RegulatoryOfficial).filter((RegulatoryOfficial.id == sub) | (RegulatoryOfficial.email == sub)).first()
     if official:
-        aud_type = official.auditor_type or "HUB_AUDITOR"
+        # Use Identity Subtype for v6.2 (Fallback to aud_type for migration)
+        subtype = official.identity_subtype or official.auditor_type or "standard_auditor"
         
         # Base filter for regulators: Only see what is marked as regulatory_visible
         reg_base_query = db.query(Hub).filter(Hub.regulatory_visible == True)
         
-        # v6.1 Institutional Scope Enforcement
-        # Priority: explicit entity_visibility_scope > hardcoded defaults
+        # v6.1+ Institutional Scope Enforcement
         if official.entity_visibility_scope:
             allowed_types = [t.strip() for t in official.entity_visibility_scope.split(",") if t.strip()]
         else:
-            # Default institutional scope for legacy accounts
             allowed_types = ["ai_agent", "gateway", "mesh_node"]
             
         reg_base_query = reg_base_query.filter(Hub.entity_type.in_(allowed_types))
 
-        if aud_type == "HUB_AUDITOR":
+        # standard_auditor: isolated to specific hubs
+        if subtype in ["standard_auditor", "HUB_AUDITOR"]:
             assigned_str = official.assigned_hub_ids or ""
             assigned_ids = [h.strip() for h in assigned_str.split(",") if h.strip()]
             if not assigned_ids:
-                raise HTTPException(status_code=403, detail="HUB_AUDITOR has no assigned hubs.")
+                raise HTTPException(status_code=403, detail="STANDARD_AUDITOR has no assigned hubs.")
             
-            # Filter assigned IDs by regulatory visibility
             visible_hubs = reg_base_query.filter(Hub.id.in_(assigned_ids)).all()
             visible_ids = [h.id for h in visible_hubs]
 
@@ -988,24 +987,26 @@ def _enforce_tenant_scope(current_user: dict, db: Session, hub_id: str = None):
                     raise HTTPException(status_code=403, detail="RESTRICTED: Hub is either not assigned or visibility is restricted.")
             return visible_ids
             
-        elif aud_type == "CROSS_HUB_AUDITOR":
+        # cross_hub_auditor: sees everything in their own organization/agency
+        elif subtype in ["cross_hub_auditor", "CROSS_HUB_AUDITOR"]:
             org_hubs = reg_base_query.filter(Hub.org_id == official.org_id).all()
             org_hub_ids = [h.id for h in org_hubs]
             if not org_hub_ids:
-                raise HTTPException(status_code=403, detail="CROSS_HUB_AUDITOR has no visible hubs in this organization.")
+                raise HTTPException(status_code=403, detail="CROSS_HUB_AUDITOR has no visible hubs.")
             if hub_id:
                 if hub_id in org_hub_ids:
                     return hub_id
                 else:
-                    raise HTTPException(status_code=403, detail="RESTRICTED: Visibility restricted for this entity.")
+                    raise HTTPException(status_code=403, detail="RESTRICTED: Visibility restricted.")
             return org_hub_ids
             
-        elif aud_type == "REGULATOR_AUDITOR":
+        # government_auditor: Sees everything in their jurisdiction across all orgs
+        elif subtype in ["government_auditor", "REGULATOR_AUDITOR"]:
             juris = official.jurisdiction or "GL"
             juris_hubs = reg_base_query.filter(Hub.region == juris).all()
             juris_hub_ids = [h.id for h in juris_hubs]
             if not juris_hub_ids:
-                raise HTTPException(status_code=403, detail=f"No visible hubs found in jurisdiction: {juris}")
+                raise HTTPException(status_code=403, detail=f"No visible hubs in jurisdiction: {juris}")
             if hub_id:
                 if hub_id in juris_hub_ids:
                     return hub_id

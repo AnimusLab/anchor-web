@@ -74,22 +74,46 @@ anchor/
 
 ## 03. Repo: `anchor-web` (Sovereign Mesh)
 
+### v6.2 Institutional Identity Infrastructure
+Anchor v6.2 pivots from a hierarchical clearance model to a deterministic **Institutional Identity** model. This ensures that governance authority is derived from operational reality rather than "security levels."
+
+| Layer | Component | Purpose |
+| :--- | :--- | :--- |
+| **Identity Subtype** | `government_auditor`, `standard_auditor` | Defines the institutional persona and baseline capabilities. |
+| **Capability Manifest** | `can_replay`, `can_export`, `can_issue_notice` | Explicitly provisioned flags with **audit reasoning** and **temporal expiry**. |
+| **Visibility Scope** | `jurisdiction_wide`, `assigned_hubs` | Deterministically filters which entities an auditor can see. |
+| **Enforcement Layer** | `require_subtypes()` | Backend gating that ensures institutional authority is valid at the runtime level. |
+
+```python
+# v6.2 Structured Capability Manifest
+{
+  "capability": "can_replay",
+  "granted_by": "root_admin",
+  "reason": "Regulatory investigation #882",
+  "expires_at": "2026-06-01T00:00:00Z"
+}
+```
+
+```python
+# Backend Subtype Gating (v6.2 Enforced Runtime)
+@app.post("/api/forensic/request")
+async def create_forensic_request(
+    current_user: dict = Depends(require_subtypes(["government_auditor", "cross_hub_auditor"]))
+):
+    ...
+```
+
+### File Structure
 ```
 anchor-web/
 ├── server/
-│   ├── proxy.py                 # Hub API (FastAPI v5.0.0)
-│   ├── auth.py                  # Enterprise auth (hub_id)
-│   ├── oversight_auth.py        # Regulator TOTP auth
-│   ├── models.py                # Organization · Fleet · User · Ledger
-│   ├── relay_protocol.py        # Hub ↔ Spoke WebSocket protocol
-│   ├── spoke_node.py            # Spoke Node (enterprise local)
-│   ├── dispatch_manager.py      # Webhook dispatcher
-│   └── security.py              # AES-256 encryption
-├── dashboard/                   # Enterprise Portal (React/Vite)
-├── oversight/                   # Regulatory Portal (React/Vite)
-├── root-admin/                  # System Admin (React/Vite)
-├── mesh/                        # 3D Terminal Globe (Globe.gl)
-└── landing/                     # Public landing page
+│   ├── proxy.py                 # Hub API & visibility enforcement
+│   ├── auth.py                  # Identity provider & capability compiler
+│   ├── oversight_auth.py        # Regulator gateway
+│   ├── models.py                # Institutional Schema (Identity Subtypes)
+│   ├── governance/
+│   │   └── registry_engine.py   # Deterministic capability registry
+...
 ```
 
 ---

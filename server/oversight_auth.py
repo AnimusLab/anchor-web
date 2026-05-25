@@ -26,8 +26,9 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import EnforcementNotice, AuditTrailEntry, LedgerEntry, Hub, Organization
+from models import EnforcementNotice, AuditTrailEntry, LedgerEntry, Hub, Organization, RegulatoryOfficial
 from mail import send_auditor_provisioned
+from governance.registry_engine import compile_governance_profile
 
 # ---------------------------------------------------------------------------
 # Router & security
@@ -81,8 +82,25 @@ class RevokeRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 def _issue_oversight_jwt(user: RegulatoryOfficial, session_id: str) -> str:
-    """Issues a short-lived oversight JWT — separate from the main auth tokens."""
+    """Issues a short-lived oversight JWT (v6.2 institutional layout)."""
     exp = datetime.now(timezone.utc) + timedelta(hours=OVERSIGHT_JWT_TTL)
+    
+    # Compile capabilities manifest with temporal check support
+    raw_overrides = getattr(user, "provisioned_capabilities", "")
+    capability_manifest = []
+    if raw_overrides:
+        try:
+            import json
+            capability_manifest = json.loads(raw_overrides)
+        except:
+            capability_manifest = raw_overrides
+
+    compiled_caps = compile_governance_profile(
+        role="regulator", 
+        subtype=user.identity_subtype, 
+        overrides=capability_manifest
+    )
+    
     return jwt.encode(
         {
             "sub":          user.id,
@@ -98,7 +116,8 @@ def _issue_oversight_jwt(user: RegulatoryOfficial, session_id: str) -> str:
             "subtype":      user.identity_subtype,
             "entity_scope": user.entity_visibility_scope,
             "jurisdiction": user.jurisdiction_scope,
-            "clearance":    user.clearance_level
+            "clearance":    user.clearance_level,
+            "capabilities": compiled_caps
         },
         ANCHOR_MASTER_KEY,
         algorithm="HS256",
@@ -389,9 +408,12 @@ def file_enforcement_notice(
     current_user: dict    = Depends(get_oversight_user),
 ):
     """
-    [Auditor] Files a formal enforcement notice against an AI entity.
-    Persists to the enforcement_notices table with the auditor's identity from JWT.
+    [Auditor] Files a formal enforcement notice (v6.2 Gated).
+    Only government_auditors have enforcement authority.
     """
+    if current_user.get("subtype") != "government_auditor":
+        raise HTTPException(status_code=403, detail="INSTITUTIONAL_AUTHORITY_REQUIRED: Only government_auditors may file enforcement notices.")
+
     notice_id = f"ENF-{current_user['regulator'].upper()}-{secrets.token_hex(4).upper()}"
     now       = datetime.now(timezone.utc).isoformat()
 
