@@ -476,8 +476,8 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
                 "email": getattr(user, 'email', 'UNKNOWN'),
                 "hub_id": user.hub_id or "PENDING",
                 "display_name": getattr(user, 'display_name', 'AUTHORIZED PERSON'),
-                "org_name": getattr(org, 'display_name', 'PENDING'),
-                "region": getattr(org, 'region', 'GLOBAL'),
+                "org_name": getattr(org, 'display_name', 'PENDING') if org else "UNKNOWN",
+                "region": getattr(org, 'region', 'GLOBAL') if org else "GLOBAL",
                 "department": getattr(user, 'department', 'OPS')
             }
         
@@ -488,14 +488,16 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
                 "email": getattr(official, 'email', 'UNKNOWN'),
                 "hub_id": official.org_id,
                 "display_name": getattr(official, 'display_name', 'OVERSIGHT OFFICER'),
-                "org_name": getattr(org, 'display_name', 'PENDING'),
-                "region": getattr(org, 'region', 'GLOBAL'),
+                "org_name": getattr(org, 'display_name', 'PENDING') if org else "UNKNOWN",
+                "region": getattr(org, 'region', 'GLOBAL') if org else "GLOBAL",
                 "department": getattr(official, 'department', 'AUDIT')
             }
         raise HTTPException(status_code=404, detail="IDENTITY NOT FOUND")
     except Exception as e:
+        print(f"IDENTIFY_FIRST ERROR: {e}")
         import traceback
-        return {"status": "ERROR", "detail": str(e), "trace": traceback.format_exc()}
+        traceback.print_exc()
+        return {"status": "ERROR", "detail": str(e)}
 
 @auth_router.post("/enterprise/identify")
 def enterprise_identify(request_body: dict = Body(...), db: Session = Depends(get_db)):
