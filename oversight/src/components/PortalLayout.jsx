@@ -185,7 +185,7 @@ export default function PortalLayout({ children }) {
         <header style={{ height: 56, background: 'var(--bg-sidebar)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0, zIndex: 5 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div className="forensic-header" style={{ fontSize: 18, color: 'var(--text-primary)' }}>{pageLabel}</div>
-            <div className="forensic-stamp" style={{ color: 'var(--amber)', transform: 'rotate(-2deg)' }}>OFFICIAL RECORD</div>
+            <div className="forensic-stamp" style={{ color: 'var(--amber)' }}>OFFICIAL RECORD</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

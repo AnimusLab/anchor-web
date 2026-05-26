@@ -966,10 +966,14 @@ def get_current_user_profile(current_user: dict = Depends(get_current_user), db:
 
     return {
         "sub": user.id,
+        "id": user.id,
         "email": getattr(user, 'email', None),
         "display_name": getattr(user, 'display_name', 'AUTHORIZED'),
+        "name": getattr(user, 'display_name', 'AUTHORIZED'),
         "role": getattr(user, 'role', 'member'),
         "org_id": getattr(user, 'org_id', None),
+        "org_name": getattr(org, 'display_name', 'UNKNOWN'),
+        "regulator": getattr(org, 'display_name', 'UNKNOWN') if user.role == "regulator" else None,
         "hub_id": getattr(hub, 'id', 'PENDING'),
         "hub_name": getattr(hub, 'display_name', 'Default Hub'),
         "hub_active": getattr(hub, 'is_active', False),

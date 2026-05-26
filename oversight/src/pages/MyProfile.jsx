@@ -47,13 +47,13 @@ export default function MyProfile() {
   const initials = (user?.name?.slice(0,1) || user?.regulator?.slice(0,1) || 'R').toUpperCase();
 
   const fields = [
-    { label: 'Display Name',  value: user?.name || '—' },
-    { label: 'Clearance ID',  value: user?.sub  || '—', mono: true },
-    { label: 'Regulator',     value: user?.regulator || '—' },
-    { label: 'Access Level',  value: user?.access_level || 'READ_ONLY' },
-    { label: 'Session ID',    value: user?.session_id || '—', mono: true },
+    { label: 'Display Name',  value: user?.display_name || user?.name || '—' },
+    { label: 'Clearance ID',  value: user?.sub  || user?.id || '—', mono: true },
+    { label: 'Regulator',     value: user?.org_name || user?.regulator || '—' },
+    { label: 'Access Level',  value: user?.access_level || (user?.role === 'root' ? 'FULL_ACCESS' : 'READ_ONLY') },
+    { label: 'Session ID',    value: user?.session_id || user?.sub?.slice(0, 8) || '—', mono: true },
     { label: 'Portal',        value: 'oversight.anchorgovernance.tech' },
-    { label: 'Token Scope',   value: 'regulator' },
+    { label: 'Token Scope',   value: user?.role || 'regulator' },
   ];
 
   return (
