@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { endpoints } from '../lib/api';
+import AccessWhitelist from '../components/AccessWhitelist';
 
 const ROLES = ['owner', 'auditor', 'admin'];
 
@@ -172,6 +173,11 @@ export default function WhitelistManagement() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* AccessWhitelist Component */}
+      <div style={{ marginTop: 40 }}>
+        <AccessWhitelist />
       </div>
     </div>
   );

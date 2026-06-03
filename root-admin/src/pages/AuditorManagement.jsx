@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { endpoints } from '../lib/api';
+import AuditorsSection from '../components/AuditorsSection';
 
 const REGULATORS = ['SEC', 'FCA', 'RBI', 'SEBI', 'EU-AI', 'CFPB', 'MAS', 'CFTC', 'NIST', 'FINOS'];
 const JURISDICTIONS = ['USA', 'UK', 'India', 'EU', 'Singapore', 'UAE', 'Japan', 'Australia'];
@@ -232,6 +233,11 @@ export default function AuditorManagement() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Active Auditors Section */}
+      <div style={{ marginTop: 40, paddingTop: 28, borderTop: '1px solid var(--border)' }}>
+        <AuditorsSection />
       </div>
     </div>
   );

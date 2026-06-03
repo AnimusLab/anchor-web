@@ -7,11 +7,17 @@ class WhitelistEntry(Base):
     """Pre-authorized emails that are allowed to onboard."""
     __tablename__ = "whitelist"
     
-    id          = Column(Integer, primary_key=True)
-    email       = Column(String, unique=True, index=True)
-    org_id      = Column(String, nullable=False)                  # "jpmc"
-    role        = Column(String, default="owner")                 # "owner", "auditor"
-    created_at  = Column(String, nullable=False)
+    id              = Column(Integer, primary_key=True)
+    email           = Column(String, unique=True, index=True)
+    email_domain    = Column(String, index=True)                    # Extracted domain: "animuslab.dev"
+    org_domain      = Column(String, nullable=False)                # Expected org domain: "animuslab.dev"
+    org_id          = Column(String, nullable=False)                # "jpmc"
+    org_slug        = Column(String, nullable=False)                # Organization identifier
+    role            = Column(String, default="owner")               # "owner", "auditor", "admin"
+    access_role     = Column(String, default="owner")               # Capability level
+    domain_verified = Column(Boolean, default=False)                # Email domain matches org domain
+    status          = Column(String, default="VERIFIED")            # "VERIFIED", "PENDING", "REVOKED"
+    created_at      = Column(String, nullable=False)
 
 # --- 2. ORGANIZATION (The Parent Account) ---
 class Organization(Base):

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { endpoints } from '../lib/api';
+import EnterpriseAccessSection from '../components/EnterpriseAccessSection';
 
 const REGIONS = ['USA', 'UK', 'India', 'EU', 'Singapore', 'Canada', 'Australia', 'Japan', 'UAE'];
 
@@ -257,6 +258,11 @@ export default function ProvisioningPortal() {
           </div>
 
         </div>
+      </div>
+
+      {/* Enterprise Access Section */}
+      <div style={{ marginTop: 40, paddingTop: 28, borderTop: '1px solid var(--border)' }}>
+        <EnterpriseAccessSection />
       </div>
     </div>
   );

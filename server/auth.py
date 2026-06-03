@@ -4,8 +4,9 @@ import secrets
 import hashlib
 import bcrypt
 import jwt
+import logging
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, Form, Query, Body, status
+from fastapi import APIRouter, Depends, HTTPException, Form, Query, Body, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
@@ -28,6 +29,7 @@ from mail import (
     send_admin_access_code
 )
 from governance.registry_engine import compile_governance_profile
+from config import Config, EntityVisibilityFilter, EntityType
 
 # =============================================================================
 # Router & Security Setup
@@ -55,6 +57,35 @@ ANCHOR_MASTER_KEY = os.getenv("ANCHOR_MASTER_KEY")
 if not ANCHOR_MASTER_KEY:
     raise RuntimeError("CRITICAL: ANCHOR_MASTER_KEY missing from environment.")
 
+# =============================================================================
+# Audit Logging Setup (Auth Hardening v6.3)
+# =============================================================================
+audit_logger = logging.getLogger("auth_audit")
+audit_logger.setLevel(logging.INFO)
+
+# File handler for audit logs
+audit_handler = logging.FileHandler(os.path.join(os.path.dirname(__file__), "logs", "auth_audit.log"))
+audit_handler.setLevel(logging.INFO)
+audit_formatter = logging.Formatter(
+    '[%(asctime)s] %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+audit_handler.setFormatter(audit_formatter)
+audit_logger.addHandler(audit_handler)
+
+# Create logs directory if it doesn't exist
+import os as os_module
+logs_dir = os.path.join(os.path.dirname(__file__), "logs")
+if not os.path.exists(logs_dir):
+    os.makedirs(logs_dir, exist_ok=True)
+
+# =============================================================================
+# Session Management (Auth Hardening v6.3)
+# =============================================================================
+# In-memory session store: {session_id: {user_email, fingerprint, created_at, last_activity}}
+active_sessions = {}
+revoked_sessions = set()  # Track revoked tokens for session rotation
+
 # Jurisdiction → entity_prefix mapping
 JURISDICTION_PREFIX = {
     "USA": "reg_sec",
@@ -71,7 +102,84 @@ JURISDICTION_PREFIX = {
 
 # --- ROOT ACCESS BYPASS STORAGE ---
 # Simple in-memory storage for emergency access codes (expires in 10 mins)
-admin_access_codes = {} 
+admin_access_codes = {}
+
+# =============================================================================
+# Session Fingerprinting Utilities (Auth Hardening v6.3)
+# =============================================================================
+
+def _create_session_fingerprint(user_agent: str, client_ip: str) -> str:
+    """
+    Creates a cryptographic fingerprint of User-Agent + IP address.
+    Used for session binding to prevent token theft across different devices/networks.
+    """
+    fingerprint_input = f"{user_agent}|{client_ip}"
+    return hashlib.sha256(fingerprint_input.encode()).hexdigest()
+
+def _audit_log(event_type: str, user_email: str, details: str, ip_address: str = "UNKNOWN"):
+    """
+    Log authentication events for governance audit trail.
+    Event Types: LOGIN, LOGOUT, TOTP_VERIFY, SESSION_ROTATE, FINGERPRINT_MISMATCH, TOKEN_REVOKE, UNAUTHORIZED_ACCESS
+    """
+    timestamp = datetime.utcnow().isoformat()
+    audit_msg = f"[{event_type}] User: {user_email} | IP: {ip_address} | Details: {details} | Timestamp: {timestamp}"
+    audit_logger.info(audit_msg)
+
+def _verify_jwt_with_fingerprint(token: str, current_fingerprint: str, client_ip: str) -> dict:
+    """
+    Decode JWT and validate session fingerprint (User-Agent + IP binding).
+    Returns decoded payload if valid, raises HTTPException otherwise.
+    Implements geo-anomaly detection by checking IP consistency.
+    """
+    try:
+        payload = jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="SESSION EXPIRED")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="INVALID TOKEN")
+    
+    # Check if token has been revoked (session rotation)
+    session_id = payload.get("session_id")
+    if session_id and session_id in revoked_sessions:
+        raise HTTPException(status_code=401, detail="SESSION INVALIDATED")
+    
+    # Validate fingerprint if present (prevents token theft)
+    stored_fingerprint = payload.get("fingerprint")
+    if stored_fingerprint and stored_fingerprint != current_fingerprint:
+        # Potential token theft - log as security event
+        user_email = payload.get("sub", "UNKNOWN")
+        _audit_log("FINGERPRINT_MISMATCH", user_email, 
+                   f"Stored: {stored_fingerprint[:8]}... | Current: {current_fingerprint[:8]}...",
+                   client_ip)
+        raise HTTPException(status_code=401, detail="DEVICE_MISMATCH")
+    
+    return payload
+
+def _compute_entity_visibility_scope(user_role: str, user_subtype: Optional[str] = None, 
+                                     provided_scope: Optional[str] = None) -> str:
+    """
+    Compute entity visibility scope for a user based on role and subtype.
+    Ensures regulatory auditors cannot access codebase and other restricted entities (v6.3).
+    
+    Returns comma-separated list of EntityType values the user can access.
+    """
+    if not Config.FEATURE_ENTITY_TAXONOMY:
+        # Default behavior if feature disabled
+        if user_role in ["owner", "admin"]:
+            return "ai_agent,gateway,mesh_node,codebase,policy,process,database"
+        else:
+            return "ai_agent,gateway"
+    
+    # Use EntityVisibilityFilter to compute allowed entities
+    visible_entities = EntityVisibilityFilter.get_visible_entities(user_role, user_subtype)
+    scope = ",".join(entity.value for entity in visible_entities)
+    return scope
+
+def _get_user_role_and_subtype(user: dict) -> tuple[str, Optional[str]]:
+    """Extract role and subtype from user object for entity filtering."""
+    role = user.get("role", "member")
+    subtype = user.get("subtype", None)
+    return role, subtype
 
 PUBLIC_DOMAINS = {
     "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", 
@@ -89,21 +197,31 @@ NATO_PHONETIC = [
 # JWT Middleware & Dependencies
 # =============================================================================
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Extracts and validates JWT from the Authorization header."""
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), request: Request = None):
+    """Extracts and validates JWT from the Authorization header with fingerprint binding (v6.3)."""
     if not credentials:
         raise HTTPException(status_code=401, detail="AUTHENTICATION REQUIRED")
     
     if credentials.credentials == ANCHOR_MASTER_KEY or credentials.credentials == "MASTER_BYPASS_TOKEN":
         return {"sub": "root-bypass", "role": "root", "org_id": "MASTER"}
 
+    # Extract client IP and User-Agent for fingerprint validation
+    client_ip = "UNKNOWN"
+    user_agent = "UNKNOWN"
+    if request:
+        try:
+            client_ip = request.client.host if request.client else "127.0.0.1"
+        except:
+            client_ip = "127.0.0.1"
+        user_agent = request.headers.get("user-agent", "")
+    
+    current_fingerprint = _create_session_fingerprint(user_agent, client_ip)
+    
     try:
-        payload = jwt.decode(credentials.credentials, ANCHOR_MASTER_KEY, algorithms=["HS256"])
+        payload = _verify_jwt_with_fingerprint(credentials.credentials, current_fingerprint, client_ip)
         return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="SESSION EXPIRED")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="INVALID TOKEN")
+    except HTTPException:
+        raise
 
 def get_current_org_admin(user: dict = Depends(get_current_user)):
     """Ensures the current user is an owner or admin of their organisation."""
@@ -157,20 +275,34 @@ def generate_company_abbr(company_name: str) -> str:
     words = clean_name.split()
     return "".join(w[0] for w in words[:4])
 
-def _issue_jwt(user, is_provisional=False):
+def _issue_jwt(user, is_provisional=False, request: Request = None):
     """
-    Anchor Governance Token (v6.1)
+    Anchor Governance Token (v6.3 - Auth Hardened)
     Capabilities are now compiled FROM the formal Governance Registry.
     This ensures that token rights are derived from institutional ontology.
+    Includes session fingerprinting (User-Agent + IP binding) and session rotation tracking.
     """
-    exp = datetime.utcnow() + timedelta(days=1)
+    # Create session ID for tracking and rotation
+    session_id = secrets.token_hex(16)
     
-    # 1. Base identity
+    # Create session fingerprint if request context available
+    fingerprint = None
+    if request:
+        client_ip = request.client.host if request.client else "127.0.0.1"
+        user_agent = request.headers.get("user-agent", "")
+        fingerprint = _create_session_fingerprint(user_agent, client_ip)
+    
+    # Reduced token lifetime to 30 minutes (from 24 hours) for session hardening
+    exp = datetime.utcnow() + timedelta(minutes=30)
+    
+    # 1. Base identity with session binding
     payload = {
         "sub": user.email,
         "uid": user.id,
         "role": user.role,
         "org_id": user.org_id,
+        "session_id": session_id,
+        "fingerprint": fingerprint,
         "exp": exp
     }
 
@@ -218,17 +350,34 @@ def _issue_jwt(user, is_provisional=False):
 
     payload["capabilities"] = compiled_caps
     
-    # Final Visibility Boundary (v6.1)
-    # If entity_scope is explicitly set on user, use it. 
-    # Otherwise, rely on the compiler's derivation for that identity type.
+    # Final Visibility Boundary (v6.1) - Enhanced with Entity Taxonomy (v6.3)
+    # Compute entity visibility scope based on role and subtype
+    # Regulatory auditors have restricted access (no codebase, database, webhooks)
     if not payload.get("entity_scope"):
-        # Default scope derivation based on role
-        if user.role == "regulator":
-            payload["entity_scope"] = "ai_agent,gateway"
-        elif user.role == "root":
-            payload["entity_scope"] = "ai_agent,gateway,mesh_node,codebase"
-        else:
-            payload["entity_scope"] = "ai_agent,gateway,mesh_node"
+        # Use entity taxonomy filter to compute appropriate scope (v6.3)
+        entity_scope = _compute_entity_visibility_scope(
+            user_role=user.role,
+            user_subtype=subtype,
+            provided_scope=getattr(user, "entity_visibility_scope", None)
+        )
+        payload["entity_scope"] = entity_scope
+        
+        # Legacy fallback if taxonomy disabled
+        if not Config.FEATURE_ENTITY_TAXONOMY:
+            if user.role == "regulator":
+                payload["entity_scope"] = "ai_agent,gateway"
+            elif user.role == "root":
+                payload["entity_scope"] = "ai_agent,gateway,mesh_node,codebase"
+            else:
+                payload["entity_scope"] = "ai_agent,gateway,mesh_node"
+
+    # Register session in active session tracking
+    active_sessions[session_id] = {
+        "user_email": user.email,
+        "fingerprint": fingerprint,
+        "created_at": datetime.utcnow().isoformat(),
+        "last_activity": datetime.utcnow().isoformat()
+    }
 
     return jwt.encode(payload, ANCHOR_MASTER_KEY, algorithm="HS256")
 
@@ -405,15 +554,25 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
             "trace": traceback.format_exc()
         }
 
-def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
-    """Internal shared logic for TOTP verification."""
+def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session, http_request: Request = None):
+    """Internal shared logic for TOTP verification with session hardening (v6.3)."""
+    # Extract IP address for audit logging
+    client_ip = "UNKNOWN"
+    if http_request and http_request.client:
+        client_ip = http_request.client.host
+    
     try:
         payload = jwt.decode(request.intent_token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
         if payload.get("type") != "auth_intent" or payload.get("sub") != request.email:
+            _audit_log("UNAUTHORIZED_ACCESS", request.email, "INVALID INTENT token", client_ip)
             raise HTTPException(status_code=401, detail="INVALID INTENT")
         if payload.get("role") not in allowed_roles:
-             raise HTTPException(status_code=401, detail="ROLE MISMATCH")
-    except Exception:
+            _audit_log("UNAUTHORIZED_ACCESS", request.email, f"ROLE MISMATCH - required {allowed_roles}", client_ip)
+            raise HTTPException(status_code=401, detail="ROLE MISMATCH")
+    except HTTPException:
+        raise
+    except Exception as e:
+        _audit_log("UNAUTHORIZED_ACCESS", request.email, f"INVALID HANDSHAKE - {str(e)}", client_ip)
         raise HTTPException(status_code=401, detail="INVALID HANDSHAKE")
 
     user = db.query(EnterpriseUser).filter(EnterpriseUser.email == request.email).first()
@@ -421,20 +580,28 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
         user = db.query(RegulatoryOfficial).filter(RegulatoryOfficial.email == request.email).first()
 
     if not user or not user.totp_secret:
+        _audit_log("UNAUTHORIZED_ACCESS", request.email, "SECURITY NOT PROVISIONED", client_ip)
         raise HTTPException(status_code=401, detail="SECURITY NOT PROVISIONED")
     
     totp = pyotp.TOTP(user.totp_secret)
     if not totp.verify(request.totp_code, valid_window=1):
+        _audit_log("UNAUTHORIZED_ACCESS", request.email, "INVALID TOTP CODE", client_ip)
         raise HTTPException(status_code=401, detail="INVALID CODE")
         
-    exp = datetime.utcnow() + timedelta(days=1)
+    # Session Rotation: Issue new token with hardened settings (v6.3)
+    # Reduced expiry from 24h to 30min, includes session fingerprinting
     is_oversight = "auditor" in allowed_roles or "regulator" in allowed_roles
     
+    # Issue new token with request context for fingerprinting
+    token = _issue_jwt(user, is_provisional=True, request=http_request)
+    decoded_token = jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
+    session_id = decoded_token.get("session_id")
+    
+    # Log successful authentication
+    _audit_log("LOGIN", user.email, f"Role: {user.role} | Session: {session_id[:8]}...", client_ip)
+    
     if is_oversight:
-        session_id = secrets.token_hex(8)
-        # Anchor v6: Scoped Governance Token
-        token = _issue_jwt(user, is_provisional=True)
-        
+        # Oversight user (auditor/regulator) response
         return {
             "status":       "AUTHENTICATED",
             "access_token": token,
@@ -443,21 +610,23 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session):
             "display_name": user.display_name,
             "regulator":    user.department or "Oversight",
             "session_id":   session_id,
-            "capabilities": jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"]).get("capabilities"),
-            "expires_in":   24 * 3600,
+            "capabilities": decoded_token.get("capabilities"),
+            "expires_in":   30 * 60,  # 30 minutes in seconds
         }
     else:
-        token = _issue_jwt(user, is_provisional=True)
+        # Enterprise user response
         return {
             "access_token": token, 
             "token_type": "bearer", 
+            "session_id": session_id,
             "user": {
                 "id": user.id, 
                 "email": user.email, 
                 "role": user.role, 
                 "org_id": user.org_id,
-                "capabilities": jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"]).get("capabilities")
-            }
+                "capabilities": decoded_token.get("capabilities")
+            },
+            "expires_in": 30 * 60,  # 30 minutes in seconds
         }
 
 # =============================================================================
@@ -515,12 +684,12 @@ def oversight_identify(request_body: dict = Body(...), db: Session = Depends(get
 
 @auth_router.post("/oversight/login")
 @auth_router.post("/oversight/verify-totp")
-def oversight_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
-    return _verify_logic(request, ["auditor", "regulator"], db)
+def oversight_verify(request: TotpVerifyRequest, db: Session = Depends(get_db), http_request: Request = None):
+    return _verify_logic(request, ["auditor", "regulator"], db, http_request)
 
 @auth_router.post("/enterprise/verify-totp")
-def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db)):
-    return _verify_logic(request, ["owner", "admin", "member"], db)
+def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db), http_request: Request = None):
+    return _verify_logic(request, ["owner", "admin", "member"], db, http_request)
 
 @auth_router.get("/pending")
 def list_pending_approvals(current_admin: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
@@ -1051,3 +1220,148 @@ def get_user_team(current_user: dict = Depends(get_current_user), db: Session = 
         }
         for u in users
     ]
+
+# =============================================================================
+# WHITELIST MANAGEMENT ENDPOINTS (v6.2 Domain Validation)
+# =============================================================================
+
+class WhitelistAuthorizeRequest(BaseModel):
+    email: str
+    org_id: str
+    org_domain: str
+    org_slug: str = "anchor"
+    role: str = "owner"
+    access_role: str = "owner"
+
+@auth_router.get("/admin/whitelist")
+def list_whitelist(
+    current_admin: dict = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """[ROOT ADMIN ONLY] List all whitelist entries."""
+    entries = db.query(WhitelistEntry).all()
+    return [
+        {
+            "id": entry.id,
+            "email": entry.email,
+            "email_domain": entry.email_domain,
+            "org_domain": entry.org_domain,
+            "org_id": entry.org_id,
+            "org_slug": entry.org_slug,
+            "role": entry.role,
+            "access_role": entry.access_role,
+            "domain_verified": entry.domain_verified,
+            "status": entry.status,
+            "created_at": entry.created_at
+        }
+        for entry in entries
+    ]
+
+@auth_router.post("/admin/whitelist/authorize")
+def authorize_whitelist_entry(
+    body: WhitelistAuthorizeRequest,
+    current_admin: dict = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    [ROOT ADMIN ONLY] Authorize an email entry to the whitelist with domain validation.
+    Implements security check: email domain must match org domain.
+    """
+    try:
+        email = body.email.strip().lower()
+        org_domain = body.org_domain.strip().lower()
+        
+        # Extract email domain
+        email_parts = email.split('@')
+        if len(email_parts) != 2:
+            raise HTTPException(status_code=400, detail="INVALID_EMAIL_FORMAT")
+        
+        email_domain = email_parts[1].lower()
+        
+        # CRITICAL SECURITY CHECK: Email domain must match org domain
+        domain_verified = email_domain == org_domain
+        
+        if not domain_verified:
+            return {
+                "status": "DOMAIN_MISMATCH",
+                "error": f"Email domain '{email_domain}' does not match organization domain '{org_domain}'",
+                "email": email,
+                "email_domain": email_domain,
+                "org_domain": org_domain,
+                "domain_verified": False,
+                "message": "Authorization REJECTED: Domain mismatch detected (potential email spoofing)"
+            }
+        
+        # Check for existing entry
+        existing = db.query(WhitelistEntry).filter(WhitelistEntry.email == email).first()
+        if existing:
+            return {
+                "status": "ALREADY_EXISTS",
+                "id": existing.id,
+                "email": existing.email,
+                "domain_verified": existing.domain_verified,
+                "status_code": existing.status,
+                "message": "Entry already exists in whitelist"
+            }
+        
+        # Create new whitelist entry
+        new_entry = WhitelistEntry(
+            email=email,
+            email_domain=email_domain,
+            org_domain=org_domain,
+            org_id=body.org_id.strip().lower(),
+            org_slug=body.org_slug.strip().lower(),
+            role=body.role,
+            access_role=body.access_role,
+            domain_verified=True,  # Domain is verified if it matches
+            status="VERIFIED",
+            created_at=datetime.utcnow().isoformat()
+        )
+        
+        db.add(new_entry)
+        db.commit()
+        db.refresh(new_entry)
+        
+        return {
+            "status": "AUTHORIZED",
+            "id": new_entry.id,
+            "email": new_entry.email,
+            "email_domain": new_entry.email_domain,
+            "org_domain": new_entry.org_domain,
+            "org_id": new_entry.org_id,
+            "domain_verified": new_entry.domain_verified,
+            "status_code": new_entry.status,
+            "message": f"✓ {email} authorized with verified domain match",
+            "created_at": new_entry.created_at
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        return {
+            "status": "ERROR",
+            "error": str(e),
+            "message": "Failed to authorize whitelist entry"
+        }
+
+@auth_router.delete("/admin/whitelist/{entry_id}")
+def revoke_whitelist_entry(
+    entry_id: int,
+    current_admin: dict = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """[ROOT ADMIN ONLY] Revoke a whitelist entry."""
+    entry = db.query(WhitelistEntry).filter(WhitelistEntry.id == entry_id).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Whitelist entry not found")
+    
+    email = entry.email
+    db.delete(entry)
+    db.commit()
+    
+    return {
+        "status": "REVOKED",
+        "email": email,
+        "message": f"✓ {email} removed from whitelist"
+    }
