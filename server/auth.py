@@ -107,6 +107,21 @@ admin_access_codes = {}
 # Session Fingerprinting Utilities (Auth Hardening v6.3)
 # =============================================================================
 
+def _get_client_ip(request: Request) -> str:
+    """Helper to extract real client IP address, supporting proxy headers."""
+    if not request:
+        return "127.0.0.1"
+    x_forwarded_for = request.headers.get("x-forwarded-for")
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip()
+    x_real_ip = request.headers.get("x-real-ip")
+    if x_real_ip:
+        return x_real_ip.strip()
+    try:
+        return request.client.host if request.client else "127.0.0.1"
+    except:
+        return "127.0.0.1"
+
 def _create_session_fingerprint(user_agent: str, client_ip: str) -> str:
     """
     Creates a cryptographic fingerprint of User-Agent + IP address.
@@ -208,10 +223,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     client_ip = "UNKNOWN"
     user_agent = "UNKNOWN"
     if request:
-        try:
-            client_ip = request.client.host if request.client else "127.0.0.1"
-        except:
-            client_ip = "127.0.0.1"
+        client_ip = _get_client_ip(request)
         user_agent = request.headers.get("user-agent", "")
     
     current_fingerprint = _create_session_fingerprint(user_agent, client_ip)
@@ -287,7 +299,7 @@ def _issue_jwt(user, is_provisional=False, request: Request = None):
     # Create session fingerprint if request context available
     fingerprint = None
     if request:
-        client_ip = request.client.host if request.client else "127.0.0.1"
+        client_ip = _get_client_ip(request)
         user_agent = request.headers.get("user-agent", "")
         fingerprint = _create_session_fingerprint(user_agent, client_ip)
     
@@ -557,8 +569,8 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session, 
     """Internal shared logic for TOTP verification with session hardening (v6.3)."""
     # Extract IP address for audit logging
     client_ip = "UNKNOWN"
-    if http_request and http_request.client:
-        client_ip = http_request.client.host
+    if http_request:
+        client_ip = _get_client_ip(http_request)
     
     try:
         payload = jwt.decode(request.intent_token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
@@ -887,6 +899,21 @@ def approve_user(target_entity_id: str = Form(...), current_admin: dict = Depend
         raise HTTPException(status_code=404, detail="Identity not found.")
         
     user.status = "approved"
+    if is_auditor:
+        # Populate default regulatory/auditor institutional characteristics if missing
+        if not user.identity_subtype:
+            user.identity_subtype = "government_auditor"
+        if not user.jurisdiction_scope:
+            user.jurisdiction_scope = user.jurisdiction or "IN"
+        if not user.entity_visibility_scope:
+            user.entity_visibility_scope = "ai_agent,gateway,mesh_node,codebase"
+        if not user.governance_scope:
+            user.governance_scope = "jurisdiction_wide"
+        if not user.clearance_level:
+            user.clearance_level = 3
+        if user.delegation_rights is None:
+            user.delegation_rights = True
+
     db.add(user) # Re-add to session just in case
     db.commit()
     db.refresh(user) # Lock it in
@@ -977,7 +1004,16 @@ def register_auditor(
         jurisdiction=jurisdiction,
         totp_secret=totp_secret,
         status="pending", # Requires ROOT ADMIN approval
-        created_at=datetime.utcnow().isoformat()
+        created_at=datetime.utcnow().isoformat(),
+        
+        # Default Institutional Governance characteristics (v6.1/v6.2 alignment)
+        identity_subtype="government_auditor",
+        jurisdiction_scope=jurisdiction,
+        entity_visibility_scope="ai_agent,gateway,mesh_node,codebase",
+        governance_scope="jurisdiction_wide",
+        institutional_origin=agency_id,
+        clearance_level=3,
+        delegation_rights=True
     )
 
     db.add(new_official)

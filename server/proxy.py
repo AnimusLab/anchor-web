@@ -116,7 +116,7 @@ def on_startup():
     init_db()
     
     # (Healing logic removed as it was overwriting legitimate Hub IDs and corrupting DB state)
-    print("[✓] Anchor Hub: Core Engine Operational.")
+    print("[OK] Anchor Hub: Core Engine Operational.")
 
 
 # --- ROOT EMAIL REPAIR (One-time fix for corrupted records) ---

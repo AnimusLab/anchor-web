@@ -213,7 +213,7 @@ class TestRunner:
         
         # Save report to file
         report_file = "TEST_REPORT_COMPREHENSIVE.md"
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             f.write(report)
         
         print(f"\n✓ Report saved to: {report_file}")
