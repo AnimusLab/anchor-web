@@ -155,7 +155,10 @@ export default function JurisdictionSummary() {
     })
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(setData)
-      .catch(e => setError(e.message))
+      .catch(e => {
+        console.error("Jurisdiction Summary failed to load:", e);
+        setError(e.message);
+      })
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -248,8 +251,12 @@ export default function JurisdictionSummary() {
             Loading jurisdiction data...
           </div>
         ) : error ? (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--red-soft)', fontSize: 13 }}>
-            Failed to load: {error}
+          <div className="ra-card" style={{ padding: 60, textAlign: 'center' }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>🌐</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>No jurisdiction data available</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              No entities registered in this jurisdiction.
+            </div>
           </div>
         ) : sorted.length === 0 ? (
           <div className="ra-card" style={{ padding: 60, textAlign: 'center' }}>

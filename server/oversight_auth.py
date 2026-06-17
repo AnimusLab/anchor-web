@@ -125,14 +125,19 @@ def _issue_oversight_jwt(user: RegulatoryOfficial, session_id: str) -> str:
 
 
 def _decode_oversight_jwt(token: str) -> dict:
+    import logging
+    logger = logging.getLogger("anchor.oversight")
     try:
         payload = jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
         if payload.get("portal") != "oversight":
+            logger.error(f"[TOKEN_SCOPE_ERROR] Attempted access with non-oversight token. User: {payload.get('sub', 'UNKNOWN')}")
             raise HTTPException(status_code=401, detail="INVALID TOKEN SCOPE")
         return payload
     except jwt.ExpiredSignatureError:
+        logger.warning("Oversight JWT expired")
         raise HTTPException(status_code=401, detail="SESSION EXPIRED")
     except jwt.InvalidTokenError:
+        logger.warning("Oversight JWT invalid")
         raise HTTPException(status_code=401, detail="INVALID TOKEN")
 
 
@@ -524,41 +529,104 @@ def get_jurisdiction_summary(
 ):
     """
     [Auditor] Returns compliance statistics grouped by jurisdiction/region.
-    Joins: LedgerEntry → Hub (hubs) → Organization.
+    Respects auditor's jurisdiction scope.
     """
+    # 1. Resolve auditor and their jurisdiction scope
+    sub = current_user.get("sub")
+    official = db.query(RegulatoryOfficial).filter(
+        (RegulatoryOfficial.id == sub) | (RegulatoryOfficial.email == sub)
+    ).first()
+    
+    # Defaults/fallbacks
+    allowed_regions = None
+    subtype = "standard_auditor"
+    
+    if official:
+        subtype = official.identity_subtype or official.auditor_type or "standard_auditor"
+        if subtype in ["government_auditor", "REGULATOR_AUDITOR"]:
+            allowed_regions = [official.jurisdiction] if official.jurisdiction else ["IN"]
+        elif subtype in ["standard_auditor", "HUB_AUDITOR"]:
+            # Standard auditor: get regions of assigned hubs
+            assigned_str = official.assigned_hub_ids or ""
+            assigned_ids = [h.strip() for h in assigned_str.split(",") if h.strip()]
+            hubs = db.query(Hub).filter(Hub.id.in_(assigned_ids)).all()
+            allowed_regions = list(set(h.region for h in hubs))
+        elif subtype in ["cross_hub_auditor", "CROSS_HUB_AUDITOR"]:
+            # Cross hub auditor: get regions of their organization's hubs
+            hubs = db.query(Hub).filter(Hub.org_id == official.org_id).all()
+            allowed_regions = list(set(h.region for h in hubs))
 
+    # 2. Query LedgerEntries joined with Hubs and Organizations
     try:
-        results = (
+        query = (
             db.query(
                 LedgerEntry.id,
                 LedgerEntry.timestamp,
                 LedgerEntry.type,
                 LedgerEntry.chain_hash,
                 Hub.id.label("hub_id"),
-                Hub.id.label("entity_name"), # Reuse ID as name for now
+                Hub.region.label("hub_region"),
+                Hub.regulatory_visible.label("hub_reg_visible"),
+                Hub.entity_type.label("hub_entity_type"),
                 Organization.display_name.label("org_name"),
                 Organization.id.label("org_id")
             )
             .outerjoin(Hub,          Hub.id            == LedgerEntry.hub_id)
             .outerjoin(Organization, Organization.id   == Hub.org_id)
-            .all()
         )
+        
+        # Apply regulatory visibility filter
+        query = query.filter(Hub.regulatory_visible == True)
+        
+        # Apply entity taxonomy visibility filter for auditors (v6.3)
+        if official and official.entity_visibility_scope:
+            allowed_types = [t.strip() for t in official.entity_visibility_scope.split(",") if t.strip()]
+            query = query.filter(Hub.entity_type.in_(allowed_types))
+        
+        results = query.all()
     except Exception as exc:
+        import logging
+        logging.getLogger("anchor.oversight").error(f"DB query failed in jurisdiction-summary: {exc}")
         raise HTTPException(status_code=500, detail=f"DB query failed: {exc}")
 
-    if not results:
-        return {
-            "summary": {
-                "total_decisions": 0, "total_violations": 0,
-                "global_compliance_pct": 100.0, "total_entities": 0, "total_regions": 0,
-            },
-            "by_region": [],
+    # Region full-name helper
+    def get_region_name(code: str) -> str:
+        mapping = {
+            "IN": "India",
+            "US": "USA",
+            "GB": "United Kingdom",
+            "UK": "United Kingdom",
+            "EU": "European Union",
+            "AE": "UAE",
+            "SG": "Singapore",
+            "CN": "China",
+            "JP": "Japan",
+            "AU": "Australia",
+            "CA": "Canada"
         }
+        return mapping.get(code.strip().upper(), code)
 
-    # Aggregate by region
+    # 3. Aggregate by region
     regions: dict = {}
+    
+    # Initialize allowed regions with empty stats if nothing has been recorded yet
+    # This guarantees that the India page is never blank or missing for an India auditor
+    if allowed_regions:
+        for r_code in allowed_regions:
+            r_name = get_region_name(r_code)
+            regions[r_name] = {
+                "region": r_name, "total": 0, "violations": 0,
+                "entities": set(), "orgs": set(), "_entity_viols": {},
+            }
+
     for r in results:
-        region = "Global" # Region info is in Hub
+        r_code = r.hub_region or "Unknown"
+        
+        # Filter by allowed regions if restricted
+        if allowed_regions and r_code not in allowed_regions:
+            continue
+            
+        region = get_region_name(r_code)
         if region not in regions:
             regions[region] = {
                 "region": region, "total": 0, "violations": 0,
@@ -590,7 +658,13 @@ def get_jurisdiction_summary(
 
     grand_total  = sum(d["total"]      for d in regions.values())
     grand_viols  = sum(d["violations"] for d in regions.values())
-    grand_ents   = len({r.hub_id for r in results if r.hub_id})
+    
+    # Count unique grand entities
+    grand_ents = 0
+    unique_ents = set()
+    for d in regions.values():
+        unique_ents.update(d["entities"])
+    grand_ents = len(unique_ents)
 
     return {
         "summary": {

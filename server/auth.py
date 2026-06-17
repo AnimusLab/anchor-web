@@ -316,6 +316,9 @@ def _issue_jwt(user, is_provisional=False, request: Request = None):
         "fingerprint": fingerprint,
         "exp": exp
     }
+    
+    if user.role in ["auditor", "regulator"]:
+        payload["portal"] = "oversight"
 
     # v6.1 Institutional Identity Characteristics
     subtype = getattr(user, "identity_subtype", None)
