@@ -63,8 +63,13 @@ if not ANCHOR_MASTER_KEY:
 audit_logger = logging.getLogger("auth_audit")
 audit_logger.setLevel(logging.INFO)
 
+# Create logs directory if it doesn't exist
+logs_dir = os.path.join(os.path.dirname(__file__), "logs")
+if not os.path.exists(logs_dir):
+    os.makedirs(logs_dir, exist_ok=True)
+
 # File handler for audit logs
-audit_handler = logging.FileHandler(os.path.join(os.path.dirname(__file__), "logs", "auth_audit.log"))
+audit_handler = logging.FileHandler(os.path.join(logs_dir, "auth_audit.log"))
 audit_handler.setLevel(logging.INFO)
 audit_formatter = logging.Formatter(
     '[%(asctime)s] %(levelname)s - %(message)s',
@@ -72,12 +77,6 @@ audit_formatter = logging.Formatter(
 )
 audit_handler.setFormatter(audit_formatter)
 audit_logger.addHandler(audit_handler)
-
-# Create logs directory if it doesn't exist
-import os as os_module
-logs_dir = os.path.join(os.path.dirname(__file__), "logs")
-if not os.path.exists(logs_dir):
-    os.makedirs(logs_dir, exist_ok=True)
 
 # =============================================================================
 # Session Management (Auth Hardening v6.3)
