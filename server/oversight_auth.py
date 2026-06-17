@@ -583,6 +583,19 @@ def get_jurisdiction_summary(
             allowed_types = [t.strip() for t in official.entity_visibility_scope.split(",") if t.strip()]
             query = query.filter(Hub.entity_type.in_(allowed_types))
         
+        # Enforce strict codebase visibility restrictions:
+        # Government and Standard auditors are absolutely not allowed to see any codebases.
+        if official:
+            subtype = official.identity_subtype or official.auditor_type or "standard_auditor"
+            if subtype in ["government_auditor", "REGULATOR_AUDITOR", "standard_auditor", "HUB_AUDITOR"]:
+                query = query.filter(Hub.entity_type != "codebase")
+            elif subtype in ["cross_hub_auditor", "CROSS_HUB_AUDITOR"]:
+                # Only see codebases if they are part of that hub (meaning in assigned_hub_ids)
+                assigned_ids = [h.strip() for h in (official.assigned_hub_ids or "").split(",") if h.strip()]
+                query = query.filter(
+                    (Hub.entity_type != "codebase") | (Hub.id.in_(assigned_ids))
+                )
+        
         results = query.all()
     except Exception as exc:
         import logging

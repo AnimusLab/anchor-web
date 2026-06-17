@@ -970,6 +970,11 @@ def _enforce_tenant_scope(current_user: dict, db: Session, hub_id: str = None):
             
         reg_base_query = reg_base_query.filter(Hub.entity_type.in_(allowed_types))
 
+        # Enforce strict codebase visibility restrictions:
+        # Government and Standard auditors are absolutely not allowed to see any codebases.
+        if subtype in ["government_auditor", "REGULATOR_AUDITOR", "standard_auditor", "HUB_AUDITOR"]:
+            reg_base_query = reg_base_query.filter(Hub.entity_type != "codebase")
+
         # standard_auditor: isolated to specific hubs
         if subtype in ["standard_auditor", "HUB_AUDITOR"]:
             assigned_str = official.assigned_hub_ids or ""
@@ -989,7 +994,11 @@ def _enforce_tenant_scope(current_user: dict, db: Session, hub_id: str = None):
             
         # cross_hub_auditor: sees everything in their own organization/agency
         elif subtype in ["cross_hub_auditor", "CROSS_HUB_AUDITOR"]:
-            org_hubs = reg_base_query.filter(Hub.org_id == official.org_id).all()
+            # Only see codebases if they are part of that hub (meaning in assigned_hub_ids)
+            assigned_ids = [h.strip() for h in (official.assigned_hub_ids or "").split(",") if h.strip()]
+            org_hubs = reg_base_query.filter(Hub.org_id == official.org_id).filter(
+                (Hub.entity_type != "codebase") | (Hub.id.in_(assigned_ids))
+            ).all()
             org_hub_ids = [h.id for h in org_hubs]
             if not org_hub_ids:
                 raise HTTPException(status_code=403, detail="CROSS_HUB_AUDITOR has no visible hubs.")
