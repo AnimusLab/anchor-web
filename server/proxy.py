@@ -424,6 +424,71 @@ def verify_entity(hub_id: str, provided_mat: str, db: Session) -> bool:
 
     return False
 
+def append_runtime_violation_to_file(hub_id: str, entry_id: str, timestamp: str, audit_data: dict, chain_hash: str = None, signature: str = None):
+    try:
+        import os
+        
+        # Determine target file paths
+        paths_to_try = [
+            "d:/animus-manifesto/.anchor/violations/runtime_violations.txt",
+            "d:/anchor-web/.anchor/violations/runtime_violations.txt",
+            "./.anchor/violations/runtime_violations.txt"
+        ]
+        
+        target_path = None
+        for p in paths_to_try:
+            abs_p = os.path.abspath(p)
+            dir_name = os.path.dirname(abs_p)
+            try:
+                os.makedirs(dir_name, exist_ok=True)
+                target_path = abs_p
+                # Prioritize animus-manifesto one if it exists or can be created
+                if "animus-manifesto" in abs_p:
+                    break
+            except:
+                pass
+                
+        if not target_path:
+            return
+            
+        file_exists = os.path.exists(target_path)
+        
+        # Extract violations list to display rule IDs safely
+        violations = audit_data.get("violations", [])
+        if not violations:
+            # Fallback if violations list is empty but status was VIOLATION
+            rule_id = audit_data.get("governance_status", {}).get("rule_id", "UNKNOWN")
+            violations = [{"rule_id": rule_id, "severity": "CRITICAL"}]
+            
+        with open(target_path, "a", encoding="utf-8") as f:
+            if not file_exists:
+                f.write("=" * 80 + "\n")
+                f.write("   ANCHOR RUNTIME GOVERNANCE VIOLATIONS\n")
+                f.write("=" * 80 + "\n\n")
+            
+            f.write("=" * 80 + "\n")
+            f.write("   ANCHOR RUNTIME GOVERNANCE VIOLATION\n")
+            f.write("=" * 80 + "\n\n")
+            
+            f.write(f"Hub ID:            {hub_id}\n")
+            f.write(f"Timestamp:         {timestamp}\n")
+            f.write(f"Decision ID:       {entry_id}\n")
+            f.write(f"Compliance Status: VIOLATION\n")
+            f.write(f"Chain Hash:        {chain_hash or 'N/A'}\n")
+            f.write(f"Signature:         {signature or 'N/A'}\n")
+            f.write(f"Evidence Ref:      Spoke local ledger entry. Retrieve via:\n")
+            f.write(f"                   anchor forensic --entry-id {entry_id}\n\n")
+            
+            f.write("--- VIOLATION FINDINGS ---\n")
+            for v in violations:
+                rule_id = v.get("rule_id", "UNKNOWN")
+                severity = v.get("severity", "CRITICAL").upper()
+                f.write(f"* [[X]] [{rule_id}] ({severity})\n")
+                
+            f.write("-" * 80 + "\n\n")
+    except Exception as ex:
+        print(f"[ERROR writing runtime violation log] {ex}")
+
 # --- 4. PYDANTIC MODELS (Payload Schemas) ---
 class FleetProvisionRequest(BaseModel):
     name: str
@@ -889,8 +954,8 @@ async def submit_telemetry(payload: IngressPayload, background_tasks: Background
             payload=header_payload,
             classification="runtime" if status != "VIOLATION" else "violation",
             origin="SPOKE-NODE",
-            session_id=None, # System heartbeat doesn't require TGT
-            prev_hash=None # Root of check chain
+            session_id="SYSTEM", # System heartbeat doesn't require TGT
+            prev_hash="GENESIS" # Root of check chain
         )
 
         new_entry = LedgerEntry(
@@ -911,6 +976,19 @@ async def submit_telemetry(payload: IngressPayload, background_tasks: Background
         # 3. Resilient Background Handshake (Alerts)
         if status == "VIOLATION":
             background_tasks.add_task(dispatch_webhook, payload.hub_id, audit, db)
+            
+            # Write runtime violation plain-text log safely
+            try:
+                append_runtime_violation_to_file(
+                    hub_id=payload.hub_id,
+                    entry_id=entry_id,
+                    timestamp=audit.get("timestamp") or datetime.now(timezone.utc).isoformat(),
+                    audit_data=audit,
+                    chain_hash=new_entry.chain_hash,
+                    signature=new_entry.signature
+                )
+            except Exception as e:
+                logger.error(f"Failed to write runtime violation file: {e}")
             
             # 4. Real-time NOC Broadcast (Summary only)
             background_tasks.add_task(

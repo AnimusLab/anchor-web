@@ -16,6 +16,15 @@ def check_db():
         for org in orgs:
             print(f"  - ID: {org.id} | Name: {org.display_name} | Region: {org.region}")
 
+        # Check Hubs
+        print("\n[HUBS]")
+        from models import Hub
+        hubs = db.query(Hub).all()
+        if not hubs:
+            print("  No hubs found.")
+        for hub in hubs:
+            print(f"  - ID: {hub.id} | Name: {hub.display_name} | Region: {hub.region} | Org: {hub.org_id}")
+
         # 2. Check Enterprise Users
         print("\n[ENTERPRISE USERS]")
         users = db.query(EnterpriseUser).all()
