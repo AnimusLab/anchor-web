@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, Text, ForeignKey, Integer
+from sqlalchemy import Column, String, Boolean, Text, ForeignKey, Integer, Float
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -223,11 +223,18 @@ class RuntimeRegistry(Base):
     __tablename__ = "runtime_registry"
     
     id             = Column(String, primary_key=True)               # e.g., "WEALTH-AGENT-01"
-    hub_id         = Column(String, ForeignKey("hubs.id"))
-    policy_chain   = Column(String, nullable=False)                 # e.g., "FINANCE-STRICT"
-    dac_namespace  = Column(String, nullable=False)                 # e.g., "FINANCE"
-    relay_identity = Column(String, nullable=False)                 # e.g., "LOCAL-SOVEREIGN"
-    created_at     = Column(String, nullable=False)
+    hub_id         = Column(String, ForeignKey("hubs.id"), nullable=True)
+    policy_chain   = Column(String, nullable=True)                  # e.g., "FINANCE-STRICT"
+    dac_namespace  = Column(String, nullable=True)                  # e.g., "FINANCE"
+    relay_identity = Column(String, nullable=True)                  # e.g., "LOCAL-SOVEREIGN"
+    created_at     = Column(String, nullable=True)
+
+    name           = Column(String, nullable=True)
+    status         = Column(String, nullable=True)
+    ip_address     = Column(String, nullable=True)
+    region_label   = Column("region", String, nullable=True)
+    system_load    = Column(Float, nullable=True)
+    last_heartbeat = Column(String, nullable=True)
 
 
 class ReplayAccessLog(Base):
