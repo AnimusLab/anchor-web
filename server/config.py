@@ -172,9 +172,9 @@ class EntityVisibilityFilter:
         "owner": {EntityType.AI_AGENT, EntityType.CODEBASE, EntityType.GATEWAY, EntityType.MESH_NODE, EntityType.POLICY, EntityType.PROCESS, EntityType.DATABASE, EntityType.WEBHOOK},
         "admin": {EntityType.AI_AGENT, EntityType.CODEBASE, EntityType.GATEWAY, EntityType.MESH_NODE, EntityType.POLICY, EntityType.PROCESS, EntityType.DATABASE},
         "developer": {EntityType.AI_AGENT, EntityType.GATEWAY, EntityType.PROCESS},  # Limited access: no codebase, database, or webhooks
-        "auditor_hub_only": {EntityType.AI_AGENT, EntityType.GATEWAY},  # HUB_ONLY scope
+        "auditor_hub_only": {EntityType.AI_AGENT},  # HUB_ONLY scope
         "auditor_cross_hub": {EntityType.AI_AGENT, EntityType.GATEWAY},  # ORG_WIDE scope
-        "auditor_regulatory": {EntityType.AI_AGENT, EntityType.GATEWAY},  # SYSTEM_WIDE scope (no codebase)
+        "auditor_regulatory": {EntityType.AI_AGENT, EntityType.GATEWAY, EntityType.PROCESS},  # SYSTEM_WIDE scope (no codebase)
         "member": {EntityType.AI_AGENT, EntityType.GATEWAY, EntityType.PROCESS},
     }
     
