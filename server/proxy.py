@@ -15,6 +15,7 @@ import time
 import json
 import os
 import sys
+import asyncio
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 import logging
@@ -47,7 +48,23 @@ from oversight_auth import oversight_router
 from governance import gov_router, seal_artifact, initialize_governance_engine
 
 # --- 1. INITIALIZE FASTAPI & CORS ---
-app = FastAPI(title="Anchor Master Node", version="5.0.0")
+env = (os.getenv("ENVIRONMENT") or "").lower()
+if env in ["development", "dev", "local"]:
+    docs_url = "/docs"
+    redoc_url = "/redoc"
+    openapi_url = "/openapi.json"
+else:
+    docs_url = None
+    redoc_url = None
+    openapi_url = None
+
+app = FastAPI(
+    title="Anchor Master Node",
+    version="5.0.0",
+    docs_url=docs_url,
+    redoc_url=redoc_url,
+    openapi_url=openapi_url
+)
 
 # Pre-declare managers to avoid name errors in bridge closure
 manager = None
@@ -1630,6 +1647,7 @@ async def spoke_gateway(websocket: WebSocket):
         hub_id = reg_msg.hub_id
 
         # Verify Hub identity and Regional Key
+        spoke_regional_key = None
         with next(get_db()) as db:
             from models import Hub
             hub = db.query(Hub).filter(Hub.id == hub_id).first()
@@ -1639,6 +1657,7 @@ async def spoke_gateway(websocket: WebSocket):
                 await websocket.send_text(rej.to_json())
                 await websocket.close(code=4003, reason="INVALID REGIONAL KEY")
                 return
+            spoke_regional_key = hub.regional_key
 
         # Regional Key verified — register this Spoke
         spoke_registry.register(hub_id, websocket)
@@ -1686,10 +1705,12 @@ async def spoke_gateway(websocket: WebSocket):
             elif msg.type == MessageType.FORENSIC_RESPONSE:
                 # Resolve a pending Auditor request
                 resp = ForensicResponsePayload(**msg.payload)
-                # Decrypt using ANCHOR_MASTER_KEY
+                # Decrypt using the specific spoke's regional key (Option A)
                 import base64
                 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-                key_bytes = hashlib.sha256(ANCHOR_MASTER_KEY.encode()).digest()
+                # Fall back to ANCHOR_MASTER_KEY if spoke_regional_key is not set (e.g. mock server)
+                decryption_secret = spoke_regional_key or ANCHOR_MASTER_KEY
+                key_bytes = hashlib.sha256(decryption_secret.encode()).digest()
                 aesgcm = AESGCM(key_bytes)
                 nonce = base64.b64decode(resp.nonce)
                 ct    = base64.b64decode(resp.encrypted_payload)
@@ -1759,33 +1780,34 @@ class RuntimeRegisterRequest(BaseModel):
     system_load: float
 
 @app.post("/api/admin/runtime/register")
-def register_runtime(body: RuntimeRegisterRequest, db: Session = Depends(get_db)):
+def register_runtime(body: RuntimeRegisterRequest, db: Session = Depends(get_db), current_user: dict = Depends(get_current_admin_user)):
     """Registers or updates a runtime node's health and topology details."""
-    existing = db.query(RuntimeRegistry).filter(RuntimeRegistry.runtime_id == body.runtime_id).first()
+    existing = db.query(RuntimeRegistry).filter(RuntimeRegistry.id == body.runtime_id).first()
     now_str = datetime.now(timezone.utc).isoformat()
     if existing:
         existing.name = body.name
         existing.status = body.status
         existing.ip_address = body.ip_address
-        existing.region = body.region
+        existing.region_label = body.region
         existing.system_load = body.system_load
         existing.last_heartbeat = now_str
     else:
         new_runtime = RuntimeRegistry(
-            runtime_id=body.runtime_id,
+            id=body.runtime_id,
             name=body.name,
             status=body.status,
             ip_address=body.ip_address,
-            region=body.region,
+            region_label=body.region,
             system_load=body.system_load,
-            last_heartbeat=now_str
+            last_heartbeat=now_str,
+            created_at=now_str
         )
         db.add(new_runtime)
     db.commit()
     return {"status": "SUCCESS", "message": f"Runtime {body.runtime_id} heartbeat recorded."}
 
 @app.get("/api/admin/runtimes")
-def get_runtimes(db: Session = Depends(get_db)):
+def get_runtimes(db: Session = Depends(get_db), current_user: dict = Depends(get_current_admin_user)):
     """Returns all registered runtimes for the topology dashboard."""
     runtimes = db.query(RuntimeRegistry).all()
     return runtimes
