@@ -19,7 +19,7 @@ from io import BytesIO
 from typing import List, Dict, Optional, Any
 from database import get_db, SessionLocal
 from models import EnterpriseUser, RegulatoryOfficial, Organization, Hub, WhitelistEntry
-from security import encrypt_secret
+from security import encrypt_secret, get_jwt_key
 from mail import (
     send_enterprise_credentials, 
     send_enterprise_provisioned, 
@@ -146,7 +146,7 @@ def _verify_jwt_with_fingerprint(token: str, current_fingerprint: str, client_ip
     Implements geo-anomaly detection by checking IP consistency.
     """
     try:
-        payload = jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
+        payload = jwt.decode(token, get_jwt_key(), algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="SESSION EXPIRED")
     except jwt.InvalidTokenError:
@@ -216,9 +216,6 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     if not credentials:
         raise HTTPException(status_code=401, detail="AUTHENTICATION REQUIRED")
     
-    if credentials.credentials == ANCHOR_MASTER_KEY or credentials.credentials == "MASTER_BYPASS_TOKEN":
-        return {"sub": "root-bypass", "role": "root", "org_id": "MASTER"}
-
     # Extract client IP and User-Agent for fingerprint validation
     client_ip = "UNKNOWN"
     user_agent = "UNKNOWN"
@@ -393,7 +390,7 @@ def _issue_jwt(user, is_provisional=False, request: Request = None):
         "last_activity": datetime.utcnow().isoformat()
     }
 
-    return jwt.encode(payload, ANCHOR_MASTER_KEY, algorithm="HS256")
+    return jwt.encode(payload, get_jwt_key(), algorithm="HS256")
 
 # =============================================================================
 # Final ID Standard Generators (v5.8)
@@ -542,7 +539,7 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
             "role": getattr(user, 'role', 'member'), 
             "type": "auth_intent", 
             "exp": intent_exp
-        }, ANCHOR_MASTER_KEY, algorithm="HS256")
+        }, get_jwt_key(), algorithm="HS256")
         from models import Organization
         org = db.query(Organization).filter(Organization.id == user.org_id).first()
         
@@ -576,7 +573,7 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session, 
         client_ip = _get_client_ip(http_request)
     
     try:
-        payload = jwt.decode(request.intent_token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
+        payload = jwt.decode(request.intent_token, get_jwt_key(), algorithms=["HS256"])
         if payload.get("type") != "auth_intent" or payload.get("sub") != request.email:
             _audit_log("UNAUTHORIZED_ACCESS", request.email, "INVALID INTENT token", client_ip)
             raise HTTPException(status_code=401, detail="INVALID INTENT")
@@ -608,7 +605,7 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session, 
     
     # Issue new token with request context for fingerprinting
     token = _issue_jwt(user, is_provisional=True, request=http_request)
-    decoded_token = jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
+    decoded_token = jwt.decode(token, get_jwt_key(), algorithms=["HS256"])
     session_id = decoded_token.get("session_id")
     
     # Log successful authentication

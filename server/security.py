@@ -1,22 +1,54 @@
 import os
+import base64
 from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.hashes import SHA256
 from fastapi import HTTPException
 
-# Load the key from the environment
-# Reminder: This key should be a base64-encoded 32-byte string
-MASTER_KEY = os.getenv("ANCHOR_MASTER_KEY")
+# Global cached keys
+_fernet_key = None
+_jwt_key = None
+_last_master_key = None
 
-# For initial setup, we provide a fallback logic or a hard error if missing
-if not MASTER_KEY:
-    # In production, this should be a hard RuntimeError
-    # For initial bridging, we will look for a local .env or key file
-    pass
+def _init_keys():
+    global _fernet_key, _jwt_key, _last_master_key
+    master_key = os.getenv("ANCHOR_MASTER_KEY")
+    if not master_key:
+        # Fallback for local testing if not set
+        master_key = "placeholder_master_key_for_local_testing_purposes"
+    
+    if _fernet_key is None or master_key != _last_master_key:
+        _last_master_key = master_key
+        master_bytes = master_key.encode("utf-8")
+        
+        # Derive Fernet key (must be urlsafe base64 encoded 32 bytes)
+        fernet_hkdf = HKDF(
+            algorithm=SHA256(),
+            length=32,
+            salt=b"anchor-key-separation",
+            info=b"fernet-encryption-key",
+        )
+        _fernet_key = base64.urlsafe_b64encode(fernet_hkdf.derive(master_bytes))
+        
+        # Derive JWT HMAC key (binary key for HMAC)
+        jwt_hkdf = HKDF(
+            algorithm=SHA256(),
+            length=32,
+            salt=b"anchor-key-separation",
+            info=b"jwt-signing-key",
+        )
+        _jwt_key = jwt_hkdf.derive(master_bytes)
+
+def get_fernet_key() -> bytes:
+    _init_keys()
+    return _fernet_key
+
+def get_jwt_key() -> bytes:
+    _init_keys()
+    return _jwt_key
 
 def get_cipher():
-    key = os.getenv("ANCHOR_MASTER_KEY")
-    if not key:
-        raise RuntimeError("ANCHOR_MASTER_KEY not found in environment variables.")
-    return Fernet(key.encode())
+    return Fernet(get_fernet_key())
 
 def encrypt_secret(plain_text: str) -> str:
     """Encrypts a string and returns a UTF-8 string of the ciphertext."""
@@ -30,3 +62,4 @@ def decrypt_secret(cipher_text: str) -> str:
         return cipher.decrypt(cipher_text.encode()).decode()
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to decrypt secure credential. Check ANCHOR_MASTER_KEY.")
+
