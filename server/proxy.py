@@ -1643,7 +1643,7 @@ async def spoke_gateway(websocket: WebSocket):
             await websocket.close(code=4002, reason="EXPECTED_SPOKE_REGISTER")
             return
 
-        reg = SpokeRegisterPayload(**reg_msg.payload)
+        reg = SpokeRegisterPayload(**(reg_msg.payload or {}))
         hub_id = reg_msg.hub_id
 
         # Verify Hub identity and Regional Key
@@ -1678,7 +1678,7 @@ async def spoke_gateway(websocket: WebSocket):
 
             if msg.type == MessageType.AUDIT_HEADER:
                 # Store lightweight header in Neon
-                header = AuditHeaderPayload(**msg.payload)
+                header = AuditHeaderPayload(**(msg.payload or {}))
                 with next(get_db()) as db:
                     from models import LedgerEntry
                     import json as _json
@@ -1704,7 +1704,7 @@ async def spoke_gateway(websocket: WebSocket):
 
             elif msg.type == MessageType.FORENSIC_RESPONSE:
                 # Resolve a pending Auditor request
-                resp = ForensicResponsePayload(**msg.payload)
+                resp = ForensicResponsePayload(**(msg.payload or {}))
                 # Decrypt using the specific spoke's regional key (Option A)
                 import base64
                 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
