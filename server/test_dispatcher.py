@@ -6,7 +6,13 @@ import asyncio
 from unittest.mock import MagicMock
 from dispatch_manager import dispatch_webhook
 from security import encrypt_secret
-from models import Fleet
+class Fleet:
+    def __init__(self, entity_id, name, webhook_url=None, webhook_secret=None, subscriptions=None):
+        self.entity_id = entity_id
+        self.name = name
+        self.webhook_url = webhook_url
+        self.webhook_secret = webhook_secret
+        self.subscriptions = subscriptions or []
 
 async def test_dispatch_logic():
     print("\n[DISPATCH TEST] Initializing Resilient Handshake Test")

@@ -66,12 +66,12 @@ def _log_receipt(db: Session, parent_entry_id: str, status: str, response_body: 
     """
     receipt = LedgerEntry(
         id=f"rec_{int(time.time()*1000)}",
-        entity_id=None,
-        parent_entry_id=parent_entry_id,
+        hub_id=None,
         timestamp=datetime.utcnow().isoformat(),
         type="notification_receipt",
         payload=json.dumps({
             "status": status,
+            "parent_entry_id": parent_entry_id,
             "response_preview": response_body[:255] if response_body else None,
             "logged_at": datetime.utcnow().isoformat()
         })

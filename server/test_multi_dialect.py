@@ -21,7 +21,22 @@ print(f"[DEBUG] sys.path: {sys.path}")
 
 from dispatch_manager import dispatch_webhook
 from security import encrypt_secret
-from models import Fleet, WebhookSubscription
+class WebhookSubscription:
+    def __init__(self, id, branch_name, webhook_url, webhook_secret, dialect, is_active=True):
+        self.id = id
+        self.branch_name = branch_name
+        self.webhook_url = webhook_url
+        self.webhook_secret = webhook_secret
+        self.dialect = dialect
+        self.is_active = is_active
+
+class Fleet:
+    def __init__(self, entity_id, name, webhook_url=None, webhook_secret=None, subscriptions=None):
+        self.entity_id = entity_id
+        self.name = name
+        self.webhook_url = webhook_url
+        self.webhook_secret = webhook_secret
+        self.subscriptions = subscriptions or []
 
 async def test_multi_dialect_logic():
     print("\n[PHASE 7 TEST] Universal Regulatory Translator Verification")
@@ -95,6 +110,7 @@ async def test_multi_dialect_logic():
         }
         mock_resp = MagicMock()
         mock_resp.status_code = 200
+        mock_resp.text = "Success"
         return mock_resp
 
     print("[STEP 1] Orchestrating Multi-Dialect Dispatch...")
@@ -113,9 +129,9 @@ async def test_multi_dialect_logic():
     
     # Verify NYC (SEC)
     nyc_data = dispatched_payloads["https://sec.internal/edgar"]["json"]
-    print(f" -> NYC Received: {nyc_data['regulator']} {nyc_data['disclosure_type']}")
+    print(f" -> NYC Received: {nyc_data['regulator']} {nyc_data['form_type']}")
     assert nyc_data["regulator"] == "U.S. Securities and Exchange Commission"
-    assert "8-K" in nyc_data["disclosure_type"]
+    assert "8-K" in nyc_data["form_type"]
 
     print("\n[STEP 3] Verifying Cryptographic Non-Repudiation (HMAC Signature)")
     

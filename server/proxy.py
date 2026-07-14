@@ -38,7 +38,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, text
 from database import get_db, init_db, SessionLocal
 from models import Hub, LedgerEntry, EnterpriseUser, RegulatoryOfficial, Organization, ForensicRequest, WhitelistEntry, ReplayAccessLog, RuntimeRegistry
-from security import encrypt_secret, decrypt_secret
+from security import encrypt_secret, decrypt_secret, get_jwt_key
 from dispatch_manager import dispatch_webhook
 from auth import (
     auth_router, get_current_user, get_current_admin_user, 
@@ -802,7 +802,7 @@ async def approve_forensic_pull(pull_id: str, status: dict = Body(...), current_
             "auditor_id": req.auditor_id,
             "exp": int(expires_at.timestamp())
         }
-        temp_token = jwt.encode(token_payload, ANCHOR_MASTER_KEY, algorithm="HS256")
+        temp_token = jwt.encode(token_payload, get_jwt_key(), algorithm="HS256")
         
         req.temporary_token = temp_token
         req.expires_at = expires_at.isoformat()
@@ -838,7 +838,7 @@ async def replay_forensics(
         
     # 3. Decode and validate JWT token
     try:
-        payload = jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
+        payload = jwt.decode(token, get_jwt_key(), algorithms=["HS256"])
         if payload.get("pull_id") != pull_id:
             raise HTTPException(status_code=401, detail="INVALID_TOKEN: Request ID mismatch.")
     except jwt.ExpiredSignatureError:
@@ -1602,7 +1602,7 @@ async def fleet_command_center(websocket: WebSocket, entity_id: str, token: str 
         return
     
     try:
-        payload = jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
+        payload = jwt.decode(token, get_jwt_key(), algorithms=["HS256"])
         if payload.get("role") != "admin":
             await websocket.close(code=4003, reason="ADMIN PRIVILEGES REQUIRED")
             return
@@ -1643,7 +1643,7 @@ async def spoke_gateway(websocket: WebSocket):
             await websocket.close(code=4002, reason="EXPECTED_SPOKE_REGISTER")
             return
 
-        reg = SpokeRegisterPayload(**reg_msg.payload)
+        reg = SpokeRegisterPayload(**(reg_msg.payload or {}))
         hub_id = reg_msg.hub_id
 
         # Verify Hub identity and Regional Key
@@ -1678,7 +1678,7 @@ async def spoke_gateway(websocket: WebSocket):
 
             if msg.type == MessageType.AUDIT_HEADER:
                 # Store lightweight header in Neon
-                header = AuditHeaderPayload(**msg.payload)
+                header = AuditHeaderPayload(**(msg.payload or {}))
                 with next(get_db()) as db:
                     from models import LedgerEntry
                     import json as _json
@@ -1704,7 +1704,7 @@ async def spoke_gateway(websocket: WebSocket):
 
             elif msg.type == MessageType.FORENSIC_RESPONSE:
                 # Resolve a pending Auditor request
-                resp = ForensicResponsePayload(**msg.payload)
+                resp = ForensicResponsePayload(**(msg.payload or {}))
                 # Decrypt using the specific spoke's regional key (Option A)
                 import base64
                 from cryptography.hazmat.primitives.ciphers.aead import AESGCM

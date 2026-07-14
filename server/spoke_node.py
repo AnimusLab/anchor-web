@@ -184,8 +184,9 @@ async def relay_loop():
                         logger.info("[RELAY] Hub ACK received. Spoke is LIVE on the Grid.")
 
                     elif msg.type == MessageType.HUB_REJECT:
-                        logger.error("[RELAY] Hub REJECTED this Spoke: %s", msg.payload)
-                        return  # Don't reconnect on explicit rejection
+                        err_msg = f"Hub REJECTED this Spoke: {msg.payload}"
+                        logger.error(f"[RELAY] {err_msg}")
+                        raise RuntimeError(err_msg)
 
                     elif msg.type == MessageType.FORENSIC_PULL:
                         pull = ForensicPullPayload(**msg.payload)
