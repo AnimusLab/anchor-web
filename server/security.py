@@ -14,8 +14,7 @@ def _init_keys():
     global _fernet_key, _jwt_key, _last_master_key
     master_key = os.getenv("ANCHOR_MASTER_KEY")
     if not master_key:
-        # Fallback for local testing if not set
-        master_key = "placeholder_master_key_for_local_testing_purposes"
+        raise RuntimeError("CRITICAL: ANCHOR_MASTER_KEY is required and not set.")
     
     if _fernet_key is None or master_key != _last_master_key:
         _last_master_key = master_key
