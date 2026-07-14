@@ -29,6 +29,7 @@ from database import get_db
 from models import EnforcementNotice, AuditTrailEntry, LedgerEntry, Hub, Organization, RegulatoryOfficial
 from mail import send_auditor_provisioned
 from governance.registry_engine import compile_governance_profile
+from security import get_jwt_key
 
 # ---------------------------------------------------------------------------
 # Router & security
@@ -119,7 +120,7 @@ def _issue_oversight_jwt(user: RegulatoryOfficial, session_id: str) -> str:
             "clearance":    user.clearance_level,
             "capabilities": compiled_caps
         },
-        ANCHOR_MASTER_KEY,
+        get_jwt_key(),
         algorithm="HS256",
     )
 
@@ -128,7 +129,7 @@ def _decode_oversight_jwt(token: str) -> dict:
     import logging
     logger = logging.getLogger("anchor.oversight")
     try:
-        payload = jwt.decode(token, ANCHOR_MASTER_KEY, algorithms=["HS256"])
+        payload = jwt.decode(token, get_jwt_key(), algorithms=["HS256"])
         if payload.get("portal") != "oversight":
             logger.error(f"[TOKEN_SCOPE_ERROR] Attempted access with non-oversight token. User: {payload.get('sub', 'UNKNOWN')}")
             raise HTTPException(status_code=401, detail="INVALID TOKEN SCOPE")

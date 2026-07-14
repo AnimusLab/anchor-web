@@ -135,8 +135,8 @@ async def approve_governance_access(
         "request_id": req.id,
         "exp": expires_at
     }
-    
-    tgt_token = jwt.encode(tgt_payload, _ANCHOR_MASTER_KEY, algorithm="HS256")
+    from security import get_jwt_key
+    tgt_token = jwt.encode(tgt_payload, get_jwt_key(), algorithm="HS256")
     
     req.status = "APPROVED"
     req.approving_authority = current_user.get("sub")
