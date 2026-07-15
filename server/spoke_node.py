@@ -359,8 +359,9 @@ async def spoke_ingest(body: SpokeIngressPayload):
     Accepts full telemetry, stores it locally, and pushes a lightweight
     header to the Hub — exactly like the old /api/ingress, but local-first.
     """
-    # 1. Verify MAT (check against .env REGIONAL_KEY for this Spoke)
-    if body.mat != REGIONAL_KEY:
+    # 1. Verify MAT (check against .env REGIONAL_KEY for this Spoke) safely
+    import hmac
+    if not hmac.compare_digest(body.mat, REGIONAL_KEY):
         raise HTTPException(status_code=401, detail="INVALID MAT")
 
     audit = body.audit_data
@@ -369,8 +370,22 @@ async def spoke_ingest(body: SpokeIngressPayload):
     is_compliant = audit.get("governance_status", {}).get("is_compliant", True)
     rule_id     = audit.get("governance_status", {}).get("rule_id")
     entry_type  = "runtime_violation" if not is_compliant else "runtime_check"
-    chain_hash  = "0x" + secrets.token_hex(32)
-    signature   = "sig_" + secrets.token_hex(16)
+
+    crypto = audit.get("cryptography", {})
+    chain_hash = crypto.get("chain_hash")
+    signature = crypto.get("signature")
+
+    # Fallback to local cryptographic signing if not provided or mock
+    if not chain_hash or chain_hash == "mock":
+        chain_hash = "0x" + secrets.token_hex(32)
+    if not signature or signature == "mock":
+        import hashlib
+        signing_key = REGIONAL_KEY or os.getenv("ANCHOR_MASTER_KEY", "placeholder_master_key")
+        signature = hmac.new(
+            signing_key.encode("utf-8"),
+            chain_hash.encode("utf-8"),
+            hashlib.sha256
+        ).hexdigest()
 
     # 2. Store FULL payload locally on the Spoke's SQLite
     store_entry_locally(

@@ -99,28 +99,49 @@ JURISDICTION_PREFIX = {
     "SEBI": "sebi",
 }
 
-# --- ROOT ACCESS BYPASS STORAGE ---
-# Simple in-memory storage for emergency access codes (expires in 10 mins)
-admin_access_codes = {}
+from collections import defaultdict
+
+# Simple in-memory rate limiter for auth routes
+_ip_attempts = defaultdict(list)
+
+def rate_limit_auth(ip: str, limit: int = 5, window_seconds: int = 60):
+    now = time.time()
+    # Clean old attempts
+    _ip_attempts[ip] = [t for t in _ip_attempts[ip] if now - t < window_seconds]
+    if len(_ip_attempts[ip]) >= limit:
+        raise HTTPException(status_code=429, detail="Too many attempts. Please wait before retrying.")
+    _ip_attempts[ip].append(now)
+
 
 # =============================================================================
 # Session Fingerprinting Utilities (Auth Hardening v6.3)
 # =============================================================================
 
 def _get_client_ip(request: Request) -> str:
-    """Helper to extract real client IP address, supporting proxy headers."""
+    """Helper to extract real client IP address, supporting proxy headers safely."""
     if not request:
         return "127.0.0.1"
+    
+    # Get direct connection remote IP
+    remote_ip = "127.0.0.1"
+    if request.client and request.client.host:
+        remote_ip = request.client.host.strip()
+
+    # Get proxy headers
     x_forwarded_for = request.headers.get("x-forwarded-for")
-    if x_forwarded_for:
-        return x_forwarded_for.split(",")[0].strip()
     x_real_ip = request.headers.get("x-real-ip")
-    if x_real_ip:
-        return x_real_ip.strip()
-    try:
-        return request.client.host if request.client else "127.0.0.1"
-    except:
-        return "127.0.0.1"
+
+    # In production, ONLY trust proxy headers if the request is coming from a trusted proxy
+    trusted_proxies = {"127.0.0.1", "localhost", "::1"}
+    
+    # If the direct connection is from a trusted proxy, trust the forwarding headers
+    if remote_ip in trusted_proxies:
+        if x_forwarded_for:
+            return x_forwarded_for.split(",")[0].strip()
+        if x_real_ip:
+            return x_real_ip.strip()
+            
+    return remote_ip
 
 def _create_session_fingerprint(user_agent: str, client_ip: str) -> str:
     """
@@ -551,19 +572,11 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
             "org_name": getattr(org, 'display_name', 'PENDING')
         }
     except HTTPException as he:
-        # Re-wrap as 200 for forensic visibility
-        return {
-            "status": "ERROR",
-            "detail": he.detail,
-            "trace": "HTTPException_RE-ROUTED"
-        }
+        raise he
     except Exception as e:
-        import traceback
-        return {
-            "status": "ERROR",
-            "detail": f"IDENTITY_LOGIC_CRASH: {str(e)}",
-            "trace": traceback.format_exc()
-        }
+        import logging
+        logging.getLogger("anchor.auth").error(f"IDENTITY_LOGIC_CRASH: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal identity lookup error")
 
 def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session, http_request: Request = None):
     """Internal shared logic for TOTP verification with session hardening (v6.3)."""
@@ -571,6 +584,7 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session, 
     client_ip = "UNKNOWN"
     if http_request:
         client_ip = _get_client_ip(http_request)
+        rate_limit_auth(client_ip, limit=5, window_seconds=60)
     
     try:
         payload = jwt.decode(request.intent_token, get_jwt_key(), algorithms=["HS256"])
@@ -644,18 +658,46 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session, 
 # Public Routes
 # =============================================================================
 
+def mask_email(email: str) -> str:
+    if not email or email == "UNKNOWN":
+        return "UNKNOWN"
+    if "@" not in email:
+        return "hidden"
+    parts = email.split("@")
+    name = parts[0]
+    domain = parts[1]
+    if len(name) <= 2:
+        masked_name = name[0] + "*" * (len(name) - 1)
+    else:
+        masked_name = name[0] + "*" * (len(name) - 2) + name[-1]
+    return f"{masked_name}@{domain}"
+
+def mask_display_name(name: str) -> str:
+    if not name:
+        return ""
+    parts = name.split()
+    masked_parts = []
+    for p in parts:
+        if len(p) <= 2:
+            masked_parts.append(p[0] + "*")
+        else:
+            masked_parts.append(p[0] + "*" * (len(p) - 2) + p[-1])
+    return " ".join(masked_parts)
+
 @auth_router.post("/identify-first")
-def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depends(get_db)):
-    """STRICT LOOKUP: Given a Clearance ID, find the associated email and hub_id."""
+def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depends(get_db), http_request: Request = None):
+    """STRICT LOOKUP: Given a Clearance ID, find the associated email and hub_id (PII-masked)."""
+    client_ip = _get_client_ip(http_request)
+    rate_limit_auth(client_ip, limit=10, window_seconds=60)
     cid = clearance_id.strip().upper()
     try:
         user = db.query(EnterpriseUser).filter(EnterpriseUser.id == cid).first()
         if user:
             org = db.query(Organization).filter(Organization.id == user.org_id).first()
             return {
-                "email": getattr(user, 'email', 'UNKNOWN'),
+                "email": mask_email(getattr(user, 'email', 'UNKNOWN')),
                 "hub_id": user.hub_id or "PENDING",
-                "display_name": getattr(user, 'display_name', 'AUTHORIZED PERSON'),
+                "display_name": mask_display_name(getattr(user, 'display_name', 'AUTHORIZED PERSON')),
                 "org_name": getattr(org, 'display_name', 'PENDING') if org else "UNKNOWN",
                 "region": getattr(org, 'region', 'GLOBAL') if org else "GLOBAL",
                 "department": getattr(user, 'department', 'OPS')
@@ -665,29 +707,34 @@ def identify_first(clearance_id: str = Body(..., embed=True), db: Session = Depe
         if official:
             org = db.query(Organization).filter(Organization.id == official.org_id).first()
             return {
-                "email": getattr(official, 'email', 'UNKNOWN'),
+                "email": mask_email(getattr(official, 'email', 'UNKNOWN')),
                 "hub_id": official.org_id,
-                "display_name": getattr(official, 'display_name', 'OVERSIGHT OFFICER'),
+                "display_name": mask_display_name(getattr(official, 'display_name', 'OVERSIGHT OFFICER')),
                 "org_name": getattr(org, 'display_name', 'PENDING') if org else "UNKNOWN",
                 "region": getattr(org, 'region', 'GLOBAL') if org else "GLOBAL",
                 "department": getattr(official, 'department', 'AUDIT')
             }
         raise HTTPException(status_code=404, detail="IDENTITY NOT FOUND")
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        print(f"IDENTIFY_FIRST ERROR: {e}")
-        import traceback
-        traceback.print_exc()
-        return {"status": "ERROR", "detail": str(e)}
+        import logging
+        logging.getLogger("anchor.auth").error(f"IDENTIFY_FIRST ERROR: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal identity lookup error")
 
 @auth_router.post("/enterprise/identify")
-def enterprise_identify(request_body: dict = Body(...), db: Session = Depends(get_db)):
+def enterprise_identify(request_body: dict = Body(...), db: Session = Depends(get_db), http_request: Request = None):
+    client_ip = _get_client_ip(http_request)
+    rate_limit_auth(client_ip, limit=10, window_seconds=60)
     cid = request_body.get("clearance_id")
     email = request_body.get("email")
     hub_id = request_body.get("hub_id")
     return _identify_logic(cid, email, hub_id, ["owner", "admin", "member", "lead", "developer"], db)
 
 @auth_router.post("/oversight/identify")
-def oversight_identify(request_body: dict = Body(...), db: Session = Depends(get_db)):
+def oversight_identify(request_body: dict = Body(...), db: Session = Depends(get_db), http_request: Request = None):
+    client_ip = _get_client_ip(http_request)
+    rate_limit_auth(client_ip, limit=10, window_seconds=60)
     cid = request_body.get("clearance_id")
     email = request_body.get("email")
     hub_id = request_body.get("hub_id")
@@ -1217,7 +1264,7 @@ def activate_hub(current_user: dict = Depends(get_current_user), db: Session = D
     }
 
 @auth_router.get("/debug/db")
-def debug_db_schema(provision: bool = False, db: Session = Depends(get_db)):
+def debug_db_schema(provision: bool = False, db: Session = Depends(get_db), current_admin: dict = Depends(get_current_admin_user)):
     if provision:
         from database import init_db
         init_db()
@@ -1228,7 +1275,7 @@ def debug_db_schema(provision: bool = False, db: Session = Depends(get_db)):
     return {
         "status": "OPERATIONAL",
         "master_key_present": bool(ANCHOR_MASTER_KEY),
-        "database": str(db.get_bind().url).split("@")[-1],
+        "database": "REDACTED",
         "tables": tables,
         "schema": schema_details,
         "required_tables_present": all(t in tables for t in ["organizations", "enterprise_users"])
