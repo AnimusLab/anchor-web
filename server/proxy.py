@@ -1332,6 +1332,9 @@ def get_fleet_ledger(entity_id: str, current_user: dict = Depends(get_current_us
     if current_user["role"] not in ("admin", "regulator", "root"):
         raise HTTPException(status_code=403, detail="AUDITOR OR ADMIN PRIVILEGES REQUIRED")
     
+    # Enforce tenant isolation
+    _enforce_tenant_scope(current_user, db, entity_id)
+    
     entries = db.query(LedgerEntry).filter(LedgerEntry.hub_id == entity_id).order_by(desc(LedgerEntry.timestamp)).all()
     return entries
 
@@ -1341,18 +1344,37 @@ def verify_fleet_chain(entity_id: str, current_user: dict = Depends(get_current_
     if current_user["role"] not in ("admin", "regulator", "root"):
         raise HTTPException(status_code=403, detail="AUDITOR OR ADMIN PRIVILEGES REQUIRED")
     
+    # Enforce tenant isolation
+    _enforce_tenant_scope(current_user, db, entity_id)
+
+    # Ensure ANCHOR_SECRET_KEY is configured for verification
+    if not os.environ.get("ANCHOR_SECRET_KEY") and ANCHOR_MASTER_KEY:
+        os.environ["ANCHOR_SECRET_KEY"] = ANCHOR_MASTER_KEY
+
+    try:
+        from anchor.core.crypto import verify_chain_hash
+    except ImportError:
+        import sys
+        sys.path.insert(0, r"d:\Anchor")
+        from anchor.core.crypto import verify_chain_hash
+    
     entries = db.query(LedgerEntry).filter(LedgerEntry.hub_id == entity_id).order_by(LedgerEntry.timestamp).all()
     
     chain_status = []
     for e in entries:
-        is_valid = True  # Placeholder for actual forensic hash verification
+        is_valid = False
+        if e.chain_hash and e.signature:
+            is_valid = verify_chain_hash(e.chain_hash, e.signature)
         chain_status.append({
             "entry_id": e.id,
             "chain_hash": e.chain_hash,
             "status": "VERIFIED" if is_valid else "CORRUPTED"
         })
     
-    return {"entity_id": entity_id, "verification_rate": 1.0, "chain": chain_status}
+    valid_count = sum(1 for status in chain_status if status["status"] == "VERIFIED")
+    verification_rate = valid_count / len(entries) if entries else 1.0
+    
+    return {"entity_id": entity_id, "verification_rate": verification_rate, "chain": chain_status}
 
 
 @app.get("/api/audit/{entity_id}/trend")
@@ -1368,6 +1390,9 @@ def get_compliance_trend(
     """
     if current_user["role"] not in ("admin", "regulator", "root"):
         raise HTTPException(status_code=403, detail="AUDITOR OR ADMIN PRIVILEGES REQUIRED")
+
+    # Enforce tenant isolation
+    _enforce_tenant_scope(current_user, db, entity_id)
 
     from datetime import timedelta
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
@@ -1435,6 +1460,9 @@ def get_translated_entry(entity_id: str, entry_id: str, dialect: str = "RBI",
     """
     if current_user["role"] not in ("admin", "regulator", "root"):
         raise HTTPException(status_code=403, detail="AUDITOR OR ADMIN PRIVILEGES REQUIRED")
+
+    # Enforce tenant isolation
+    _enforce_tenant_scope(current_user, db, entity_id)
 
     entry = db.query(LedgerEntry).filter(
         LedgerEntry.id == entry_id,
