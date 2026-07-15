@@ -234,8 +234,14 @@ NATO_PHONETIC = [
 # =============================================================================
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), request: Request = None):
-    """Extracts and validates JWT from the Authorization header with fingerprint binding (v6.3)."""
-    if not credentials:
+    """Extracts and validates JWT from Authorization header OR HttpOnly cookies with fingerprint binding (v6.3)."""
+    token = None
+    if credentials:
+        token = credentials.credentials
+    elif request:
+        token = request.cookies.get("access_token")
+        
+    if not token:
         raise HTTPException(status_code=401, detail="AUTHENTICATION REQUIRED")
     
     # Extract client IP and User-Agent for fingerprint validation
@@ -248,7 +254,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     current_fingerprint = _create_session_fingerprint(user_agent, client_ip)
     
     try:
-        payload = _verify_jwt_with_fingerprint(credentials.credentials, current_fingerprint, client_ip)
+        payload = _verify_jwt_with_fingerprint(token, current_fingerprint, client_ip)
         return payload
     except HTTPException:
         raise

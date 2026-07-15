@@ -14,6 +14,16 @@ def _init_keys():
     global _fernet_key, _jwt_key, _last_master_key
     master_key = os.getenv("ANCHOR_MASTER_KEY")
     if not master_key:
+        # Check standard container/Kubernetes secret path or custom secret path
+        secret_path = os.getenv("ANCHOR_MASTER_KEY_FILE", "/var/run/secrets/anchor/master_key")
+        if os.path.exists(secret_path):
+            try:
+                with open(secret_path, "r", encoding="utf-8") as f:
+                    master_key = f.read().strip()
+            except Exception:
+                pass
+                
+    if not master_key:
         raise RuntimeError("CRITICAL: ANCHOR_MASTER_KEY is required and not set.")
     
     if _fernet_key is None or master_key != _last_master_key:
