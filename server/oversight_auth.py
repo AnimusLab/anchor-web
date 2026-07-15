@@ -68,7 +68,7 @@ class ProvisionRequest(BaseModel):
     access_level: str = "READ_ONLY"
 
     # v6.1 Institutional Governance Fields
-    identity_subtype: Optional[str] = "REGULATORY_AUDITOR"
+    identity_subtype: Optional[str] = "government_auditor"
     entity_visibility_scope: Optional[str] = "ai_agent,gateway"
     governance_scope: Optional[str] = "jurisdiction_wide"
     clearance_level: Optional[int] = 3
