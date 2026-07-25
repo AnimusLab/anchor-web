@@ -305,6 +305,9 @@ rotation_schedule = SecretRotationSchedule()
 # Validate configuration on module load
 is_valid, validation_errors = Config.validate()
 if not is_valid:
+    env = (os.getenv("ENVIRONMENT") or "").lower()
     print("⚠️ Configuration validation warnings:")
     for error in validation_errors:
         print(f"  - {error}")
+    if env not in ["development", "dev", "local"]:
+        raise RuntimeError(f"CRITICAL CONFIGURATION ERROR: {validation_errors}")

@@ -24,11 +24,23 @@ function StatCard({ label, value, sub, color, colorClass }) {
   );
 }
 
+const escapeHtml = (str) => {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+};
+
 const hl = (obj) => {
   if (!obj) return { __html: '' };
-  return { __html: JSON.stringify(obj, null, 2).replace(
+  const raw = JSON.stringify(obj, null, 2);
+  return { __html: raw.replace(
     /(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
-    m => `<span style="color:${/^"/.test(m) ? (/:$/.test(m) ? 'var(--text-muted)' : 'var(--cyan-soft)') : /true/.test(m) ? 'var(--green)' : /false|null/.test(m) ? 'var(--red-soft)' : 'var(--text-dim)'}">${m}</span>`
+    m => {
+      const color = /^"/.test(m) ? (/:$/.test(m) ? 'var(--text-muted)' : 'var(--cyan-soft)') : /true/.test(m) ? 'var(--green)' : /false|null/.test(m) ? 'var(--red-soft)' : 'var(--text-dim)';
+      return `<span style="color:${color}">${escapeHtml(m)}</span>`;
+    }
   )};
 };
 
