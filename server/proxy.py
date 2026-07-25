@@ -1365,9 +1365,8 @@ def verify_fleet_chain(entity_id: str, current_user: dict = Depends(get_current_
     try:
         from anchor.core.crypto import verify_chain_hash
     except ImportError:
-        import sys
-        sys.path.insert(0, r"d:\Anchor")
-        from anchor.core.crypto import verify_chain_hash
+        logger.error("[CRITICAL] anchor core package not installed; cannot verify chain hash")
+        raise HTTPException(status_code=500, detail="CORE CRYPTO PACKAGE UNAVAILABLE")
     
     entries = db.query(LedgerEntry).filter(LedgerEntry.hub_id == entity_id).order_by(LedgerEntry.timestamp).all()
     

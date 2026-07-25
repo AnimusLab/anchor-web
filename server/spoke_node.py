@@ -377,10 +377,18 @@ async def spoke_ingest(body: SpokeIngressPayload):
 
     # Fallback to local cryptographic signing if not provided or mock
     if not chain_hash or chain_hash == "mock":
-        chain_hash = "0x" + secrets.token_hex(32)
+        import hashlib
+        payload_bytes = json.dumps(audit, sort_keys=True).encode("utf-8")
+        chain_hash = "0x" + hashlib.sha256(payload_bytes).hexdigest()
+
     if not signature or signature == "mock":
         import hashlib
-        signing_key = REGIONAL_KEY or os.getenv("ANCHOR_MASTER_KEY", "placeholder_master_key")
+        signing_key = REGIONAL_KEY or os.getenv("ANCHOR_MASTER_KEY")
+        if not signing_key:
+            raise HTTPException(
+                status_code=500,
+                detail="UNCONFIGURED SPOKE SIGNING KEY: Spoke node cannot sign audit telemetry"
+            )
         signature = hmac.new(
             signing_key.encode("utf-8"),
             chain_hash.encode("utf-8"),

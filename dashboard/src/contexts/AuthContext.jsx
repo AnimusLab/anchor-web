@@ -11,10 +11,10 @@ export function AuthProvider({ children }) {
 
     // On mount / token change: validate the JWT against the backend
     useEffect(() => {
-        if (token) {
-            fetch(endpoints.me, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
+        fetch(endpoints.me, {
+            credentials: 'include',
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
             .then(async (res) => {
                 if (res.ok) return res.json();
                 throw new Error('Session Expired');

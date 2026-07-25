@@ -29,16 +29,14 @@ from database import get_db
 from models import EnforcementNotice, AuditTrailEntry, LedgerEntry, Hub, Organization, RegulatoryOfficial
 from mail import send_auditor_provisioned
 from governance.registry_engine import compile_governance_profile
-from security import get_jwt_key
-
-# ---------------------------------------------------------------------------
-# Router & security
-# ---------------------------------------------------------------------------
+from security import get_jwt_key, encrypt_secret, decrypt_secret
+from auth import _get_client_ip, rate_limit_auth, mask_email, mask_display_name
+from fastapi import Response, APIRouter
+from fastapi.security import HTTPBearer
 
 oversight_router = APIRouter(prefix="/api/oversight", tags=["Oversight Auth"])
 security         = HTTPBearer(auto_error=False)
 
-ANCHOR_MASTER_KEY = os.getenv("ANCHOR_MASTER_KEY", "")
 OVERSIGHT_JWT_TTL = int(os.getenv("OVERSIGHT_JWT_TTL_HOURS", "8"))  # 8-hour session
 
 NATO_PHONETIC = [
@@ -158,7 +156,7 @@ def get_oversight_admin(
         raise HTTPException(status_code=401, detail="AUTHENTICATION REQUIRED")
     try:
         payload = jwt.decode(
-            credentials.credentials, ANCHOR_MASTER_KEY, algorithms=["HS256"]
+            credentials.credentials, get_jwt_key(), algorithms=["HS256"]
         )
         if payload.get("role") != "admin":
             raise HTTPException(status_code=403, detail="ADMIN PRIVILEGES REQUIRED")
@@ -177,8 +175,11 @@ from database import get_db
 from models import RegulatoryOfficial, Organization
 
 @oversight_router.post("/identify")
-def oversight_identify(body: dict, db: Session = Depends(get_db)):
-    """Validates ID (and optionally Email) and returns user info for the identification stage."""
+def oversight_identify(body: dict, db: Session = Depends(get_db), http_request: Request = None):
+    """Validates ID (and optionally Email) and returns user info for the identification stage (rate-limited & PII-masked)."""
+    client_ip = _get_client_ip(http_request)
+    rate_limit_auth(client_ip, limit=10, window_seconds=60)
+    
     search_id = body.get("clearance_id", "").strip().upper()
     search_email = body.get("email", "").strip().lower()
 
@@ -188,7 +189,6 @@ def oversight_identify(body: dict, db: Session = Depends(get_db)):
     )
     
     # If email is provided, enforce it (standard identification)
-    # If not, this is an auto-fill request
     if search_email:
         query = query.filter(RegulatoryOfficial.email == search_email)
     
@@ -197,25 +197,28 @@ def oversight_identify(body: dict, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="IDENTITY NOT RECOGNIZED")
 
-    # Fetch Hub ID from the Org table
-    org = db.query(Organization).filter(Organization.id == user.org_id).first()
-    hub_id = org.hub_id if org else "UNKNOWN"
+    # Fetch Hub ID from the Hub table
+    hub = db.query(Hub).filter(Hub.org_id == user.org_id).first()
+    hub_id = hub.id if hub else "UNKNOWN"
 
     return {
         "status": "RECOGNIZED",
-        "display_name": user.display_name,
-        "email": user.email, # Returned for auto-fill UX
+        "display_name": mask_display_name(user.display_name),
+        "email": mask_email(user.email),
         "agency_hub_id": hub_id,
         "regulator": user.department
     }
 
 
 @oversight_router.post("/login")
-def oversight_login(body: OversightLoginRequest, db: Session = Depends(get_db), request: Request = None):
+def oversight_login(body: OversightLoginRequest, response: Response, db: Session = Depends(get_db), request: Request = None):
     """
     Validates Clearance ID + hub_id + email + 6-digit TOTP code.
     handshake for regulatory access using the SQL backend.
     """
+    client_ip = _get_client_ip(request)
+    rate_limit_auth(client_ip, limit=5, window_seconds=60)
+
     # 1. Validate identity against SQL database (Enforce casing for resilience)
     search_id = body.clearance_id.strip().upper()
     search_email = body.email.strip().lower()
@@ -233,20 +236,21 @@ def oversight_login(body: OversightLoginRequest, db: Session = Depends(get_db), 
     if not user.totp_secret:
         raise HTTPException(status_code=401, detail="MFA NOT PROVISIONED")
 
-    totp = pyotp.TOTP(user.totp_secret)
+    plain_totp = decrypt_secret(user.totp_secret)
+    totp = pyotp.TOTP(plain_totp)
     if not totp.verify(body.totp_code.strip(), valid_window=1):
         raise HTTPException(status_code=401, detail="IDENTITY VERIFICATION FAILED")
 
     # 3. Log session start
-    # [v5.1 Reset: Session logging moved to shared audit trail]
     session_id = secrets.token_hex(8) 
-
 
     # 4. Issue oversight-scoped JWT
     token = _issue_oversight_jwt(
         user         = user,
         session_id   = session_id,
     )
+
+    response.set_cookie("access_token", token, httponly=True, secure=True, samesite="lax")
 
     return {
         "status":       "AUTHENTICATED",
@@ -329,7 +333,7 @@ def provision_new_auditor(
         role="regulator",
         jurisdiction=body.jurisdiction,
         department=body.regulator,
-        totp_secret=totp_secret,
+        totp_secret=encrypt_secret(totp_secret),
         status="approved",
         email_verified=True,
         created_at=datetime.now(timezone.utc).isoformat(),

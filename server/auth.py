@@ -20,14 +20,14 @@ from io import BytesIO
 from typing import List, Dict, Optional, Any
 from database import get_db, SessionLocal
 from models import EnterpriseUser, RegulatoryOfficial, Organization, Hub, WhitelistEntry
-from security import encrypt_secret, get_jwt_key
+from fastapi import APIRouter, Depends, HTTPException, Form, Query, Body, status, Request, Response
+from security import encrypt_secret, decrypt_secret, get_jwt_key
 from mail import (
     send_enterprise_credentials, 
     send_enterprise_provisioned, 
     send_auditor_verification, 
     send_auditor_provisioned,
-    send_approval_notification, 
-    send_admin_access_code
+    send_approval_notification
 )
 from governance.registry_engine import compile_governance_profile
 from config import Config, EntityVisibilityFilter, EntityType
@@ -585,7 +585,7 @@ def _identify_logic(clearance_id: str, email: str, hub_id: str, allowed_roles: l
         logging.getLogger("anchor.auth").error(f"IDENTITY_LOGIC_CRASH: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal identity lookup error")
 
-def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session, http_request: Request = None):
+def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session, http_request: Request = None, response: Response = None):
     """Internal shared logic for TOTP verification with session hardening (v6.3)."""
     # Extract IP address for audit logging
     client_ip = "UNKNOWN"
@@ -615,7 +615,8 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session, 
         _audit_log("UNAUTHORIZED_ACCESS", request.email, "SECURITY NOT PROVISIONED", client_ip)
         raise HTTPException(status_code=401, detail="SECURITY NOT PROVISIONED")
     
-    totp = pyotp.TOTP(user.totp_secret)
+    plain_totp = decrypt_secret(user.totp_secret)
+    totp = pyotp.TOTP(plain_totp)
     if not totp.verify(request.totp_code, valid_window=1):
         _audit_log("UNAUTHORIZED_ACCESS", request.email, "INVALID TOTP CODE", client_ip)
         raise HTTPException(status_code=401, detail="INVALID CODE")
@@ -631,6 +632,9 @@ def _verify_logic(request: TotpVerifyRequest, allowed_roles: list, db: Session, 
     
     # Log successful authentication
     _audit_log("LOGIN", user.email, f"Role: {user.role} | Session: {session_id[:8]}...", client_ip)
+
+    if response:
+        response.set_cookie("access_token", token, httponly=True, secure=True, samesite="lax")
     
     if is_oversight:
         # Oversight user (auditor/regulator) response
@@ -749,12 +753,12 @@ def oversight_identify(request_body: dict = Body(...), db: Session = Depends(get
 
 @auth_router.post("/oversight/login")
 @auth_router.post("/oversight/verify-totp")
-def oversight_verify(request: TotpVerifyRequest, db: Session = Depends(get_db), http_request: Request = None):
-    return _verify_logic(request, ["auditor", "regulator"], db, http_request)
+def oversight_verify(request: TotpVerifyRequest, response: Response, db: Session = Depends(get_db), http_request: Request = None):
+    return _verify_logic(request, ["auditor", "regulator"], db, http_request, response)
 
 @auth_router.post("/enterprise/verify-totp")
-def enterprise_verify(request: TotpVerifyRequest, db: Session = Depends(get_db), http_request: Request = None):
-    return _verify_logic(request, ["owner", "admin", "member"], db, http_request)
+def enterprise_verify(request: TotpVerifyRequest, response: Response, db: Session = Depends(get_db), http_request: Request = None):
+    return _verify_logic(request, ["owner", "admin", "member"], db, http_request, response)
 
 @auth_router.get("/pending")
 def list_pending_approvals(current_admin: dict = Depends(get_current_admin_user), db: Session = Depends(get_db)):
@@ -838,7 +842,7 @@ def admin_provision_auditor(
         role="regulator",
         department=body.department or "ENFORCEMENT",
         jurisdiction=body.jurisdiction,
-        totp_secret=totp_secret,
+        totp_secret=encrypt_secret(totp_secret),
         status="approved", 
         created_at=datetime.utcnow().isoformat(),
         
@@ -922,7 +926,7 @@ def admin_provision_enterprise(
             org_id=org.id,
             hub_id=final_hub_id,
             department=body.department,
-            totp_secret=totp_secret,
+            totp_secret=encrypt_secret(totp_secret),
             status="approved",
             created_at=datetime.utcnow().isoformat()
         )
@@ -977,13 +981,13 @@ def approve_user(target_entity_id: str = Form(...), current_admin: dict = Depend
         from mail import send_auditor_provisioned, send_enterprise_provisioned
         import pyotp
         
-        # Standard QR handshaker
-        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=otpauth://totp/Anchor:{user.email}?secret={user.totp_secret}&issuer=Anchor"
+        plain_totp = decrypt_secret(user.totp_secret)
+        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=otpauth://totp/Anchor:{user.email}?secret={plain_totp}&issuer=Anchor"
 
         if is_auditor:
             send_auditor_provisioned(
                 user.email, user.display_name, user.id, 
-                "GLOBAL-HUB", user.jurisdiction or "GL", qr_url, user.totp_secret
+                "GLOBAL-HUB", user.jurisdiction or "GL", qr_url, plain_totp
             )
         else:
             from models import Organization, Hub
@@ -995,7 +999,7 @@ def approve_user(target_entity_id: str = Form(...), current_admin: dict = Depend
                 org.display_name if org else "Enterprise",
                 org.region if org else "Global",
                 user.id, hub.id if hub else "PENDING",
-                user.totp_secret, qr_url
+                plain_totp, qr_url
             )
     except Exception as e:
         print(f"[APPROVE ERROR] Sovereign Gatekeeper dispatch failed: {str(e)}")
@@ -1056,7 +1060,7 @@ def register_auditor(
         role="auditor",
         department="ENFORCEMENT",
         jurisdiction=jurisdiction,
-        totp_secret=totp_secret,
+        totp_secret=encrypt_secret(totp_secret),
         status="pending", # Requires ROOT ADMIN approval
         created_at=datetime.utcnow().isoformat(),
         
@@ -1179,7 +1183,7 @@ def provision_enterprise(
             org_id=org.id,
             hub_id=final_hub_id,
             department=department,
-            totp_secret=totp_secret,
+            totp_secret=encrypt_secret(totp_secret),
             status="pending",
             created_at=datetime.utcnow().isoformat()
         )
