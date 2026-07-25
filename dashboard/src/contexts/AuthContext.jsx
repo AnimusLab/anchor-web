@@ -29,9 +29,6 @@ export function AuthProvider({ children }) {
                 localStorage.removeItem('anchor_token');
             })
             .finally(() => setIsLoading(false));
-        } else {
-            setIsLoading(false);
-        }
     }, [token]);
 
 

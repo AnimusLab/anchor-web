@@ -28,9 +28,6 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('oversight_token');
       })
       .finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
-    }
   }, [token]);
 
   const login = useCallback(async (newToken) => {
