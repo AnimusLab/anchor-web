@@ -981,8 +981,20 @@ def approve_user(target_entity_id: str = Form(...), current_admin: dict = Depend
         from mail import send_auditor_provisioned, send_enterprise_provisioned
         import pyotp
         
+        def _generate_local_qr_code(otpauth_url: str) -> str:
+            """Generates a base64-encoded PNG data URI locally without exposing secrets to external third-party QR APIs."""
+            qr = qrcode.QRCode(version=1, box_size=4, border=2)
+            qr.add_data(otpauth_url)
+            qr.make(fit=True)
+            img = qr.make_image(fill_color="black", back_color="white")
+            buffered = BytesIO()
+            img.save(buffered, format="PNG")
+            img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+            return f"data:image/png;base64,{img_str}"
+
         plain_totp = decrypt_secret(user.totp_secret)
-        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=otpauth://totp/Anchor:{user.email}?secret={plain_totp}&issuer=Anchor"
+        otpauth_url = f"otpauth://totp/Anchor:{user.email}?secret={plain_totp}&issuer=Anchor"
+        qr_url = _generate_local_qr_code(otpauth_url)
 
         if is_auditor:
             send_auditor_provisioned(

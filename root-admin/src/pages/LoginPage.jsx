@@ -69,13 +69,12 @@ export default function LoginPage() {
     try {
       const res = await fetch(`${apiUrl}/api/auth/admin/verify-access`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code: accessCode })
       })
       const data = await res.json()
       if (res.ok) {
-        localStorage.setItem('root_token', data.access_token)
-        localStorage.setItem('root_user', JSON.stringify(data.user))
         window.location.href = '/dashboard'
       } else {
         setError(data.detail || 'INVALID OR EXPIRED CODE')
