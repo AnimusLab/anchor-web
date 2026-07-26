@@ -581,7 +581,14 @@ This checklist transforms Anchor from:
 to:
 > Institutionally credible infrastructure
 
-Deploy NGINX first.
-Then secure cookies, rate limiting, and CSRF.
+---
 
-Everything else follows.
+## Final Security Remediation Status (v6.3+)
+
+- [x] **Secure Cookie Configuration (M-8)**: `HttpOnly`, `Secure`, `SameSite=Lax` cookies enabled across `auth.py`, `oversight_auth.py`, and frontend clients (`dashboard`, `oversight`, `root-admin`).
+- [x] **Zero Third-Party Secret Exposure**: Replaced `api.qrserver.com` external API with local base64 PNG data URI generation via Python `qrcode` library.
+- [x] **Database Cryptographic At-Rest Protection (N-18)**: Encrypted `totp_secret` at rest using `encrypt_secret()` (Fernet AES-128) across all database models and routes.
+- [x] **Fail-Closed Configuration (N-14, N-20, N-22)**: Server startup and scripts (`config.py`, `spoke_node.py`, `heal_ids.py`) fail closed if required keys or environment variables are missing.
+- [x] **Stored XSS Remediation (N-19)**: Sanitized raw JSON rendering using `escapeHtml()` in `Dashboard.jsx`.
+- [x] **PII Masking & Rate Limiting (N-16)**: Masked email and display name fields on unauthenticated `/identify` endpoints with sliding-window IP rate limiting.
+

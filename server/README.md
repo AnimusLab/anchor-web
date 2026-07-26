@@ -48,6 +48,13 @@ npm run dev
 ### 4. Setting up the Spoke Node
 Refer to the specialized [Spoke Installation Guide](file:///d:/anchor-web/server/SPOKE_INSTALL.md) for full backend setup.
 
+## 🔒 Security Architecture (v6.3+)
+
+- **Pure HttpOnly Session Cookies**: Authentication tokens are transmitted via `HttpOnly`, `Secure`, `SameSite=Lax` cookies across `dashboard`, `oversight`, and `root-admin` portals (no plaintext `localStorage` token storage).
+- **In-Process Base64 QR Code Generation**: TOTP provisioning QR codes are rendered locally via `qrcode` as `data:image/png;base64,...` data URIs, ensuring zero plaintext secrets are leaked to external third-party services.
+- **Encrypted-At-Rest Credentials**: TOTP secrets (`totp_secret`) are encrypted at rest with Fernet AES-128 key management in database models (`EnterpriseUser`, `RegulatoryOfficial`).
+- **Rate-Limited & Masked Identification**: Public `/identify` endpoints obfuscate emails and names while enforcing sliding-window IP rate limiting (10 req/min/IP).
+
 ## 🗺 Roadmap
 Future development (v6.0+) focuses on the **Model Context Protocol (MCP)** integration, allowing AI agents to query rulebooks natively during inference. See [ROADMAP_v6_MCP.md](file:///d:/anchor-web/DOCS/ROADMAP_v6_MCP.md) for details.
 

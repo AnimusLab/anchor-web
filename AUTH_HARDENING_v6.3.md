@@ -224,19 +224,21 @@ Each line contains:
 
 | Threat | Mitigation | Impact |
 |--------|-----------|--------|
-| **Token Theft** | Fingerprint binding (UA + IP) | Stolen tokens unusable on different device/network |
+| **Token Theft / XSS** | HttpOnly + Secure + SameSite=Lax Cookies (No localStorage token copy) | Tokens unreadable by malicious client-side JavaScript |
+| **Secret Leakage via 3rd Party API** | In-process PNG Base64 Data URI QR Code Generation (`qrcode`) | TOTP secrets never hit external web services |
+| **Database Compromise** | Fernet AES-128 Encryption of `totp_secret` at Rest | Plaintext TOTP keys absent from SQL storage |
 | **Session Fixation** | Session rotation after login | Old session invalidated immediately |
 | **Replay Attacks** | 30-min token expiry (vs 24h) | 96.5% smaller attack window |
-| **Credential Reuse** | Session ID tracking | Simultaneous logins detectable |
-| **Man-in-the-Middle** | IP + UA fingerprinting | Sudden device/location changes rejected |
+| **Brute Force / Enumeration** | Sliding-window IP rate limiting (10 req/min/IP on `/identify`) | Identity lookup brute force blocked |
+| **PII Exposure** | Character-obfuscation (`mask_email`, `mask_display_name`) | Unauthenticated responses contain no raw PII |
 | **Compliance** | Full audit trail | Governance investigation capability |
 
 ## Compliance & Governance
 
-✓ **HIPAA**: Audit trail for user access events
-✓ **SOC2**: Session management and authentication hardening
-✓ **PCI-DSS**: Session timeout (30 min) and unique session IDs
-✓ **GDPR**: Audit logs for user activity investigation
+✓ **HIPAA**: Audit trail for user access events & PII obfuscation
+✓ **SOC2**: Session management, TOTP encryption at rest, and pure HttpOnly cookies
+✓ **PCI-DSS**: Session timeout (30 min), unique session IDs, local cryptographic asset generation
+✓ **GDPR**: PII masking on unauthenticated endpoints and audit logs for user activity investigation
 ✓ **Internal Governance**: Constitutional representation of capabilities via JWT
 
 ## Deployment Checklist
@@ -250,8 +252,10 @@ Each line contains:
 - [x] Fingerprint validation on all protected routes
 - [x] Audit log directory creation automatic
 - [x] Test suite validates all components
-- [ ] **Next**: Secrets management setup (environment variables)
-- [ ] **Next**: Entity taxonomy implementation (visibility filtering)
+- [x] TOTP secrets encrypted at rest in database (N-18)
+- [x] In-process local QR code base64 data URI generation (Zero third-party QR leak)
+- [x] HttpOnly/Secure/SameSite=Lax cookie authentication across dashboard, oversight, and root-admin portals (M-8)
+- [x] Sliding-window rate limiting & PII masking on `/identify` endpoints (N-16)
 
 ## Next Priority Tasks
 
