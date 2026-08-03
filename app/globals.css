@@ -3,49 +3,78 @@
 @tailwind utilities;
 
 :root {
-  --background: #050505;
-  --foreground: #e5e5e5;
+  --background: #08080a;
+  --foreground: #e2e8f0;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  line-height: 1.625;
+  line-height: 1.6;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom selection */
+/* Smooth selection */
 ::selection {
-  background-color: #262626;
+  background-color: rgba(255, 255, 255, 0.15);
   color: #ffffff;
 }
 
-/* AnimusLab Institutional System Utilities */
-.animus-border {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Custom Soothing Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #08080a;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* AnimusLab Soothing System */
+.animus-card {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animus-card:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.animus-border-r {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .animus-border-b {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .animus-border-t {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .animus-label {
-  font-size: 0.7rem;
-  letter-spacing: 0.3em;
+  font-size: 0.68rem;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: #737373;
+  color: #64748b;
   font-family: var(--font-mono);
 }
 
 .animus-accent-line {
-  width: 48px;
+  width: 40px;
   height: 2px;
-  background: white;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 1px;
 }
