@@ -3,19 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --background: #080c14;
-  --foreground: #f8fafc;
+  --background: #0b0f19;
+  --foreground: #f1f5f9;
   --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 body {
   background-color: var(--background);
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.08) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.06) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(245, 158, 11, 0.05) 0px, transparent 50%);
-  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans);
   line-height: 1.6;
@@ -26,7 +21,7 @@ body {
 
 /* Smooth selection */
 ::selection {
-  background-color: rgba(56, 189, 248, 0.3);
+  background-color: rgba(59, 130, 246, 0.3);
   color: #ffffff;
 }
 
@@ -36,7 +31,7 @@ body {
   height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #080c14;
+  background: #0b0f19;
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(148, 163, 184, 0.25);
@@ -47,61 +42,70 @@ body {
 }
 
 /* =========================================
-   LIQUID GLASS & NEOMORPHIC DESIGN SYSTEM
+   1. SKEUOMORPHIC SIDEBAR & BADGES (Tactile 3D Realism)
 ========================================= */
 
-/* Liquid Glass Cards (Spatial UI) */
-.spatial-glass {
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.skeuo-sidebar {
+  background: linear-gradient(180deg, #181d28 0%, #0f131c 100%);
+  border-right: 1px solid #2a3140;
   box-shadow: 
-    0 10px 30px -10px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    6px 0 20px rgba(0, 0, 0, 0.7),
+    inset -1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
-.spatial-glass:hover {
-  border-color: rgba(255, 255, 255, 0.16);
+.skeuo-header-box {
+  background: linear-gradient(180deg, #242b3b 0%, #151a24 100%);
+  border: 1px solid #364054;
   box-shadow: 
-    0 20px 40px -15px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
 }
 
-/* Neomorphic Tactile Tabs & Cards (Like image) */
-.neo-card {
-  background: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+.skeuo-nav-active {
+  background: linear-gradient(180deg, #2a3346 0%, #1a202d 100%);
+  border: 1px solid #45526e;
   box-shadow: 
-    inset 1px 1px 2px rgba(255, 255, 255, 0.08),
-    inset -1px -1px 2px rgba(0, 0, 0, 0.6),
-    0 4px 16px rgba(0, 0, 0, 0.4);
-  border-radius: 12px;
-}
-
-/* Skeuomorphic Glossy Badge */
-.skeuo-badge {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%), #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 3px 6px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: #ffffff !important;
+}
+
+.skeuo-badge {
+  background: linear-gradient(180deg, #273042 0%, #161b26 100%);
+  border: 1px solid #3b475e;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   border-radius: 8px;
 }
 
-/* Soothing Dividers */
-.animus-border-r {
-  border-right: 1px solid rgba(255, 255, 255, 0.07);
+
+/* =========================================
+   2. NEOMORPHIC BOXES & CARDS (Soft Molded Relief)
+========================================= */
+
+.neo-box {
+  background: #0b0f19;
+  border-radius: 14px;
+  box-shadow: 
+    6px 6px 14px #05070b,
+    -6px -6px 14px #111727;
+  transition: all 0.2s ease-in-out;
 }
 
-.animus-border-b {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+.neo-box:hover {
+  box-shadow: 
+    8px 8px 18px #040609,
+    -8px -8px 18px #131a2c;
 }
 
-.animus-border-t {
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+.neo-box-inset {
+  background: #090c14;
+  border-radius: 10px;
+  box-shadow: 
+    inset 4px 4px 8px #04060a,
+    inset -4px -4px 8px #101625;
 }
 
 .animus-label {

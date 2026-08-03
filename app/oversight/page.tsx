@@ -7,42 +7,42 @@ export default function OversightDashboardPage() {
         <p className="text-sm text-slate-400 font-mono mt-1">Read-only oversight telemetry & DAC verification across assigned regulated entities.</p>
       </div>
 
-      {/* Neomorphic KPI Blocks */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
-        <div className="spatial-glass p-6 space-y-2">
-          <div className="animus-label text-slate-300">ASSIGNED ENTITIES</div>
+      {/* Neomorphic Molded KPI Blocks */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+        <div className="neo-box p-6 space-y-2">
+          <div className="animus-label text-slate-400">ASSIGNED ENTITIES</div>
           <div className="text-3xl font-bold text-slate-100 mt-1">6 Inst.</div>
           <div className="text-xs text-slate-400 font-mono">Region: RBI-IN</div>
         </div>
 
-        <div className="spatial-glass p-6 space-y-2">
-          <div className="animus-label text-slate-300">AI DECISIONS AUDITED</div>
+        <div className="neo-box p-6 space-y-2">
+          <div className="animus-label text-slate-400">AI DECISIONS AUDITED</div>
           <div className="text-3xl font-bold text-slate-100 mt-1">1,482,910</div>
           <div className="text-xs text-slate-400 font-mono">100% Chain Hash Signed</div>
         </div>
 
-        <div className="neo-card p-6 space-y-2">
-          <div className="animus-label text-slate-300">P2P FORENSIC PULLS</div>
+        <div className="neo-box p-6 space-y-2">
+          <div className="animus-label text-amber-400">P2P FORENSIC PULLS</div>
           <div className="text-3xl font-bold text-amber-400 mt-1">2 Relayed</div>
           <div className="text-xs text-slate-400 font-mono">Via AnimusLab Relay</div>
         </div>
 
-        <div className="spatial-glass p-6 space-y-2">
-          <div className="animus-label text-slate-300">ENFORCEMENT NOTICES</div>
+        <div className="neo-box p-6 space-y-2">
+          <div className="animus-label text-slate-400">ENFORCEMENT NOTICES</div>
           <div className="text-3xl font-bold text-slate-100 mt-1">0 Active</div>
           <div className="text-xs text-slate-400 font-mono">No Active Disputes</div>
         </div>
       </div>
 
-      {/* Decision Audit Log Stream */}
-      <div className="spatial-glass overflow-hidden">
-        <div className="p-5 border-b border-white/[0.08] flex justify-between items-center bg-slate-900/60">
+      {/* Decision Audit Log Stream (Neomorphic Box) */}
+      <div className="neo-box overflow-hidden">
+        <div className="p-5 border-b border-slate-800/60 flex justify-between items-center bg-[#090c14]">
           <span className="animus-label text-slate-300">DECISION AUDIT CHAIN (AI DECISIONS ONLY)</span>
           <span className="text-xs font-mono text-slate-400 font-semibold">Tamper-Proof Ledger</span>
         </div>
 
-        <div className="divide-y divide-white/[0.06] font-mono text-xs">
-          <div className="p-5 flex items-center justify-between hover:bg-white/[0.02] transition">
+        <div className="p-4 space-y-3">
+          <div className="neo-box-inset p-5 flex items-center justify-between font-mono text-xs">
             <div>
               <span className="text-slate-100 font-bold text-sm">JPMC-IN-MUM01</span>
               <span className="text-slate-500 mx-3">|</span>
@@ -50,7 +50,7 @@ export default function OversightDashboardPage() {
               <div className="text-xs text-slate-400 mt-1">Chain Hash: 0x9a8f21b7c00e12...</div>
             </div>
             <div className="flex items-center space-x-3">
-              <span className="text-emerald-400 font-bold skeuo-badge px-3 py-1">
+              <span className="text-emerald-400 font-bold skeuo-badge px-3 py-1.5">
                 RBI COMPLIANT
               </span>
               <button className="skeuo-badge text-slate-200 px-4 py-2 font-semibold hover:text-white transition">

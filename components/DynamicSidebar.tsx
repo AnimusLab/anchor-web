@@ -35,35 +35,35 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
   const canApproveP2P = CLEARANCE_MATRIX.capabilities.canApproveP2PRequests(role);
 
   return (
-    <aside className="w-64 animus-border-r bg-slate-950/70 backdrop-blur-xl flex flex-col justify-between flex-shrink-0">
+    <aside className="w-64 skeuo-sidebar flex flex-col justify-between flex-shrink-0 z-20">
       <div className="overflow-y-auto no-scrollbar">
-        {/* Header */}
-        <div className="p-5 animus-border-b">
-          <div className="flex items-center space-x-3">
+        {/* Skeuomorphic Metallic Header */}
+        <div className="p-4 border-b border-[#252c3a]">
+          <div className="p-3 skeuo-header-box flex items-center space-x-3">
             <div className="p-2 skeuo-badge">
               {role === "AUDITOR" ? (
-                <Gavel className="w-5 h-5 text-amber-400" />
+                <Gavel className="w-4 h-4 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
               ) : (
-                <Shield className="w-5 h-5 text-emerald-400" />
+                <Shield className="w-4 h-4 text-emerald-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
               )}
             </div>
             <div>
-              <div className="font-bold text-sm text-slate-100 tracking-wide">
+              <div className="font-bold text-xs text-slate-100 tracking-wide drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
                 {role === "AUDITOR" ? "Anchor Oversight" : "Governance Hub"}
               </div>
-              <div className="text-xs text-slate-400 font-mono mt-0.5">
+              <div className="text-[10px] text-slate-400 font-mono mt-0.5">
                 {role === "AUDITOR" ? "oversight.animuslab.dev" : "hub.animuslab.dev"}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Clearance Badge (Skeuomorphic) */}
-        <div className="mx-4 my-4 p-3 skeuo-badge font-mono text-xs space-y-1">
-          <span className="text-slate-400 font-semibold block uppercase tracking-wider text-[10px]">
+        {/* Skeuomorphic Clearance Badge */}
+        <div className="mx-4 my-3 p-3 skeuo-badge font-mono text-xs space-y-1">
+          <span className="text-slate-400 font-semibold block uppercase tracking-wider text-[9px]">
             CLEARANCE: {auditorType || role}
           </span>
-          <span className="text-slate-100 font-bold tracking-wide">{clearanceId}</span>
+          <span className="text-slate-100 font-bold tracking-wide text-xs">{clearanceId}</span>
         </div>
 
         {/* Enterprise Navigation */}
@@ -71,21 +71,21 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
           <>
             {/* Section 1: Governance & Telemetry */}
             <div className="p-4 space-y-2">
-              <div className="animus-label text-[10px]">GOVERNANCE & TELEMETRY</div>
+              <div className="animus-label text-[10px] text-slate-400">GOVERNANCE & TELEMETRY</div>
               <nav className="space-y-1.5 font-medium text-xs">
-                <Link href="/hub" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition ${pathname === '/hub' ? 'text-white neo-card font-semibold' : 'text-slate-300 hover:bg-slate-900/60 hover:text-white'}`}>
+                <Link href="/hub" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition ${pathname === '/hub' ? 'skeuo-nav-active font-semibold' : 'text-slate-300 hover:bg-[#202736] hover:text-white'}`}>
                   <LayoutDashboard className="w-4 h-4 text-emerald-400" />
                   <span>Overview</span>
                 </Link>
-                <Link href="/hub/telemetry" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                <Link href="/hub/telemetry" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                   <History className="w-4 h-4 text-slate-400" />
                   <span>Decision Telemetry</span>
                 </Link>
-                <Link href="/hub/violations" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                <Link href="/hub/violations" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                   <ShieldAlert className="w-4 h-4 text-amber-400" />
                   <span>Violation Feed</span>
                 </Link>
-                <Link href="/hub/replay" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                <Link href="/hub/replay" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                   <RotateCcw className="w-4 h-4 text-slate-400" />
                   <span>Mission Replay</span>
                 </Link>
@@ -94,15 +94,15 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
 
             {/* Section 2: Projects & Ingestion */}
             <div className="p-4 pt-0 space-y-2">
-              <div className="animus-label text-[10px]">PROJECTS & INGESTION</div>
+              <div className="animus-label text-[10px] text-slate-400">PROJECTS & INGESTION</div>
               <nav className="space-y-1.5 font-medium text-xs">
-                <Link href="/hub/projects" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                <Link href="/hub/projects" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                   <Layers className="w-4 h-4 text-sky-400" />
                   <span>Project Inventory</span>
                 </Link>
 
                 {canManageKeys && (
-                  <Link href="/hub/keys" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                  <Link href="/hub/keys" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                     <Key className="w-4 h-4 text-emerald-400" />
                     <span>API Key Vault</span>
                   </Link>
@@ -112,13 +112,13 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
 
             {/* Section 3: Compliance & Reports */}
             <div className="p-4 pt-0 space-y-2">
-              <div className="animus-label text-[10px]">COMPLIANCE & REPORTS</div>
+              <div className="animus-label text-[10px] text-slate-400">COMPLIANCE & REPORTS</div>
               <nav className="space-y-1.5 font-medium text-xs">
-                <Link href="/hub/reports" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                <Link href="/hub/reports" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                   <FileText className="w-4 h-4 text-slate-400" />
                   <span>Dialect Reports</span>
                 </Link>
-                <Link href="/hub/verifier" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                <Link href="/hub/verifier" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                   <CheckCircle className="w-4 h-4 text-slate-400" />
                   <span>Audit Chain Verifier</span>
                 </Link>
@@ -128,21 +128,21 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
             {/* Section 4: Hub Management */}
             {(canManageSeats || canApproveP2P) && (
               <div className="p-4 pt-0 space-y-2">
-                <div className="animus-label text-[10px]">HUB MANAGEMENT</div>
+                <div className="animus-label text-[10px] text-slate-400">HUB MANAGEMENT</div>
                 <nav className="space-y-1.5 font-medium text-xs">
                   {canManageSeats && (
-                    <Link href="/hub/team" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                    <Link href="/hub/team" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                       <Users className="w-4 h-4 text-slate-400" />
                       <span>Team & Seats</span>
                     </Link>
                   )}
                   {canApproveP2P && (
-                    <Link href="/hub/requests" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                    <Link href="/hub/requests" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                       <UserCheck className="w-4 h-4 text-amber-400" />
                       <span>P2P Access Requests</span>
                     </Link>
                   )}
-                  <Link href="/hub/settings" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                  <Link href="/hub/settings" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                     <Settings className="w-4 h-4 text-slate-400" />
                     <span>Hub Settings</span>
                   </Link>
@@ -156,17 +156,17 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
         {role === "AUDITOR" && (
           <>
             <div className="p-4 space-y-2">
-              <div className="animus-label text-[10px]">REGULATORY OVERSIGHT</div>
+              <div className="animus-label text-[10px] text-slate-400">REGULATORY OVERSIGHT</div>
               <nav className="space-y-1.5 font-medium text-xs">
-                <Link href="/oversight" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition ${pathname === '/oversight' ? 'text-white neo-card font-semibold' : 'text-slate-300 hover:bg-slate-900/60 hover:text-white'}`}>
+                <Link href="/oversight" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition ${pathname === '/oversight' ? 'skeuo-nav-active font-semibold' : 'text-slate-300 hover:bg-[#202736] hover:text-white'}`}>
                   <Layers className="w-4 h-4 text-amber-400" />
                   <span>Jurisdiction Overview</span>
                 </Link>
-                <Link href="/oversight/dac" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                <Link href="/oversight/dac" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                   <FileCheck className="w-4 h-4 text-slate-400" />
                   <span>Decision Audit Chain</span>
                 </Link>
-                <Link href="/oversight/heatmap" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                <Link href="/oversight/heatmap" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                   <ShieldAlert className="w-4 h-4 text-amber-400" />
                   <span>Violation Heatmap</span>
                 </Link>
@@ -174,13 +174,13 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
             </div>
 
             <div className="p-4 pt-0 space-y-2">
-              <div className="animus-label text-[10px]">FORENSIC AUDIT</div>
+              <div className="animus-label text-[10px] text-slate-400">FORENSIC AUDIT</div>
               <nav className="space-y-1.5 font-medium text-xs">
-                <Link href="/oversight/requests" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                <Link href="/oversight/requests" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                   <Send className="w-4 h-4 text-sky-400" />
                   <span>P2P Pull Requests</span>
                 </Link>
-                <Link href="/oversight/replay" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                <Link href="/oversight/replay" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                   <RotateCcw className="w-4 h-4 text-slate-400" />
                   <span>Gated Mission Replay</span>
                 </Link>
@@ -188,13 +188,13 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
             </div>
 
             <div className="p-4 pt-0 space-y-2">
-              <div className="animus-label text-[10px]">COMPLIANCE EXPORTS</div>
+              <div className="animus-label text-[10px] text-slate-400">COMPLIANCE EXPORTS</div>
               <nav className="space-y-1.5 font-medium text-xs">
-                <Link href="/oversight/dialects" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                <Link href="/oversight/dialects" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                   <FileCheck className="w-4 h-4 text-slate-400" />
                   <span>Dialect Generator</span>
                 </Link>
-                <Link href="/oversight/verify" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-900/60 hover:text-white transition">
+                <Link href="/oversight/verify" className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-[#202736] hover:text-white transition">
                   <CheckCircle className="w-4 h-4 text-slate-400" />
                   <span>Chain Verifier</span>
                 </Link>
@@ -205,9 +205,9 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
       </div>
 
       {/* Footer */}
-      <div className="p-4 animus-border-t font-mono text-xs text-slate-400 flex justify-between items-center bg-slate-950/80">
+      <div className="p-4 border-t border-[#252c3a] font-mono text-xs text-slate-400 flex justify-between items-center bg-[#121620]">
         <span className="font-semibold">{role === "AUDITOR" ? "REGULATORY PORTAL" : "ENTERPRISE PORTAL"}</span>
-        <span className={`w-2.5 h-2.5 rounded-full ${role === "AUDITOR" ? "bg-amber-400" : "bg-emerald-400"} animate-pulse`}></span>
+        <span className={`w-2.5 h-2.5 rounded-full ${role === "AUDITOR" ? "bg-amber-400" : "bg-emerald-400"} animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]`}></span>
       </div>
     </aside>
   );
