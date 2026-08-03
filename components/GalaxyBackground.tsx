@@ -23,37 +23,30 @@ export default function GalaxyBackground() {
 
     window.addEventListener("resize", handleResize);
 
-    // Generate 350 Star Particles
-    const numStars = 350;
+    // Generate 400 Serious Pure White & Silver Stars
+    const numStars = 400;
     const stars: Array<{
       x: number;
       y: number;
       radius: number;
-      color: string;
       alpha: number;
       alphaSpeed: number;
       vx: number;
       vy: number;
+      isBright: boolean;
     }> = [];
 
-    const starColors = [
-      "rgba(255, 255, 255, ",
-      "rgba(56, 189, 248, ",   // Electric Cyan
-      "rgba(168, 85, 247, ",   // Deep Purple
-      "rgba(236, 72, 153, ",   // Cosmic Pink
-      "rgba(16, 185, 129, "    // Emerald
-    ];
-
     for (let i = 0; i < numStars; i++) {
+      const isBright = Math.random() < 0.15; // 15% bright glint stars
       stars.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        radius: Math.random() * 2 + 0.5,
-        color: starColors[Math.floor(Math.random() * starColors.length)],
-        alpha: Math.random(),
-        alphaSpeed: (Math.random() * 0.015 + 0.005) * (Math.random() > 0.5 ? 1 : -1),
-        vx: (Math.random() - 0.5) * 0.15,
-        vy: (Math.random() - 0.5) * 0.15,
+        radius: isBright ? Math.random() * 1.5 + 1 : Math.random() * 0.9 + 0.3,
+        alpha: Math.random() * 0.7 + 0.2,
+        alphaSpeed: (Math.random() * 0.012 + 0.004) * (Math.random() > 0.5 ? 1 : -1),
+        vx: (Math.random() - 0.5) * 0.08,
+        vy: (Math.random() - 0.5) * 0.08,
+        isBright,
       });
     }
 
@@ -61,10 +54,10 @@ export default function GalaxyBackground() {
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Draw Star Particles
+      // Draw Pure White Star Field
       stars.forEach((star) => {
         star.alpha += star.alphaSpeed;
-        if (star.alpha <= 0.1 || star.alpha >= 1) {
+        if (star.alpha <= 0.15 || star.alpha >= 0.95) {
           star.alphaSpeed = -star.alphaSpeed;
         }
 
@@ -78,9 +71,15 @@ export default function GalaxyBackground() {
 
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-        ctx.fillStyle = star.color + star.alpha + ")";
-        ctx.shadowBlur = star.radius > 1.5 ? 8 : 0;
-        ctx.shadowColor = star.color + "1)";
+        ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+
+        if (star.isBright) {
+          ctx.shadowBlur = 6;
+          ctx.shadowColor = `rgba(255, 255, 255, ${star.alpha})`;
+        } else {
+          ctx.shadowBlur = 0;
+        }
+
         ctx.fill();
       });
 
@@ -96,36 +95,23 @@ export default function GalaxyBackground() {
   }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#04060f]">
-      {/* Vibrant Rotating Nebula Cloud Layer 1 */}
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#03050a]">
+      {/* Subtle Deep Space Dark Dust Shadow (No Color) */}
       <div 
-        className="absolute -top-[50%] -left-[50%] w-[200%] h-[200%] animate-[galaxySpin_40s_linear_infinite]"
+        className="absolute inset-0 opacity-40"
         style={{
           background: `
-            radial-gradient(circle at 35% 25%, rgba(56, 189, 248, 0.28) 0%, transparent 40%),
-            radial-gradient(circle at 75% 30%, rgba(147, 51, 234, 0.25) 0%, transparent 45%),
-            radial-gradient(circle at 45% 75%, rgba(16, 185, 129, 0.2) 0%, transparent 45%),
-            radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.22) 0%, transparent 40%)
+            radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.4) 0%, transparent 80%),
+            radial-gradient(circle at 80% 20%, rgba(2, 6, 23, 0.6) 0%, transparent 60%)
           `
         }}
       />
 
-      {/* Vibrant Rotating Nebula Cloud Layer 2 (Counter Rotation) */}
-      <div 
-        className="absolute -top-[40%] -left-[40%] w-[180%] h-[180%] animate-[galaxySpinReverse_55s_linear_infinite]"
-        style={{
-          background: `
-            radial-gradient(circle at 65% 45%, rgba(99, 102, 241, 0.22) 0%, transparent 45%),
-            radial-gradient(circle at 25% 75%, rgba(245, 158, 11, 0.18) 0%, transparent 40%)
-          `
-        }}
-      />
-
-      {/* Live HTML5 Canvas Twinkling Star Particle Engine */}
+      {/* Pure White HTML5 Canvas Starfield Engine */}
       <canvas ref={canvasRef} className="absolute inset-0 block w-full h-full" />
 
-      {/* Spatial Dot Grid */}
-      <div className="absolute inset-0 bg-[radial-gradient(rgba(148,163,184,0.22)_1px,transparent_1px)] [background-size:28px_28px] opacity-50" />
+      {/* Serious Fine Spatial Grid Overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:32px_32px] opacity-40" />
     </div>
   );
 }
