@@ -1,4 +1,5 @@
 import DynamicSidebar from "@/components/DynamicSidebar";
+import GalaxyBackground from "@/components/GalaxyBackground";
 import { getSession } from "@/lib/auth/session";
 
 export default async function OversightLayout({ children }: { children: React.ReactNode }) {
@@ -9,8 +10,9 @@ export default async function OversightLayout({ children }: { children: React.Re
   const auditorType = session?.auditorType || "GOVERNMENT_AUDITOR";
 
   return (
-    <div className="flex h-screen bg-[#040711] text-slate-100 font-sans text-xs overflow-hidden galaxy-bg-animated">
-      <div className="galaxy-starfield-overlay"></div>
+    <div className="flex h-screen bg-[#040711] text-slate-100 font-sans text-xs overflow-hidden relative">
+      {/* Animated Galaxy Starfield & Rotating Nebula Background */}
+      <GalaxyBackground />
       
       {/* 3D Skeuomorphic Dynamic Sidebar */}
       <DynamicSidebar role={role} auditorType={auditorType} clearanceId={clearanceId} />

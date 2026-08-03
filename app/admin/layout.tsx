@@ -1,4 +1,5 @@
 import Link from "next/link";
+import GalaxyBackground from "@/components/GalaxyBackground";
 import { 
   LayoutDashboard, 
   Globe, 
@@ -16,8 +17,9 @@ import {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-[#040711] text-slate-100 font-mono text-xs overflow-hidden galaxy-bg-animated">
-      <div className="galaxy-starfield-overlay"></div>
+    <div className="flex h-screen bg-[#040711] text-slate-100 font-mono text-xs overflow-hidden relative">
+      {/* Animated Galaxy Starfield & Rotating Nebula Background */}
+      <GalaxyBackground />
 
       {/* 3D Skeuomorphic Sidebar */}
       <aside className="w-64 skeuo-sidebar-3d flex flex-col justify-between flex-shrink-0 z-20">
