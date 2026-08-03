@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: #060911;
+  --background: #060913;
   --foreground: #f8fafc;
   --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -11,13 +11,6 @@
 
 body {
   background-color: var(--background);
-  background-image: 
-    radial-gradient(at 10% 10%, rgba(56, 189, 248, 0.12) 0px, transparent 45%),
-    radial-gradient(at 90% 15%, rgba(16, 185, 129, 0.08) 0px, transparent 45%),
-    radial-gradient(at 50% 90%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
-    radial-gradient(#1e293b 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 24px 24px;
-  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans);
   line-height: 1.6;
@@ -26,94 +19,130 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+/* =========================================
+   ANIMATED SPATIAL ENVIRONMENT BACKGROUND
+========================================= */
+
+.spatial-bg-animated {
+  position: relative;
+  background-color: #060913;
+  overflow: hidden;
 }
-::-webkit-scrollbar-track {
-  background: #060911;
+
+.spatial-bg-animated::before {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(99, 102, 241, 0.14) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(245, 158, 11, 0.08) 0%, transparent 40%);
+  animation: spatialAurora 25s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
 }
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.25);
-  border-radius: 4px;
+
+.spatial-grid-overlay {
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(rgba(148, 163, 184, 0.15) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.6;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
+
+@keyframes spatialAurora {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
 }
 
 /* =========================================
-   1. FULL 3D SKEUOMORPHIC SIDEBAR & CONTROLS
+   PHYSICAL 3D NEOMORPHIC CARDS (Tactile Relief)
 ========================================= */
 
-.skeuo-sidebar-3d {
-  background: linear-gradient(180deg, rgba(28, 35, 49, 0.85) 0%, rgba(15, 19, 29, 0.95) 100%);
-  backdrop-filter: blur(20px) saturate(180%);
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+.neo-card-3d {
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(145deg, #0e1526 0%, #090e1a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
   box-shadow: 
-    12px 0 35px -5px rgba(0, 0, 0, 0.8),
-    inset -1px 0 0 rgba(255, 255, 255, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 16px 32px -8px rgba(0, 0, 0, 0.8),
+    6px 6px 16px #04060c,
+    -6px -6px 16px #121b30,
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.neo-card-3d:hover {
+  transform: translateY(-4px) scale(1.01);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 
+    0 24px 48px -10px rgba(0, 0, 0, 0.9),
+    8px 8px 20px #03040a,
+    -8px -8px 20px #152038,
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.neo-card-inset-3d {
+  background: #070b14;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  box-shadow: 
+    inset 4px 4px 10px #03050a,
+    inset -4px -4px 10px #101625;
+}
+
+/* Skeuomorphic 3D Controls */
+.skeuo-sidebar-3d {
+  position: relative;
+  z-index: 10;
+  background: linear-gradient(180deg, rgba(20, 26, 38, 0.92) 0%, rgba(10, 14, 22, 0.96) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 
+    16px 0 40px -5px rgba(0, 0, 0, 0.85),
+    inset -1px 0 0 rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .skeuo-header-box-3d {
-  background: linear-gradient(180deg, #2a3447 0%, #161c27 100%);
-  border: 1px solid #3e4c66;
+  background: linear-gradient(180deg, #2b364a 0%, #161d2a 100%);
+  border: 1px solid #435473;
   box-shadow: 
-    0 6px 12px rgba(0, 0, 0, 0.6),
-    inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    0 6px 14px rgba(0, 0, 0, 0.7),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4);
   border-radius: 12px;
 }
 
 .skeuo-nav-active-3d {
-  background: linear-gradient(180deg, #323e57 0%, #1d2535 100%);
-  border: 1px solid #506287;
+  background: linear-gradient(180deg, #354461 0%, #1e283b 100%);
+  border: 1px solid #586d99;
   box-shadow: 
-    0 4px 10px rgba(0, 0, 0, 0.6),
-    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+    0 4px 12px rgba(0, 0, 0, 0.7),
+    inset 0 1px 1px rgba(255, 255, 255, 0.45);
   color: #ffffff !important;
 }
 
 .skeuo-badge-3d {
-  background: linear-gradient(180deg, #2b3548 0%, #171d28 100%);
-  border: 1px solid #41506b;
+  background: linear-gradient(180deg, #2c384d 0%, #171e2b 100%);
+  border: 1px solid #455778;
   box-shadow: 
-    0 3px 6px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    0 3px 8px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
   border-radius: 10px;
-}
-
-/* =========================================
-   2. SPATIAL NEOMORPHIC CARDS & CONTAINERS
-========================================= */
-
-.spatial-neo-card {
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow: 
-    0 20px 40px -15px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.5);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.spatial-neo-card:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
-  box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.85),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
-}
-
-.spatial-neo-inset {
-  background: rgba(8, 12, 20, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  box-shadow: 
-    inset 4px 4px 10px rgba(0, 0, 0, 0.7),
-    inset -2px -2px 6px rgba(255, 255, 255, 0.03);
 }
 
 .animus-label {

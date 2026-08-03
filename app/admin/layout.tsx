@@ -16,7 +16,9 @@ import {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-[#060911] text-[#f8fafc] font-mono text-xs overflow-hidden">
+    <div className="flex h-screen bg-[#060913] text-slate-100 font-mono text-xs overflow-hidden spatial-bg-animated">
+      <div className="spatial-grid-overlay"></div>
+
       {/* 3D Skeuomorphic Sidebar */}
       <aside className="w-64 skeuo-sidebar-3d flex flex-col justify-between flex-shrink-0 z-20">
         <div className="overflow-y-auto no-scrollbar">
@@ -127,8 +129,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* Spatial Main Area */}
-      <main className="flex-1 overflow-y-auto p-8 backdrop-blur-sm">
+      {/* Main Spatial Area */}
+      <main className="flex-1 overflow-y-auto p-8 relative z-10">
         {children}
       </main>
     </div>
