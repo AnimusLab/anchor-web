@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: #060913;
+  --background: #040711;
   --foreground: #f8fafc;
   --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -20,128 +20,149 @@ body {
 }
 
 /* =========================================
-   ANIMATED SPATIAL ENVIRONMENT BACKGROUND
+   ANIMATED COSMIC GALAXY BACKGROUND SYSTEM
 ========================================= */
 
-.spatial-bg-animated {
+.galaxy-bg-animated {
   position: relative;
-  background-color: #060913;
+  background-color: #040711;
   overflow: hidden;
 }
 
-.spatial-bg-animated::before {
+/* Galaxy Nebula Spiral & Cosmic Glows */
+.galaxy-bg-animated::before {
   content: "";
   position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: -60%;
+  left: -60%;
+  width: 220%;
+  height: 220%;
   background: 
-    radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.15) 0%, transparent 40%),
-    radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.12) 0%, transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(99, 102, 241, 0.14) 0%, transparent 50%),
-    radial-gradient(circle at 70% 70%, rgba(245, 158, 11, 0.08) 0%, transparent 40%);
-  animation: spatialAurora 25s ease-in-out infinite alternate;
+    radial-gradient(ellipse at 30% 20%, rgba(56, 189, 248, 0.18) 0%, transparent 45%),
+    radial-gradient(ellipse at 70% 30%, rgba(147, 51, 234, 0.14) 0%, transparent 45%),
+    radial-gradient(ellipse at 40% 70%, rgba(16, 185, 129, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(245, 158, 11, 0.1) 0%, transparent 45%);
+  animation: galaxyRotate 40s linear infinite;
   pointer-events: none;
   z-index: 0;
 }
 
-.spatial-grid-overlay {
+/* Twinkling Starfield & Spatial Perspective Grid */
+.galaxy-starfield-overlay {
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(rgba(148, 163, 184, 0.15) 1px, transparent 1px);
-  background-size: 28px 28px;
+  background-image: 
+    radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
+    radial-gradient(rgba(56, 189, 248, 0.3) 1.5px, transparent 1.5px),
+    radial-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+  background-size: 120px 120px, 200px 200px, 32px 32px;
+  background-position: 0 0, 40px 60px, 0 0;
+  animation: starfieldTwinkle 12s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
-@keyframes spatialAurora {
+@keyframes galaxyRotate {
   0% {
     transform: rotate(0deg) scale(1);
   }
   50% {
-    transform: rotate(180deg) scale(1.1);
+    transform: rotate(180deg) scale(1.08);
   }
   100% {
     transform: rotate(360deg) scale(1);
   }
 }
 
+@keyframes starfieldTwinkle {
+  0% {
+    opacity: 0.5;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0.6;
+    transform: translateY(-8px);
+  }
+}
+
 /* =========================================
-   PHYSICAL 3D NEOMORPHIC CARDS (Tactile Relief)
+   PHYSICAL 3D NEOMORPHIC CARDS (Matching Image 2)
 ========================================= */
 
 .neo-card-3d {
   position: relative;
   z-index: 2;
-  background: linear-gradient(145deg, #0e1526 0%, #090e1a 100%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(145deg, #0f1628 0%, #090e1b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 16px;
   box-shadow: 
-    0 16px 32px -8px rgba(0, 0, 0, 0.8),
-    6px 6px 16px #04060c,
-    -6px -6px 16px #121b30,
-    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    0 16px 36px -8px rgba(0, 0, 0, 0.85),
+    6px 6px 18px #03050c,
+    -6px -6px 18px #131c32,
+    inset 0 1px 1px rgba(255, 255, 255, 0.22);
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .neo-card-3d:hover {
   transform: translateY(-4px) scale(1.01);
-  border-color: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.25);
   box-shadow: 
-    0 24px 48px -10px rgba(0, 0, 0, 0.9),
-    8px 8px 20px #03040a,
-    -8px -8px 20px #152038,
-    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+    0 24px 50px -10px rgba(0, 0, 0, 0.95),
+    8px 8px 22px #020308,
+    -8px -8px 22px #16223d,
+    inset 0 1px 2px rgba(255, 255, 255, 0.35);
 }
 
 .neo-card-inset-3d {
-  background: #070b14;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #070b16;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   box-shadow: 
-    inset 4px 4px 10px #03050a,
-    inset -4px -4px 10px #101625;
+    inset 4px 4px 10px #03050b,
+    inset -4px -4px 10px #101728;
 }
 
 /* Skeuomorphic 3D Controls */
 .skeuo-sidebar-3d {
   position: relative;
   z-index: 10;
-  background: linear-gradient(180deg, rgba(20, 26, 38, 0.92) 0%, rgba(10, 14, 22, 0.96) 100%);
+  background: linear-gradient(180deg, rgba(20, 27, 40, 0.94) 0%, rgba(10, 14, 23, 0.98) 100%);
   backdrop-filter: blur(24px) saturate(180%);
-  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 
-    16px 0 40px -5px rgba(0, 0, 0, 0.85),
-    inset -1px 0 0 rgba(255, 255, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    16px 0 40px -5px rgba(0, 0, 0, 0.9),
+    inset -1px 0 0 rgba(255, 255, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .skeuo-header-box-3d {
-  background: linear-gradient(180deg, #2b364a 0%, #161d2a 100%);
-  border: 1px solid #435473;
+  background: linear-gradient(180deg, #2c384d 0%, #161e2b 100%);
+  border: 1px solid #445677;
   box-shadow: 
-    0 6px 14px rgba(0, 0, 0, 0.7),
-    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+    0 6px 14px rgba(0, 0, 0, 0.75),
+    inset 0 1px 1px rgba(255, 255, 255, 0.45);
   border-radius: 12px;
 }
 
 .skeuo-nav-active-3d {
-  background: linear-gradient(180deg, #354461 0%, #1e283b 100%);
-  border: 1px solid #586d99;
+  background: linear-gradient(180deg, #364663 0%, #1e293c 100%);
+  border: 1px solid #5a709b;
   box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.7),
-    inset 0 1px 1px rgba(255, 255, 255, 0.45);
+    0 4px 12px rgba(0, 0, 0, 0.75),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
   color: #ffffff !important;
 }
 
 .skeuo-badge-3d {
-  background: linear-gradient(180deg, #2c384d 0%, #171e2b 100%);
-  border: 1px solid #455778;
+  background: linear-gradient(180deg, #2d394e 0%, #171f2c 100%);
+  border: 1px solid #46597a;
   box-shadow: 
-    0 3px 8px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    0 3px 8px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
   border-radius: 10px;
 }
 

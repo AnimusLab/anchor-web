@@ -9,8 +9,8 @@ export default async function OversightLayout({ children }: { children: React.Re
   const auditorType = session?.auditorType || "GOVERNMENT_AUDITOR";
 
   return (
-    <div className="flex h-screen bg-[#060913] text-slate-100 font-sans text-xs overflow-hidden spatial-bg-animated">
-      <div className="spatial-grid-overlay"></div>
+    <div className="flex h-screen bg-[#040711] text-slate-100 font-sans text-xs overflow-hidden galaxy-bg-animated">
+      <div className="galaxy-starfield-overlay"></div>
       
       {/* 3D Skeuomorphic Dynamic Sidebar */}
       <DynamicSidebar role={role} auditorType={auditorType} clearanceId={clearanceId} />
