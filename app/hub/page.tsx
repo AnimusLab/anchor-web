@@ -1,79 +1,65 @@
-import { ShieldCheck, AlertTriangle, Layers, Activity } from "lucide-react";
-
 export default function HubOverviewPage() {
   return (
     <div className="space-y-8">
-      {/* Title */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-100">Hub Overview</h1>
-        <p className="text-sm text-slate-400">Enterprise AI governance summary for J.P. Morgan (IN-MUM01)</p>
+        <div className="animus-label mb-1">ENTERPRISE GOVERNANCE TERMINAL</div>
+        <h1 className="text-2xl font-semibold text-white tracking-tight">Hub Overview</h1>
+        <p className="text-xs text-zinc-400 font-mono mt-1">Silo ID: JPMC-IN-MUM01 · Mode: Hybrid P2P Telemetry</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Compliance Rate</span>
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
-          </div>
-          <div className="mt-3 text-2xl font-bold text-slate-100">99.4%</div>
-          <div className="text-xs text-slate-500 mt-1">Across 4 active projects</div>
+      {/* KPI Blocks */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="p-5 bg-zinc-950 animus-border space-y-1">
+          <div className="animus-label">COMPLIANCE RATE</div>
+          <div className="text-3xl font-semibold text-white">99.4%</div>
+          <div className="text-[11px] text-zinc-500 font-mono">4 Active Projects</div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Projects</span>
-            <Layers className="w-5 h-5 text-blue-400" />
-          </div>
-          <div className="mt-3 text-2xl font-bold text-slate-100">4 / 15</div>
-          <div className="text-xs text-slate-500 mt-1">Growth Tier Package</div>
+        <div className="p-5 bg-zinc-950 animus-border space-y-1">
+          <div className="animus-label">PACKAGE TIER</div>
+          <div className="text-3xl font-semibold text-white">Base Enterprise</div>
+          <div className="text-[11px] text-zinc-500 font-mono">3 Isolated Hubs</div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Flagged Violations</span>
-            <AlertTriangle className="w-5 h-5 text-amber-400" />
-          </div>
-          <div className="mt-3 text-2xl font-bold text-slate-100">3</div>
-          <div className="text-xs text-slate-500 mt-1">2 Remediated, 1 Pending</div>
+        <div className="p-5 bg-zinc-950 animus-border space-y-1">
+          <div className="animus-label">FLAGGED FINDINGS</div>
+          <div className="text-3xl font-semibold text-white">3</div>
+          <div className="text-[11px] text-zinc-500 font-mono">2 Resolved / 1 Active</div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Telemetry Stream</span>
-            <Activity className="w-5 h-5 text-emerald-400 animate-pulse" />
-          </div>
-          <div className="mt-3 text-2xl font-bold text-slate-100">P2P Active</div>
-          <div className="text-xs text-slate-500 mt-1">Raw evidence on premises</div>
+        <div className="p-5 bg-zinc-950 animus-border space-y-1">
+          <div className="animus-label">TELEMETRY STREAM</div>
+          <div className="text-3xl font-semibold text-emerald-400">P2P Live</div>
+          <div className="text-[11px] text-zinc-500 font-mono">Raw data on-premise</div>
         </div>
       </div>
 
-      {/* Telemetry Preview Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="font-semibold text-sm text-slate-200">Recent Audit Records</h3>
-          <span className="text-xs text-slate-500 font-mono">Live Stream</span>
+      {/* Decision Audit Log Stream */}
+      <div className="bg-zinc-950 animus-border">
+        <div className="p-4 animus-border-b flex justify-between items-center">
+          <span className="animus-label">RECENT DECISION AUDIT CHAIN (DAC) ENTRIES</span>
+          <span className="text-xs font-mono text-zinc-500">Live P2P Stream</span>
         </div>
-        <div className="divide-y divide-slate-800/60 text-sm">
-          <div className="px-6 py-3 flex items-center justify-between">
+
+        <div className="divide-y divide-zinc-900 font-mono text-xs">
+          <div className="p-4 flex items-center justify-between">
             <div>
-              <span className="font-mono text-xs text-slate-400">dec_9901a</span>
-              <span className="ml-3 font-medium text-slate-200">payments-service</span>
+              <span className="text-white font-bold">dec_9901a</span>
+              <span className="text-zinc-600 mx-2">|</span>
+              <span className="text-zinc-300">payments-service</span>
+              <div className="text-[11px] text-zinc-600 mt-1">Chain Hash: 0x8f2a9910b42c00a1...</div>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-xs font-mono bg-slate-800 text-slate-400 px-2 py-0.5 rounded">RBI Dialect</span>
-              <span className="text-xs text-emerald-400 font-semibold">COMPLIANT</span>
-            </div>
+            <span className="text-emerald-400 font-semibold px-2 py-0.5 border border-emerald-900 bg-emerald-950/40">COMPLIANT (RBI)</span>
           </div>
-          <div className="px-6 py-3 flex items-center justify-between">
+
+          <div className="p-4 flex items-center justify-between">
             <div>
-              <span className="font-mono text-xs text-slate-400">dec_9902b</span>
-              <span className="ml-3 font-medium text-slate-200">wealth-advisor-agent</span>
+              <span className="text-white font-bold">dec_9902b</span>
+              <span className="text-zinc-600 mx-2">|</span>
+              <span className="text-zinc-300">wealth-advisor-agent</span>
+              <div className="text-[11px] text-zinc-600 mt-1">Chain Hash: 0x4f12a8909101ff82...</div>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-xs font-mono bg-slate-800 text-slate-400 px-2 py-0.5 rounded">EU AI Act</span>
-              <span className="text-xs text-amber-400 font-semibold">VIOLATION</span>
-            </div>
+            <span className="text-amber-400 font-semibold px-2 py-0.5 border border-amber-900 bg-amber-950/40">VIOLATION (EU AI ACT)</span>
           </div>
         </div>
       </div>

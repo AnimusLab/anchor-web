@@ -1,78 +1,84 @@
 import Link from "next/link";
-import { Shield, Terminal, FileCode, ArrowRight, Lock, CheckCircle } from "lucide-react";
+import { ArrowRight, Shield } from "lucide-react";
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100">
+    <div className="flex flex-col min-h-screen bg-[#050505] text-[#e5e5e5]">
       {/* Header */}
-      <header className="border-b border-slate-800 px-6 py-4 flex items-center justify-between max-w-7xl mx-auto w-full">
+      <header className="animus-border-b px-8 py-5 flex items-center justify-between max-w-6xl mx-auto w-full">
         <div className="flex items-center space-x-3">
-          <Shield className="w-6 h-6 text-emerald-400" />
-          <span className="font-bold tracking-tight text-lg">Anchor</span>
-          <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">v2.0.0-alpha</span>
+          <Shield className="w-5 h-5 text-white" />
+          <span className="font-semibold tracking-wider text-base text-white uppercase">AnimusLab</span>
+          <span className="text-zinc-600 font-mono text-xs">/</span>
+          <span className="text-zinc-400 font-mono text-xs">Anchor</span>
         </div>
-        <nav className="flex items-center space-x-6 text-sm text-slate-400">
-          <Link href="/docs" className="hover:text-slate-200 transition">Docs</Link>
-          <Link href="/manifesto" className="hover:text-slate-200 transition">Manifesto</Link>
-          <Link href="/hub" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-medium px-4 py-2 rounded-md transition text-sm">
-            Launch Hub
+        <nav className="flex items-center space-x-8 text-xs font-mono tracking-wider text-zinc-400">
+          <Link href="/docs" className="hover:text-white transition uppercase">Docs</Link>
+          <Link href="/manifesto" className="hover:text-white transition uppercase">Manifesto</Link>
+          <Link href="/hub" className="border border-zinc-700 hover:border-white text-white px-4 py-2 transition uppercase">
+            Enterprise Hub
           </Link>
         </nav>
       </header>
 
       {/* Hero */}
-      <main className="flex-1 flex flex-col justify-center items-center px-6 max-w-5xl mx-auto text-center py-20">
-        <div className="inline-flex items-center space-x-2 bg-slate-900 border border-slate-800 px-3 py-1 rounded-full text-xs font-mono text-emerald-400 mb-8">
-          <span>EU AI Act · RBI FREE-AI · SEC 2026 Ready</span>
-        </div>
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-50 max-w-4xl leading-tight">
-          Deterministic, Cryptographically Auditable AI Governance
+      <main className="flex-1 flex flex-col justify-center max-w-4xl mx-auto px-8 py-24">
+        <div className="animus-label mb-4">INSTITUTIONAL AI GOVERNANCE SYSTEM</div>
+        <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight text-white leading-[1.1]">
+          Deterministic, Cryptographically Auditable Governance
         </h1>
-        <p className="mt-6 text-lg text-slate-400 max-w-2xl">
-          Replacing probabilistic safety theater with mathematical enforcement. raw audit data stays on your infrastructure; the Hub receives tamper-evident decision metadata hashes.
+        <div className="animus-accent-line my-8"></div>
+        <p className="text-lg text-[#b3b3b3] max-w-2xl leading-relaxed">
+          Replacing probabilistic safety theater with mathematical enforcement. Raw evidence remains strictly on customer servers; the Governance Hub processes non-repudiable metadata hashes.
         </p>
 
-        {/* Action Buttons */}
-        <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Link href="/hub" className="flex items-center space-x-2 bg-slate-100 hover:bg-white text-slate-950 font-semibold px-6 py-3 rounded-lg transition">
-            <span>Enterprise Hub</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-          <div className="bg-slate-900 border border-slate-800 text-slate-300 font-mono text-sm px-4 py-3 rounded-lg flex items-center space-x-3">
-            <Terminal className="w-4 h-4 text-emerald-400" />
-            <span>pip install anchor-audit</span>
+        {/* Technical Callout */}
+        <div className="mt-12 p-6 bg-zinc-950/80 animus-border space-y-3 font-mono text-xs text-zinc-400">
+          <div className="flex justify-between items-center text-zinc-300">
+            <span>SPECIFICATION :: DECISION AUDIT CHAIN (DAC)</span>
+            <span className="text-emerald-400">SEALED</span>
+          </div>
+          <p className="text-zinc-500 font-sans text-xs leading-normal">
+            Satisfies EU AI Act Article 12, RBI FREE-AI Recommendation 7, CFPB Regulation B, and SEC 2026 audit trail requirements simultaneously.
+          </p>
+          <div className="text-white pt-2 border-t border-zinc-900 flex items-center justify-between">
+            <span>$ pip install anchor-audit</span>
+            <Link href="/hub" className="inline-flex items-center space-x-2 text-white hover:text-zinc-400 transition font-sans text-xs">
+              <span>Enter Enterprise Portal</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
 
-        {/* Three Core Features */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-24 text-left w-full">
-          <div className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-xl">
-            <Lock className="w-8 h-8 text-emerald-400 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-100 mb-2">Hybrid Data Sovereignty</h3>
-            <p className="text-sm text-slate-400">
-              Raw inference logs and code evidence never leave your server. The Hub only stores cryptographic metadata hashes.
+        {/* 3 Core Principles */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20 text-left">
+          <div className="space-y-2">
+            <div className="animus-label">01 / SOVEREIGNTY</div>
+            <h3 className="font-semibold text-white text-sm">Hybrid Data Model</h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Zero raw evidence transmission. P2P streaming for real-time audit verification.
             </p>
           </div>
-          <div className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-xl">
-            <FileCode className="w-8 h-8 text-emerald-400 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-100 mb-2">Regulatory Polyglottism</h3>
-            <p className="text-sm text-slate-400">
-              One Decision Audit Chain satisfies EU AI Act Article 12, RBI Recommendation 7, and SEC audit trails simultaneously.
+          <div className="space-y-2">
+            <div className="animus-label">02 / POLYGLOTTISM</div>
+            <h3 className="font-semibold text-white text-sm">Regulatory Mapping</h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              One audit chain entry formats dynamically to RBI, SEC, and EU AI Act standards.
             </p>
           </div>
-          <div className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-xl">
-            <CheckCircle className="w-8 h-8 text-emerald-400 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-100 mb-2">Auditor Query Wall</h3>
-            <p className="text-sm text-slate-400">
-              Strict database query wall (`WHERE entity_type = 'ai_agent'`). Regulatory auditors never see codebase audit records.
+          <div className="space-y-2">
+            <div className="animus-label">03 / PRIVACY WALL</div>
+            <h3 className="font-semibold text-white text-sm">Auditor Query Boundary</h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Hard query wall (`WHERE entity_type = &apos;ai_agent&apos;`). Codebase audits are invisible to auditors.
             </p>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 py-8 px-6 text-center text-xs text-slate-500">
-        <p>© 2026 AnimusLab. All rights reserved. Licensed under Apache 2.0.</p>
+      <footer className="animus-border-t py-8 px-8 text-center text-xs font-mono text-zinc-600 max-w-6xl mx-auto w-full">
+        ANIMUSLAB © 2026 · INDEPENDENT RESEARCH INSTITUTE · APACHE 2.0
       </footer>
     </div>
   );
