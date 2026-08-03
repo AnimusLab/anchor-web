@@ -1,0 +1,125 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ANIMUS_ADMIN
+  HUB_MANAGER
+  PROJECT_LEAD
+  DEVELOPER
+  AUDITOR
+}
+
+enum AuditorType {
+  STANDARD_AUDITOR
+  CROSS_HUB_AUDITOR
+  GOVERNMENT_AUDITOR
+}
+
+enum EntityType {
+  AI_AGENT
+  CODEBASE
+  GATEWAY
+  MESH_NODE
+}
+
+enum AccessRequestStatus {
+  PENDING
+  RELAYED_TO_MANAGER
+  APPROVED
+  DENIED
+  REVOKED
+}
+
+model Organization {
+  id           String   @id // e.g. "jpmc"
+  displayName  String
+  domain       String   @unique
+  contractTier String   // "STARTER", "BASE_ENTERPRISE", "GROWTH", "SOVEREIGN"
+  createdAt    DateTime @default(now())
+  hubs         Hub[]
+  users        User[]
+}
+
+model Hub {
+  id             String        @id // e.g. "JPMC-IN-MUM01"
+  orgId          String
+  organization   Organization  @relation(fields: [orgId], references: [id])
+  displayName    String
+  region         String
+  apiKeyHash     String        @unique // Hub-wide Key Hash
+  createdAt      DateTime      @default(now())
+  projects       Project[]
+  users          User[]
+  ledgerEntries  LedgerEntry[]
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  hubId       String
+  hub         Hub      @relation(fields: [hubId], references: [id])
+  name        String
+  slug        String
+  apiKeyHash  String   @unique // Project-scoped Key Hash
+  createdAt   DateTime @default(now())
+  users       User[]
+}
+
+model User {
+  id                String                    @id // e.g. "OWN-AN-MUM-042" or "AUD-RBI-IN-009"
+  email             String                    @unique
+  displayName       String
+  role              Role
+  auditorType       AuditorType?
+  totpSecret        String?
+  orgId             String?
+  organization      Organization?             @relation(fields: [orgId], references: [id])
+  hubId             String?
+  hub               Hub?                      @relation(fields: [hubId], references: [id])
+  projectId         String?
+  project           Project?                  @relation(fields: [projectId], references: [id])
+  status            String                    @default("PENDING") // Whitelist approval flow
+  createdAt         DateTime                  @default(now())
+  requestsMade      GovernanceAccessRequest[] @relation("Requester")
+  requestsApproved  GovernanceAccessRequest[] @relation("Approver")
+}
+
+model Whitelist {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  orgId      String
+  role       Role
+  status     String   @default("APPROVED")
+  createdAt  DateTime @default(now())
+}
+
+model LedgerEntry {
+  id         String     @id @default(cuid())
+  hubId      String
+  hub        Hub        @relation(fields: [hubId], references: [id])
+  project    String
+  entityType EntityType @default(AI_AGENT)
+  timestamp  DateTime   @default(now())
+  payload    Json       // Summary / Metadata hash ONLY (raw evidence stays on client server)
+  chainHash  String
+  signature  String?
+}
+
+model GovernanceAccessRequest {
+  id            String              @id @default(cuid())
+  requesterId   String
+  requester     User                @relation("Requester", fields: [requesterId], references: [id])
+  targetHubId   String
+  purpose       String
+  justification String
+  status        AccessRequestStatus @default(PENDING)
+  approverId    String?
+  approver      User?               @relation("Approver", fields: [approverId], references: [id])
+  createdAt     DateTime            @default(now())
+  expiresAt     DateTime?
+}

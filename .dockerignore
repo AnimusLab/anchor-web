@@ -1,9 +1,5 @@
-.env
-*.db
-*.log
-__pycache__/
-.pytest_cache/
-totp.txt
-.git
-.github
 node_modules
+.next
+.git
+.env
+.env.local

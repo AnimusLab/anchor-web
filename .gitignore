@@ -1,32 +1,30 @@
-node_modules
-dist
-dist-ssr
-*.local
-.env
-.env.*
-.DS_Store
-.vscode
-.idea
-build
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
+# local env files
+.env*.local
 .env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
 
-# Project Specific
-server/anchor.db
-server/anchor_mesh.db
-*.db
-*.sqlite
-.anchor/
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

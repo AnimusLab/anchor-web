@@ -1,69 +1,24 @@
-name: Cloudflare & Hugging Face Deployment
+name: Sync to Hugging Face Hub
 
 on:
   push:
-    branches:
-      - main
-
-permissions:
-  contents: read
-  deployments: write
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  # --- 1. FRONTEND DEPLOYMENT (Cloudflare Pages) ---
-  deploy-frontends:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        project: [landing, dashboard, oversight, root-admin, mesh]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        if: matrix.project != 'mesh'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: './${{ matrix.project }}/package-lock.json'
-
-      - name: Install & Build ${{ matrix.project }}
-        if: matrix.project != 'mesh'
-        env:
-          VITE_API_URL: https://animuslab-anchor.hf.space
-        run: |
-          cd ${{ matrix.project }}
-          npm install
-          npm run build
-
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: ${{ matrix.project == 'mesh' && 'meshdashboard' || format('anchor-{0}', matrix.project) }}
-          directory: ${{ matrix.project == 'mesh' && 'mesh' || format('{0}/dist', matrix.project) }}
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-
-  # --- 2. BACKEND DEPLOYMENT (Hugging Face Space) ---
-  deploy-backend:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Push to Hugging Face
+      - name: Push to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Robust Force-Push Sync Strategy
-          cd server
-          rm -f *.db  # Ensure no local DBs survive the sync
-          git init -b main
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add .
-          git commit -m "deploy: anchor hub production sync"
-          git remote add hf https://AnimusLab:${HF_TOKEN}@huggingface.co/spaces/AnimusLab/Anchor
-          git push hf main --force
+          git config --global user.email "deploy@animuslab.dev"
+          git config --global user.name "AnimusLab Deploy Bot"
+          git remote add hf https://user:$HF_TOKEN@huggingface.co/spaces/AnimusLab/Anchor-Web || true
+          git push --force hf main

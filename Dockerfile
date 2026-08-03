@@ -1,36 +1,40 @@
-FROM python:3.9-slim
+# Base stage
+FROM node:20-alpine AS base
 
-# Install system dependencies for psycopg2 and qrcode
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    gcc \
-    libmagic-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Dependencies stage
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY package.json package-lock.json* ./
+COPY prisma ./prisma/
+RUN npm ci
 
-WORKDIR /code
+# Builder stage
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED 1
+RUN npx prisma generate
+RUN npm run build
 
-# In the HF Space, the contents of the 'server' folder are at the root.
-COPY . /code/server
+# Runner stage
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
 
-# Install dependencies from the requirements.txt now at /code/server/
-RUN pip install --no-cache-dir -r /code/server/requirements.txt
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Create a non-root user (good practice for HF Spaces)
-RUN useradd -m -u 1000 user
-USER user
-ENV HOME=/home/user \
-	PATH=/home/user/.local/bin:$PATH
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-WORKDIR $HOME/app
+USER nextjs
 
-# Copy everything to the user app directory
-COPY --chown=user . $HOME/app
-
-# Expose the HF Spaces port
 EXPOSE 7860
+ENV PORT 7860
+ENV HOSTNAME "0.0.0.0"
 
-# Run the Master Node on the HF port
-# We use 'server.proxy:app' because if we are in $HOME/app, 
-# and the files are from the 'server' folder, we might need to adjust the import path.
-# Actually, if proxy.py is at the root of the space, we run 'proxy:app'.
-CMD ["uvicorn", "proxy:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["node", "server.js"]
