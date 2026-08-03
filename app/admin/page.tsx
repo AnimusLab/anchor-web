@@ -1,63 +1,84 @@
+import { Building2, UserCheck, ShieldAlert, Key, Plus, CheckCircle, XCircle } from "lucide-react";
+
 export default function AdminPage() {
   return (
-    <div className="space-y-6 font-mono text-xs">
-      <div className="neo-card p-5 flex justify-between items-center">
+    <div className="space-y-8 max-w-6xl mx-auto">
+      {/* Header Banner (Neomorphic Box) */}
+      <div className="neo-box p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="animus-label mb-1 text-sky-400">SYS://OPERATIONS_CONTROL</div>
-          <div className="text-white font-bold text-base">AnimusLab Platform Administration</div>
+          <h1 className="text-3xl font-bold text-slate-100 tracking-tight">AnimusLab Platform Administration</h1>
+          <p className="text-sm text-slate-400 font-mono mt-1">Master Operations Portal · Multi-Tenant Control Plane</p>
         </div>
         <div className="flex space-x-3">
-          <button className="skeuo-badge px-4 py-2 font-bold text-white hover:bg-slate-800 transition">
-            + Provision New Hub
+          <button className="skeuo-badge px-4 py-2.5 font-bold text-xs text-white hover:bg-slate-800 transition flex items-center space-x-2">
+            <Plus className="w-4 h-4 text-emerald-400" />
+            <span>Provision New Hub</span>
           </button>
-          <button className="skeuo-badge px-4 py-2 font-bold text-slate-300 hover:text-white transition">
+          <button className="skeuo-badge px-4 py-2.5 font-bold text-xs text-slate-300 hover:text-white transition">
             Manage Whitelist
           </button>
         </div>
       </div>
 
-      {/* KPI Neomorphic Blocks (Matching screenshot) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="neo-card p-5 space-y-2">
-          <div className="animus-label">ACTIVE HUBS</div>
-          <div className="text-2xl font-bold text-slate-100">12 Provisioned</div>
-          <div className="text-slate-400 text-xs">2 Starter / 7 Base / 3 Growth</div>
+      {/* Neomorphic Metric Blocks (Molded Relief) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="neo-box p-6 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="animus-label text-slate-400">ACTIVE HUBS</span>
+            <Building2 className="w-5 h-5 text-sky-400" />
+          </div>
+          <div className="text-3xl font-bold text-slate-100 mt-2">12 Provisioned</div>
+          <div className="text-xs text-slate-400 font-mono">2 Starter / 7 Base / 3 Growth</div>
         </div>
 
-        <div className="neo-card p-5 space-y-2">
-          <div className="animus-label tracking-wider">PENDING WHITELIST</div>
-          <div className="text-3xl font-bold text-amber-400">3 Users Awaiting</div>
-          <div className="text-slate-400 text-xs">Domain check required</div>
+        <div className="neo-box p-6 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="animus-label text-amber-400">PENDING WHITELIST</span>
+            <UserCheck className="w-5 h-5 text-amber-400" />
+          </div>
+          <div className="text-3xl font-bold text-amber-400 mt-2">3 Users Awaiting</div>
+          <div className="text-xs text-slate-400 font-mono">Domain check required</div>
         </div>
 
-        <div className="neo-card p-5 space-y-2">
-          <div className="animus-label">GOV RELAY REQUESTS</div>
-          <div className="text-2xl font-bold text-emerald-400">1 Awaiting Hub Action</div>
-          <div className="text-slate-400 text-xs">Gov Auditor → Hub Manager</div>
+        <div className="neo-box p-6 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="animus-label text-emerald-400">GOV RELAY REQUESTS</span>
+            <ShieldAlert className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div className="text-3xl font-bold text-emerald-400 mt-2">1 Awaiting Action</div>
+          <div className="text-xs text-slate-400 font-mono">Gov Auditor → Hub Manager</div>
         </div>
       </div>
 
-      {/* Whitelist Queue Table */}
-      <div className="neo-card overflow-hidden">
-        <div className="p-4 border-b border-white/[0.06] flex justify-between items-center bg-slate-900/50">
-          <span className="font-bold text-slate-200">WHITELIST_PROVISIONING_QUEUE</span>
-          <span className="text-slate-400 font-semibold">Auto-Check Active</span>
+      {/* Whitelist Queue Table (Neomorphic Box) */}
+      <div className="neo-box overflow-hidden">
+        <div className="p-5 border-b border-slate-800/60 flex justify-between items-center bg-[#090c14]">
+          <span className="animus-label text-slate-300">WHITELIST PROVISIONING QUEUE</span>
+          <span className="text-xs font-mono text-slate-400 font-semibold">Auto-Check Active</span>
         </div>
 
-        <div className="divide-y divide-white/[0.06]">
-          <div className="p-5 flex items-center justify-between hover:bg-white/[0.02] transition">
+        <div className="p-5 space-y-4">
+          <div className="neo-box-inset p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <span className="text-sky-400 font-bold text-sm">rbi_auditor_09@rbi.org.in</span>
-              <span className="text-slate-500 mx-3">→</span>
-              <span className="text-slate-200 font-semibold">GOVERNMENT_AUDITOR</span>
-              <div className="text-slate-400 mt-1">Org: Reserve Bank of India | Domain Verified: YES</div>
+              <div className="flex items-center space-x-3">
+                <span className="text-sky-400 font-bold text-base">rbi_auditor_09@rbi.org.in</span>
+                <span className="text-xs font-mono text-amber-400 font-bold skeuo-badge px-2.5 py-1">
+                  GOVERNMENT_AUDITOR
+                </span>
+              </div>
+              <div className="text-xs text-slate-400 mt-1 font-mono">
+                Org: Reserve Bank of India · Domain Verified: <span className="text-emerald-400 font-bold">YES</span>
+              </div>
             </div>
             <div className="flex space-x-3">
-              <button className="skeuo-badge text-emerald-400 px-4 py-2 font-bold hover:bg-emerald-950/40 transition">
-                Approve & Provision
+              <button className="skeuo-badge text-emerald-400 px-4 py-2 font-bold text-xs hover:bg-emerald-950/40 transition flex items-center space-x-2">
+                <CheckCircle className="w-4 h-4" />
+                <span>Approve & Provision</span>
               </button>
-              <button className="skeuo-badge text-rose-400 px-4 py-2 font-bold hover:bg-rose-950/40 transition">
-                Reject
+              <button className="skeuo-badge text-rose-400 px-4 py-2 font-bold text-xs hover:bg-rose-950/40 transition flex items-center space-x-2">
+                <XCircle className="w-4 h-4" />
+                <span>Reject</span>
               </button>
             </div>
           </div>
