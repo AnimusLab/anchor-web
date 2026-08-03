@@ -3,14 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --background: #08080a;
-  --foreground: #e2e8f0;
+  --background: #090d16;
+  --foreground: #f1f5f9;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
   line-height: 1.6;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -19,62 +21,64 @@ body {
 
 /* Smooth selection */
 ::selection {
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgba(59, 130, 246, 0.25);
   color: #ffffff;
 }
 
-/* Custom Soothing Scrollbar */
+/* Soothing Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #08080a;
+  background: #090d16;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(148, 163, 184, 0.35);
 }
 
-/* AnimusLab Soothing System */
+/* AnimusLab Soothing System Cards & Borders */
 .animus-card {
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 8px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 12px;
+  transition: all 0.2s ease-in-out;
 }
 
 .animus-card:hover {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.75);
 }
 
 .animus-border-r {
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .animus-border-b {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .animus-border-t {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .animus-label {
-  font-size: 0.68rem;
-  letter-spacing: 0.25em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #64748b;
+  color: #94a3b8;
   font-family: var(--font-mono);
 }
 
 .animus-accent-line {
-  width: 40px;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 1px;
+  width: 48px;
+  height: 3px;
+  background: #38bdf8;
+  border-radius: 2px;
 }

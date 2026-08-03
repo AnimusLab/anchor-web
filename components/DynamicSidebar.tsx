@@ -35,80 +35,85 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
   const canApproveP2P = CLEARANCE_MATRIX.capabilities.canApproveP2PRequests(role);
 
   return (
-    <aside className="w-64 animus-border-r bg-[#080808] flex flex-col justify-between flex-shrink-0">
+    <aside className="w-64 animus-border-r bg-[#0b0f19] flex flex-col justify-between flex-shrink-0">
       <div className="overflow-y-auto no-scrollbar">
         {/* Header */}
-        <div className="p-4 animus-border-b">
-          <div className="flex items-center space-x-2">
-            {role === "AUDITOR" ? (
-              <Gavel className="w-4 h-4 text-white" />
-            ) : (
-              <Shield className="w-4 h-4 text-white" />
-            )}
-            <span className="font-bold text-sm text-white tracking-wider uppercase">
-              {role === "AUDITOR" ? "Anchor Oversight" : "Governance Hub"}
-            </span>
-          </div>
-          <div className="animus-label text-[10px] mt-1">
-            {role === "AUDITOR" ? "oversight.animuslab.dev" : "hub.animuslab.dev"}
+        <div className="p-5 animus-border-b">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-slate-800/80 rounded-lg border border-slate-700/60">
+              {role === "AUDITOR" ? (
+                <Gavel className="w-5 h-5 text-amber-400" />
+              ) : (
+                <Shield className="w-5 h-5 text-emerald-400" />
+              )}
+            </div>
+            <div>
+              <div className="font-bold text-sm text-slate-100 tracking-wide">
+                {role === "AUDITOR" ? "Anchor Oversight" : "Governance Hub"}
+              </div>
+              <div className="text-xs text-slate-400 font-mono mt-0.5">
+                {role === "AUDITOR" ? "oversight.animuslab.dev" : "hub.animuslab.dev"}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Clearance Badge */}
-        <div className="p-3 bg-zinc-950/80 animus-border-b font-mono text-[10px]">
-          <span className="text-zinc-500 block uppercase">
+        <div className="p-4 bg-slate-900/60 animus-border-b font-mono text-xs space-y-1">
+          <span className="text-slate-400 font-semibold block uppercase tracking-wider text-[10px]">
             CLEARANCE: {auditorType || role}
           </span>
-          <span className="text-white font-bold">{clearanceId}</span>
+          <span className="text-slate-100 font-bold tracking-wide">{clearanceId}</span>
         </div>
 
         {/* Auditor Hard Query Wall Banner */}
         {role === "AUDITOR" && (
-          <div className="p-3 bg-amber-950/20 animus-border-b font-mono text-[10px] text-amber-300/80 leading-relaxed">
+          <div className="p-4 bg-amber-950/30 animus-border-b font-mono text-xs text-amber-300 leading-relaxed font-medium">
             🔒 HARD QUERY WALL:
-            WHERE entity_type = &apos;ai_agent&apos;. Codebase audit records are permanently hidden.
+            <div className="mt-1 text-[11px] text-amber-200/90 font-mono bg-amber-950/60 p-1.5 rounded border border-amber-800/40">
+              WHERE entity_type = &apos;ai_agent&apos;
+            </div>
           </div>
         )}
 
-        {/* Enterprise Navigation (Managers, Leads, Devs) */}
+        {/* Enterprise Navigation */}
         {role !== "AUDITOR" && (
           <>
             {/* Section 1: Governance & Telemetry */}
-            <div className="p-4 space-y-2 font-mono">
-              <div className="animus-label text-[9px]">GOVERNANCE & TELEMETRY</div>
-              <nav className="space-y-0.5">
-                <Link href="/hub" className={`flex items-center space-x-2.5 px-2.5 py-1.5 rounded ${pathname === '/hub' ? 'text-white bg-zinc-900 animus-border' : 'text-zinc-400 hover:text-white transition'}`}>
-                  <LayoutDashboard className="w-3.5 h-3.5" />
+            <div className="p-4 space-y-2">
+              <div className="animus-label text-[10px]">GOVERNANCE & TELEMETRY</div>
+              <nav className="space-y-1 font-medium text-xs">
+                <Link href="/hub" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition ${pathname === '/hub' ? 'text-white bg-slate-800 border border-slate-700 font-semibold' : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'}`}>
+                  <LayoutDashboard className="w-4 h-4 text-emerald-400" />
                   <span>Overview</span>
                 </Link>
-                <Link href="/hub/telemetry" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                  <History className="w-3.5 h-3.5" />
+                <Link href="/hub/telemetry" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                  <History className="w-4 h-4 text-slate-400" />
                   <span>Decision Telemetry</span>
                 </Link>
-                <Link href="/hub/violations" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                  <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                <Link href="/hub/violations" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                  <ShieldAlert className="w-4 h-4 text-amber-400" />
                   <span>Violation Feed</span>
                 </Link>
-                <Link href="/hub/replay" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                  <RotateCcw className="w-3.5 h-3.5" />
+                <Link href="/hub/replay" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                  <RotateCcw className="w-4 h-4 text-slate-400" />
                   <span>Mission Replay</span>
                 </Link>
               </nav>
             </div>
 
             {/* Section 2: Projects & Ingestion */}
-            <div className="p-4 pt-0 space-y-2 font-mono">
-              <div className="animus-label text-[9px]">PROJECTS & INGESTION</div>
-              <nav className="space-y-0.5">
-                <Link href="/hub/projects" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                  <Layers className="w-3.5 h-3.5" />
+            <div className="p-4 pt-0 space-y-2">
+              <div className="animus-label text-[10px]">PROJECTS & INGESTION</div>
+              <nav className="space-y-1 font-medium text-xs">
+                <Link href="/hub/projects" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                  <Layers className="w-4 h-4 text-sky-400" />
                   <span>Project Inventory</span>
                 </Link>
 
-                {/* ONLY RENDERED IF AUTHORIZED FOR KEYS */}
                 {canManageKeys && (
-                  <Link href="/hub/keys" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                    <Key className="w-3.5 h-3.5 text-emerald-400" />
+                  <Link href="/hub/keys" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                    <Key className="w-4 h-4 text-emerald-400" />
                     <span>API Key Vault</span>
                   </Link>
                 )}
@@ -116,39 +121,39 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
             </div>
 
             {/* Section 3: Compliance & Reports */}
-            <div className="p-4 pt-0 space-y-2 font-mono">
-              <div className="animus-label text-[9px]">COMPLIANCE & REPORTS</div>
-              <nav className="space-y-0.5">
-                <Link href="/hub/reports" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                  <FileText className="w-3.5 h-3.5" />
+            <div className="p-4 pt-0 space-y-2">
+              <div className="animus-label text-[10px]">COMPLIANCE & REPORTS</div>
+              <nav className="space-y-1 font-medium text-xs">
+                <Link href="/hub/reports" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                  <FileText className="w-4 h-4 text-slate-400" />
                   <span>Dialect Reports</span>
                 </Link>
-                <Link href="/hub/verifier" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                  <CheckCircle className="w-3.5 h-3.5" />
+                <Link href="/hub/verifier" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                  <CheckCircle className="w-4 h-4 text-slate-400" />
                   <span>Audit Chain Verifier</span>
                 </Link>
               </nav>
             </div>
 
-            {/* Section 4: Hub Management (Gated to Managers & Admin) */}
+            {/* Section 4: Hub Management */}
             {(canManageSeats || canApproveP2P) && (
-              <div className="p-4 pt-0 space-y-2 font-mono">
-                <div className="animus-label text-[9px]">HUB MANAGEMENT</div>
-                <nav className="space-y-0.5">
+              <div className="p-4 pt-0 space-y-2">
+                <div className="animus-label text-[10px]">HUB MANAGEMENT</div>
+                <nav className="space-y-1 font-medium text-xs">
                   {canManageSeats && (
-                    <Link href="/hub/team" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                      <Users className="w-3.5 h-3.5" />
+                    <Link href="/hub/team" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                      <Users className="w-4 h-4 text-slate-400" />
                       <span>Team & Seats</span>
                     </Link>
                   )}
                   {canApproveP2P && (
-                    <Link href="/hub/requests" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                      <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                    <Link href="/hub/requests" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                      <UserCheck className="w-4 h-4 text-amber-400" />
                       <span>P2P Access Requests</span>
                     </Link>
                   )}
-                  <Link href="/hub/settings" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                    <Settings className="w-3.5 h-3.5" />
+                  <Link href="/hub/settings" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                    <Settings className="w-4 h-4 text-slate-400" />
                     <span>Hub Settings</span>
                   </Link>
                 </nav>
@@ -157,51 +162,37 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
           </>
         )}
 
-        {/* Auditor Navigation (Standard, Cross-Hub, Gov) */}
+        {/* Auditor Navigation */}
         {role === "AUDITOR" && (
           <>
-            <div className="p-4 space-y-2 font-mono">
-              <div className="animus-label text-[9px]">REGULATORY OVERSIGHT</div>
-              <nav className="space-y-0.5">
-                <Link href="/oversight" className="flex items-center space-x-2.5 px-2.5 py-1.5 rounded text-white bg-zinc-900 animus-border">
-                  <Layers className="w-3.5 h-3.5" />
+            <div className="p-4 space-y-2">
+              <div className="animus-label text-[10px]">REGULATORY OVERSIGHT</div>
+              <nav className="space-y-1 font-medium text-xs">
+                <Link href="/oversight" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-white bg-slate-800 border border-slate-700 font-semibold">
+                  <Layers className="w-4 h-4 text-amber-400" />
                   <span>Jurisdiction Overview</span>
                 </Link>
-                <Link href="/oversight/dac" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                  <FileCheck className="w-3.5 h-3.5" />
+                <Link href="/oversight/dac" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                  <FileCheck className="w-4 h-4 text-slate-400" />
                   <span>Decision Audit Chain</span>
                 </Link>
-                <Link href="/oversight/heatmap" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                  <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                <Link href="/oversight/heatmap" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                  <ShieldAlert className="w-4 h-4 text-amber-400" />
                   <span>Violation Heatmap</span>
                 </Link>
               </nav>
             </div>
 
-            <div className="p-4 pt-0 space-y-2 font-mono">
-              <div className="animus-label text-[9px]">FORENSIC AUDIT</div>
-              <nav className="space-y-0.5">
-                <Link href="/oversight/requests" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                  <Send className="w-3.5 h-3.5 text-sky-400" />
+            <div className="p-4 pt-0 space-y-2">
+              <div className="animus-label text-[10px]">FORENSIC AUDIT</div>
+              <nav className="space-y-1 font-medium text-xs">
+                <Link href="/oversight/requests" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                  <Send className="w-4 h-4 text-sky-400" />
                   <span>P2P Pull Requests</span>
                 </Link>
-                <Link href="/oversight/replay" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                  <RotateCcw className="w-3.5 h-3.5" />
+                <Link href="/oversight/replay" className="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/50 hover:text-white transition">
+                  <RotateCcw className="w-4 h-4 text-slate-400" />
                   <span>Gated Mission Replay</span>
-                </Link>
-              </nav>
-            </div>
-
-            <div className="p-4 pt-0 space-y-2 font-mono">
-              <div className="animus-label text-[9px]">COMPLIANCE EXPORTS</div>
-              <nav className="space-y-0.5">
-                <Link href="/oversight/dialects" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                  <FileCheck className="w-3.5 h-3.5" />
-                  <span>Dialect Generator</span>
-                </Link>
-                <Link href="/oversight/verify" className="flex items-center space-x-2.5 px-2.5 py-1.5 text-zinc-400 hover:text-white transition">
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  <span>Chain Verifier</span>
                 </Link>
               </nav>
             </div>
@@ -210,9 +201,9 @@ export default function DynamicSidebar({ role, auditorType, clearanceId }: Sideb
       </div>
 
       {/* Footer */}
-      <div className="p-4 animus-border-t font-mono text-[10px] text-zinc-500 flex justify-between items-center">
-        <span>{role === "AUDITOR" ? "REGULATORY PORTAL" : "ENTERPRISE PORTAL"}</span>
-        <span className={`w-2 h-2 rounded-full ${role === "AUDITOR" ? "bg-amber-400" : "bg-emerald-400"}`}></span>
+      <div className="p-4 animus-border-t font-mono text-xs text-slate-400 flex justify-between items-center bg-slate-900/40">
+        <span className="font-semibold">{role === "AUDITOR" ? "REGULATORY PORTAL" : "ENTERPRISE PORTAL"}</span>
+        <span className={`w-2.5 h-2.5 rounded-full ${role === "AUDITOR" ? "bg-amber-400" : "bg-emerald-400"} animate-pulse`}></span>
       </div>
     </aside>
   );
