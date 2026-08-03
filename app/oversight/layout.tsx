@@ -1,5 +1,5 @@
 import DynamicSidebar from "@/components/DynamicSidebar";
-import GalaxyBackground from "@/components/GalaxyBackground";
+import SolarSystemBackground from "@/components/SolarSystemBackground";
 import { getSession } from "@/lib/auth/session";
 
 export default async function OversightLayout({ children }: { children: React.ReactNode }) {
@@ -10,14 +10,14 @@ export default async function OversightLayout({ children }: { children: React.Re
   const auditorType = session?.auditorType || "GOVERNMENT_AUDITOR";
 
   return (
-    <div className="flex h-screen bg-[#040711] text-slate-100 font-sans text-xs overflow-hidden relative">
-      {/* Animated Galaxy Starfield & Rotating Nebula Background */}
-      <GalaxyBackground />
+    <div className="flex h-screen bg-[#03050a] text-slate-100 font-sans text-xs overflow-hidden relative">
+      {/* Animated Solar System Background */}
+      <SolarSystemBackground />
       
-      {/* 3D Skeuomorphic Dynamic Sidebar */}
+      {/* Dynamic Glassmorphism Sidebar */}
       <DynamicSidebar role={role} auditorType={auditorType} clearanceId={clearanceId} />
 
-      {/* Main Spatial Content Area */}
+      {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto p-8 relative z-10">
         {children}
       </main>

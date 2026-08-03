@@ -1,5 +1,5 @@
 import Link from "next/link";
-import GalaxyBackground from "@/components/GalaxyBackground";
+import SolarSystemBackground from "@/components/SolarSystemBackground";
 import { 
   LayoutDashboard, 
   Globe, 
@@ -17,21 +17,21 @@ import {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-[#040711] text-slate-100 font-mono text-xs overflow-hidden relative">
-      {/* Animated Galaxy Starfield & Rotating Nebula Background */}
-      <GalaxyBackground />
+    <div className="flex h-screen bg-[#03050a] text-slate-100 font-mono text-xs overflow-hidden relative">
+      {/* Animated Solar System Background */}
+      <SolarSystemBackground />
 
-      {/* 3D Skeuomorphic Sidebar */}
-      <aside className="w-64 skeuo-sidebar-3d flex flex-col justify-between flex-shrink-0 z-20">
+      {/* Glassmorphism Sidebar (No Outer Drop Shadow) */}
+      <aside className="w-64 glass-sidebar flex flex-col justify-between flex-shrink-0 z-20">
         <div className="overflow-y-auto no-scrollbar">
           {/* Header */}
           <div className="p-4 border-b border-white/[0.08]">
-            <div className="p-3.5 skeuo-header-box-3d flex items-center space-x-3">
-              <div className="p-2 skeuo-badge-3d">
-                <Shield className="w-4 h-4 text-sky-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" />
+            <div className="p-3.5 glass-header-box flex items-center space-x-3">
+              <div className="p-2 glass-badge">
+                <Shield className="w-4 h-4 text-sky-400" />
               </div>
               <div>
-                <div className="font-bold text-xs text-slate-100 tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] uppercase">
+                <div className="font-bold text-xs text-slate-100 tracking-wide uppercase">
                   Anchor Root
                 </div>
                 <div className="text-[10px] text-slate-400 font-mono mt-0.5">admin.animuslab.dev</div>
@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
 
-          <div className="mx-4 my-3.5 p-3 skeuo-badge-3d text-[10px]">
+          <div className="mx-4 my-3.5 p-3 glass-badge text-[10px]">
             <span className="text-slate-400 block uppercase">PRIVILEGE: ROOT</span>
             <span className="text-emerald-400 font-bold tracking-wide">LEVEL_ROOT_CLEARANCE</span>
           </div>
@@ -48,7 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-4 space-y-2">
             <div className="animus-label text-[9px]">OVERSIGHT & ANALYTICS</div>
             <nav className="space-y-1">
-              <Link href="/admin" className="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-white skeuo-nav-active-3d font-bold">
+              <Link href="/admin" className="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-white glass-nav-active">
                 <LayoutDashboard className="w-3.5 h-3.5 text-sky-400" />
                 <span>Overview</span>
               </Link>
@@ -125,13 +125,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/[0.08] text-[10px] text-slate-400 flex justify-between items-center bg-slate-950/80">
+        <div className="p-4 border-t border-white/[0.08] text-[10px] text-slate-400 flex justify-between items-center bg-[#070b16]/80">
           <span>Anchor v2.0.0 — Root</span>
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
         </div>
       </aside>
 
-      {/* Main Spatial Area */}
+      {/* Main Area */}
       <main className="flex-1 overflow-y-auto p-8 relative z-10">
         {children}
       </main>
