@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SolarSystemBackground from "@/components/SolarSystemBackground";
-import { Shield, Key, ArrowRight, Lock, Gavel, User, KeyRound, Droplet } from "lucide-react";
+import { Shield, Key, ArrowRight, Gavel, User, KeyRound, Droplet } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -74,13 +74,13 @@ export default function LoginPage() {
       {/* Animated Solar System Background */}
       <SolarSystemBackground />
 
-      {/* Liquid Glass Login Box (Bigger Card Width max-w-lg) */}
-      <div className="w-full max-w-lg p-9 space-y-7 relative z-10 rounded-3xl bg-slate-950/40 backdrop-blur-2xl border border-cyan-400/30 shadow-[0_20px_50px_rgba(6,182,212,0.15),inset_0_1px_2px_rgba(255,255,255,0.3)]">
+      {/* Pure Liquid Glass Login Box (NO OUTER GLOW) */}
+      <div className="liquid-glass-card w-full max-w-lg p-9 space-y-7 relative z-10">
         {/* Logo & Zero Signup Banner */}
         <div className="flex justify-between items-center border-b border-white/10 pb-5">
           <div className="flex items-center space-x-3.5">
-            <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-400/40 text-cyan-300">
-              <Droplet className="w-6 h-6 animate-pulse" />
+            <div className="p-3 glass-badge text-sky-400">
+              <Shield className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-100 tracking-tight font-sans">Anchor Access Portal</h1>
@@ -120,7 +120,7 @@ export default function LoginPage() {
               placeholder="e.g. tanishq@animuslab.dev or rbi_auditor_09@rbi.org.in"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#040711]/90 border border-white/15 rounded-xl px-4 py-3.5 text-slate-100 focus:outline-none focus:border-cyan-400/60 transition"
+              className="w-full bg-[#040711]/90 border border-white/15 rounded-xl px-4 py-3.5 text-slate-100 focus:outline-none focus:border-sky-400/60 transition"
             />
           </div>
 
@@ -133,14 +133,14 @@ export default function LoginPage() {
                 placeholder="••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#040711]/90 border border-white/15 rounded-xl px-4 py-3.5 text-slate-100 focus:outline-none focus:border-cyan-400/60 transition"
+                className="w-full bg-[#040711]/90 border border-white/15 rounded-xl px-4 py-3.5 text-slate-100 focus:outline-none focus:border-sky-400/60 transition"
               />
             </div>
 
             <div>
               <label className="text-slate-300 block mb-1.5 font-sans font-semibold flex items-center justify-between">
                 <span>2FA AUTH CODE</span>
-                <KeyRound className="w-3.5 h-3.5 text-cyan-400" />
+                <KeyRound className="w-3.5 h-3.5 text-sky-400" />
               </label>
               <input
                 type="text"
@@ -149,7 +149,7 @@ export default function LoginPage() {
                 placeholder="6-digit TOTP"
                 value={totpCode}
                 onChange={(e) => setTotpCode(e.target.value)}
-                className="w-full bg-[#040711]/90 border border-white/15 rounded-xl px-4 py-3.5 text-cyan-400 font-bold focus:outline-none focus:border-cyan-400/60 transition"
+                className="w-full bg-[#040711]/90 border border-white/15 rounded-xl px-4 py-3.5 text-sky-400 font-bold focus:outline-none focus:border-sky-400/60 transition"
               />
             </div>
           </div>
@@ -157,14 +157,14 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-emerald-500 text-slate-950 font-bold text-xs hover:brightness-110 transition shadow-[0_4px_25px_rgba(6,182,212,0.35)] flex items-center justify-center space-x-2 font-sans mt-2"
+            className="w-full py-4 rounded-xl bg-gradient-to-r from-sky-500 via-emerald-500 to-sky-500 text-slate-950 font-bold text-xs hover:brightness-110 transition flex items-center justify-center space-x-2 font-sans mt-2"
           >
             <span>{loading ? "VERIFYING WHITELIST & 2FA..." : "AUTHENTICATE & ACCESS PORTAL"}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        {/* Quick Demo Credentials (EXCLUDES Admin for Security Isolation) */}
+        {/* Quick Demo Credentials */}
         <div className="border-t border-white/10 pt-4 space-y-2 font-mono text-[11px]">
           <div className="flex justify-between items-center font-sans text-[10px]">
             <span className="text-slate-400 block uppercase">WHITELISTED DEMO CLEARANCES:</span>
