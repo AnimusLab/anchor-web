@@ -28,3 +28,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Anchor Core (Python backend — lives in anchor-core repo, not here)
+/dashboard/
+/landing/
+/root-admin/
+/server/
+/oversight/
+/__pycache__/
+/.anchor/
+/.venv/
+/scratch/
+
+# SQLite databases (development artifacts)
+*.db
+
+# Python
+*.pyc
+*.pyo
