@@ -15,7 +15,8 @@ import {
   RotateCcw, 
   Sliders, 
   Activity,
-  Shield
+  Shield,
+  FileSpreadsheet
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -23,7 +24,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex h-screen bg-[#03050a] text-slate-100 font-mono text-xs overflow-hidden relative">
-      {/* Animated Solar System Background */}
       <SolarSystemBackground />
 
       {/* Dynamic Glassmorphism Sidebar */}
@@ -36,7 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Shield className="w-4 h-4 text-sky-400" />
               </div>
               <div>
-                <div className="font-bold text-xs text-slate-100 tracking-wide uppercase">
+                <div className="font-bold text-xs text-slate-100 tracking-wide uppercase font-sans">
                   Anchor Root
                 </div>
                 <div className="text-[10px] text-slate-400 font-mono mt-0.5">admin.animuslab.dev</div>
@@ -68,13 +68,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </nav>
           </div>
 
-          {/* Nav Section 2: Access Management */}
+          {/* Nav Section 2: Access & Audit Control */}
           <div className="p-4 pt-0 space-y-2">
-            <div className="animus-label text-[9px]">ACCESS MANAGEMENT</div>
+            <div className="animus-label text-[9px]">ACCESS & AUDIT CONTROL</div>
             <nav className="space-y-1">
               <Link href="/admin/pending" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/pending' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <UserCheck className="w-3.5 h-3.5 text-amber-400" />
                 <span>Pending Approvals</span>
+              </Link>
+              <Link href="/admin/audit-trail" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/audit-trail' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+                <FileSpreadsheet className="w-3.5 h-3.5 text-rose-400" />
+                <span>Anti-Collusion Audit Trail</span>
               </Link>
             </nav>
           </div>
