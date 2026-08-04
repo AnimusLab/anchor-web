@@ -123,3 +123,15 @@ model GovernanceAccessRequest {
   createdAt     DateTime            @default(now())
   expiresAt     DateTime?
 }
+
+model GovernanceIdentity {
+  id                   String   @id @default(cuid())
+  projectName          String
+  publicKeyPem         String
+  publicKeyFingerprint String   @unique
+  registeredBy         String?
+  registeredAt         DateTime @default(now())
+  status               String   @default("ACTIVE")
+  hubId                String?
+}
+
