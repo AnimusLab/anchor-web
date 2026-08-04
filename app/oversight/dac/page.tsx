@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { FileCheck, Search, Filter, ShieldCheck, Lock, ExternalLink } from "lucide-react";
 
 interface DacBlock {
@@ -19,6 +20,14 @@ const MOCK_DAC_BLOCKS: DacBlock[] = [
 ];
 
 export default function DacLedgerPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filtered = MOCK_DAC_BLOCKS.filter((b) =>
+    b.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    b.agent.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    b.hash.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-8 max-w-6xl mx-auto relative z-10">
       {/* Header Banner */}
@@ -35,15 +44,29 @@ export default function DacLedgerPage() {
         </div>
       </div>
 
+      {/* Global Entity Search Filter */}
+      <div className="glass-card p-4">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search Company Silo ID (e.g. JPMC-IN-MUM01), Agent, or Block Hash..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-[#070b16]/70 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-400/50 font-mono transition"
+          />
+        </div>
+      </div>
+
       {/* DAC Blocks Stream */}
       <div className="glass-card overflow-hidden">
         <div className="p-5 border-b border-white/[0.08] flex justify-between items-center bg-[#070b16]/60 font-mono text-xs">
           <span className="animus-label text-slate-300">BLOCK CHAIN STREAM</span>
-          <span className="text-slate-400">Tamper-Proof Merkle Root Valid</span>
+          <span className="text-slate-400">{filtered.length} Blocks Matched</span>
         </div>
 
         <div className="p-5 space-y-4">
-          {MOCK_DAC_BLOCKS.map((block) => (
+          {filtered.map((block) => (
             <div key={block.height} className="glass-card-inset p-5 space-y-3 font-mono text-xs">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-white/10 pb-3">
                 <div className="flex items-center space-x-3">

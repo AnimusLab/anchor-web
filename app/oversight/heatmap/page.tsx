@@ -1,6 +1,7 @@
 "use client";
 
-import { ShieldAlert, AlertTriangle, Building2, Layers } from "lucide-react";
+import { useState } from "react";
+import { ShieldAlert, AlertTriangle, Building2, Search } from "lucide-react";
 
 interface HeatmapItem {
   entity: string;
@@ -19,6 +20,13 @@ const MOCK_HEATMAP: HeatmapItem[] = [
 ];
 
 export default function ViolationHeatmapPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filtered = MOCK_HEATMAP.filter((item) =>
+    item.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.region.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-8 max-w-6xl mx-auto relative z-10">
       {/* Header Banner */}
@@ -35,9 +43,23 @@ export default function ViolationHeatmapPage() {
         </div>
       </div>
 
+      {/* Instant Search Bar */}
+      <div className="glass-card p-4">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Filter Regulated Entity Silo ID or Institution Name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-[#070b16]/70 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-400/50 font-mono transition"
+          />
+        </div>
+      </div>
+
       {/* Heatmap Grid Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {MOCK_HEATMAP.map((item) => (
+        {filtered.map((item) => (
           <div key={item.entity} className="glass-card p-6 space-y-4">
             <div className="flex justify-between items-start border-b border-white/10 pb-4">
               <div>

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import SolarSystemBackground from "@/components/SolarSystemBackground";
 import { 
   LayoutDashboard, 
@@ -16,12 +19,14 @@ import {
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
   return (
     <div className="flex h-screen bg-[#03050a] text-slate-100 font-mono text-xs overflow-hidden relative">
       {/* Animated Solar System Background */}
       <SolarSystemBackground />
 
-      {/* Glassmorphism Sidebar (No Outer Drop Shadow) */}
+      {/* Dynamic Glassmorphism Sidebar */}
       <aside className="w-64 glass-sidebar flex flex-col justify-between flex-shrink-0 z-20">
         <div className="overflow-y-auto no-scrollbar">
           {/* Header */}
@@ -48,16 +53,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-4 space-y-2">
             <div className="animus-label text-[9px]">OVERSIGHT & ANALYTICS</div>
             <nav className="space-y-1">
-              <Link href="/admin" className="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-white glass-nav-active">
+              <Link href="/admin" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <LayoutDashboard className="w-3.5 h-3.5 text-sky-400" />
                 <span>Overview</span>
               </Link>
-              <Link href="/admin/telemetry" className="flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white transition">
-                <Globe className="w-3.5 h-3.5" />
+              <Link href="/admin/telemetry" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/telemetry' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+                <Globe className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Global Telemetry</span>
               </Link>
-              <Link href="/admin/fleet" className="flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white transition">
-                <Server className="w-3.5 h-3.5" />
+              <Link href="/admin/fleet" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/fleet' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+                <Server className="w-3.5 h-3.5 text-sky-400" />
                 <span>Fleet Inspection</span>
               </Link>
             </nav>
@@ -67,7 +72,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-4 pt-0 space-y-2">
             <div className="animus-label text-[9px]">ACCESS MANAGEMENT</div>
             <nav className="space-y-1">
-              <Link href="/admin/pending" className="flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white transition">
+              <Link href="/admin/pending" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/pending' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <UserCheck className="w-3.5 h-3.5 text-amber-400" />
                 <span>Pending Approvals</span>
               </Link>
@@ -78,15 +83,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-4 pt-0 space-y-2">
             <div className="animus-label text-[9px]">SAAS CONTROL PLANE</div>
             <nav className="space-y-1">
-              <Link href="/admin/nodes" className="flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white transition">
+              <Link href="/admin/nodes" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/nodes' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Building2 className="w-3.5 h-3.5" />
                 <span>Enterprise Nodes</span>
               </Link>
-              <Link href="/admin/auditors" className="flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white transition">
-                <ShieldAlert className="w-3.5 h-3.5" />
+              <Link href="/admin/auditors" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/auditors' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+                <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
                 <span>Regulatory Officials</span>
               </Link>
-              <Link href="/admin/billing" className="flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white transition">
+              <Link href="/admin/billing" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/billing' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <CreditCard className="w-3.5 h-3.5" />
                 <span>Billing & Subscriptions</span>
               </Link>
@@ -97,16 +102,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-4 pt-0 space-y-2">
             <div className="animus-label text-[9px]">CRYPTOGRAPHIC ENGINE</div>
             <nav className="space-y-1">
-              <Link href="/admin/resolution" className="flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white transition">
+              <Link href="/admin/resolution" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/resolution' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Key className="w-3.5 h-3.5" />
                 <span>Identity Resolution</span>
               </Link>
-              <Link href="/admin/recovery" className="flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white transition">
+              <Link href="/admin/recovery" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/recovery' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Identity Recovery</span>
               </Link>
-              <Link href="/admin/overrides" className="flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white transition">
-                <Sliders className="w-3.5 h-3.5" />
+              <Link href="/admin/overrides" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/overrides' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+                <Sliders className="w-3.5 h-3.5 text-rose-400" />
                 <span>Network Overrides</span>
               </Link>
             </nav>
@@ -116,7 +121,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-4 pt-0 space-y-2">
             <div className="animus-label text-[9px]">LIVE OPERATIONS</div>
             <nav className="space-y-1">
-              <Link href="/admin/noc" className="flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white transition">
+              <Link href="/admin/noc" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/noc' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Activity className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Live NOC</span>
               </Link>
