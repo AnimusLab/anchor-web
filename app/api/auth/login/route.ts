@@ -1,53 +1,60 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { Role, AuditorType } from "@/lib/auth/clearance";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { email } = body;
+  try {
+    const { email } = await request.json();
+    const lowerEmail = (email || "").toLowerCase();
 
-  let role: Role = "HUB_MANAGER";
-  let auditorType: AuditorType | undefined = undefined;
-  let clearanceId = "OWN-AN-MUM-001";
-  let projectId = "payments-service";
-  let redirectUrl = "/hub";
+    // Query user profile from Prisma database
+    const user = await prisma.user.findUnique({
+      where: { email: lowerEmail }
+    });
 
-  const lowerEmail = (email || "").toLowerCase();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "Authentication failed. Email not in Whitelist." },
+        { status: 401 }
+      );
+    }
 
-  if (lowerEmail.includes("rbi") || lowerEmail.includes("auditor")) {
-    role = "AUDITOR";
-    auditorType = "GOVERNMENT_AUDITOR";
-    clearanceId = "AUD-RBI-IN-009";
-    redirectUrl = "/oversight";
-  } else if (lowerEmail.includes("admin") || lowerEmail.includes("root")) {
-    role = "ANIMUS_ADMIN";
-    clearanceId = "LEVEL_ROOT_CLEARANCE";
-    redirectUrl = "/admin";
-  } else if (lowerEmail.includes("lead") || lowerEmail.includes("alex")) {
-    role = "PROJECT_LEAD";
-    clearanceId = "LEAD-PAYMENTS-002";
-    projectId = "payments-service";
-    redirectUrl = "/hub";
-  } else if (lowerEmail.includes("dev") || lowerEmail.includes("sarah")) {
-    role = "DEVELOPER";
-    clearanceId = "DEV-WEALTH-003";
-    projectId = "wealth-advisor-agent";
-    redirectUrl = "/hub";
+    if (user.status !== "APPROVED") {
+      return NextResponse.json(
+        { success: false, message: "User account is pending whitelist activation." },
+        { status: 403 }
+      );
+    }
+
+    let redirectUrl = "/hub";
+    if (user.role === "AUDITOR") {
+      redirectUrl = "/oversight";
+    } else if (user.role === "ANIMUS_ADMIN") {
+      redirectUrl = "/admin";
+    }
+
+    const sessionData = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      auditorType: user.auditorType,
+      projectId: user.projectId,
+    };
+
+    cookies().set("session", JSON.stringify(sessionData), {
+      httpOnly: true,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
+    return NextResponse.json({ success: true, redirectUrl, session: sessionData });
+
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: "Authentication database connection failure.", details: error.message },
+      { status: 500 }
+    );
   }
-
-  const sessionData = {
-    id: clearanceId,
-    email: lowerEmail,
-    role,
-    auditorType,
-    projectId,
-  };
-
-  cookies().set("session", JSON.stringify(sessionData), {
-    httpOnly: true,
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-  });
-
-  return NextResponse.json({ success: true, redirectUrl, session: sessionData });
 }
