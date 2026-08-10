@@ -63,11 +63,6 @@ export default function LoginPage() {
     }
   };
 
-  const setQuickEmail = (targetEmail: string) => {
-    setEmail(targetEmail);
-    setPassword("••••••••••••");
-    setTotpCode("889012");
-  };
 
   return (
     <div className="flex h-screen bg-[#03050a] text-slate-100 font-sans text-xs overflow-hidden relative items-center justify-center p-6">
@@ -164,32 +159,9 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Quick Demo Credentials */}
-        <div className="border-t border-white/10 pt-4 space-y-2 font-mono text-[11px]">
-          <div className="flex justify-between items-center font-sans text-[10px]">
-            <span className="text-slate-400 block uppercase">WHITELISTED DEMO CLEARANCES:</span>
-            <span className="text-slate-500">NO PUBLIC SIGN-UP</span>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => setQuickEmail("rbi_auditor_09@rbi.org.in")}
-              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-amber-400 text-amber-400 text-left truncate"
-            >
-              🏛️ Gov Auditor
-            </button>
-            <button
-              onClick={() => setQuickEmail("tanishq@animuslab.dev")}
-              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-emerald-400 text-emerald-400 text-left truncate"
-            >
-              🛡️ Hub Manager
-            </button>
-            <button
-              onClick={() => setQuickEmail("alex.c@jpmc.com")}
-              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-sky-400 text-sky-400 text-left truncate"
-            >
-              📁 Project Lead
-            </button>
-          </div>
+        {/* Whitelisted Notice */}
+        <div className="border-t border-white/10 pt-4 text-center font-mono text-[11px] text-slate-500">
+          SECURE SEED GATE // PUBLIC SIGN-UP IS NOT PERMITTED
         </div>
       </div>
     </div>
