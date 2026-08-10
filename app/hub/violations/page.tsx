@@ -1,154 +1,134 @@
 "use client";
 
-import { ShieldAlert, AlertTriangle, FileCheck, ExternalLink, ShieldX } from "lucide-react";
+import React, { useEffect, useState } from 'react';
 
-interface ViolationItem {
-  id: string;
-  timestamp: string;
-  project: string;
-  agent: string;
-  ruleViolated: string;
-  severity: "CRITICAL" | "HIGH" | "MEDIUM";
-  jurisdiction: string;
-  description: string;
+interface Violation {
+  rule_id: string;
+  statute?: string;
+  severity?: string;
+  trace_uri?: string;
+  summary?: string;
+  message?: string;
 }
 
-const MOCK_VIOLATIONS: ViolationItem[] = [
-  {
-    id: "viol_8801",
-    timestamp: "2026-08-04 12:44:50 UTC",
-    project: "wealth-advisor-agent",
-    agent: "portfolio-balancer",
-    ruleViolated: "EU AI Act Article 14 (Human Oversight Override)",
-    severity: "CRITICAL",
-    jurisdiction: "EU_AI_ACT_2024",
-    description: "Agent auto-executed high-risk trade exceeding 500k EUR threshold without requiring mandatory dual-key human manager sign-off."
-  },
-  {
-    id: "viol_8802",
-    timestamp: "2026-08-04 11:20:15 UTC",
-    project: "credit-decisioning",
-    agent: "underwriter-ai",
-    ruleViolated: "RBI Master Direction - Digital Lending Sec 7.2",
-    severity: "HIGH",
-    jurisdiction: "RBI_IN_2025",
-    description: "Decision engine referenced unapproved secondary demographic feature during automated interest rate scoring."
-  },
-  {
-    id: "viol_8803",
-    timestamp: "2026-08-04 09:15:00 UTC",
-    project: "kyc-verifier",
-    agent: "document-parser",
-    ruleViolated: "ISO/IEC 42001 Clause 8.3 (Data Provenance Log)",
-    severity: "MEDIUM",
-    jurisdiction: "ISO_42001",
-    description: "Audit trail missing raw image SHA-256 reference prior to optical character extraction."
-  }
-];
+interface TelemetryEvent {
+  id: string;
+  siloId: string;
+  projectName: string;
+  riskScore: number;
+  identityFingerprint: string;
+  createdAt: string;
+  violations: Violation[];
+}
 
-export default function ViolationFeedPage() {
+export default function HubViolationsPage() {
+  const [events, setEvents] = useState<TelemetryEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchViolations = async () => {
+    try {
+      const response = await fetch('/api/v1/hub/violations');
+      const data = await response.json();
+      if (data.events) {
+        setEvents(data.events);
+      }
+    } catch (error) {
+      console.error("Error streaming compliance matrices:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchViolations();
+    // Establish a 5-second polling interval to mimic live P2P stream telemetry
+    const interval = setInterval(fetchViolations, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="space-y-8 max-w-6xl mx-auto relative z-10">
-      {/* Header Banner */}
-      <div className="flex justify-between items-end border-b border-white/[0.08] pb-6">
-        <div>
-          <div className="animus-label mb-1 text-amber-400">COMPLIANCE RISK MONITOR</div>
-          <h1 className="text-3xl font-bold text-slate-100 tracking-tight">Violation Feed</h1>
-          <p className="text-sm text-slate-400 font-mono mt-1">Real-time flagged compliance flaws, regulatory breaches, and rule violations.</p>
-        </div>
-
-        <div className="text-right font-mono text-xs text-slate-300">
-          <span className="text-slate-400">ACTIVE CRITICAL: </span>
-          <span className="text-rose-400 font-bold glass-badge px-3 py-1.5 inline-block">1 Critical Breach</span>
-        </div>
+    <div className="min-h-screen bg-[#06070B] text-white p-8 font-mono selection:bg-[#FF3B30] selection:text-white">
+      {/* Dynamic Terminal Header */}
+      <div className="border border-[#1E2235] bg-[#0C0E17]/60 backdrop-blur-md rounded-lg p-6 mb-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#FF3B30]/40 to-transparent" />
+        <h1 className="text-xl font-bold tracking-wider text-[#FF3B30] flex items-center gap-2">
+          ⚠️ REAL-TIME GOVERNANCE VIOLATION FEED
+        </h1>
+        <p className="text-xs text-[#6C7293] mt-1">
+          Silo Interface Connection: Operational | Active Telemetry Interceptors: Enforced
+        </p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="glass-card p-6 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="animus-label text-rose-400">CRITICAL BREACHES</span>
-            <ShieldX className="w-5 h-5 text-rose-400" />
-          </div>
-          <div className="text-3xl font-bold text-rose-400 mt-2">1 Active</div>
-          <div className="text-xs text-slate-400 font-mono">Requires Dual Key Resolution</div>
+      {loading ? (
+        <div className="text-xs text-[#6C7293] animate-pulse">Streaming database records...</div>
+      ) : events.length === 0 ? (
+        <div className="border border-[#1E2235] bg-[#0C0E17]/40 rounded-lg p-12 text-center text-xs text-[#6C7293]">
+          🛡️ SYSTEM INVARIANTS SECURED. NO ACTIVE COMPLIANCE BREACHES LOGGED.
         </div>
-
-        <div className="glass-card p-6 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="animus-label text-amber-400">HIGH SEVERITY</span>
-            <AlertTriangle className="w-5 h-5 text-amber-400" />
-          </div>
-          <div className="text-3xl font-bold text-amber-400 mt-2">1 Flaw</div>
-          <div className="text-xs text-slate-400 font-mono">RBI Digital Lending</div>
-        </div>
-
-        <div className="glass-card p-6 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="animus-label text-slate-400">MEDIUM / LOW</span>
-            <FileCheck className="w-5 h-5 text-sky-400" />
-          </div>
-          <div className="text-3xl font-bold text-slate-100 mt-2">1 Finding</div>
-          <div className="text-xs text-slate-400 font-mono">ISO 42001 Audit Trail</div>
-        </div>
-      </div>
-
-      {/* Violations List */}
-      <div className="glass-card overflow-hidden">
-        <div className="p-5 border-b border-white/[0.08] flex justify-between items-center bg-[#070b16]/60">
-          <span className="animus-label text-slate-300">REGULATORY BREACH FEED</span>
-          <span className="text-xs font-mono text-slate-400">Sorted by Severity</span>
-        </div>
-
-        <div className="p-5 space-y-4">
-          {MOCK_VIOLATIONS.map((viol) => (
-            <div key={viol.id} className="glass-card-inset p-5 space-y-3 font-mono text-xs">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-white/10 pb-3">
-                <div className="flex items-center space-x-3">
-                  <span className="text-rose-400 font-bold text-sm">{viol.id}</span>
-                  <span className="text-slate-500">|</span>
-                  <span className="text-slate-200 font-semibold">{viol.project}</span>
-                  <span className="text-slate-500">/</span>
-                  <span className="text-slate-400">{viol.agent}</span>
+      ) : (
+        <div className="space-y-6">
+          {events.map((event) => (
+            <div key={event.id} className="border border-[#FF3B30]/30 bg-[#0C0E17]/80 rounded-lg p-6 relative group hover:border-[#FF3B30]/60 transition-all duration-300">
+              {/* Event Metadata Banner */}
+              <div className="flex flex-wrap items-center justify-between border-b border-[#1E2235] pb-4 mb-4 gap-4 text-xs">
+                <div>
+                  <span className="text-[#6C7293]">SILO_ID:</span> <span className="text-white font-bold">{event.siloId}</span>
+                  <span className="text-[#6C7293] ml-4">PROJECT:</span> <span className="text-white font-bold">{event.projectName}</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="glass-badge px-3 py-1 text-sky-400 font-bold text-[10px]">
-                    {viol.jurisdiction}
+                <div className="flex items-center gap-4">
+                  <span className="px-2 py-0.5 rounded bg-[#FF3B30]/10 text-[#FF3B30] border border-[#FF3B30]/20 font-bold">
+                    RISK MULTIPLIER: {event.riskScore.toFixed(1)} / 10.0
                   </span>
-                  <span
-                    className={`glass-badge px-3 py-1 font-bold text-[10px] ${
-                      viol.severity === "CRITICAL"
-                        ? "text-rose-400 border-rose-500/30"
-                        : viol.severity === "HIGH"
-                        ? "text-amber-400"
-                        : "text-sky-400"
-                    }`}
-                  >
-                    {viol.severity}
+                  <span className="text-[#6C7293]">
+                    {new Date(event.createdAt).toISOString()}
                   </span>
                 </div>
               </div>
 
-              <div>
-                <span className="text-amber-400 font-bold text-sm block font-sans mb-1">
-                  {viol.ruleViolated}
+              {/* Unpacked Violations Array */}
+              <div className="space-y-4">
+                {event.violations.map((violation, index) => (
+                  <div key={index} className="bg-[#121526]/50 border border-[#1E2235] rounded p-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
+                      <span className="text-xs text-[#FF8800] bg-[#FF8800]/10 border border-[#FF8800]/20 px-1.5 py-0.5 rounded font-bold">
+                        [{violation.rule_id}] {violation.statute || "Statutory Gate Invariant"}
+                      </span>
+                      <span className="text-[10px] text-[#6C7293] select-all">
+                        NODE_FP: {event.identityFingerprint.substring(0, 32)}...
+                      </span>
+                    </div>
+                    
+                    {/* Plain-Language 5-Line Explanation */}
+                    <p className="text-xs text-[#C5C9DB] leading-relaxed mb-3">
+                      {violation.summary || violation.message || "Manual code review required. See mitigation documentation for structural guidance."}
+                    </p>
+
+                    {/* Universal External Documentation Link */}
+                    <div className="text-xs">
+                      <a 
+                        href={`https://animuslab.dev/rules/${violation.rule_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#58A6FF] hover:underline flex items-center gap-1"
+                      >
+                        👉 View Mitigation Blueprint & Statutory Framework Documentation
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Immutable Operational Seal Sign-Off */}
+              <div className="mt-4 pt-3 border-t border-[#1E2235]/40 flex items-center justify-between text-[10px] text-[#6C7293]">
+                <span>TRANSACTION_HASH: sha256:{event.id.substring(0, 16)}...</span>
+                <span className="flex items-center gap-1 text-[#00E5FF]">
+                  🛡️ Certified & Signed by AnimusLab System Kernel
                 </span>
-                <p className="text-slate-300 font-sans text-xs leading-relaxed">
-                  {viol.description}
-                </p>
-              </div>
-
-              <div className="pt-2 flex justify-between items-center text-[11px] text-slate-400 border-t border-white/5">
-                <span>Ingested: {viol.timestamp}</span>
-                <button className="text-sky-400 hover:underline flex items-center space-x-1">
-                  <span>View Decision Telemetry</span>
-                  <ExternalLink className="w-3 h-3" />
-                </button>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }

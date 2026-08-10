@@ -1,39 +1,61 @@
 "use client";
 
-import { useState } from "react";
-import { UserCheck, CheckCircle2, XCircle, Plus, Mail, Key, Shield, Building2, Send, Check } from "lucide-react";
+import { useEffect, useState } from "react";
+import { UserCheck, CheckCircle2, XCircle, Plus, Mail, Key, Shield, Building2, Send, Check, RefreshCw } from "lucide-react";
 
-interface WhitelistItem {
+interface NodeIdentity {
   id: string;
-  email: string;
-  role: string;
-  orgName: string;
-  domainVerified: boolean;
-  status: "PENDING" | "PROVISIONED" | "REJECTED";
+  projectName: string;
+  publicKeyPem: string;
+  publicKeyFingerprint: string;
+  registeredBy?: string;
+  registeredAt: string;
+  status: "PENDING_WHITELIST" | "ACTIVE" | "REJECTED";
 }
 
-const MOCK_WHITELIST: WhitelistItem[] = [
-  { id: "wl_01", email: "rbi_auditor_09@rbi.org.in", role: "GOVERNMENT_AUDITOR", orgName: "Reserve Bank of India", domainVerified: true, status: "PENDING" },
-  { id: "wl_02", email: "alex.c@jpmc.com", role: "PROJECT_LEAD", orgName: "JP Morgan Chase", domainVerified: true, status: "PROVISIONED" },
-  { id: "wl_03", email: "sarah.j@jpmc.com", role: "DEVELOPER", orgName: "JP Morgan Chase", domainVerified: true, status: "PROVISIONED" }
-];
-
 export default function PendingApprovalsPage() {
-  const [showIngestModal, setShowIngestModal] = useState(false);
-  const [showAccessGeneratorModal, setShowAccessGeneratorModal] = useState(false);
-  const [invitedSuccessMsg, setInvitedSuccessMsg] = useState("");
+  const [pendingNodes, setPendingNodes] = useState<NodeIdentity[]>([]);
+  const [activeNodes, setActiveNodes] = useState<NodeIdentity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionSuccessMsg, setActionSuccessMsg] = useState("");
 
-  // Hub Access Generator Form
-  const [hubName, setHubName] = useState("ICICI Bank Bengaluru Hub");
-  const [siloId, setSiloId] = useState("ICICI-IN-BLR01");
-  const [managerEmail, setManagerEmail] = useState("manager@icicibank.com");
-  const [totpSetupKey, setTotpSetupKey] = useState("JBSWY3DPEHPK3PXP");
+  const fetchNodes = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/v1/identity/pending");
+      if (res.ok) {
+        const data = await res.json();
+        setPendingNodes(data.pending || []);
+        setActiveNodes(data.active || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch node identities:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleGenerateHubAccess = (e: React.FormEvent) => {
-    e.preventDefault();
-    setInvitedSuccessMsg(`Hub ${siloId} Provisioned! Onboarding email with TOTP Setup Key (${totpSetupKey}) dispatched to ${managerEmail}.`);
-    setShowAccessGeneratorModal(false);
-    setTimeout(() => setInvitedSuccessMsg(""), 6000);
+  useEffect(() => {
+    fetchNodes();
+  }, []);
+
+  const handleApproveNode = async (fingerprint: string, action: "APPROVE" | "REJECT") => {
+    try {
+      const res = await fetch("/api/v1/identity/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fingerprint, action })
+      });
+
+      if (res.ok) {
+        const verb = action === "APPROVE" ? "APPROVED & ACTIVATED" : "REJECTED";
+        setActionSuccessMsg(`Node ${fingerprint.substring(0, 18)}... ${verb} successfully.`);
+        fetchNodes();
+        setTimeout(() => setActionSuccessMsg(""), 5000);
+      }
+    } catch (err) {
+      console.error("Failed to update node status:", err);
+    }
   };
 
   return (
@@ -42,33 +64,26 @@ export default function PendingApprovalsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/[0.08] pb-6 gap-4">
         <div>
           <div className="animus-label mb-1 text-amber-400">ACCESS CONTROL & WHITELIST INGESTION</div>
-          <h1 className="text-3xl font-bold text-slate-100 tracking-tight font-sans">Pending Approvals & Access Generator</h1>
-          <p className="text-sm text-slate-400 mt-1">Ingest whitelisted email domains, provision enterprise hub access, and dispatch initial manager 2FA TOTP setup keys.</p>
+          <h1 className="text-3xl font-bold text-slate-100 tracking-tight font-sans">Pending Approvals & Node Registry</h1>
+          <p className="text-sm text-slate-400 mt-1">Review pending cryptographic key identities from anchor init and provision active enterprise node access.</p>
         </div>
 
         <div className="flex space-x-3">
           <button
-            onClick={() => setShowAccessGeneratorModal(true)}
-            className="glass-badge px-4 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-950/40 flex items-center space-x-2 transition"
-          >
-            <Building2 className="w-4 h-4" />
-            <span>Generate Hub & Assign Manager</span>
-          </button>
-          <button
-            onClick={() => setShowIngestModal(true)}
+            onClick={fetchNodes}
             className="glass-badge px-4 py-2.5 text-xs font-bold text-sky-400 hover:bg-sky-950/40 flex items-center space-x-2 transition"
           >
-            <Plus className="w-4 h-4 text-sky-400" />
-            <span>Ingest Email to Whitelist</span>
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            <span>Refresh Registry</span>
           </button>
         </div>
       </div>
 
-      {/* Success Dispatch Alert */}
-      {invitedSuccessMsg && (
+      {/* Action Success Alert */}
+      {actionSuccessMsg && (
         <div className="glass-card p-4 border border-emerald-500/40 text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
           <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-400" />
-          <span>{invitedSuccessMsg}</span>
+          <span>{actionSuccessMsg}</span>
         </div>
       )}
 
@@ -76,131 +91,93 @@ export default function PendingApprovalsPage() {
       <div className="glass-card p-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <Shield className="w-4 h-4 text-amber-400" />
-          <span>POLICY: Zero Public Signup. Only email addresses ingested into this whitelist can authenticate via `/login`.</span>
+          <span>POLICY: Zero Un-whitelisted Access. Telemetry packets from un-whitelisted node fingerprints are dropped with 401 Unauthorized.</span>
         </div>
         <span className="glass-badge px-3 py-1 text-amber-400 font-bold text-[10px]">ENFORCED</span>
       </div>
 
-      {/* Whitelist Queue */}
+      {/* Pending Whitelist Queue */}
       <div className="glass-card overflow-hidden">
         <div className="p-5 border-b border-white/[0.08] flex justify-between items-center bg-[#070b16]/60">
-          <span className="animus-label text-slate-300">WHITELISTED CREDENTIALS & INGESTION QUEUE</span>
-          <span className="text-slate-400">Domain Check Auto-Active</span>
+          <span className="animus-label text-amber-400 font-bold">PENDING NODE IDENTITY APPROVAL QUEUE</span>
+          <span className="text-slate-400">{pendingNodes.length} Nodes Awaiting Approval</span>
         </div>
 
         <div className="p-5 space-y-4">
-          {MOCK_WHITELIST.map((item) => (
-            <div key={item.id} className="glass-card-inset p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <div className="flex items-center space-x-3">
-                  <span className="text-sky-400 font-bold text-base">{item.email}</span>
-                  <span className="glass-badge px-2.5 py-0.5 text-amber-400 font-bold text-[10px]">{item.role}</span>
-                </div>
-                <div className="text-slate-400 text-xs mt-1">
-                  Org: {item.orgName} · Domain Auto-Check: <span className="text-emerald-400 font-bold">VERIFIED</span>
-                </div>
-              </div>
-
-              <div className="flex space-x-3">
-                {item.status === "PENDING" ? (
-                  <>
-                    <button className="glass-badge text-emerald-400 px-4 py-2 font-bold text-xs hover:bg-emerald-950/40 flex items-center space-x-2">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Approve & Provision</span>
-                    </button>
-                    <button className="glass-badge text-rose-400 px-4 py-2 font-bold text-xs hover:bg-rose-950/40 flex items-center space-x-2">
-                      <XCircle className="w-4 h-4" />
-                      <span>Reject</span>
-                    </button>
-                  </>
-                ) : (
-                  <span className="glass-badge px-3 py-1 text-emerald-400 font-bold text-[10px]">
-                    PROVISIONED & WHITELISTED
-                  </span>
-                )}
-              </div>
+          {pendingNodes.length === 0 ? (
+            <div className="text-center py-8 text-slate-500">
+              No pending node identity registrations awaiting approval.
             </div>
-          ))}
+          ) : (
+            pendingNodes.map((item) => (
+              <div key={item.id} className="glass-card-inset p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-2 border-amber-500">
+                <div>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sky-400 font-bold text-base">{item.projectName}</span>
+                    <span className="glass-badge px-2.5 py-0.5 text-amber-400 font-bold text-[10px]">PENDING_WHITELIST</span>
+                  </div>
+                  <div className="text-slate-400 text-xs mt-2 font-mono break-all">
+                    Fingerprint: <span className="text-slate-200 font-bold">{item.publicKeyFingerprint}</span>
+                  </div>
+                  <div className="text-slate-500 text-[10px] mt-1">
+                    Registered: {new Date(item.registeredAt).toLocaleString()} · Source: {item.registeredBy || "CLI"}
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 flex-shrink-0">
+                  <button
+                    onClick={() => handleApproveNode(item.publicKeyFingerprint, "APPROVE")}
+                    className="glass-badge text-emerald-400 px-4 py-2 font-bold text-xs hover:bg-emerald-950/40 flex items-center space-x-2 transition"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Approve & Provision</span>
+                  </button>
+                  <button
+                    onClick={() => handleApproveNode(item.publicKeyFingerprint, "REJECT")}
+                    className="glass-badge text-rose-400 px-4 py-2 font-bold text-xs hover:bg-rose-950/40 flex items-center space-x-2 transition"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    <span>Reject</span>
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
-      {/* Hub Access Generator Modal */}
-      {showAccessGeneratorModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 font-sans text-xs">
-          <div className="glass-card w-full max-w-lg p-6 space-y-5 border border-white/20">
-            <div className="flex justify-between items-start border-b border-white/10 pb-4">
-              <div>
-                <div className="animus-label text-emerald-400 mb-1">ENTERPRISE HUB ACCESS GENERATOR</div>
-                <h3 className="text-xl font-bold text-slate-100">Provision Hub & Assign Manager</h3>
-              </div>
-              <button onClick={() => setShowAccessGeneratorModal(false)} className="glass-badge px-3 py-1 text-xs text-slate-400 font-mono">
-                Close
-              </button>
+      {/* Active Whitelisted Nodes */}
+      <div className="glass-card overflow-hidden">
+        <div className="p-5 border-b border-white/[0.08] flex justify-between items-center bg-[#070b16]/60">
+          <span className="animus-label text-emerald-400 font-bold">ACTIVE PROVISIONED ENTERPRISE NODES</span>
+          <span className="text-slate-400">{activeNodes.length} Active Telemetry Streams</span>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {activeNodes.length === 0 ? (
+            <div className="text-center py-6 text-slate-500">
+              No active nodes provisioned yet. Approve pending nodes above to enable telemetry ingestion.
             </div>
-
-            <form onSubmit={handleGenerateHubAccess} className="space-y-4 font-mono text-xs">
-              <div>
-                <label className="text-slate-300 block mb-1 font-sans font-bold">ENTERPRISE HUB NAME</label>
-                <input
-                  type="text"
-                  required
-                  value={hubName}
-                  onChange={(e) => setHubName(e.target.value)}
-                  className="w-full bg-[#040711] border border-white/10 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-slate-300 block mb-1 font-sans font-bold">SILO IDENTIFIER</label>
-                <input
-                  type="text"
-                  required
-                  value={siloId}
-                  onChange={(e) => setSiloId(e.target.value)}
-                  className="w-full bg-[#040711] border border-white/10 rounded-xl px-4 py-2.5 text-sky-400 font-bold focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-slate-300 block mb-1 font-sans font-bold">INITIAL HUB MANAGER EMAIL</label>
-                <input
-                  type="email"
-                  required
-                  value={managerEmail}
-                  onChange={(e) => setManagerEmail(e.target.value)}
-                  className="w-full bg-[#040711] border border-white/10 rounded-xl px-4 py-2.5 text-emerald-400 font-bold focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-slate-300 block mb-1 font-sans font-bold flex justify-between">
-                  <span>2FA AUTHENTICATOR MANUAL SETUP SECRET KEY</span>
-                  <Key className="w-3.5 h-3.5 text-amber-400" />
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  value={totpSetupKey}
-                  className="w-full bg-[#040711] border border-white/10 rounded-xl px-4 py-2.5 text-amber-400 font-bold focus:outline-none"
-                />
-                <span className="text-[10px] text-slate-500 mt-1 block">
-                  This TOTP secret key will be dispatched in the onboarding email for 2FA setup.
+          ) : (
+            activeNodes.map((item) => (
+              <div key={item.id} className="glass-card-inset p-4 flex justify-between items-center border-l-2 border-emerald-500">
+                <div>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-slate-100 font-bold text-sm">{item.projectName}</span>
+                    <span className="glass-badge px-2.5 py-0.5 text-emerald-400 font-bold text-[10px]">ACTIVE & STREAMING</span>
+                  </div>
+                  <div className="text-slate-400 text-[11px] mt-1 font-mono">
+                    FP: {item.publicKeyFingerprint}
+                  </div>
+                </div>
+                <span className="glass-badge px-3 py-1 text-emerald-400 font-bold text-[10px]">
+                  TELEMETRY AUTHORIZED
                 </span>
               </div>
-
-              <div className="pt-2 flex justify-end space-x-3">
-                <button type="button" onClick={() => setShowAccessGeneratorModal(false)} className="glass-badge px-4 py-2 text-xs text-slate-400">
-                  Cancel
-                </button>
-                <button type="submit" className="glass-badge px-5 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-950/40 flex items-center space-x-2">
-                  <Send className="w-4 h-4" />
-                  <span>Dispatch Access Email & Provision</span>
-                </button>
-              </div>
-            </form>
-          </div>
+            ))
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

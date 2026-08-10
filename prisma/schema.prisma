@@ -135,3 +135,18 @@ model GovernanceIdentity {
   hubId                String?
 }
 
+model TelemetryEvent {
+  id                   String   @id @default(cuid())
+  siloId               String
+  projectName          String
+  complianceVerdict    String
+  riskScore            Float
+  identityFingerprint String
+  violationsJson       String
+  createdAt            DateTime @default(now())
+
+  @@index([identityFingerprint])
+  @@index([complianceVerdict])
+}
+
+
