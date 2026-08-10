@@ -20,5 +20,5 @@ jobs:
         run: |
           git config --global user.email "deploy@animuslab.dev"
           git config --global user.name "AnimusLab Deploy Bot"
-          git remote add hf https://user:$HF_TOKEN@huggingface.co/spaces/AnimusLab/Anchor-Web || true
+          git remote add hf https://user:$HF_TOKEN@huggingface.co/spaces/AnimusLab/Anchor || true
           git push --force hf main
