@@ -14,11 +14,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Prepare Clean Git Repository
+        run: |
+          rm -rf .git
+          git init -b main
+          git config --global user.email "deploy@animuslab.dev"
+          git config --global user.name "AnimusLab Deploy Bot"
+          git add .
+          git commit -m "deploy: production build for Hugging Face Space"
+
       - name: Push to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git config --global user.email "deploy@animuslab.dev"
-          git config --global user.name "AnimusLab Deploy Bot"
-          git remote add hf https://user:$HF_TOKEN@huggingface.co/spaces/AnimusLab/Anchor || true
+          git remote add hf https://user:$HF_TOKEN@huggingface.co/spaces/AnimusLab/Anchor
           git push --force hf main
