@@ -82,7 +82,9 @@ export function middleware(request: NextRequest) {
   
   // admin.animuslab.dev -> /admin (Requires ANIMUS_ADMIN)
   if (hostname.startsWith('admin.')) {
-    if (pathname === '/login') return NextResponse.next();
+    if (pathname === '/login') {
+      return NextResponse.rewrite(new URL('/admin/login', request.url));
+    }
     if (session?.role !== 'ANIMUS_ADMIN') {
       const loginUrl = new URL('/login', request.url);
       return NextResponse.redirect(loginUrl);
