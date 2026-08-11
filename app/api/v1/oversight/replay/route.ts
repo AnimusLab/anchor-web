@@ -35,7 +35,8 @@ export async function GET(request: Request) {
 
     const sanitizedReplayPayload = {
       id: event.id,
-      siloId: event.siloId,
+      siloId: event.hubId,
+      hubId: event.hubId,
       projectName: event.projectName,
       riskScore: event.riskScore,
       identityFingerprint: event.identityFingerprint,

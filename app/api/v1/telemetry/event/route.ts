@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const loggedEvent = await prisma.telemetryEvent.create({
       data: {
         id: event_id || `evt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-        siloId: silo_id || "DEFAULT_SILO",
+        hubId: silo_id || verifiedIdentity.hubId || "JPMC-IN-MUM01",
         projectName: project_name || verifiedIdentity.projectName,
         complianceVerdict: compliance_verdict || "NON_COMPLIANT",
         riskScore: parseFloat(risk_score) || 0.0,

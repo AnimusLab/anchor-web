@@ -27,7 +27,8 @@ export async function GET(request: Request) {
     // Unpack the JSON strings into raw iterable objects for frontend mapping
     const structuredViolations = telemetryEvents.map(event => ({
       id: event.id,
-      siloId: event.siloId,
+      siloId: event.hubId,
+      hubId: event.hubId,
       projectName: event.projectName,
       riskScore: event.riskScore,
       identityFingerprint: event.identityFingerprint,

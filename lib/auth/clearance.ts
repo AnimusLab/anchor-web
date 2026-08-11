@@ -1,4 +1,11 @@
-export type Role = "ANIMUS_ADMIN" | "HUB_MANAGER" | "PROJECT_LEAD" | "DEVELOPER" | "AUDITOR";
+export type Role =
+  | "ANIMUS_ADMIN"
+  | "HUB_MANAGER"
+  | "PROJECT_LEAD"
+  | "DEVELOPER"
+  | "STANDARD_AUDITOR"
+  | "CROSS_HUB_AUDITOR"
+  | "REGULATORY_AUDITOR";
 
 export type AuditorType = "STANDARD_AUDITOR" | "CROSS_HUB_AUDITOR" | "GOVERNMENT_AUDITOR";
 
@@ -10,16 +17,19 @@ export interface UserSession {
   orgId?: string;
   hubId?: string;
   projectId?: string;
+  jurisdiction?: string;
 }
 
 export const CLEARANCE_MATRIX = {
   // Routes accessible by Role
   routes: {
     ANIMUS_ADMIN: ["/admin", "/admin/*"],
-    HUB_MANAGER: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay", "/hub/projects", "/hub/keys", "/hub/reports", "/hub/verifier", "/hub/team", "/hub/requests", "/hub/settings"],
-    PROJECT_LEAD: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay", "/hub/projects", "/hub/keys", "/hub/reports", "/hub/verifier"],
-    DEVELOPER: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay"],
-    AUDITOR: ["/oversight", "/oversight/dac", "/oversight/heatmap", "/oversight/requests", "/oversight/replay", "/oversight/dialects", "/oversight/verify", "/oversight/notices", "/oversight/profile"],
+    HUB_MANAGER: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay", "/hub/projects", "/hub/keys", "/hub/reports", "/hub/verifier", "/hub/team", "/hub/requests", "/hub/settings", "/hub/profile"],
+    PROJECT_LEAD: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay", "/hub/projects", "/hub/keys", "/hub/reports", "/hub/verifier", "/hub/profile"],
+    DEVELOPER: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay", "/hub/profile"],
+    STANDARD_AUDITOR: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay", "/hub/reports", "/hub/verifier", "/hub/profile"],
+    CROSS_HUB_AUDITOR: ["/oversight", "/oversight/dac", "/oversight/heatmap", "/oversight/requests", "/oversight/replay", "/oversight/dialects", "/oversight/verify", "/oversight/profile"],
+    REGULATORY_AUDITOR: ["/oversight", "/oversight/dac", "/oversight/heatmap", "/oversight/requests", "/oversight/replay", "/oversight/dialects", "/oversight/verify", "/oversight/notices", "/oversight/profile"],
   },
 
   // Capabilities by Role
@@ -28,9 +38,8 @@ export const CLEARANCE_MATRIX = {
     canCreateProjectKeys: (role: Role) => role === "HUB_MANAGER" || role === "PROJECT_LEAD" || role === "ANIMUS_ADMIN",
     canManageSeats: (role: Role) => role === "HUB_MANAGER" || role === "ANIMUS_ADMIN",
     canApproveP2PRequests: (role: Role) => role === "HUB_MANAGER" || role === "ANIMUS_ADMIN",
-    canSeeCodebaseAudits: (role: Role) => role !== "AUDITOR", // Strict Auditor Wall
-    canFileEnforcementNotices: (role: Role, auditorType?: AuditorType) => 
-      role === "ANIMUS_ADMIN" || (role === "AUDITOR" && (auditorType === "CROSS_HUB_AUDITOR" || auditorType === "GOVERNMENT_AUDITOR")),
+    canSeeCodebaseAudits: (role: Role) => role !== "CROSS_HUB_AUDITOR" && role !== "REGULATORY_AUDITOR", // Strict Auditor Wall
+    canFileEnforcementNotices: (role: Role) => role === "ANIMUS_ADMIN" || role === "REGULATORY_AUDITOR" || role === "CROSS_HUB_AUDITOR",
   }
 };
 
@@ -46,3 +55,4 @@ export function canAccessRoute(user: UserSession, pathname: string): boolean {
     return pathname === route;
   });
 }
+

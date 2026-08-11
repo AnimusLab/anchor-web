@@ -7,18 +7,36 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum OrgType {
+  ENTERPRISE
+  REGULATORY_BODY
+}
+
+enum ContractTier {
+  STARTER
+  BASE_ENTERPRISE
+  GROWTH
+  SOVEREIGN
+}
+
 enum Role {
-  ANIMUS_ADMIN
   HUB_MANAGER
   PROJECT_LEAD
   DEVELOPER
-  AUDITOR
-}
-
-enum AuditorType {
   STANDARD_AUDITOR
   CROSS_HUB_AUDITOR
-  GOVERNMENT_AUDITOR
+  REGULATORY_AUDITOR
+}
+
+enum AdminRole {
+  ANIMUS_ADMIN
+  ANIMUS_ENGINEER
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REVOKED
 }
 
 enum EntityType {
@@ -28,100 +46,253 @@ enum EntityType {
   MESH_NODE
 }
 
+enum VisibilityClass {
+  PUBLIC
+  INTERNAL
+  RESTRICTED
+}
+
 enum AccessRequestStatus {
   PENDING
-  RELAYED_TO_MANAGER
   APPROVED
   DENIED
   REVOKED
+  EXPIRED
+}
+
+enum NoticeSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum InviteStatus {
+  SENT
+  ACCEPTED
+  EXPIRED
 }
 
 model Organization {
-  id           String   @id // e.g. "jpmc"
+  id           String       @id // e.g. "jpmc" or "rbi"
   displayName  String
-  domain       String   @unique
-  contractTier String   // "STARTER", "BASE_ENTERPRISE", "GROWTH", "SOVEREIGN"
-  createdAt    DateTime @default(now())
+  domain       String       @unique // e.g. "jpmc.com" or "rbi.org.in"
+  orgType      OrgType      @default(ENTERPRISE)
+  region       String       @default("GL")
+  contractTier ContractTier?
+  status       UserStatus   @default(APPROVED)
+  createdAt    DateTime     @default(now())
+
   hubs         Hub[]
   users        User[]
+  whitelists   Whitelist[]
+  invites      OrgInvite[]
 }
 
 model Hub {
-  id             String        @id // e.g. "JPMC-IN-MUM01"
-  orgId          String
-  organization   Organization  @relation(fields: [orgId], references: [id])
-  displayName    String
-  region         String
-  apiKeyHash     String        @unique // Hub-wide Key Hash
-  createdAt      DateTime      @default(now())
-  projects       Project[]
-  users          User[]
-  ledgerEntries  LedgerEntry[]
+  id                 String           @id // e.g. "JPMC-IN-MUM01"
+  orgId              String
+  organization       Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  displayName        String
+  region             String
+  unit               String           @default("MUM01")
+  apiKeyHash         String           @unique
+  entityType         EntityType       @default(AI_AGENT)
+  visibilityClass    VisibilityClass  @default(INTERNAL)
+  regulatoryVisible  Boolean          @default(true)
+  isActive           Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+
+  projects           Project[]
+  users              User[]
+  userAssignments    UserHubAssignment[]
+  ledgerEntries      LedgerEntry[]
+  telemetryEvents    TelemetryEvent[]
+  enforcementNotices EnforcementNotice[]
+  accessRequests     GovernanceAccessRequest[]
+  identities         GovernanceIdentity[]
+  whitelists         Whitelist[]
+  invites            OrgInvite[]
 }
 
 model Project {
   id          String   @id @default(cuid())
   hubId       String
-  hub         Hub      @relation(fields: [hubId], references: [id])
+  hub         Hub      @relation(fields: [hubId], references: [id], onDelete: Cascade)
   name        String
   slug        String
-  apiKeyHash  String   @unique // Project-scoped Key Hash
+  apiKeyHash  String   @unique
   createdAt   DateTime @default(now())
+
   users       User[]
 }
 
 model User {
-  id                String                    @id // e.g. "OWN-AN-MUM-042" or "AUD-RBI-IN-009"
-  email             String                    @unique
-  displayName       String
-  role              Role
-  auditorType       AuditorType?
-  totpSecret        String?
-  orgId             String?
-  organization      Organization?             @relation(fields: [orgId], references: [id])
-  hubId             String?
-  hub               Hub?                      @relation(fields: [hubId], references: [id])
-  projectId         String?
-  project           Project?                  @relation(fields: [projectId], references: [id])
-  status            String                    @default("PENDING") // Whitelist approval flow
-  createdAt         DateTime                  @default(now())
-  requestsMade      GovernanceAccessRequest[] @relation("Requester")
-  requestsApproved  GovernanceAccessRequest[] @relation("Approver")
+  id           String     @id // e.g. "OWN-JPMC-MUM-042" or "AUD-RBI-IN-009"
+  email        String     @unique
+  displayName  String
+  role         Role
+  orgId        String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  hubId        String?    // Required for HUB_MANAGER, PROJECT_LEAD, DEVELOPER, STANDARD_AUDITOR
+  hub          Hub?       @relation(fields: [hubId], references: [id], onDelete: SetNull)
+  projectId    String?
+  project      Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  jurisdiction String?    // e.g. "RBI", "SEC", "FCA", "EU"
+  totpSecret   String?
+  status       UserStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+
+  hubAssignments     UserHubAssignment[]
+  requestsMade       GovernanceAccessRequest[] @relation("Requester")
+  requestsApproved   GovernanceAccessRequest[] @relation("Approver")
+  replayLogs         ReplayAccessLog[]
+  noticesIssued      EnforcementNotice[]
+  enterpriseAuditLogs AuditTrail[]
+  auditorAuditLogs    AuditorTrail[]
+}
+
+model UserHubAssignment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hubId     String
+  hub       Hub      @relation(fields: [hubId], references: [id], onDelete: Cascade)
+  grantedBy String?  // AdminUser ID
+  grantedAt DateTime @default(now())
+  expiresAt DateTime?
+  reason    String?
+
+  @@unique([userId, hubId])
+}
+
+model AdminUser {
+  id          String     @id // e.g. "AN-ADMIN-001"
+  email       String     @unique // e.g. "tan@animuslab.dev"
+  displayName String
+  role        AdminRole  @default(ANIMUS_ADMIN)
+  totpSecret  String?
+  status      UserStatus @default(APPROVED)
+  createdAt   DateTime   @default(now())
+
+  adminLogs   AdminAuditLog[]
+  whitelists  Whitelist[]
+  invites     OrgInvite[]
+}
+
+model AdminAuditLog {
+  id         String    @id @default(cuid())
+  adminId    String
+  admin      AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action     String    // e.g. "CREATE_USER", "APPROVE_USER", "PROVISION_HUB"
+  targetId   String?
+  targetType String?   // "USER", "HUB", "ORG"
+  metadata   Json?
+  timestamp  DateTime  @default(now())
+}
+
+model AuditTrail {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  details   String?
+  timestamp DateTime @default(now())
+}
+
+model AuditorTrail {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String   // e.g. "VIEWED_LEDGER", "FILED_NOTICE", "REPLAY_PULL"
+  targetId  String?
+  timestamp DateTime @default(now())
 }
 
 model Whitelist {
-  id         String   @id @default(cuid())
-  email      String   @unique
+  id         String       @id @default(cuid())
+  email      String       @unique
   orgId      String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  hubId      String?
+  hub        Hub?         @relation(fields: [hubId], references: [id], onDelete: SetNull)
   role       Role
-  status     String   @default("APPROVED")
-  createdAt  DateTime @default(now())
+  invitedBy  String?
+  admin      AdminUser?   @relation(fields: [invitedBy], references: [id], onDelete: SetNull)
+  status     UserStatus   @default(APPROVED)
+  createdAt  DateTime     @default(now())
+}
+
+model OrgInvite {
+  id         String       @id @default(cuid())
+  email      String
+  role       Role
+  orgId      String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  hubId      String?
+  hub        Hub?         @relation(fields: [hubId], references: [id], onDelete: SetNull)
+  invitedBy  String
+  admin      AdminUser    @relation(fields: [invitedBy], references: [id], onDelete: Cascade)
+  status     InviteStatus @default(SENT)
+  createdAt  DateTime     @default(now())
+  expiresAt  DateTime
 }
 
 model LedgerEntry {
-  id         String     @id @default(cuid())
-  hubId      String
-  hub        Hub        @relation(fields: [hubId], references: [id])
-  project    String
-  entityType EntityType @default(AI_AGENT)
-  timestamp  DateTime   @default(now())
-  payload    Json       // Summary / Metadata hash ONLY (raw evidence stays on client server)
-  chainHash  String
-  signature  String?
+  id                     String     @id @default(cuid()) // "led_..."
+  hubId                  String
+  hub                    Hub        @relation(fields: [hubId], references: [id], onDelete: Cascade)
+  projectName            String
+  entityType             EntityType @default(AI_AGENT)
+  timestamp              DateTime   @default(now())
+  payload                Json
+  chainHash              String
+  type                   String     @default("runtime_check")
+  signature              String?
+  evidenceClassification String     @default("operational")
+  parentEntryId          String?
 }
 
 model GovernanceAccessRequest {
-  id            String              @id @default(cuid())
-  requesterId   String
-  requester     User                @relation("Requester", fields: [requesterId], references: [id])
-  targetHubId   String
-  purpose       String
-  justification String
-  status        AccessRequestStatus @default(PENDING)
-  approverId    String?
-  approver      User?               @relation("Approver", fields: [approverId], references: [id])
-  createdAt     DateTime            @default(now())
-  expiresAt     DateTime?
+  id                     String              @id @default(cuid()) // "REQ-..."
+  requesterId            String
+  requester              User                @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  targetHubId            String
+  targetHub              Hub                 @relation(fields: [targetHubId], references: [id], onDelete: Cascade)
+  purposeClassification  String              // e.g. "Forensic Audit"
+  justification          String
+  requestedCapability    String              @default("can_replay")
+  status                 AccessRequestStatus @default(PENDING)
+  approverId             String?
+  approver               User?               @relation("Approver", fields: [approverId], references: [id], onDelete: SetNull)
+  temporaryToken         String?
+  createdAt              DateTime            @default(now())
+  expiresAt              DateTime?
+
+  replayLogs             ReplayAccessLog[]
+}
+
+model ReplayAccessLog {
+  id         String                  @id @default(cuid()) // "acc_..."
+  requestId  String
+  request    GovernanceAccessRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  accessedBy String
+  auditor    User                    @relation(fields: [accessedBy], references: [id], onDelete: Cascade)
+  accessedAt DateTime                @default(now())
+  chainHash  String
+}
+
+model EnforcementNotice {
+  id           String   @id @default(cuid())
+  issuedBy     String
+  auditor      User     @relation(fields: [issuedBy], references: [id], onDelete: Cascade)
+  hubId        String
+  hub          Hub      @relation(fields: [hubId], references: [id], onDelete: Cascade)
+  targetEmail  String
+  severity     NoticeSeverity @default(MEDIUM)
+  noticeText   String
+  jurisdiction String
+  filedAt      DateTime @default(now())
 }
 
 model GovernanceIdentity {
@@ -133,20 +304,21 @@ model GovernanceIdentity {
   registeredAt         DateTime @default(now())
   status               String   @default("ACTIVE")
   hubId                String?
+  hub                  Hub?     @relation(fields: [hubId], references: [id], onDelete: SetNull)
 }
 
 model TelemetryEvent {
-  id                   String   @id @default(cuid())
-  siloId               String
-  projectName          String
-  complianceVerdict    String
-  riskScore            Float
+  id                  String   @id @default(cuid())
+  hubId               String
+  hub                 Hub      @relation(fields: [hubId], references: [id], onDelete: Cascade)
+  projectName         String
+  entityDisplayName   String?  // e.g. "Forge Repository"
+  complianceVerdict   String
+  riskScore           Float
   identityFingerprint String
-  violationsJson       String
-  createdAt            DateTime @default(now())
+  violationsJson      String
+  createdAt           DateTime @default(now())
 
   @@index([identityFingerprint])
   @@index([complianceVerdict])
 }
-
-

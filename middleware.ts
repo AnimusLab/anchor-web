@@ -17,20 +17,40 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check session cookie
-  const sessionCookie = request.cookies.get('session');
+  // Check session cookie (JWT or JSON payload)
+  const sessionCookie = request.cookies.get('session') || request.cookies.get('access_token');
   let session: any = null;
+
   if (sessionCookie) {
     try {
+      // Direct JSON parse if set as raw payload cookie
       session = JSON.parse(sessionCookie.value);
     } catch (e) {
-      // Ignored
+      // Decode base64 payload if JWT string
+      try {
+        const parts = sessionCookie.value.split('.');
+        if (parts.length === 3) {
+          const payloadJson = Buffer.from(parts[1], 'base64').toString('utf-8');
+          const payload = JSON.parse(payloadJson);
+          session = {
+            id: payload.uid,
+            email: payload.sub,
+            role: payload.role,
+            auditorType: payload.auditorType,
+            orgId: payload.orgId,
+            hubId: payload.hubId,
+            projectId: payload.projectId,
+            jurisdiction: payload.jurisdiction,
+          };
+        }
+      } catch (err) {
+        // Ignored
+      }
     }
   }
 
   // 1. Rewrite for landing.animuslab.dev or landing.localhost:3000
   if (hostname.startsWith('landing.')) {
-    // Serve the root landing page (app/(marketing)/page.tsx)
     if (pathname === '/login') {
       return NextResponse.rewrite(new URL('/login', request.url));
     }
@@ -46,7 +66,11 @@ export function middleware(request: NextRequest) {
   // If already authenticated and visiting /login, redirect to their home portal
   if (session && pathname === '/login') {
     let homeUrl = 'https://hub.animuslab.dev';
-    if (session.role === 'AUDITOR') {
+    if (
+      session.role === 'CROSS_HUB_AUDITOR' ||
+      session.role === 'REGULATORY_AUDITOR' ||
+      session.role === 'AUDITOR'
+    ) {
       homeUrl = 'https://oversight.animuslab.dev';
     } else if (session.role === 'ANIMUS_ADMIN') {
       homeUrl = 'https://admin.animuslab.dev';
@@ -69,10 +93,10 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // hub.animuslab.dev -> /hub (Requires HUB_MANAGER, PROJECT_LEAD, DEVELOPER, or ANIMUS_ADMIN)
+  // hub.animuslab.dev -> /hub (Requires HUB_MANAGER, PROJECT_LEAD, DEVELOPER, STANDARD_AUDITOR, or ANIMUS_ADMIN)
   if (hostname.startsWith('hub.')) {
     if (pathname === '/login') return NextResponse.next();
-    const allowedRoles = ['HUB_MANAGER', 'PROJECT_LEAD', 'DEVELOPER', 'ANIMUS_ADMIN'];
+    const allowedRoles = ['HUB_MANAGER', 'PROJECT_LEAD', 'DEVELOPER', 'STANDARD_AUDITOR', 'ANIMUS_ADMIN'];
     if (!allowedRoles.includes(session?.role || '')) {
       const loginUrl = new URL('/login', request.url);
       return NextResponse.redirect(loginUrl);
@@ -83,10 +107,10 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // oversight.animuslab.dev -> /oversight (Requires AUDITOR or ANIMUS_ADMIN)
+  // oversight.animuslab.dev -> /oversight (Requires CROSS_HUB_AUDITOR, REGULATORY_AUDITOR, AUDITOR, or ANIMUS_ADMIN)
   if (hostname.startsWith('oversight.')) {
     if (pathname === '/login') return NextResponse.next();
-    const allowedRoles = ['AUDITOR', 'ANIMUS_ADMIN'];
+    const allowedRoles = ['CROSS_HUB_AUDITOR', 'REGULATORY_AUDITOR', 'STANDARD_AUDITOR', 'AUDITOR', 'ANIMUS_ADMIN'];
     if (!allowedRoles.includes(session?.role || '')) {
       const loginUrl = new URL('/login', request.url);
       return NextResponse.redirect(loginUrl);
@@ -105,4 +129,5 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
+
 
