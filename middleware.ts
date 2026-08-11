@@ -58,6 +58,7 @@ export function middleware(request: NextRequest) {
   
   // admin.animuslab.dev -> /admin (Requires ANIMUS_ADMIN)
   if (hostname.startsWith('admin.')) {
+    if (pathname === '/login') return NextResponse.next();
     if (session?.role !== 'ANIMUS_ADMIN') {
       const loginUrl = new URL('/login', request.url);
       return NextResponse.redirect(loginUrl);
@@ -70,6 +71,7 @@ export function middleware(request: NextRequest) {
 
   // hub.animuslab.dev -> /hub (Requires HUB_MANAGER, PROJECT_LEAD, DEVELOPER, or ANIMUS_ADMIN)
   if (hostname.startsWith('hub.')) {
+    if (pathname === '/login') return NextResponse.next();
     const allowedRoles = ['HUB_MANAGER', 'PROJECT_LEAD', 'DEVELOPER', 'ANIMUS_ADMIN'];
     if (!allowedRoles.includes(session?.role || '')) {
       const loginUrl = new URL('/login', request.url);
@@ -83,6 +85,7 @@ export function middleware(request: NextRequest) {
 
   // oversight.animuslab.dev -> /oversight (Requires AUDITOR or ANIMUS_ADMIN)
   if (hostname.startsWith('oversight.')) {
+    if (pathname === '/login') return NextResponse.next();
     const allowedRoles = ['AUDITOR', 'ANIMUS_ADMIN'];
     if (!allowedRoles.includes(session?.role || '')) {
       const loginUrl = new URL('/login', request.url);
