@@ -123,10 +123,10 @@ export default function BusinessLandingPage() {
             <ExternalLink className="w-3 h-3" />
           </a>
           <span className="text-white/20">|</span>
-          <Link href="/hub" className="text-[#6366f1] font-bold hover:text-indigo-400 transition-colors uppercase tracking-wider flex items-center gap-1.5">
+          <a href="https://hub.animuslab.dev" className="text-[#6366f1] font-bold hover:text-indigo-400 transition-colors uppercase tracking-wider flex items-center gap-1.5">
             <span>Enterprise_Portal</span>
             <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          </a>
         </div>
       </nav>
 
@@ -151,16 +151,16 @@ export default function BusinessLandingPage() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
-            <Link href="/hub">
+            <a href="https://hub.animuslab.dev">
               <button className="bg-gradient-to-r from-[#6366f1] to-[#4f46e5] hover:brightness-110 text-white px-8 py-4 rounded-xl text-xs font-bold tracking-wider shadow-lg shadow-[#6366f1]/20 transition-all duration-200 transform hover:-translate-y-0.5 font-sans">
                 DEPLOY ENTERPRISE HUB →
               </button>
-            </Link>
-            <Link href="/oversight">
+            </a>
+            <a href="https://oversight.animuslab.dev">
               <button className="bg-[#070b16]/80 border border-white/10 hover:border-white/30 text-[#C5C9DB] hover:text-white px-8 py-4 rounded-xl text-xs font-bold tracking-wider backdrop-blur-md transition-all duration-200 transform hover:-translate-y-0.5 font-sans">
                 AUDITOR OVERSIGHT GATEWAY
               </button>
-            </Link>
+            </a>
           </div>
         </div>
 
