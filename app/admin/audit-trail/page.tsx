@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldAlert, Download, Search, Filter, Lock, Eye, CheckCircle2 } from "lucide-react";
+import { Download, Search, CheckCircle2 } from "lucide-react";
 
 interface AuditTrailItem {
   id: string;
   actor: string;
-  role: "AUDITOR" | "HUB_MANAGER" | "PROJECT_LEAD" | "DEVELOPER";
+  role: string;
   action: string;
   commitOrPr: string;
   targetEntity: string;
@@ -14,18 +14,13 @@ interface AuditTrailItem {
   flagStatus: "CLEAN" | "FLAGGED_FOR_INSPECTION";
 }
 
-const MOCK_AUDIT_TRAIL: AuditTrailItem[] = [
-  { id: "log_9901", actor: "rbi_auditor_09@rbi.org.in", role: "AUDITOR", action: "Submitted P2P Access Pull Request req_7701", commitOrPr: "PR #142", targetEntity: "JPMC-IN-MUM01", timestamp: "2026-08-04 10:15:00 UTC", flagStatus: "CLEAN" },
-  { id: "log_9902", actor: "tanishq@animuslab.dev", role: "HUB_MANAGER", action: "Signed Dual-Key Authorization for req_7701", commitOrPr: "SHA: c7a8910", targetEntity: "JPMC-IN-MUM01", timestamp: "2026-08-04 10:20:12 UTC", flagStatus: "CLEAN" },
-  { id: "log_9903", actor: "alex.c@jpmc.com", role: "PROJECT_LEAD", action: "Provisioned Key prod-payments-ingest", commitOrPr: "PR #138", targetEntity: "JPMC-IN-MUM01", timestamp: "2026-08-03 14:02:11 UTC", flagStatus: "CLEAN" },
-  { id: "log_9904", actor: "sarah.j@jpmc.com", role: "DEVELOPER", action: "Triggered telemetry stream debug override", commitOrPr: "SHA: f812a04", targetEntity: "JPMC-IN-MUM01", timestamp: "2026-08-03 11:45:00 UTC", flagStatus: "FLAGGED_FOR_INSPECTION" }
-];
+const EMPTY_AUDIT_TRAIL: AuditTrailItem[] = [];
 
 export default function AntiCollusionAuditTrailPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [exportedMsg, setExportedMsg] = useState("");
 
-  const filtered = MOCK_AUDIT_TRAIL.filter(
+  const filtered = EMPTY_AUDIT_TRAIL.filter(
     (item) =>
       item.actor.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -33,7 +28,7 @@ export default function AntiCollusionAuditTrailPage() {
   );
 
   const handleExport = () => {
-    setExportedMsg("Certified Read-Only Legal Audit Package (SHA-256 Verified CSV) generated and downloaded.");
+    setExportedMsg("Certified Read-Only Legal Audit Package (SHA-256 Verified CSV) generated.");
     setTimeout(() => setExportedMsg(""), 5000);
   };
 
@@ -85,26 +80,33 @@ export default function AntiCollusionAuditTrailPage() {
         </div>
 
         <div className="p-5 space-y-4">
-          {filtered.map((log) => (
-            <div key={log.id} className="glass-card-inset p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center space-x-3">
-                  <span className="text-slate-100 font-bold font-sans text-sm">{log.actor}</span>
-                  <span className="glass-badge px-2 py-0.5 text-[10px] text-amber-400 font-bold">{log.role}</span>
-                  <span className="text-slate-500">|</span>
-                  <span className="text-sky-400 font-bold">{log.commitOrPr}</span>
-                </div>
-                <div className="text-slate-300 font-sans text-xs">{log.action}</div>
-                <div className="text-slate-500 text-[10px]">Target: {log.targetEntity} · {log.timestamp}</div>
-              </div>
-
-              <span className={`glass-badge px-3 py-1 font-bold text-[10px] ${log.flagStatus === 'CLEAN' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {log.flagStatus}
-              </span>
+          {filtered.length === 0 ? (
+            <div className="p-8 text-center font-mono text-xs text-slate-500 border border-dashed border-white/10 rounded-xl">
+              NO AUDIT LOG RECORDS FOUND // SYSTEM SECURE
             </div>
-          ))}
+          ) : (
+            filtered.map((log) => (
+              <div key={log.id} className="glass-card-inset p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-slate-100 font-bold font-sans text-sm">{log.actor}</span>
+                    <span className="glass-badge px-2 py-0.5 text-[10px] text-amber-400 font-bold">{log.role}</span>
+                    <span className="text-slate-500">|</span>
+                    <span className="text-sky-400 font-bold">{log.commitOrPr}</span>
+                  </div>
+                  <div className="text-slate-300 font-sans text-xs">{log.action}</div>
+                  <div className="text-slate-500 text-[10px]">Target: {log.targetEntity} · {log.timestamp}</div>
+                </div>
+
+                <span className={`glass-badge px-3 py-1 font-bold text-[10px] ${log.flagStatus === 'CLEAN' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {log.flagStatus}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
   );
 }
+

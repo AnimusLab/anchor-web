@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileCheck, Search, Filter, ShieldCheck, Lock, ExternalLink } from "lucide-react";
+import { Search } from "lucide-react";
 
 interface DacBlock {
   height: number;
@@ -13,16 +13,12 @@ interface DacBlock {
   status: "COMPLIANT" | "VIOLATION";
 }
 
-const MOCK_DAC_BLOCKS: DacBlock[] = [
-  { height: 1482910, hash: "0x9a8f21b7c00e12ff8901", prevHash: "0x8b12c9910a22ff33aa90", entity: "JPMC-IN-MUM01", agent: "credit-decisioning-v4", timestamp: "2026-08-04 12:45:12 UTC", status: "COMPLIANT" },
-  { height: 1482909, hash: "0x8b12c9910a22ff33aa90", prevHash: "0x77ee991200ab4411cc11", entity: "HDFC-IN-DEL02", agent: "kyc-biometrics-v1", timestamp: "2026-08-04 12:42:00 UTC", status: "COMPLIANT" },
-  { height: 1482908, hash: "0x77ee991200ab4411cc11", prevHash: "0x55aa331100bb2244dd88", entity: "ICICI-IN-BLR01", agent: "wealth-advisor-v2", timestamp: "2026-08-04 12:38:10 UTC", status: "VIOLATION" }
-];
+const EMPTY_DAC_BLOCKS: DacBlock[] = [];
 
 export default function DacLedgerPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filtered = MOCK_DAC_BLOCKS.filter((b) =>
+  const filtered = EMPTY_DAC_BLOCKS.filter((b) =>
     b.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
     b.agent.toLowerCase().includes(searchQuery.toLowerCase()) ||
     b.hash.toLowerCase().includes(searchQuery.toLowerCase())
@@ -40,7 +36,7 @@ export default function DacLedgerPage() {
 
         <div className="text-right font-mono text-xs text-slate-300">
           <span className="text-slate-400">LEDGER HEIGHT: </span>
-          <span className="text-amber-400 font-bold glass-badge px-3.5 py-1.5 inline-block">#1,482,910 Blocks</span>
+          <span className="text-amber-400 font-bold glass-badge px-3.5 py-1.5 inline-block">#0 Blocks</span>
         </div>
       </div>
 
@@ -50,7 +46,7 @@ export default function DacLedgerPage() {
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
           <input
             type="text"
-            placeholder="Search Company Silo ID (e.g. JPMC-IN-MUM01), Agent, or Block Hash..."
+            placeholder="Search Company Silo ID, Agent, or Block Hash..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-[#070b16]/70 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-400/50 font-mono transition"
@@ -66,37 +62,44 @@ export default function DacLedgerPage() {
         </div>
 
         <div className="p-5 space-y-4">
-          {filtered.map((block) => (
-            <div key={block.height} className="glass-card-inset p-5 space-y-3 font-mono text-xs">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-white/10 pb-3">
-                <div className="flex items-center space-x-3">
-                  <span className="text-amber-400 font-bold text-base">BLOCK #{block.height}</span>
-                  <span className="text-slate-500">|</span>
-                  <span className="text-slate-100 font-semibold">{block.entity}</span>
-                  <span className="text-slate-500">/</span>
-                  <span className="text-slate-400">{block.agent}</span>
-                </div>
-                <span className={`glass-badge px-3 py-1 font-bold text-[10px] ${block.status === 'COMPLIANT' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {block.status}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
-                <div>
-                  <span className="text-slate-500 block">BLOCK HASH</span>
-                  <span className="text-emerald-400 break-all font-bold">{block.hash}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">PREVIOUS BLOCK HASH</span>
-                  <span className="text-slate-400 break-all">{block.prevHash}</span>
-                </div>
-              </div>
-
-              <div className="text-[11px] text-slate-500 pt-1">Timestamp: {block.timestamp}</div>
+          {filtered.length === 0 ? (
+            <div className="p-8 text-center font-mono text-xs text-slate-500 border border-dashed border-white/10 rounded-xl">
+              NO BLOCKS RECORDED IN DECISION AUDIT CHAIN // LEDGER STANDBY
             </div>
-          ))}
+          ) : (
+            filtered.map((block) => (
+              <div key={block.height} className="glass-card-inset p-5 space-y-3 font-mono text-xs">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-white/10 pb-3">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-amber-400 font-bold text-base">BLOCK #{block.height}</span>
+                    <span className="text-slate-500">|</span>
+                    <span className="text-slate-100 font-semibold">{block.entity}</span>
+                    <span className="text-slate-500">/</span>
+                    <span className="text-slate-400">{block.agent}</span>
+                  </div>
+                  <span className={`glass-badge px-3 py-1 font-bold text-[10px] ${block.status === 'COMPLIANT' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {block.status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+                  <div>
+                    <span className="text-slate-500 block">BLOCK HASH</span>
+                    <span className="text-emerald-400 break-all font-bold">{block.hash}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">PREVIOUS BLOCK HASH</span>
+                    <span className="text-slate-400 break-all">{block.prevHash}</span>
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-slate-500 pt-1">Timestamp: {block.timestamp}</div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
   );
 }
+
