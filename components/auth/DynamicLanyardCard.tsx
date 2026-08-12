@@ -1,6 +1,7 @@
 "use client";
 
-import { Shield, ShieldCheck, Key, Lock, CheckCircle2, UserCheck, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { ShieldCheck, Key, Lock, CheckCircle2, AlertCircle, QrCode, RefreshCw } from "lucide-react";
 
 export interface LanyardCardData {
   name: string;
@@ -25,179 +26,198 @@ export default function DynamicLanyardCard({
   portalTheme = "hub",
   mode = "signin",
 }: DynamicLanyardCardProps) {
-  // Theme Color Configurations
+  const [isFlipped, setIsFlipped] = useState(false);
+
   const themeConfig = {
     hub: {
-      accentColor: "#00F2FE",
-      accentBg: "from-cyan-500 to-blue-600",
-      badgeText: "text-cyan-400",
-      badgeBg: "bg-cyan-500/10 border-cyan-500/30",
-      lanyardLine: "bg-gradient-to-b from-cyan-400 to-sky-600 shadow-[0_0_12px_rgba(0,242,254,0.5)]",
-      cardBorder: data.isVerified ? "border-cyan-400/60 shadow-[0_0_30px_rgba(0,242,254,0.25)]" : "border-white/10",
+      accentColor: "#6366F1",
+      badgeText: "text-[#6366f1]",
+      badgeBg: "bg-[#6366f1]/10 border-[#6366f1]/20",
+      cardBorder: data.isVerified ? "border-[#6366f1]/60 shadow-[0_0_40px_rgba(99,102,241,0.3)]" : "border-white/15",
       headerTitle: "ORGANIZATION CLEARANCE",
       defaultOrg: "ANIMUSLAB MESH",
-      defaultRole: "SOVEREIGN USER",
+      defaultRole: "SOVEREIGN OPERATOR",
     },
     oversight: {
       accentColor: "#F59E0B",
-      accentBg: "from-amber-500 to-yellow-600",
       badgeText: "text-amber-400",
       badgeBg: "bg-amber-500/10 border-amber-500/30",
-      lanyardLine: "bg-gradient-to-b from-amber-400 to-emerald-500 shadow-[0_0_12px_rgba(245,158,11,0.5)]",
-      cardBorder: data.isVerified ? "border-amber-400/60 shadow-[0_0_30px_rgba(245,158,11,0.25)]" : "border-white/10",
+      cardBorder: data.isVerified ? "border-amber-400/60 shadow-[0_0_40px_rgba(245,158,11,0.3)]" : "border-white/15",
       headerTitle: "REGULATORY CREDENTIAL",
       defaultOrg: "STATUTORY AGENCY",
-      defaultRole: "OVERSIGHT OFFICER",
+      defaultRole: "STATUTORY OFFICER",
     },
     admin: {
       accentColor: "#F43F5E",
-      accentBg: "from-rose-500 to-purple-600",
       badgeText: "text-rose-400",
       badgeBg: "bg-rose-500/10 border-rose-500/30",
-      lanyardLine: "bg-gradient-to-b from-rose-500 to-violet-600 shadow-[0_0_12px_rgba(244,63,94,0.5)]",
-      cardBorder: data.isVerified ? "border-rose-400/60 shadow-[0_0_30px_rgba(244,63,94,0.25)]" : "border-white/10",
+      cardBorder: data.isVerified ? "border-rose-400/60 shadow-[0_0_40px_rgba(244,63,94,0.3)]" : "border-white/15",
       headerTitle: "ROOT CONTROL PLANE",
       defaultOrg: "ANIMUSLAB INFRA",
-      defaultRole: "MASTER NODE OPERATOR",
+      defaultRole: "ROOT OPERATOR",
     },
   }[portalTheme];
 
   const displayName = data.name || (data.email ? data.email.split("@")[0].toUpperCase() : "PERSONNEL NAME");
   const displayOrg = data.orgName || themeConfig.defaultOrg;
-  const displayHub = data.hubId || "HUB_PENDING";
+  const displayHub = data.hubId ? data.hubId.toUpperCase() : "SILO_PENDING";
   const displayClearanceId = data.clearanceId || "ID_PENDING";
   const displayRole = data.role ? data.role.replace(/_/g, " ") : themeConfig.defaultRole;
-  const displayFingerprint = data.fingerprint || "ED25519: UNVERIFIED KEY HASH";
+  const displayFingerprint = data.fingerprint || "ED25519: UNVERIFIED KEYS HANDSHAKE";
 
   return (
-    <div className="relative flex flex-col items-center select-none">
-      {/* Hanging Top Lanyard Cord with Metallic Clasp */}
-      <div className={`w-1.5 h-28 md:h-36 ${themeConfig.lanyardLine} transition-all duration-500 relative`}>
-        {/* Metallic Clasp Clip at Card Joint */}
-        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-md bg-gradient-to-b from-slate-300 via-slate-500 to-slate-800 border border-slate-200/50 shadow-md flex items-center justify-center">
-          <div className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-white/40" />
-        </div>
-      </div>
-
-      {/* Lanyard ID Card Body */}
+    <div
+      className="w-full max-w-[380px] h-[480px] relative z-10 cursor-pointer select-none group"
+      onClick={() => setIsFlipped(!isFlipped)}
+      style={{ perspective: "1000px" }}
+    >
       <div
-        className={`w-[320px] sm:w-[380px] rounded-3xl bg-[#090d1a]/95 backdrop-blur-xl border ${themeConfig.cardBorder} p-6 shadow-2xl transition-all duration-500 transform hover:scale-[1.02] relative overflow-hidden font-mono text-xs mt-3`}
+        className="w-full h-full relative transition-transform duration-700 ease-out"
+        style={{
+          transformStyle: "preserve-3d",
+          transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+        }}
       >
-        {/* Ambient Holographic Background Grid Glow */}
-        <div className="absolute inset-0 bg-[radial-[#0f172a]_1px,transparent_1px] [background-size:12px_12px] opacity-30 pointer-events-none" />
-        <div className={`absolute -top-24 -right-24 w-48 h-48 rounded-full bg-gradient-to-br ${themeConfig.accentBg} opacity-15 blur-3xl pointer-events-none`} />
+        {/* ================= BADGE FRONT SIDE ================= */}
+        <div
+          className={`absolute inset-0 w-full h-full border ${themeConfig.cardBorder} bg-[#0A0D14]/85 backdrop-blur-2xl rounded-2xl p-6 shadow-2xl flex flex-col justify-between overflow-hidden font-mono text-xs`}
+          style={{ backfaceVisibility: "hidden" }}
+        >
+          {/* Ambient Liquid Specular Top Highlight Link */}
+          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
 
-        {/* Card Header & Security Badge */}
-        <div className="flex justify-between items-start border-b border-white/10 pb-4 relative z-10">
-          <div>
-            <div className="text-[10px] text-slate-400 tracking-wider uppercase font-bold">
-              {themeConfig.headerTitle}
+          {/* Front Header */}
+          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div>
+              <span className="text-[9px] text-[#6C7293] font-bold tracking-widest block uppercase">
+                {themeConfig.headerTitle}
+              </span>
+              <span className="text-xs font-black text-white tracking-wider font-sans">
+                {displayOrg}
+              </span>
             </div>
-            <div className="text-sm font-bold text-slate-100 font-sans tracking-tight mt-0.5">
-              {displayOrg}
-            </div>
+            <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase border ${themeConfig.badgeBg} ${themeConfig.badgeText}`}>
+              {data.isVerified ? "VERIFIED" : "AWAITING"}
+            </span>
           </div>
 
-          <div
-            className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-              data.isVerified
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                : themeConfig.badgeBg + " " + themeConfig.badgeText
-            } flex items-center space-x-1`}
-          >
-            {data.isVerified ? (
-              <>
-                <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                <span>VERIFIED</span>
-              </>
-            ) : mode === "onboard" ? (
-              <>
-                <AlertCircle className="w-3 h-3 text-amber-400" />
-                <span>NEW STAGING</span>
-              </>
-            ) : (
-              <>
-                <Lock className="w-3 h-3" />
-                <span>PENDING</span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Card Content Layout */}
-        <div className="py-5 space-y-4 relative z-10">
-          {/* Personnel Avatar & Identity Block */}
-          <div className="flex items-center space-x-4">
-            {/* Avatar Badge Container */}
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/15 flex items-center justify-center flex-shrink-0 shadow-inner relative">
-              <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center font-bold text-base text-slate-200 uppercase font-sans">
-                {displayName.substring(0, 2)}
-              </div>
-              {data.isVerified && (
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#090d1a] flex items-center justify-center">
-                  <CheckCircle2 className="w-3 h-3 text-slate-950" />
-                </div>
-              )}
+          {/* Personnel Identity Center Block (#030712 High Contrast Backing) */}
+          <div className="bg-[#030712] border border-white/10 rounded-xl p-4 flex items-center gap-4 shadow-inner">
+            <div className="w-12 h-12 rounded-full bg-[#1A1D26] border border-white/15 flex items-center justify-center font-black text-sm text-[#6366f1] uppercase font-sans flex-shrink-0">
+              {displayName.substring(0, 2)}
             </div>
-
-            <div className="space-y-1 overflow-hidden">
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">PERSONNEL NAME</div>
-              <div className="text-sm font-bold text-slate-100 truncate font-sans tracking-tight">
+            <div className="overflow-hidden">
+              <span className="text-[9px] text-[#6C7293] font-bold block uppercase tracking-wider">
+                Personnel Identity
+              </span>
+              <div className="text-xs font-bold text-white tracking-wide truncate font-sans">
                 {displayName}
               </div>
-              <div className="text-[11px] text-slate-400 truncate font-mono">
-                {data.email || "awaiting.identity@animuslab.dev"}
+              <div className="text-[10px] text-sky-400 font-bold truncate mt-0.5">
+                {data.email || "identity@animuslab.dev"}
               </div>
             </div>
           </div>
 
-          {/* Key Identifiers Grid */}
-          <div className="grid grid-cols-2 gap-3 glass-card-inset p-3.5 rounded-xl border border-white/5 bg-[#050811]/70">
+          {/* Scope Matrix Identification Block */}
+          <div className="grid grid-cols-2 gap-4 bg-[#030712] border border-white/10 rounded-xl p-4 text-left">
             <div>
-              <div className="text-[9px] text-slate-500 uppercase">CLEARANCE ID</div>
-              <div className="text-xs font-bold text-slate-200 font-mono mt-0.5 truncate">
+              <span className="text-[9px] text-[#6C7293] font-bold block tracking-wider uppercase">
+                Clearance ID
+              </span>
+              <span className="text-[11px] font-bold text-white tracking-wider block mt-0.5 truncate">
                 {displayClearanceId}
-              </div>
+              </span>
             </div>
-
             <div>
-              <div className="text-[9px] text-slate-500 uppercase">HUB SILO ID</div>
-              <div className="text-xs font-bold text-sky-400 font-mono mt-0.5 truncate">
+              <span className="text-[9px] text-[#6C7293] font-bold block tracking-wider uppercase">
+                Hub Silo ID
+              </span>
+              <span className="text-[11px] font-bold text-sky-400 tracking-wider block mt-0.5 truncate">
                 {displayHub}
-              </div>
+              </span>
             </div>
-
-            <div className="col-span-2 border-t border-white/5 pt-2 mt-1">
-              <div className="text-[9px] text-slate-500 uppercase">CLEARANCE LEVEL</div>
-              <div className="text-xs font-bold text-emerald-400 font-mono mt-0.5 uppercase tracking-wide">
+            <div className="col-span-2 pt-2 border-t border-white/10">
+              <span className="text-[9px] text-[#6C7293] font-bold block tracking-wider uppercase">
+                Clearance Status
+              </span>
+              <span className="text-[11px] font-bold text-[#10b981] tracking-widest block mt-0.5 uppercase">
                 {displayRole}
-              </div>
-            </div>
-          </div>
-
-          {/* Cryptographic Key Fingerprint Bar */}
-          <div className="glass-card-inset p-2.5 rounded-xl border border-white/5 bg-[#03050c]/90 flex items-center justify-between text-[10px]">
-            <div className="flex items-center space-x-2 overflow-hidden">
-              <Key className={`w-3.5 h-3.5 flex-shrink-0 ${data.isVerified ? "text-emerald-400" : "text-slate-500"}`} />
-              <span className="text-slate-400 truncate font-mono tracking-tighter">
-                {displayFingerprint}
               </span>
             </div>
           </div>
+
+          {/* Bottom Cryptographic Fingerprint Footer */}
+          <div className="border-t border-white/10 pt-4 space-y-2">
+            <div className="bg-[#030712] border border-white/10 rounded p-2 text-[9px] font-bold text-slate-300 break-all tracking-tight select-all">
+              KEY_FP: {displayFingerprint}
+            </div>
+            <div className="flex items-center justify-between text-[9px] text-[#6C7293]">
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b] animate-ping" />
+                Click to Flip Badge →
+              </span>
+              <span className="font-bold text-slate-400">ANIMUS V6.0</span>
+            </div>
+          </div>
         </div>
 
-        {/* Card Footer Status Bar */}
-        <div className="pt-3 border-t border-white/10 flex justify-between items-center text-[10px] text-slate-500 relative z-10">
-          <div className="flex items-center space-x-1.5">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                data.isVerified ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
-              }`}
-            />
-            <span>{data.statusText || (data.isVerified ? "IDENTITY VERIFIED // ACTIVE" : "AWAITING IDENTIFICATION")}</span>
+        {/* ================= BADGE BACK SIDE ================= */}
+        <div
+          className={`absolute inset-0 w-full h-full border ${themeConfig.cardBorder} bg-[#0A0D14]/95 backdrop-blur-2xl rounded-2xl p-6 shadow-2xl flex flex-col justify-between overflow-hidden font-mono text-xs`}
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+        >
+          {/* Back Header */}
+          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div>
+              <span className="text-[9px] text-[#6C7293] font-bold tracking-widest block uppercase">
+                INSTITUTIONAL VERIFICATION REGISTRY
+              </span>
+              <span className="text-xs font-black text-amber-400 tracking-wider">
+                SECURE AUDIT NODE REPOSITORY
+              </span>
+            </div>
+            <QrCode className="w-5 h-5 text-amber-400" />
           </div>
 
-          <span className="text-[9px] text-slate-600 font-mono">ANIMUS V6.0</span>
+          {/* Machine-Readable Cryptographic Barcode Area */}
+          <div className="bg-[#030712] border border-white/10 rounded-xl p-5 text-center space-y-3 shadow-inner">
+            <div className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">
+              MACHINE-READABLE CRYPTOGRAPHIC BARCODE
+            </div>
+
+            {/* Dynamic Simulated High-Density Barcode Lines */}
+            <div className="flex justify-center items-center h-12 space-x-1 py-1 bg-black/60 rounded-lg p-2 border border-white/5">
+              {[4, 2, 6, 1, 8, 3, 5, 2, 7, 4, 2, 6, 3, 8, 2, 5, 3, 7, 1, 6, 4, 8, 2, 5, 3, 7, 2, 4, 6].map((w, idx) => (
+                <div
+                  key={idx}
+                  className={`h-full ${idx % 2 === 0 ? "bg-amber-400" : "bg-slate-700"}`}
+                  style={{ width: `${w * 1.5}px` }}
+                />
+              ))}
+            </div>
+
+            <div className="text-[10px] font-bold text-emerald-400 tracking-widest uppercase">
+              {displayHub !== "SILO_PENDING" ? `AN-SYS-${displayHub}-2026` : "CORE_NODE_INDEX_LOCKED"}
+            </div>
+          </div>
+
+          {/* Legal Sign-Off Statement */}
+          <div className="bg-[#030712] border border-white/10 rounded-xl p-3.5 text-[9px] text-slate-400 leading-relaxed">
+            <div className="text-slate-200 font-bold mb-1 uppercase tracking-wider">
+              Cryptographic Security Mandate:
+            </div>
+            This physical session credential is bound to the verified local private key layer. Any memory modification triggers immediate revocation.
+          </div>
+
+          {/* Footer Seal */}
+          <div className="border-t border-white/10 pt-3 flex items-center justify-between text-[9px] text-[#6C7293]">
+            <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>AUTHENTICATED BY ANIMUSLAB</span>
+            </span>
+            <span>BACK SIDE</span>
+          </div>
         </div>
       </div>
     </div>

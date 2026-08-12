@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import DynamicLanyardCard, { LanyardCardData } from "@/components/auth/DynamicLanyardCard";
 import { Shield, Key, Mail, Lock, Building2, User, Globe, ArrowRight, CheckCircle2, AlertCircle, RefreshCw, FileText } from "lucide-react";
 
@@ -8,7 +9,7 @@ export default function OversightLoginPage() {
   const [activeTab, setActiveTab] = useState<"signin" | "onboard">("signin");
   const [step, setStep] = useState<"identity" | "totp">("identity");
 
-  // Sign In Form States
+  // Form Field Inputs (Strictly Mandatory *)
   const [accessId, setAccessId] = useState("");
   const [email, setEmail] = useState("");
   const [agencyHubId, setAgencyHubId] = useState("");
@@ -32,7 +33,7 @@ export default function OversightLoginPage() {
     orgName: "STATUTORY AGENCY",
     hubId: "AGENCY_PENDING",
     clearanceId: "ID_PENDING",
-    role: "REGULATORY AUDITOR",
+    role: "STATUTORY OFFICER",
     isVerified: false,
   });
 
@@ -100,11 +101,11 @@ export default function OversightLoginPage() {
     }
   };
 
-  // Continue to TOTP 2FA Verification Step
+  // Continue to TOTP 2FA Verification Step (Strictly Mandatory Enforcement)
   const handleProceedToTotp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      setErrorMsg("Please enter your official regulatory email address.");
+    if (!accessId || !email || !agencyHubId) {
+      setErrorMsg("CRITICAL_INVARIANT_FAILURE: All registration fields are strictly mandatory (*).");
       return;
     }
     setErrorMsg("");
@@ -157,7 +158,7 @@ export default function OversightLoginPage() {
   const handleOnboardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !onboardEmail || !reqAgencyHub) {
-      setErrorMsg("Please complete all required regulatory fields.");
+      setErrorMsg("Please complete all required regulatory fields (*).");
       return;
     }
 
@@ -197,13 +198,12 @@ export default function OversightLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#060810] text-slate-100 font-sans flex flex-col justify-between relative overflow-hidden selection:bg-amber-500/30 selection:text-amber-200">
-      {/* Background Holographic Mesh Grid */}
-      <div className="absolute inset-0 bg-[radial-[#1e1b18]_1px,transparent_1px] [background-size:24px_24px] opacity-40 pointer-events-none" />
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-600/10 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-[#040508] text-white font-mono p-8 flex flex-col justify-between relative overflow-hidden selection:bg-amber-500/30 selection:text-amber-200">
+      {/* Background Quantum Telemetry Effects */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.04),transparent_60%)] pointer-events-none" />
 
       {/* Header Bar */}
-      <header className="px-8 py-6 relative z-20 flex justify-between items-center border-b border-white/[0.08]">
+      <header className="px-4 py-4 relative z-20 flex justify-between items-center border-b border-white/10 max-w-7xl mx-auto w-full">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-400 to-yellow-600 flex items-center justify-center font-bold text-slate-950 font-mono shadow-[0_0_15px_rgba(245,158,11,0.4)]">
             O
@@ -215,23 +215,24 @@ export default function OversightLoginPage() {
         </div>
 
         <div className="flex items-center space-x-2 text-xs font-mono text-slate-400">
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
           <span>REGULATORY RELAY ACTIVE</span>
         </div>
       </header>
 
       {/* Main Content Layout */}
-      <main className="max-w-7xl mx-auto px-6 py-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10 my-auto">
-        {/* Left Form Column */}
-        <div className="lg:col-span-7 space-y-8">
-          <div>
-            <div className="text-xs font-mono text-amber-400 font-bold tracking-wider mb-2">
-              CRYPTOGRAPHIC AUDIT LEDGER ACCESS
+      <main className="max-w-7xl mx-auto px-4 py-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10 my-auto">
+        {/* LEFT COLUMN: Mandatory Triple-Scope Identity Access Form */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-amber-400 tracking-widest uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+              Cryptographic Audit Ledger Access
             </div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-100 font-sans">
+            <h1 className="text-3xl font-black tracking-tight text-white uppercase font-sans">
               {activeTab === "signin" ? "Regulatory Authorization" : "Request Regulatory Clearance"}
             </h1>
-            <p className="text-sm text-slate-400 mt-2 max-w-xl">
+            <p className="text-xs text-[#6C7293] leading-relaxed max-w-xl">
               {activeTab === "signin"
                 ? "Authorized statutory regulators and auditors access tamper-evident AI decision audit chains and sovereign telemetry logs via air-gapped relay."
                 : "Submit official credentials for statutory auditor access. Clearance requests require verification by AnimusLab Root Administration."}
@@ -239,7 +240,7 @@ export default function OversightLoginPage() {
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="inline-flex p-1 rounded-2xl bg-[#0d0f1a] border border-white/10 font-mono text-xs">
+          <div className="inline-flex p-1 rounded-xl bg-[#090B11] border border-white/10 font-mono text-xs">
             <button
               onClick={() => {
                 setActiveTab("signin");
@@ -247,10 +248,10 @@ export default function OversightLoginPage() {
                 setErrorMsg("");
                 setSuccessMsg("");
               }}
-              className={`px-6 py-2.5 rounded-xl font-bold transition flex items-center space-x-2 ${
+              className={`px-5 py-2 rounded-lg font-bold transition flex items-center space-x-2 ${
                 activeTab === "signin"
-                  ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20"
+                  : "text-[#6C7293] hover:text-white"
               }`}
             >
               <Lock className="w-3.5 h-3.5" />
@@ -263,10 +264,10 @@ export default function OversightLoginPage() {
                 setErrorMsg("");
                 setSuccessMsg("");
               }}
-              className={`px-6 py-2.5 rounded-xl font-bold transition flex items-center space-x-2 ${
+              className={`px-5 py-2 rounded-lg font-bold transition flex items-center space-x-2 ${
                 activeTab === "onboard"
-                  ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20"
+                  : "text-[#6C7293] hover:text-white"
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
@@ -276,15 +277,15 @@ export default function OversightLoginPage() {
 
           {/* Alert Messages */}
           {errorMsg && (
-            <div className="glass-card p-4 border border-rose-500/40 text-rose-300 text-xs font-mono flex items-center space-x-3 animate-fadeIn">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 text-rose-400" />
-              <span>{errorMsg}</span>
+            <div className="border border-[#f43f5e]/40 bg-[#f43f5e]/10 text-[#f43f5e] p-4 rounded-xl text-xs font-mono flex items-center space-x-3 animate-fadeIn">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 text-[#f43f5e]" />
+              <span>⚠️ {errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="glass-card p-4 border border-emerald-500/40 text-emerald-300 text-xs font-mono flex items-center space-x-3 animate-fadeIn">
-              <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-400" />
+            <div className="border border-[#10b981]/40 bg-[#10b981]/10 text-[#10b981] p-4 rounded-xl text-xs font-mono flex items-center space-x-3 animate-fadeIn">
+              <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-[#10b981]" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -294,60 +295,54 @@ export default function OversightLoginPage() {
             <div>
               {step === "identity" ? (
                 <form onSubmit={handleProceedToTotp} className="space-y-4 max-w-lg font-mono text-xs">
-                  <div>
-                    <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">
-                      TACTICAL CLEARANCE ID (OPTIONAL)
+                  <div className="space-y-1.5">
+                    <label className="text-[#6C7293] font-bold tracking-wider block">
+                      TACTICAL CLEARANCE ID <span className="text-[#f43f5e]">*</span>
                     </label>
-                    <div className="relative">
-                      <Key className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
-                      <input
-                        type="text"
-                        placeholder="e.g. SEC-ALFA-9 or AUD-RBI-009"
-                        value={accessId}
-                        onChange={(e) => setAccessId(e.target.value)}
-                        onBlur={(e) => handleIdentifierBlur(e.target.value)}
-                        className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={accessId}
+                      onChange={(e) => setAccessId(e.target.value)}
+                      onBlur={(e) => handleIdentifierBlur(e.target.value)}
+                      placeholder="e.g., SEC-ALFA-9 or AUD-RBI-009"
+                      className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-400 text-white tracking-widest transition"
+                    />
                   </div>
 
-                  <div>
-                    <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">
-                      OFFICIAL REGULATORY EMAIL *
+                  <div className="space-y-1.5">
+                    <label className="text-[#6C7293] font-bold tracking-wider block">
+                      OFFICIAL REGULATORY EMAIL <span className="text-[#f43f5e]">*</span>
                     </label>
-                    <div className="relative">
-                      <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
-                      <input
-                        type="email"
-                        required
-                        placeholder="auditor@regulator.gov"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        onBlur={(e) => handleIdentifierBlur(e.target.value)}
-                        className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
-                      />
-                    </div>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onBlur={(e) => handleIdentifierBlur(e.target.value)}
+                      placeholder="e.g., auditor@regulator.gov"
+                      className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-400 text-white tracking-widest transition"
+                    />
                   </div>
 
-                  <div>
-                    <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">
-                      AGENCY HUB ID (OPTIONAL)
+                  <div className="space-y-1.5">
+                    <label className="text-[#6C7293] font-bold tracking-wider block">
+                      AGENCY HUB ID <span className="text-[#f43f5e]">*</span>
                     </label>
-                    <div className="relative">
-                      <Building2 className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
-                      <input
-                        type="text"
-                        placeholder="SEC, RBI, NIST..."
-                        value={agencyHubId}
-                        onChange={(e) => setAgencyHubId(e.target.value)}
-                        className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={agencyHubId}
+                      onChange={(e) => setAgencyHubId(e.target.value)}
+                      onBlur={(e) => handleIdentifierBlur(e.target.value)}
+                      placeholder="e.g., SEC, RBI, NIST"
+                      className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-400 text-white tracking-widest transition"
+                    />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 px-6 rounded-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 hover:brightness-110 transition shadow-[0_0_20px_rgba(245,158,11,0.3)] flex items-center justify-center space-x-2 text-sm mt-4 font-sans"
+                    className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 py-3.5 rounded-xl font-bold tracking-widest uppercase shadow-lg shadow-amber-500/20 transition-all duration-200 mt-2 font-sans flex items-center justify-center space-x-2"
                   >
                     <span>Review Clearance & 2FA →</span>
                   </button>
@@ -355,14 +350,14 @@ export default function OversightLoginPage() {
               ) : (
                 /* STEP 2: TOTP CODE VERIFICATION */
                 <form onSubmit={handleLoginSubmit} className="space-y-6 max-w-lg font-mono text-xs">
-                  <div className="glass-card p-4 border border-amber-500/30 text-amber-300">
-                    <div className="text-[10px] uppercase text-slate-400">REGULATORY CREDENTIAL CONFIRMED</div>
-                    <div className="text-sm font-bold text-slate-100 mt-0.5">{email}</div>
+                  <div className="bg-[#090B11] border border-amber-500/30 p-4 rounded-xl text-amber-400">
+                    <div className="text-[10px] uppercase text-[#6C7293]">REGULATORY CREDENTIAL CONFIRMED</div>
+                    <div className="text-sm font-bold text-white mt-0.5">{email}</div>
                   </div>
 
-                  <div>
-                    <label className="block text-slate-400 mb-2 uppercase font-bold text-[10px]">
-                      ENTER 6-DIGIT TOTP AUTHENTICATION CODE
+                  <div className="space-y-2">
+                    <label className="block text-[#6C7293] font-bold tracking-wider uppercase text-[10px]">
+                      ENTER 6-DIGIT TOTP AUTHENTICATION CODE <span className="text-[#f43f5e]">*</span>
                     </label>
                     <input
                       type="text"
@@ -371,7 +366,7 @@ export default function OversightLoginPage() {
                       placeholder="671445"
                       value={totpCode}
                       onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
-                      className="w-full bg-[#070b16]/90 border border-amber-500/50 rounded-2xl px-4 py-4 text-center text-3xl font-mono tracking-[0.5em] text-amber-400 focus:outline-none focus:border-amber-400 shadow-inner"
+                      className="w-full bg-[#090B11] border border-amber-500/50 rounded-2xl px-4 py-4 text-center text-3xl font-mono tracking-[0.5em] text-amber-400 focus:outline-none focus:border-amber-400 shadow-inner"
                     />
                   </div>
 
@@ -379,14 +374,14 @@ export default function OversightLoginPage() {
                     <button
                       type="button"
                       onClick={() => setStep("identity")}
-                      className="w-1/3 py-3 px-4 rounded-xl font-bold glass-badge text-slate-300 hover:text-white transition"
+                      className="w-1/3 py-3 px-4 rounded-xl font-bold bg-white/5 border border-white/10 text-slate-300 hover:text-white transition"
                     >
                       ← Back
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-2/3 py-3 px-6 rounded-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 hover:brightness-110 transition shadow-[0_0_20px_rgba(245,158,11,0.3)] flex items-center justify-center space-x-2 font-sans"
+                      className="w-2/3 py-3 px-6 rounded-xl font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 transition shadow-lg flex items-center justify-center space-x-2 font-sans"
                     >
                       {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Establish Auditor Session →</span>}
                     </button>
@@ -399,54 +394,48 @@ export default function OversightLoginPage() {
           {/* TAB 2: ONBOARDING FORM */}
           {activeTab === "onboard" && (
             <form onSubmit={handleOnboardSubmit} className="space-y-4 max-w-lg font-mono text-xs">
-              <div>
-                <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">OFFICER FULL NAME *</label>
-                <div className="relative">
-                  <User className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Inspector R. K. Sharma"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">OFFICIAL REGULATORY EMAIL *</label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
-                  <input
-                    type="email"
-                    required
-                    placeholder="auditor@regulator.gov"
-                    value={onboardEmail}
-                    onChange={(e) => setOnboardEmail(e.target.value)}
-                    className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">REQUESTED AGENCY HUB ID *</label>
+              <div className="space-y-1.5">
+                <label className="text-[#6C7293] font-bold tracking-wider block">OFFICER FULL NAME <span className="text-[#f43f5e]">*</span></label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. RBI, SEC, FCA, EU-AI-ACT"
-                  value={reqAgencyHub}
-                  onChange={(e) => setReqAgencyHub(e.target.value)}
-                  className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
+                  placeholder="Inspector R. K. Sharma"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-400 text-white transition"
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">JURISDICTION (NATION STATE)</label>
+              <div className="space-y-1.5">
+                <label className="text-[#6C7293] font-bold tracking-wider block">OFFICIAL REGULATORY EMAIL <span className="text-[#f43f5e]">*</span></label>
+                <input
+                  type="email"
+                  required
+                  placeholder="auditor@regulator.gov"
+                  value={onboardEmail}
+                  onChange={(e) => setOnboardEmail(e.target.value)}
+                  className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-400 text-white transition"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[#6C7293] font-bold tracking-wider block">REQUESTED AGENCY HUB ID <span className="text-[#f43f5e]">*</span></label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g., RBI, SEC, FCA, EU-AI-ACT"
+                  value={reqAgencyHub}
+                  onChange={(e) => setReqAgencyHub(e.target.value)}
+                  className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-400 text-white transition"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[#6C7293] font-bold tracking-wider block">JURISDICTION (NATION STATE)</label>
                 <select
                   value={jurisdiction}
                   onChange={(e) => setJurisdiction(e.target.value)}
-                  className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
+                  className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-400 text-white transition"
                 >
                   <option value="India (RBI)">India (RBI)</option>
                   <option value="United States (SEC)">United States (SEC)</option>
@@ -458,23 +447,35 @@ export default function OversightLoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 px-6 rounded-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 hover:brightness-110 transition shadow-[0_0_20px_rgba(245,158,11,0.3)] flex items-center justify-center space-x-2 text-sm mt-4 font-sans"
+                className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 py-3.5 rounded-xl font-bold tracking-widest uppercase shadow-lg shadow-amber-500/20 transition shadow-lg flex items-center justify-center space-x-2 text-sm mt-4 font-sans"
               >
                 {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Request Regulatory Access →</span>}
               </button>
             </form>
           )}
+
+          {/* Dynamic Sandbox Trial Access Routing Interface */}
+          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+            <Link href="/demo" className="w-full sm:w-auto">
+              <button className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-amber-400 font-bold px-5 py-3 rounded-xl tracking-wide transition-colors flex items-center justify-center space-x-2">
+                <span>🚀 Launch 1-Month Free Sandbox</span>
+              </button>
+            </Link>
+            <div className="text-[10px] text-[#6C7293] max-w-[200px] leading-normal text-right hidden sm:block font-mono">
+              Trial sandbox environments auto-terminate after 30 calendar days.
+            </div>
+          </div>
         </div>
 
-        {/* Right Dynamic Hanging Lanyard ID Card Column */}
+        {/* RIGHT COLUMN: 3D Flipping Liquid Glass Sovereign Credential Card */}
         <div className="lg:col-span-5 flex justify-center lg:justify-end relative">
           <DynamicLanyardCard data={cardData} portalTheme="oversight" mode={activeTab} />
         </div>
       </main>
 
-      {/* Footer Disclaimer Bar */}
-      <footer className="px-8 py-4 border-t border-white/[0.08] text-[10px] font-mono text-slate-500 flex justify-between items-center relative z-20">
-        <div>ENFORCEMENT PRIORITY: 01 // SYSTEM_VERSION: V6.0.2</div>
+      {/* Footer Bar */}
+      <footer className="px-8 py-4 border-t border-white/10 text-[10px] font-mono text-[#6C7293] flex justify-between items-center relative z-20 max-w-7xl mx-auto w-full">
+        <div>ENFORCEMENT PRIORITY: 01 // SYSTEM_VERSION: V6.0.3</div>
         <div>AIR-GAPPED RELAY ACTIVE · OVERSIGHT.ANCHORGOVERNANCE.TECH</div>
       </footer>
     </div>
