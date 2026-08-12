@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { sendOnboardingAdminNotification } from "@/lib/email";
 
 const prisma = new PrismaClient();
 
@@ -54,6 +55,17 @@ export async function POST(req: NextRequest) {
         },
       });
     }
+
+    // Dispatch background email notification to root admin & backup email
+    sendOnboardingAdminNotification({
+      name: name.trim(),
+      email: cleanEmail,
+      orgName,
+      city,
+      region: region || jurisdiction,
+      department,
+      portalType,
+    }).catch((err) => console.error("Background email notification error:", err));
 
     return NextResponse.json({
       success: true,
