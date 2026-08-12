@@ -1,0 +1,66 @@
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { name, email, orgName, city, region, department, requestedHubId, jurisdiction, portalType } = body;
+
+    if (!email || !name) {
+      return NextResponse.json({ error: "Name and Email are required for onboarding submission" }, { status: 400 });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Account already exists for this email address. Please proceed to Sign In." },
+        { status: 409 }
+      );
+    }
+
+    // Check if request already pending in Whitelist
+    const existingWhitelist = await prisma.whitelist.findUnique({
+      where: { email: cleanEmail },
+    });
+
+    if (existingWhitelist) {
+      return NextResponse.json(
+        {
+          success: true,
+          message: "An onboarding registration for this email is already registered in the whitelist queue.",
+          status: existingWhitelist.status,
+        },
+        { status: 200 }
+      );
+    }
+
+    // Find default org for self-service onboarding or fallback
+    const defaultOrg = await prisma.organization.findFirst({
+      where: { orgType: "ENTERPRISE" },
+    });
+
+    if (defaultOrg) {
+      await prisma.whitelist.create({
+        data: {
+          email: cleanEmail,
+          orgId: defaultOrg.id,
+          role: portalType === "oversight" ? "REGULATORY_AUDITOR" : "HUB_MANAGER",
+          status: "PENDING",
+        },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Your enterprise onboarding registration has been submitted for Root Administrator clearance review.",
+    });
+  } catch (error: any) {
+    console.error("Onboarding submission failed:", error);
+    return NextResponse.json({ error: "Failed to submit onboarding request. Please try again." }, { status: 500 });
+  }
+}

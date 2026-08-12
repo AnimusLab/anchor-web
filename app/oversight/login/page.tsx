@@ -2,25 +2,23 @@
 
 import { useState, useEffect } from "react";
 import DynamicLanyardCard, { LanyardCardData } from "@/components/auth/DynamicLanyardCard";
-import { Shield, Key, Mail, Lock, Building2, User, Globe, ArrowRight, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { Shield, Key, Mail, Lock, Building2, User, Globe, ArrowRight, CheckCircle2, AlertCircle, RefreshCw, FileText } from "lucide-react";
 
-export default function EnterpriseLoginPage() {
+export default function OversightLoginPage() {
   const [activeTab, setActiveTab] = useState<"signin" | "onboard">("signin");
   const [step, setStep] = useState<"identity" | "totp">("identity");
 
   // Sign In Form States
   const [accessId, setAccessId] = useState("");
   const [email, setEmail] = useState("");
-  const [hubId, setHubId] = useState("");
+  const [agencyHubId, setAgencyHubId] = useState("");
   const [totpCode, setTotpCode] = useState("");
 
   // Onboarding Form States
   const [fullName, setFullName] = useState("");
   const [onboardEmail, setOnboardEmail] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [city, setCity] = useState("");
-  const [region, setRegion] = useState("India (IN)");
-  const [department, setDepartment] = useState("");
+  const [reqAgencyHub, setReqAgencyHub] = useState("");
+  const [jurisdiction, setJurisdiction] = useState("India (RBI)");
 
   // Status & Dynamic Card Binding
   const [isSearching, setIsSearching] = useState(false);
@@ -31,10 +29,10 @@ export default function EnterpriseLoginPage() {
   const [cardData, setCardData] = useState<LanyardCardData>({
     name: "",
     email: "",
-    orgName: "",
-    hubId: "",
-    clearanceId: "",
-    role: "SOVEREIGN USER",
+    orgName: "STATUTORY AGENCY",
+    hubId: "AGENCY_PENDING",
+    clearanceId: "ID_PENDING",
+    role: "REGULATORY AUDITOR",
     isVerified: false,
   });
 
@@ -44,7 +42,7 @@ export default function EnterpriseLoginPage() {
       setCardData((prev) => ({
         ...prev,
         email: email || prev.email,
-        hubId: hubId || prev.hubId,
+        hubId: agencyHubId || prev.hubId,
         clearanceId: accessId || prev.clearanceId,
       }));
     } else {
@@ -52,15 +50,15 @@ export default function EnterpriseLoginPage() {
         ...prev,
         name: fullName,
         email: onboardEmail,
-        orgName: companyName,
-        role: department ? `${department.toUpperCase()} LEAD` : "PENDING REVIEW",
-        clearanceId: "STAGING_REQ",
-        hubId: "PENDING_PROVISION",
+        orgName: reqAgencyHub ? `AGENCY: ${reqAgencyHub.toUpperCase()}` : "REGULATORY AGENCY",
+        role: "STATUTORY OFFICER",
+        clearanceId: "AUD_REQ_PENDING",
+        hubId: reqAgencyHub || "PENDING",
         isVerified: false,
-        statusText: "ONBOARDING REQUEST // PENDING REVIEW",
+        statusText: "OVERSIGHT CLEARANCE // PENDING REVIEW",
       }));
     }
-  }, [accessId, email, hubId, fullName, onboardEmail, companyName, department, activeTab]);
+  }, [accessId, email, agencyHubId, fullName, onboardEmail, reqAgencyHub, activeTab]);
 
   // Server-Side Whitelist Scanner & Autofill Handler
   const handleIdentifierBlur = async (queryVal: string) => {
@@ -82,17 +80,17 @@ export default function EnterpriseLoginPage() {
         setCardData({
           name: data.name,
           email: data.email,
-          orgName: data.orgName,
+          orgName: data.orgName || "REGULATORY AGENCY",
           hubId: data.hubId,
           clearanceId: data.clearanceId,
           role: data.role,
           fingerprint: data.fingerprint,
           isVerified: true,
-          statusText: data.statusText,
+          statusText: "AUDITOR CLEARANCE MATCHED // READY FOR 2FA",
         });
 
         if (!email) setEmail(data.email);
-        if (!hubId) setHubId(data.hubId);
+        if (!agencyHubId) setAgencyHubId(data.hubId);
         if (!accessId) setAccessId(data.clearanceId);
       }
     } catch (err) {
@@ -106,7 +104,7 @@ export default function EnterpriseLoginPage() {
   const handleProceedToTotp = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setErrorMsg("Please enter your corporate email address to proceed.");
+      setErrorMsg("Please enter your official regulatory email address.");
       return;
     }
     setErrorMsg("");
@@ -132,7 +130,7 @@ export default function EnterpriseLoginPage() {
           email,
           totpCode,
           accessId,
-          hubId,
+          hubId: agencyHubId,
         }),
       });
 
@@ -142,14 +140,14 @@ export default function EnterpriseLoginPage() {
         setCardData((prev) => ({
           ...prev,
           isVerified: true,
-          statusText: "AUTHENTICATED // SESSION ACTIVE",
+          statusText: "AUDITOR SESSION VERIFIED // ACTIVE",
         }));
-        window.location.href = data.redirectTo || "/hub";
+        window.location.href = data.redirectTo || "/oversight";
       } else {
         setErrorMsg(data.error || "Authentication failed. Invalid 2FA TOTP code.");
       }
     } catch (err) {
-      setErrorMsg("Connection failure during login verification.");
+      setErrorMsg("Connection failure during auditor verification.");
     } finally {
       setIsSubmitting(false);
     }
@@ -158,8 +156,8 @@ export default function EnterpriseLoginPage() {
   // Onboarding Form Submission Handler
   const handleOnboardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName || !onboardEmail || !companyName) {
-      setErrorMsg("Please complete all required fields.");
+    if (!fullName || !onboardEmail || !reqAgencyHub) {
+      setErrorMsg("Please complete all required regulatory fields.");
       return;
     }
 
@@ -174,76 +172,74 @@ export default function EnterpriseLoginPage() {
         body: JSON.stringify({
           name: fullName,
           email: onboardEmail,
-          orgName: companyName,
-          city,
-          region,
-          department,
-          portalType: "enterprise",
+          orgName: reqAgencyHub,
+          jurisdiction,
+          portalType: "oversight",
         }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
-        setSuccessMsg(data.message);
+        setSuccessMsg("Regulatory clearance request submitted. Root Administrator review pending.");
         setCardData((prev) => ({
           ...prev,
           statusText: "STAGING REGISTRATION LOGGED",
         }));
       } else {
-        setErrorMsg(data.error || "Failed to submit onboarding registration.");
+        setErrorMsg(data.error || "Failed to submit regulatory clearance request.");
       }
     } catch (err) {
-      setErrorMsg("Connection failure during onboarding submission.");
+      setErrorMsg("Connection failure during clearance submission.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#040711] text-slate-100 font-sans flex flex-col justify-between relative overflow-hidden selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="min-h-screen bg-[#060810] text-slate-100 font-sans flex flex-col justify-between relative overflow-hidden selection:bg-amber-500/30 selection:text-amber-200">
       {/* Background Holographic Mesh Grid */}
-      <div className="absolute inset-0 bg-[radial-[#0f172a]_1px,transparent_1px] [background-size:24px_24px] opacity-40 pointer-events-none" />
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-[#1e1b18]_1px,transparent_1px] [background-size:24px_24px] opacity-40 pointer-events-none" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-600/10 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Header Bar */}
       <header className="px-8 py-6 relative z-20 flex justify-between items-center border-b border-white/[0.08]">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center font-bold text-slate-950 font-mono shadow-[0_0_15px_rgba(0,242,254,0.4)]">
-            A
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-400 to-yellow-600 flex items-center justify-center font-bold text-slate-950 font-mono shadow-[0_0_15px_rgba(245,158,11,0.4)]">
+            O
           </div>
           <div>
-            <div className="text-sm font-bold tracking-tight">Anchor</div>
-            <div className="text-[10px] font-mono text-cyan-400">ENTERPRISE PORTAL</div>
+            <div className="text-sm font-bold tracking-tight">Anchor Oversight</div>
+            <div className="text-[10px] font-mono text-amber-400">REGULATORY PORTAL</div>
           </div>
         </div>
 
         <div className="flex items-center space-x-2 text-xs font-mono text-slate-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>SOVEREIGN MESH ACTIVE</span>
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <span>REGULATORY RELAY ACTIVE</span>
         </div>
       </header>
 
-      {/* Main Content Layout (Split Screen Form vs Lanyard Card) */}
+      {/* Main Content Layout */}
       <main className="max-w-7xl mx-auto px-6 py-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10 my-auto">
         {/* Left Form Column */}
         <div className="lg:col-span-7 space-y-8">
           <div>
-            <div className="text-xs font-mono text-cyan-400 font-bold tracking-wider mb-2">
-              SOVEREIGN GOVERNANCE GATEWAY
+            <div className="text-xs font-mono text-amber-400 font-bold tracking-wider mb-2">
+              CRYPTOGRAPHIC AUDIT LEDGER ACCESS
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight text-slate-100 font-sans">
-              {activeTab === "signin" ? "Enterprise Authentication" : "Onboard Your Enterprise"}
+              {activeTab === "signin" ? "Regulatory Authorization" : "Request Regulatory Clearance"}
             </h1>
             <p className="text-sm text-slate-400 mt-2 max-w-xl">
               {activeTab === "signin"
-                ? "Authenticate your institutional identity to access real-time AI decision telemetry, cryptographic audit logs, and compliance policy controls."
-                : "Register your organization on the Anchor sovereign mesh. Submitted registrations are staged for Root Administrator clearance review."}
+                ? "Authorized statutory regulators and auditors access tamper-evident AI decision audit chains and sovereign telemetry logs via air-gapped relay."
+                : "Submit official credentials for statutory auditor access. Clearance requests require verification by AnimusLab Root Administration."}
             </p>
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="inline-flex p-1 rounded-2xl bg-[#090e1c] border border-white/10 font-mono text-xs">
+          <div className="inline-flex p-1 rounded-2xl bg-[#0d0f1a] border border-white/10 font-mono text-xs">
             <button
               onClick={() => {
                 setActiveTab("signin");
@@ -253,7 +249,7 @@ export default function EnterpriseLoginPage() {
               }}
               className={`px-6 py-2.5 rounded-xl font-bold transition flex items-center space-x-2 ${
                 activeTab === "signin"
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-[0_0_15px_rgba(0,242,254,0.3)]"
+                  ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
@@ -269,11 +265,11 @@ export default function EnterpriseLoginPage() {
               }}
               className={`px-6 py-2.5 rounded-xl font-bold transition flex items-center space-x-2 ${
                 activeTab === "onboard"
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-[0_0_15px_rgba(0,242,254,0.3)]"
+                  ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              <Building2 className="w-3.5 h-3.5" />
+              <FileText className="w-3.5 h-3.5" />
               <span>Onboard</span>
             </button>
           </div>
@@ -300,68 +296,67 @@ export default function EnterpriseLoginPage() {
                 <form onSubmit={handleProceedToTotp} className="space-y-4 max-w-lg font-mono text-xs">
                   <div>
                     <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">
-                      ACCESS AUTHORIZATION ID (OPTIONAL)
+                      TACTICAL CLEARANCE ID (OPTIONAL)
                     </label>
                     <div className="relative">
                       <Key className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
                       <input
                         type="text"
-                        placeholder="e.g. OWN-AN-MUM-842"
+                        placeholder="e.g. SEC-ALFA-9 or AUD-RBI-009"
                         value={accessId}
                         onChange={(e) => setAccessId(e.target.value)}
                         onBlur={(e) => handleIdentifierBlur(e.target.value)}
-                        className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-400 transition"
+                        className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
                       />
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">
-                      CORPORATE ACCESS EMAIL *
+                      OFFICIAL REGULATORY EMAIL *
                     </label>
                     <div className="relative">
                       <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
                       <input
                         type="email"
                         required
-                        placeholder="owner@company.al"
+                        placeholder="auditor@regulator.gov"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onBlur={(e) => handleIdentifierBlur(e.target.value)}
-                        className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-400 transition"
+                        className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
                       />
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">
-                      ORGANIZATION HUB SILO ID (OPTIONAL)
+                      AGENCY HUB ID (OPTIONAL)
                     </label>
                     <div className="relative">
                       <Building2 className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
                       <input
                         type="text"
-                        placeholder="e.g. animuslab or JPMC-IN-MUM01"
-                        value={hubId}
-                        onChange={(e) => setHubId(e.target.value)}
-                        className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-400 transition"
+                        placeholder="SEC, RBI, NIST..."
+                        value={agencyHubId}
+                        onChange={(e) => setAgencyHubId(e.target.value)}
+                        className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
                       />
                     </div>
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 px-6 rounded-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 hover:brightness-110 transition shadow-[0_0_20px_rgba(0,242,254,0.3)] flex items-center justify-center space-x-2 text-sm mt-4 font-sans"
+                    className="w-full py-3.5 px-6 rounded-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 hover:brightness-110 transition shadow-[0_0_20px_rgba(245,158,11,0.3)] flex items-center justify-center space-x-2 text-sm mt-4 font-sans"
                   >
-                    <span>Continue to 2FA Verification</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <span>Review Clearance & 2FA →</span>
                   </button>
                 </form>
               ) : (
                 /* STEP 2: TOTP CODE VERIFICATION */
                 <form onSubmit={handleLoginSubmit} className="space-y-6 max-w-lg font-mono text-xs">
-                  <div className="glass-card p-4 border border-cyan-500/30 text-cyan-300">
-                    <div className="text-[10px] uppercase text-slate-400">IDENTITY CONFIRMED</div>
+                  <div className="glass-card p-4 border border-amber-500/30 text-amber-300">
+                    <div className="text-[10px] uppercase text-slate-400">REGULATORY CREDENTIAL CONFIRMED</div>
                     <div className="text-sm font-bold text-slate-100 mt-0.5">{email}</div>
                   </div>
 
@@ -376,7 +371,7 @@ export default function EnterpriseLoginPage() {
                       placeholder="671445"
                       value={totpCode}
                       onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
-                      className="w-full bg-[#070b16]/90 border border-cyan-500/50 rounded-2xl px-4 py-4 text-center text-3xl font-mono tracking-[0.5em] text-cyan-400 focus:outline-none focus:border-cyan-400 shadow-inner"
+                      className="w-full bg-[#070b16]/90 border border-amber-500/50 rounded-2xl px-4 py-4 text-center text-3xl font-mono tracking-[0.5em] text-amber-400 focus:outline-none focus:border-amber-400 shadow-inner"
                     />
                   </div>
 
@@ -391,9 +386,9 @@ export default function EnterpriseLoginPage() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-2/3 py-3 px-6 rounded-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 hover:brightness-110 transition shadow-[0_0_20px_rgba(0,242,254,0.3)] flex items-center justify-center space-x-2 font-sans"
+                      className="w-2/3 py-3 px-6 rounded-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 hover:brightness-110 transition shadow-[0_0_20px_rgba(245,158,11,0.3)] flex items-center justify-center space-x-2 font-sans"
                     >
-                      {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Establish Session →</span>}
+                      {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Establish Auditor Session →</span>}
                     </button>
                   </div>
                 </form>
@@ -405,93 +400,67 @@ export default function EnterpriseLoginPage() {
           {activeTab === "onboard" && (
             <form onSubmit={handleOnboardSubmit} className="space-y-4 max-w-lg font-mono text-xs">
               <div>
-                <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">YOUR FULL NAME *</label>
+                <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">OFFICER FULL NAME *</label>
                 <div className="relative">
                   <User className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
                   <input
                     type="text"
                     required
-                    placeholder="Tanishq Vaswani"
+                    placeholder="Inspector R. K. Sharma"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-400 transition"
+                    className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">YOUR CORPORATE EMAIL *</label>
+                <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">OFFICIAL REGULATORY EMAIL *</label>
                 <div className="relative">
                   <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
                   <input
                     type="email"
                     required
-                    placeholder="owner@company.al"
+                    placeholder="auditor@regulator.gov"
                     value={onboardEmail}
                     onChange={(e) => setOnboardEmail(e.target.value)}
-                    className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-400 transition"
+                    className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">COMPANY NAME *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Global Bank"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-400 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">CITY / BRANCH</label>
-                  <input
-                    type="text"
-                    placeholder="Mumbai"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-400 transition"
-                  />
-                </div>
+              <div>
+                <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">REQUESTED AGENCY HUB ID *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. RBI, SEC, FCA, EU-AI-ACT"
+                  value={reqAgencyHub}
+                  onChange={(e) => setReqAgencyHub(e.target.value)}
+                  className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">REGION / COUNTRY</label>
-                  <select
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-400 transition"
-                  >
-                    <option value="India (IN)">India (IN)</option>
-                    <option value="United States (US)">United States (US)</option>
-                    <option value="European Union (EU)">European Union (EU)</option>
-                    <option value="United Kingdom (UK)">United Kingdom (UK)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">DEPARTMENT / DIVISION</label>
-                  <input
-                    type="text"
-                    placeholder="Risk Ops, Compliance"
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-400 transition"
-                  />
-                </div>
+              <div>
+                <label className="block text-slate-400 mb-1.5 uppercase font-bold text-[10px]">JURISDICTION (NATION STATE)</label>
+                <select
+                  value={jurisdiction}
+                  onChange={(e) => setJurisdiction(e.target.value)}
+                  className="w-full bg-[#070b16]/80 border border-white/10 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition"
+                >
+                  <option value="India (RBI)">India (RBI)</option>
+                  <option value="United States (SEC)">United States (SEC)</option>
+                  <option value="European Union (EU AI Act)">European Union (EU AI Act)</option>
+                  <option value="United Kingdom (FCA)">United Kingdom (FCA)</option>
+                </select>
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 px-6 rounded-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 hover:brightness-110 transition shadow-[0_0_20px_rgba(0,242,254,0.3)] flex items-center justify-center space-x-2 text-sm mt-4 font-sans"
+                className="w-full py-3.5 px-6 rounded-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 hover:brightness-110 transition shadow-[0_0_20px_rgba(245,158,11,0.3)] flex items-center justify-center space-x-2 text-sm mt-4 font-sans"
               >
-                {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Submit for Clearance Review →</span>}
+                {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Request Regulatory Access →</span>}
               </button>
             </form>
           )}
@@ -499,14 +468,14 @@ export default function EnterpriseLoginPage() {
 
         {/* Right Dynamic Hanging Lanyard ID Card Column */}
         <div className="lg:col-span-5 flex justify-center lg:justify-end relative">
-          <DynamicLanyardCard data={cardData} portalTheme="hub" mode={activeTab} />
+          <DynamicLanyardCard data={cardData} portalTheme="oversight" mode={activeTab} />
         </div>
       </main>
 
       {/* Footer Disclaimer Bar */}
       <footer className="px-8 py-4 border-t border-white/[0.08] text-[10px] font-mono text-slate-500 flex justify-between items-center relative z-20">
-        <div>CORE IDENTITY PROTOCOL: V6.0 // TRIPLE_FACTOR_AUTH</div>
-        <div>SOVEREIGN RELAY ACTIVE · ANCHORGOVERNANCE.TECH</div>
+        <div>ENFORCEMENT PRIORITY: 01 // SYSTEM_VERSION: V6.0.2</div>
+        <div>AIR-GAPPED RELAY ACTIVE · OVERSIGHT.ANCHORGOVERNANCE.TECH</div>
       </footer>
     </div>
   );
