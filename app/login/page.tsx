@@ -1,128 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import DynamicLanyardCard, { LanyardCardData } from "@/components/auth/DynamicLanyardCard";
-import { Shield, Key, Mail, Lock, Building2, User, Globe, ArrowRight, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { ShieldCheck, Sparkles, Key, Lock, ArrowRight, Layers, Rocket } from "lucide-react";
+import DynamicLanyardCard from "@/components/auth/DynamicLanyardCard";
 
-export default function EnterpriseLoginPage() {
-  const [activeTab, setActiveTab] = useState<"signin" | "onboard">("signin");
-  const [step, setStep] = useState<"identity" | "totp">("identity");
-
-  // Form Field Inputs (Strictly Mandatory *)
-  const [accessId, setAccessId] = useState("");
+export default function LoginPage() {
+  const router = useRouter();
+  const [clearanceId, setClearanceId] = useState("");
   const [email, setEmail] = useState("");
-  const [siloId, setSiloId] = useState("");
-  const [totpCode, setTotpCode] = useState("");
-
-  // Onboarding Form States
-  const [fullName, setFullName] = useState("");
-  const [onboardEmail, setOnboardEmail] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [city, setCity] = useState("");
-  const [region, setRegion] = useState("India (IN)");
-  const [department, setDepartment] = useState("");
-
-  // Status & Dynamic Card Binding
-  const [isSearching, setIsSearching] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hubId, setHubId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
 
-  const [cardData, setCardData] = useState<LanyardCardData>({
-    name: "",
-    email: "",
-    orgName: "",
-    hubId: "",
-    clearanceId: "",
-    role: "SOVEREIGN OPERATOR",
-    isVerified: false,
-  });
-
-  // Dynamic Card Mirroring Effect on Input Changes
-  useEffect(() => {
-    if (activeTab === "signin") {
-      setCardData((prev) => ({
-        ...prev,
-        email: email || prev.email,
-        hubId: siloId || prev.hubId,
-        clearanceId: accessId || prev.clearanceId,
-      }));
-    } else {
-      setCardData((prev) => ({
-        ...prev,
-        name: fullName,
-        email: onboardEmail,
-        orgName: companyName,
-        role: department ? `${department.toUpperCase()} LEAD` : "PENDING REVIEW",
-        clearanceId: "STAGING_REQ",
-        hubId: "PENDING_PROVISION",
-        isVerified: false,
-        statusText: "ONBOARDING REQUEST // PENDING REVIEW",
-      }));
-    }
-  }, [accessId, email, siloId, fullName, onboardEmail, companyName, department, activeTab]);
-
-  // Server-Side Whitelist Scanner & Autofill Handler
-  const handleIdentifierBlur = async (queryVal: string) => {
-    if (!queryVal || queryVal.length < 3 || isSearching) return;
-
-    setIsSearching(true);
-    setErrorMsg("");
-
-    try {
-      const res = await fetch("/api/auth/lookup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: queryVal }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.found) {
-        setCardData({
-          name: data.name,
-          email: data.email,
-          orgName: data.orgName,
-          hubId: data.hubId,
-          clearanceId: data.clearanceId,
-          role: data.role,
-          fingerprint: data.fingerprint,
-          isVerified: true,
-          statusText: "CRYPTOGRAPHIC IDENTITY MATCHED // READY FOR 2FA",
-        });
-
-        if (!email) setEmail(data.email);
-        if (!siloId) setSiloId(data.hubId);
-        if (!accessId) setAccessId(data.clearanceId);
-      }
-    } catch (err) {
-      console.error("Autofill lookup failed:", err);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Continue to TOTP 2FA Verification Step (Strictly Mandatory Enforcement)
-  const handleProceedToTotp = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!accessId || !email || !siloId) {
-      setErrorMsg("CRITICAL_INVARIANT_FAILURE: All registration fields are strictly mandatory (*).");
-      return;
-    }
-    setErrorMsg("");
-    setStep("totp");
-  };
-
-  // Final Session Establishment Login Handler
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (totpCode.length !== 6) {
-      setErrorMsg("Please enter the 6-digit TOTP authentication code.");
-      return;
-    }
-
-    setIsSubmitting(true);
+    setIsLoading(true);
     setErrorMsg("");
 
     try {
@@ -130,383 +24,202 @@ export default function EnterpriseLoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email,
-          totpCode,
-          accessId,
-          hubId: siloId,
+          clearanceId: clearanceId.trim(),
+          email: email.trim(),
+          hubId: hubId.trim(),
         }),
       });
 
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Authentication failed");
 
-      if (res.ok && data.success) {
-        setCardData((prev) => ({
-          ...prev,
-          isVerified: true,
-          statusText: "AUTHENTICATED // SESSION ACTIVE",
-        }));
-        window.location.href = data.redirectTo || "/hub";
-      } else {
-        setErrorMsg(data.error || "Authentication failed. Invalid 2FA TOTP code.");
-      }
-    } catch (err) {
-      setErrorMsg("Connection failure during login verification.");
+      router.push("/hub");
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to authenticate node credential.");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  // Onboarding Form Submission Handler
-  const handleOnboardSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!fullName || !onboardEmail || !companyName) {
-      setErrorMsg("Please complete all required onboarding fields (*).");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setErrorMsg("");
-    setSuccessMsg("");
-
+  const handleSandboxLaunch = async () => {
+    setIsLoading(true);
     try {
-      const res = await fetch("/api/auth/onboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: fullName,
-          email: onboardEmail,
-          orgName: companyName,
-          city,
-          region,
-          department,
-          portalType: "enterprise",
-        }),
-      });
-
+      const res = await fetch("/api/v1/demo/provision", { method: "POST" });
       const data = await res.json();
-
-      if (res.ok && data.success) {
-        setSuccessMsg(data.message);
-        setCardData((prev) => ({
-          ...prev,
-          statusText: "STAGING REGISTRATION LOGGED",
-        }));
+      if (data.redirect) {
+        router.push(data.redirect);
       } else {
-        setErrorMsg(data.error || "Failed to submit onboarding registration.");
+        router.push("/hub");
       }
     } catch (err) {
-      setErrorMsg("Connection failure during onboarding submission.");
+      router.push("/demo");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#040508] text-white font-mono p-8 flex flex-col justify-between relative overflow-hidden selection:bg-[#6366f1] selection:text-white">
-      {/* Background Mesh Quantum Telemetry Effects */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.04),transparent_60%)] pointer-events-none" />
+    <div className="min-h-screen bg-[#03050a] text-slate-100 flex flex-col justify-between p-6 md:p-10 relative overflow-hidden font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+      {/* Background Spatial Atmosphere Grid & Auroras */}
+      <div className="absolute inset-0 spatial-bg-grid opacity-30 pointer-events-none" />
+      <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none animate-spatial-aurora" />
+      <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-cyan-600/20 blur-[120px] pointer-events-none animate-spatial-aurora" style={{ animationDelay: "-6s" }} />
 
-      {/* Header Bar */}
-      <header className="px-4 py-4 relative z-20 flex justify-between items-center border-b border-white/10 max-w-7xl mx-auto w-full">
+      {/* Top Header Navigation */}
+      <header className="flex items-center justify-between z-20 max-w-7xl w-full mx-auto pb-6 border-b border-white/10">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#6366f1] to-sky-400 flex items-center justify-center font-bold text-slate-950 font-mono shadow-[0_0_15px_rgba(99,102,241,0.4)]">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 font-bold text-lg font-mono shadow-[0_0_20px_rgba(99,102,241,0.3)]">
             A
           </div>
           <div>
-            <div className="text-sm font-bold tracking-tight">Anchor</div>
-            <div className="text-[10px] font-mono text-[#6366f1]">ENTERPRISE PORTAL</div>
+            <span className="text-base font-black tracking-wider text-white uppercase block font-sans">
+              Anchor
+            </span>
+            <span className="text-[11px] font-mono text-indigo-400 font-bold tracking-widest block uppercase">
+              ENTERPRISE PORTAL
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 text-xs font-mono text-slate-400">
-          <span className="w-2 h-2 rounded-full bg-[#10b981] animate-ping" />
-          <span>SOVEREIGN CONTROL PLANE GATE</span>
+        <div className="flex items-center space-x-3 text-xs font-mono">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <span className="text-slate-300 font-bold tracking-wider uppercase">
+            SOVEREIGN CONTROL PLANE GATE
+          </span>
         </div>
       </header>
 
-      {/* Main Content Layout */}
-      <main className="max-w-7xl mx-auto px-4 py-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10 my-auto">
-        {/* LEFT COLUMN: Mandatory Triple-Scope Identity Access Form */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#6366f1] tracking-widest uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1] animate-ping" />
-              Sovereign Control Plane Gate
+      {/* Main Form & ID Card Container */}
+      <main className="z-20 max-w-7xl w-full mx-auto my-auto py-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center justify-items-center">
+        {/* Left Form (Spatial Glass Container) */}
+        <div className="lg:col-span-7 w-full max-w-xl bg-slate-900/65 backdrop-blur-2xl border border-white/15 p-8 md:p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] space-y-7">
+          <div>
+            <div className="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/30 px-3.5 py-1.5 rounded-full text-xs font-mono text-indigo-300 mb-3">
+              <Layers className="w-4 h-4 text-indigo-400" />
+              <span>CRYPTOGRAPHIC ACCESS GATE</span>
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-white uppercase font-sans">
-              {activeTab === "signin" ? "Cryptographic Access" : "Onboard Your Enterprise"}
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase font-sans">
+              CRYPTOGRAPHIC ACCESS
             </h1>
-            <p className="text-xs text-[#6C7293] leading-relaxed max-w-xl">
-              {activeTab === "signin"
-                ? "Verify your Ed25519 identity keys against the global registry node to activate your session."
-                : "Register your organization on the Anchor sovereign mesh. Submitted registrations are staged for Root Administrator clearance review."}
+            <p className="text-sm text-slate-300 mt-2 leading-relaxed">
+              Verify your Ed25519 identity keys against the global registry node to activate your session.
             </p>
           </div>
 
-          {/* Mode Switcher Tabs */}
-          <div className="inline-flex p-1 rounded-xl bg-[#090B11] border border-white/10 font-mono text-xs">
+          {/* Mode Switcher */}
+          <div className="flex bg-black/60 border border-white/10 p-1.5 rounded-2xl text-xs font-mono">
             <button
-              onClick={() => {
-                setActiveTab("signin");
-                setStep("identity");
-                setErrorMsg("");
-                setSuccessMsg("");
-              }}
-              className={`px-5 py-2 rounded-lg font-bold transition flex items-center space-x-2 ${
-                activeTab === "signin"
-                  ? "bg-[#6366f1] text-white shadow-lg shadow-[#6366f1]/20"
-                  : "text-[#6C7293] hover:text-white"
-              }`}
+              type="button"
+              className="flex-1 py-2.5 rounded-xl font-bold bg-indigo-600 text-white shadow-lg flex items-center justify-center space-x-2 uppercase"
             >
               <Lock className="w-3.5 h-3.5" />
               <span>Sign In</span>
             </button>
-
-            <button
-              onClick={() => {
-                setActiveTab("onboard");
-                setErrorMsg("");
-                setSuccessMsg("");
-              }}
-              className={`px-5 py-2 rounded-lg font-bold transition flex items-center space-x-2 ${
-                activeTab === "onboard"
-                  ? "bg-[#6366f1] text-white shadow-lg shadow-[#6366f1]/20"
-                  : "text-[#6C7293] hover:text-white"
-              }`}
+            <Link
+              href="/demo"
+              className="flex-1 py-2.5 rounded-xl font-bold text-slate-400 hover:text-white flex items-center justify-center space-x-2 uppercase transition"
             >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Onboard</span>
-            </button>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Sandbox Trial</span>
+            </Link>
           </div>
 
-          {/* Alert Messages */}
           {errorMsg && (
-            <div className="border border-[#f43f5e]/40 bg-[#f43f5e]/10 text-[#f43f5e] p-4 rounded-xl text-xs font-mono flex items-center space-x-3 animate-fadeIn">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 text-[#f43f5e]" />
-              <span>⚠️ {errorMsg}</span>
+            <div className="bg-rose-500/10 border border-rose-500/40 text-rose-300 p-4 rounded-2xl text-xs font-mono">
+              ⚠️ {errorMsg}
             </div>
           )}
 
-          {successMsg && (
-            <div className="border border-[#10b981]/40 bg-[#10b981]/10 text-[#10b981] p-4 rounded-xl text-xs font-mono flex items-center space-x-3 animate-fadeIn">
-              <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-[#10b981]" />
-              <span>{successMsg}</span>
-            </div>
-          )}
-
-          {/* TAB 1: SIGN IN FORM */}
-          {activeTab === "signin" && (
+          {/* Login Inputs Form */}
+          <form onSubmit={handleLoginSubmit} className="space-y-5">
             <div>
-              {step === "identity" ? (
-                <form onSubmit={handleProceedToTotp} className="space-y-4 max-w-lg font-mono text-xs">
-                  <div className="space-y-1.5">
-                    <label className="text-[#6C7293] font-bold tracking-wider block">
-                      ACCESS AUTHORIZATION ID <span className="text-[#f43f5e]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={accessId}
-                      onChange={(e) => setAccessId(e.target.value)}
-                      onBlur={(e) => handleIdentifierBlur(e.target.value)}
-                      placeholder="e.g., OWN-AN-MUM-842"
-                      className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-[#6366f1] text-white tracking-widest transition"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[#6C7293] font-bold tracking-wider block">
-                      CORPORATE ACCESS EMAIL <span className="text-[#f43f5e]">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      onBlur={(e) => handleIdentifierBlur(e.target.value)}
-                      placeholder="e.g., tan@animuslab.dev"
-                      className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-[#6366f1] text-white tracking-widest transition"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[#6C7293] font-bold tracking-wider block">
-                      ORGANIZATION HUB SILO ID <span className="text-[#f43f5e]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={siloId}
-                      onChange={(e) => setSiloId(e.target.value)}
-                      onBlur={(e) => handleIdentifierBlur(e.target.value)}
-                      placeholder="e.g., animuslab"
-                      className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-[#6366f1] text-white tracking-widest transition"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white py-3.5 rounded-xl font-bold tracking-widest uppercase shadow-lg shadow-[#6366f1]/20 transition-all duration-200 mt-2 font-sans flex items-center justify-center space-x-2"
-                  >
-                    <span>Authenticate Node →</span>
-                  </button>
-                </form>
-              ) : (
-                /* STEP 2: TOTP CODE VERIFICATION */
-                <form onSubmit={handleLoginSubmit} className="space-y-6 max-w-lg font-mono text-xs">
-                  <div className="bg-[#090B11] border border-[#6366f1]/30 p-4 rounded-xl text-[#6366f1]">
-                    <div className="text-[10px] uppercase text-[#6C7293]">IDENTITY CONFIRMED</div>
-                    <div className="text-sm font-bold text-white mt-0.5">{email}</div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-[#6C7293] font-bold tracking-wider uppercase text-[10px]">
-                      ENTER 6-DIGIT TOTP AUTHENTICATION CODE <span className="text-[#f43f5e]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      required
-                      placeholder="671445"
-                      value={totpCode}
-                      onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
-                      className="w-full bg-[#090B11] border border-[#6366f1]/50 rounded-2xl px-4 py-4 text-center text-3xl font-mono tracking-[0.5em] text-[#6366f1] focus:outline-none focus:border-[#6366f1] shadow-inner"
-                    />
-                  </div>
-
-                  <div className="flex space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => setStep("identity")}
-                      className="w-1/3 py-3 px-4 rounded-xl font-bold bg-white/5 border border-white/10 text-slate-300 hover:text-white transition"
-                    >
-                      ← Back
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-2/3 py-3 px-6 rounded-xl font-bold bg-[#6366f1] text-white hover:bg-[#4f46e5] transition shadow-lg flex items-center justify-center space-x-2 font-sans"
-                    >
-                      {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Establish Session →</span>}
-                    </button>
-                  </div>
-                </form>
-              )}
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 font-mono">
+                Clearance ID <span className="text-indigo-400">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={clearanceId}
+                onChange={(e) => setClearanceId(e.target.value)}
+                placeholder="e.g., EMG-ANM-2607"
+                className="w-full bg-black/60 border border-white/15 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition shadow-inner"
+              />
             </div>
-          )}
 
-          {/* TAB 2: ONBOARDING FORM */}
-          {activeTab === "onboard" && (
-            <form onSubmit={handleOnboardSubmit} className="space-y-4 max-w-lg font-mono text-xs">
-              <div className="space-y-1.5">
-                <label className="text-[#6C7293] font-bold tracking-wider block">YOUR FULL NAME <span className="text-[#f43f5e]">*</span></label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Tanishq Vaswani"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-[#6366f1] text-white transition"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[#6C7293] font-bold tracking-wider block">YOUR CORPORATE EMAIL <span className="text-[#f43f5e]">*</span></label>
-                <input
-                  type="email"
-                  required
-                  placeholder="owner@company.al"
-                  value={onboardEmail}
-                  onChange={(e) => setOnboardEmail(e.target.value)}
-                  className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-[#6366f1] text-white transition"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-[#6C7293] font-bold tracking-wider block">COMPANY NAME <span className="text-[#f43f5e]">*</span></label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Global Bank"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-[#6366f1] text-white transition"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[#6C7293] font-bold tracking-wider block">CITY / BRANCH</label>
-                  <input
-                    type="text"
-                    placeholder="Mumbai"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-[#6366f1] text-white transition"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-[#6C7293] font-bold tracking-wider block">REGION / COUNTRY</label>
-                  <select
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-[#6366f1] text-white transition"
-                  >
-                    <option value="India (IN)">India (IN)</option>
-                    <option value="United States (US)">United States (US)</option>
-                    <option value="European Union (EU)">European Union (EU)</option>
-                    <option value="United Kingdom (UK)">United Kingdom (UK)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[#6C7293] font-bold tracking-wider block">DEPARTMENT / DIVISION</label>
-                  <input
-                    type="text"
-                    placeholder="Risk Ops, Compliance"
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full bg-[#090B11] border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-[#6366f1] text-white transition"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white py-3.5 rounded-xl font-bold tracking-widest uppercase shadow-lg shadow-[#6366f1]/20 transition shadow-lg flex items-center justify-center space-x-2 text-sm mt-4 font-sans"
-              >
-                {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Submit for Clearance Review →</span>}
-              </button>
-            </form>
-          )}
-
-          {/* Dynamic Sandbox Trial Access Routing Interface */}
-          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-            <Link href="/demo" className="w-full sm:w-auto">
-              <button className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-[#10b981] font-bold px-5 py-3 rounded-xl tracking-wide transition-colors flex items-center justify-center space-x-2">
-                <span>🚀 Launch 1-Month Free Sandbox</span>
-              </button>
-            </Link>
-            <div className="text-[10px] text-[#6C7293] max-w-[200px] leading-normal text-right hidden sm:block font-mono">
-              Trial sandbox environments auto-terminate after 30 calendar days.
+            <div>
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 font-mono">
+                Corporate Email <span className="text-indigo-400">*</span>
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="e.g., tan@animuslab.dev"
+                className="w-full bg-black/60 border border-white/15 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition shadow-inner"
+              />
             </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 font-mono">
+                Organization Hub ID <span className="text-indigo-400">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={hubId}
+                onChange={(e) => setHubId(e.target.value)}
+                placeholder="e.g., animuslab"
+                className="w-full bg-black/60 border border-white/15 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition shadow-inner"
+              />
+            </div>
+
+            {/* Primary CTA Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black py-4 rounded-2xl shadow-[0_0_30px_rgba(99,102,241,0.5)] hover:shadow-[0_0_40px_rgba(99,102,241,0.7)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2"
+            >
+              <span>{isLoading ? "AUTHENTICATING..." : "AUTHENTICATE NODE →"}</span>
+            </button>
+          </form>
+
+          {/* Prominent Secondary Sandbox Button */}
+          <div className="pt-2 border-t border-white/10">
+            <button
+              type="button"
+              onClick={handleSandboxLaunch}
+              disabled={isLoading}
+              className="w-full bg-emerald-500/10 border border-emerald-400/40 hover:bg-emerald-500/20 text-emerald-300 py-3.5 rounded-2xl font-mono text-xs font-extrabold tracking-wider uppercase transition flex items-center justify-center space-x-2 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+            >
+              <Rocket className="w-4 h-4 text-emerald-400 animate-bounce" />
+              <span>Launch 1-Month Free Sandbox Portal</span>
+            </button>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: 3D Flipping Liquid Glass Sovereign Credential Card */}
-        <div className="lg:col-span-5 flex justify-center lg:justify-end relative">
-          <DynamicLanyardCard data={cardData} portalTheme="hub" mode={activeTab} />
+        {/* Right ID Card Container */}
+        <div className="lg:col-span-5 w-full flex justify-center">
+          <DynamicLanyardCard
+            portalTheme="hub"
+            data={{
+              name: email ? email.split("@")[0].toUpperCase() : "",
+              email: email,
+              orgName: "ANIMUSLAB MESH",
+              hubId: hubId,
+              clearanceId: clearanceId || "EMG-ANM-2607",
+              role: "ENTERPRISE MANAGER",
+              isVerified: Boolean(clearanceId && email),
+              fingerprint: clearanceId ? `sha256:${clearanceId.toLowerCase()}842...` : undefined,
+            }}
+          />
         </div>
       </main>
 
-      {/* Footer Bar */}
-      <footer className="px-8 py-4 border-t border-white/10 text-[10px] font-mono text-[#6C7293] flex justify-between items-center relative z-20 max-w-7xl mx-auto w-full">
+      {/* Footer */}
+      <footer className="z-20 max-w-7xl w-full mx-auto pt-6 border-t border-white/10 flex items-center justify-between text-xs font-mono text-slate-400">
         <div>CORE IDENTITY PROTOCOL: V6.0 // TRIPLE_FACTOR_AUTH</div>
-        <div>SOVEREIGN RELAY ACTIVE · ANCHORGOVERNANCE.TECH</div>
+        <div className="text-slate-400 font-bold">SOVEREIGN RELAY ACTIVE · ANCHORGOVERNANCE.TECH</div>
       </footer>
     </div>
   );
