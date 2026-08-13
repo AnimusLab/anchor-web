@@ -1,15 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Eye, Layers, Sliders, Droplet, Sun, ShieldCheck, Key, Lock, QrCode, RotateCw, Activity, Cpu } from "lucide-react";
+import { Sparkles, Eye, Layers, Sliders, Droplet, Sun, ShieldCheck, Key, Lock, QrCode, RotateCw, Activity, Cpu, Camera, UserCheck } from "lucide-react";
 import LiveHolographicAvatar from "@/components/auth/LiveHolographicAvatar";
 
 export default function DesignSamplesPage() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
 
+  // Dynamic Test Parameters State
+  const [testName, setTestName] = useState("Tanishq Vaswani");
+  const [testGender, setTestGender] = useState<"male" | "female" | "auto">("auto");
+  const [customPhoto, setCustomPhoto] = useState<string | undefined>(undefined);
+
   const toggleFlip = (cardKey: string) => {
     setFlippedCards((prev) => ({ ...prev, [cardKey]: !prev[cardKey] }));
+  };
+
+  const handleCustomPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        setCustomPhoto(evt.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -24,8 +40,61 @@ export default function DesignSamplesPage() {
           Sovereign Credential ID Card Showcase
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Explore the AnimusLab Sovereign Identity Card rendered across 5 distinct design paradigms. Click any card to flip it and experience the <span className="text-cyan-300 font-bold">Live Waving Holographic Avatar</span> on the back side!
+          Explore the AnimusLab Sovereign Identity Card rendered across 5 distinct design paradigms. Click any card to flip it over and experience the <span className="text-cyan-300 font-bold">Gender-Aware Live 3D Memoji Avatar / Custom Photo Resolver</span> on the back!
         </p>
+
+        {/* Dynamic Parameter Test Controls */}
+        <div className="mt-6 p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 font-mono text-xs max-w-3xl">
+          <div className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center space-x-2">
+            <UserCheck className="w-4 h-4 text-cyan-400" />
+            <span>Interactive Avatar Parameter Controls</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-[10px] text-slate-400 block mb-1">TEST PERSONNEL NAME</label>
+              <input
+                type="text"
+                value={testName}
+                onChange={(e) => setTestName(e.target.value)}
+                placeholder="e.g. Tanishq Vaswani or Ananya Sharma"
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs font-sans focus:outline-none focus:border-cyan-400"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] text-slate-400 block mb-1">GENDER RESOLUTION MODE</label>
+              <select
+                value={testGender}
+                onChange={(e) => setTestGender(e.target.value as any)}
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-400"
+              >
+                <option value="auto">Auto-Detect from Name</option>
+                <option value="male">👨 Male 3D Memoji</option>
+                <option value="female">👩 Female 3D Memoji</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] text-slate-400 block mb-1">PROFILE PHOTO UPLOAD</label>
+              <div className="flex items-center space-x-2">
+                <label className="flex-1 bg-slate-950 hover:bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-300 hover:text-white text-xs font-medium cursor-pointer transition flex items-center justify-center space-x-1.5">
+                  <Camera className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>{customPhoto ? "Change Photo" : "Upload Face Photo"}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleCustomPhotoUpload} />
+                </label>
+                {customPhoto && (
+                  <button
+                    onClick={() => setCustomPhoto(undefined)}
+                    className="px-2 py-2 bg-rose-500/20 text-rose-300 rounded-xl border border-rose-500/30 text-xs font-bold"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Filter Tabs */}
         <div className="flex flex-wrap gap-2.5 mt-6 font-mono text-xs">
@@ -63,7 +132,7 @@ export default function DesignSamplesPage() {
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-mono">
-              Translucent frosted glass material with backdrop blur, delicate white border strokes, and live waving holographic avatar on the back side.
+              Translucent frosted glass material with backdrop blur, white border strokes, and live waving 3D avatar on the back side.
             </p>
 
             {/* Glassmorphism Container Backdrop */}
@@ -73,7 +142,7 @@ export default function DesignSamplesPage() {
 
               {/* Glassmorphism ID Card Component */}
               <div
-                className="relative w-full max-w-[340px] h-[460px] cursor-pointer select-none group"
+                className="relative w-full max-w-[340px] h-[470px] cursor-pointer select-none group"
                 onClick={() => toggleFlip("glass")}
                 style={{ perspective: "1000px" }}
               >
@@ -100,14 +169,18 @@ export default function DesignSamplesPage() {
                     </div>
 
                     <div className="bg-black/30 backdrop-blur-md border border-white/15 rounded-xl p-4 flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-cyan-400 to-indigo-500 p-0.5 flex-shrink-0 shadow-lg">
-                        <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center font-black text-sm text-cyan-300 font-sans">
-                          TV
-                        </div>
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-cyan-400 to-indigo-500 p-0.5 flex-shrink-0 shadow-lg overflow-hidden">
+                        {customPhoto ? (
+                          <img src={customPhoto} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                          <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center font-black text-sm text-cyan-300 font-sans">
+                            {testName ? testName.substring(0, 2).toUpperCase() : "TV"}
+                          </div>
+                        )}
                       </div>
                       <div className="overflow-hidden">
-                        <div className="text-xs font-bold text-white truncate font-sans">TANISHQ VASWANI</div>
-                        <div className="text-[10px] text-cyan-200 truncate">tan@animuslab.dev</div>
+                        <div className="text-xs font-bold text-white truncate font-sans">{testName.toUpperCase()}</div>
+                        <div className="text-[10px] text-cyan-200 truncate">identity@animuslab.dev</div>
                       </div>
                     </div>
 
@@ -127,24 +200,30 @@ export default function DesignSamplesPage() {
                         KEY_FP: sha256:b49d424a21b414...
                       </div>
                       <div className="flex justify-between items-center text-white/70 pt-1">
-                        <span>Click to Flip for Live Avatar</span>
+                        <span>Click to Flip for 3D Avatar</span>
                         <span>GLASS V6</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* BACK VIEW - LIVE WAVING AVATAR */}
+                  {/* BACK VIEW - GENDER-AWARE LIVE 3D MEMOJI AVATAR */}
                   <div
                     className="absolute inset-0 w-full h-full p-5 rounded-2xl bg-black/50 backdrop-blur-2xl border border-white/25 shadow-2xl flex flex-col justify-between font-mono text-xs"
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                   >
                     <div className="flex justify-between items-center border-b border-white/20 pb-2">
-                      <span className="text-[10px] font-bold text-cyan-300 font-sans uppercase">LIVE HOLOGRAPHIC AVATAR</span>
+                      <span className="text-[10px] font-bold text-cyan-300 font-sans uppercase">LIVE 3D MEMOJI AVATAR</span>
                       <QrCode className="w-4 h-4 text-cyan-300" />
                     </div>
 
                     {/* LIVE WAVING AVATAR RIG */}
-                    <LiveHolographicAvatar name="TANISHQ VASWANI" role="SOVEREIGN OPERATOR" theme="cyan" />
+                    <LiveHolographicAvatar
+                      name={testName}
+                      role="SOVEREIGN OPERATOR"
+                      theme="cyan"
+                      gender={testGender}
+                      customPhotoUrl={customPhoto}
+                    />
 
                     <div className="border-t border-white/20 pt-2 flex items-center justify-between text-[9px] text-white/70">
                       <span>AN-SYS-SOL01-2026</span>
@@ -172,13 +251,13 @@ export default function DesignSamplesPage() {
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-mono">
-              Tactile 3D analog realism with metallic bevels, engraved borders, and live gestured avatar on the back side.
+              Tactile 3D analog realism with metallic bevels and gender-aware 3D Memoji avatar on the back side.
             </p>
 
             {/* Skeuomorphism Container Backdrop */}
             <div className="p-8 rounded-3xl bg-[#14161d] border border-slate-800 flex items-center justify-center min-h-[520px] shadow-2xl">
               <div
-                className="relative w-full max-w-[340px] h-[460px] cursor-pointer select-none group"
+                className="relative w-full max-w-[340px] h-[470px] cursor-pointer select-none group"
                 onClick={() => toggleFlip("skeuo")}
                 style={{ perspective: "1000px" }}
               >
@@ -205,12 +284,16 @@ export default function DesignSamplesPage() {
                     </div>
 
                     <div className="bg-[#101217] p-4 rounded-xl border border-[#2c303c] shadow-[inset_0_2px_6px_rgba(0,0,0,0.9)] flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-b from-[#3a3e4b] to-[#1c1e25] border border-[#52586a] flex items-center justify-center font-black text-sm text-amber-400 font-sans shadow-md">
-                        TV
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-b from-[#3a3e4b] to-[#1c1e25] border border-[#52586a] flex items-center justify-center font-black text-sm text-amber-400 font-sans shadow-md overflow-hidden">
+                        {customPhoto ? (
+                          <img src={customPhoto} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          testName ? testName.substring(0, 2).toUpperCase() : "TV"
+                        )}
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-slate-100 font-sans">TANISHQ VASWANI</div>
-                        <div className="text-[10px] text-amber-400 font-mono">tan@animuslab.dev</div>
+                        <div className="text-xs font-bold text-slate-100 font-sans">{testName.toUpperCase()}</div>
+                        <div className="text-[10px] text-amber-400 font-mono">identity@animuslab.dev</div>
                       </div>
                     </div>
 
@@ -230,13 +313,13 @@ export default function DesignSamplesPage() {
                         KEY_FP: ed25519:8f2a9910b42c00a1...
                       </div>
                       <div className="flex justify-between items-center text-slate-400">
-                        <span>Click to Flip for Live Avatar</span>
+                        <span>Click to Flip for 3D Avatar</span>
                         <span>SKEUO V6</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* BACK VIEW - LIVE WAVING AVATAR */}
+                  {/* BACK VIEW - GENDER-AWARE LIVE 3D MEMOJI AVATAR */}
                   <div
                     className="absolute inset-0 w-full h-full p-5 rounded-2xl bg-gradient-to-b from-[#21232b] via-[#181920] to-[#0f1015] border border-[#484d5e] shadow-[0_15px_30px_rgba(0,0,0,0.9)] flex flex-col justify-between font-mono text-xs"
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
@@ -247,7 +330,13 @@ export default function DesignSamplesPage() {
                     </div>
 
                     {/* LIVE WAVING AVATAR RIG */}
-                    <LiveHolographicAvatar name="TANISHQ VASWANI" role="ANALOG SECURITY OFFICER" theme="gold" />
+                    <LiveHolographicAvatar
+                      name={testName}
+                      role="SECURITY OFFICER"
+                      theme="gold"
+                      gender={testGender}
+                      customPhotoUrl={customPhoto}
+                    />
 
                     <div className="border-t border-[#3c404f] pt-2 flex items-center justify-between text-[9px] text-slate-400">
                       <span>AN-SKEUO-BARCODE-2026</span>
@@ -275,13 +364,13 @@ export default function DesignSamplesPage() {
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-mono">
-              Soft molded UI crafted out of the dark surface with live holographic avatar on the back side.
+              Soft molded UI crafted out of the dark surface with gender-aware 3D Memoji avatar on the back side.
             </p>
 
             {/* Neomorphism Container Backdrop */}
             <div className="p-8 rounded-3xl bg-[#0e1726] flex items-center justify-center min-h-[520px] shadow-2xl">
               <div
-                className="relative w-full max-w-[340px] h-[460px] cursor-pointer select-none group"
+                className="relative w-full max-w-[340px] h-[470px] cursor-pointer select-none group"
                 onClick={() => toggleFlip("neo")}
                 style={{ perspective: "1000px" }}
               >
@@ -317,14 +406,18 @@ export default function DesignSamplesPage() {
                       style={{ boxShadow: "inset 4px 4px 8px #060a11, inset -4px -4px 8px #16243b" }}
                     >
                       <div
-                        className="w-12 h-12 rounded-xl bg-[#0e1726] flex items-center justify-center font-black text-sm text-emerald-400 font-sans"
+                        className="w-12 h-12 rounded-xl bg-[#0e1726] flex items-center justify-center font-black text-sm text-emerald-400 font-sans overflow-hidden"
                         style={{ boxShadow: "3px 3px 6px #060a11, -3px -3px 6px #16243b" }}
                       >
-                        TV
+                        {customPhoto ? (
+                          <img src={customPhoto} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          testName ? testName.substring(0, 2).toUpperCase() : "TV"
+                        )}
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-slate-100 font-sans">TANISHQ VASWANI</div>
-                        <div className="text-[10px] text-emerald-400 font-mono">tan@animuslab.dev</div>
+                        <div className="text-xs font-bold text-slate-100 font-sans">{testName.toUpperCase()}</div>
+                        <div className="text-[10px] text-emerald-400 font-mono">identity@animuslab.dev</div>
                       </div>
                     </div>
 
@@ -350,13 +443,13 @@ export default function DesignSamplesPage() {
                         KEY_FP: sha256:b49d424a21b414...
                       </div>
                       <div className="flex justify-between items-center text-slate-400">
-                        <span>Click to Flip for Live Avatar</span>
+                        <span>Click to Flip for 3D Avatar</span>
                         <span>NEO V6</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* BACK VIEW - LIVE WAVING AVATAR */}
+                  {/* BACK VIEW - GENDER-AWARE LIVE 3D MEMOJI AVATAR */}
                   <div
                     className="absolute inset-0 w-full h-full p-5 rounded-3xl bg-[#0e1726] flex flex-col justify-between font-mono text-xs"
                     style={{
@@ -371,7 +464,13 @@ export default function DesignSamplesPage() {
                     </div>
 
                     {/* LIVE WAVING AVATAR RIG */}
-                    <LiveHolographicAvatar name="TANISHQ VASWANI" role="MOLDED SECURITY OFFICER" theme="emerald" />
+                    <LiveHolographicAvatar
+                      name={testName}
+                      role="MOLDED SECURITY OFFICER"
+                      theme="emerald"
+                      gender={testGender}
+                      customPhotoUrl={customPhoto}
+                    />
 
                     <div className="pt-2 flex items-center justify-between text-[9px] text-slate-400">
                       <span>AN-NEO-MATRIX-2026</span>
@@ -399,7 +498,7 @@ export default function DesignSamplesPage() {
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-mono">
-              Organic fluid glass with surface tension highlights and live waving holographic avatar on the back side.
+              Organic fluid glass with surface tension highlights and gender-aware 3D Memoji avatar on the back side.
             </p>
 
             {/* Liquid Glass Container Backdrop */}
@@ -408,7 +507,7 @@ export default function DesignSamplesPage() {
 
               {/* Liquid Glass ID Card */}
               <div
-                className="relative w-full max-w-[340px] h-[460px] cursor-pointer select-none group"
+                className="relative w-full max-w-[340px] h-[470px] cursor-pointer select-none group"
                 onClick={() => toggleFlip("liquid")}
                 style={{ perspective: "1000px" }}
               >
@@ -435,12 +534,16 @@ export default function DesignSamplesPage() {
                     </div>
 
                     <div className="bg-cyan-950/60 p-4 rounded-2xl border border-cyan-400/30 backdrop-blur-md flex items-center gap-3 shadow-inner">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-500 flex items-center justify-center font-black text-sm text-slate-950 font-sans shadow-md">
-                        TV
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-500 flex items-center justify-center font-black text-sm text-slate-950 font-sans shadow-md overflow-hidden">
+                        {customPhoto ? (
+                          <img src={customPhoto} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          testName ? testName.substring(0, 2).toUpperCase() : "TV"
+                        )}
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-white font-sans">TANISHQ VASWANI</div>
-                        <div className="text-[10px] text-cyan-300 font-mono">tan@animuslab.dev</div>
+                        <div className="text-xs font-bold text-white font-sans">{testName.toUpperCase()}</div>
+                        <div className="text-[10px] text-cyan-300 font-mono">identity@animuslab.dev</div>
                       </div>
                     </div>
 
@@ -460,13 +563,13 @@ export default function DesignSamplesPage() {
                         KEY_FP: sha256:b49d424a21b414...
                       </div>
                       <div className="flex justify-between items-center text-cyan-300">
-                        <span>Click to Flip for Live Avatar</span>
+                        <span>Click to Flip for 3D Avatar</span>
                         <span>LIQUID V6</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* BACK VIEW - LIVE WAVING AVATAR */}
+                  {/* BACK VIEW - GENDER-AWARE LIVE 3D MEMOJI AVATAR */}
                   <div
                     className="absolute inset-0 w-full h-full p-5 rounded-3xl bg-cyan-950/40 backdrop-blur-2xl border border-cyan-400/40 shadow-[0_20px_50px_rgba(6,182,212,0.3)] flex flex-col justify-between font-mono text-xs"
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
@@ -477,7 +580,13 @@ export default function DesignSamplesPage() {
                     </div>
 
                     {/* LIVE WAVING AVATAR RIG */}
-                    <LiveHolographicAvatar name="TANISHQ VASWANI" role="FLUID SECURITY OFFICER" theme="cyan" />
+                    <LiveHolographicAvatar
+                      name={testName}
+                      role="FLUID SECURITY OFFICER"
+                      theme="cyan"
+                      gender={testGender}
+                      customPhotoUrl={customPhoto}
+                    />
 
                     <div className="border-t border-cyan-400/20 pt-2 flex items-center justify-between text-[9px] text-cyan-300">
                       <span>AN-LIQUID-FLUID-2026</span>
@@ -505,7 +614,7 @@ export default function DesignSamplesPage() {
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-mono">
-              3D depth hierarchy with multi-layered floating translucent spatial window panels and live waving holographic avatar on the back side.
+              3D depth hierarchy with multi-layered floating translucent spatial window panels and gender-aware 3D Memoji avatar on the back side.
             </p>
 
             {/* Spatial UI Container Backdrop */}
@@ -549,12 +658,16 @@ export default function DesignSamplesPage() {
                     </div>
 
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-white/10 flex items-center gap-3 shadow-xl">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center font-black text-sm text-indigo-300 font-sans shadow-inner">
-                        TV
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center font-black text-sm text-indigo-300 font-sans shadow-inner overflow-hidden">
+                        {customPhoto ? (
+                          <img src={customPhoto} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          testName ? testName.substring(0, 2).toUpperCase() : "TV"
+                        )}
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-white font-sans">TANISHQ VASWANI</div>
-                        <div className="text-[10px] text-indigo-300 font-mono">tan@animuslab.dev</div>
+                        <div className="text-xs font-bold text-white font-sans">{testName.toUpperCase()}</div>
+                        <div className="text-[10px] text-indigo-300 font-mono">identity@animuslab.dev</div>
                       </div>
                     </div>
 
@@ -574,13 +687,13 @@ export default function DesignSamplesPage() {
                         KEY_FP: sha256:b49d424a21b414...
                       </div>
                       <div className="flex justify-between items-center text-slate-400">
-                        <span>Click to Flip for Live Avatar</span>
+                        <span>Click to Flip for 3D Avatar</span>
                         <span>VISIONOS V6</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* BACK VIEW - LIVE WAVING AVATAR */}
+                  {/* BACK VIEW - GENDER-AWARE LIVE 3D MEMOJI AVATAR */}
                   <div
                     className="absolute inset-0 w-full h-full p-5 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-indigo-400/40 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] flex flex-col justify-between font-mono text-xs ring-2 ring-indigo-500/30"
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
@@ -591,7 +704,13 @@ export default function DesignSamplesPage() {
                     </div>
 
                     {/* LIVE WAVING AVATAR RIG */}
-                    <LiveHolographicAvatar name="TANISHQ VASWANI" role="SPATIAL SECURITY OFFICER" theme="indigo" />
+                    <LiveHolographicAvatar
+                      name={testName}
+                      role="SPATIAL SECURITY OFFICER"
+                      theme="indigo"
+                      gender={testGender}
+                      customPhotoUrl={customPhoto}
+                    />
 
                     <div className="border-t border-white/10 pt-2 flex items-center justify-between text-[9px] text-slate-400">
                       <span>AN-SPATIAL-NODE-2026</span>

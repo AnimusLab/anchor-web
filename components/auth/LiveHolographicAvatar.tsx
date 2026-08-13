@@ -1,24 +1,33 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getAvatarImage, AvatarResolutionOptions } from "@/lib/avatarResolver";
 
 interface LiveHolographicAvatarProps {
   name?: string;
   role?: string;
   theme?: "hub" | "oversight" | "admin" | "cyan" | "gold" | "emerald" | "indigo";
+  gender?: "male" | "female" | "auto" | "custom";
+  customPhotoUrl?: string;
+  onCustomPhotoUpload?: (url: string) => void;
 }
 
 export default function LiveHolographicAvatar({
   name = "TANISHQ VASWANI",
   role = "SOVEREIGN OPERATOR",
   theme = "cyan",
+  gender = "auto",
+  customPhotoUrl,
+  onCustomPhotoUpload,
 }: LiveHolographicAvatarProps) {
   const [expression, setExpression] = useState<"wink" | "smile">("wink");
   const [isScanning, setIsScanning] = useState(false);
   const [holoGlow, setHoloGlow] = useState(true);
   const [headTilt, setHeadTilt] = useState(false);
+  const [selectedGender, setSelectedGender] = useState<"male" | "female" | "auto" | "custom">(gender);
+  const [uploadedPhoto, setUploadedPhoto] = useState<string | undefined>(customPhotoUrl);
 
-  // Auto loop expression animations (winking and head tilting like Snapchat Bitmoji / Apple Memoji)
+  // Auto loop expression animations
   useEffect(() => {
     const interval = setInterval(() => {
       setExpression((prev) => (prev === "wink" ? "smile" : "wink"));
@@ -26,6 +35,12 @@ export default function LiveHolographicAvatar({
     }, 3500);
     return () => clearInterval(interval);
   }, []);
+
+  const avatarInfo = getAvatarImage(expression, {
+    name,
+    gender: selectedGender,
+    customPhotoUrl: uploadedPhoto,
+  });
 
   const themeConfig = {
     cyan: {
@@ -91,6 +106,19 @@ export default function LiveHolographicAvatar({
     setTimeout(() => setIsScanning(false), 2000);
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const url = event.target?.result as string;
+        setUploadedPhoto(url);
+        if (onCustomPhotoUpload) onCustomPhotoUpload(url);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="relative flex flex-col items-center justify-center p-3 rounded-2xl bg-black/70 border border-white/10 overflow-hidden font-mono select-none">
       {/* Background Holographic Aura Grid */}
@@ -123,37 +151,80 @@ export default function LiveHolographicAvatar({
           </>
         )}
 
-        {/* 3D Memoji Avatar Image Frame with Smooth Expressions & Tilting */}
+        {/* Avatar Frame with Smooth Expressions & Tilting */}
         <div
-          className="w-32 h-32 rounded-full overflow-hidden border-2 border-white/30 shadow-2xl relative z-10 transition-transform duration-500 ease-out"
+          className="w-32 h-32 rounded-full overflow-hidden border-2 border-white/30 shadow-2xl relative z-10 transition-transform duration-500 ease-out bg-slate-950"
           style={{
             transform: headTilt ? "rotate(-4deg) scale(1.02)" : "rotate(3deg) scale(1)",
           }}
         >
           <img
-            src={expression === "wink" ? "/avatars/memoji_wink.jpg" : "/avatars/memoji_smile.jpg"}
-            alt="3D Memoji Avatar"
+            src={avatarInfo.src}
+            alt="3D Avatar"
             className="w-full h-full object-cover transition-opacity duration-300"
           />
 
-          {/* Dynamic Expression Emoji Badge Overlay */}
-          <div className="absolute bottom-1 right-1 bg-black/80 backdrop-blur-md border border-white/20 px-1.5 py-0.5 rounded-full text-xs shadow-lg animate-pulse">
-            {expression === "wink" ? "😉" : "😊"}
+          {/* Dynamic Expression Badge Overlay */}
+          <div className="absolute bottom-1 right-1 bg-black/80 backdrop-blur-md border border-white/20 px-1.5 py-0.5 rounded-full text-xs shadow-lg">
+            {uploadedPhoto ? "🖼️" : avatarInfo.resolvedGender === "female" ? (expression === "wink" ? "😉" : "😊") : (expression === "wink" ? "😉" : "😊")}
           </div>
         </div>
       </div>
 
-      {/* Personnel Name & Role Header */}
+      {/* Personnel Name & Gender Badge */}
       <div className="text-center mt-1 z-10">
         <div className="text-[10px] font-bold text-white tracking-widest font-sans uppercase flex items-center justify-center space-x-1">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
           <span>{name}</span>
         </div>
-        <div className="text-[9px] text-slate-400 font-mono mt-0.5">{role}</div>
+        <div className="text-[9px] text-slate-400 font-mono mt-0.5 flex items-center justify-center space-x-1">
+          <span>{role}</span>
+          <span className="text-slate-600">·</span>
+          <span className="text-cyan-300 font-bold uppercase">{uploadedPhoto ? "CUSTOM PHOTO" : avatarInfo.resolvedGender}</span>
+        </div>
       </div>
 
-      {/* Interactive Avatar Controls */}
-      <div className="flex gap-1.5 mt-2.5 z-10">
+      {/* Gender & Custom Photo Controls */}
+      <div className="flex items-center gap-1 mt-2 z-10">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setUploadedPhoto(undefined);
+            setSelectedGender("male");
+          }}
+          className={`px-2 py-0.5 rounded text-[9px] font-bold border transition ${
+            !uploadedPhoto && avatarInfo.resolvedGender === "male" ? themeConfig.badgeBg : "bg-white/5 border-white/10 text-slate-400 hover:text-white"
+          }`}
+        >
+          👨 Male
+        </button>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setUploadedPhoto(undefined);
+            setSelectedGender("female");
+          }}
+          className={`px-2 py-0.5 rounded text-[9px] font-bold border transition ${
+            !uploadedPhoto && avatarInfo.resolvedGender === "female" ? themeConfig.badgeBg : "bg-white/5 border-white/10 text-slate-400 hover:text-white"
+          }`}
+        >
+          👩 Female
+        </button>
+
+        <label
+          onClick={(e) => e.stopPropagation()}
+          className={`px-2 py-0.5 rounded text-[9px] font-bold border cursor-pointer transition ${
+            uploadedPhoto ? themeConfig.badgeBg : "bg-white/5 border-white/10 text-slate-400 hover:text-white"
+          }`}
+        >
+          📷 Photo
+          <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+        </label>
+      </div>
+
+      {/* Interactive Expression Controls */}
+      <div className="flex gap-1.5 mt-2 z-10">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -185,16 +256,6 @@ export default function LiveHolographicAvatar({
           }`}
         >
           🛡️ Scan
-        </button>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setHoloGlow(!holoGlow);
-          }}
-          className="px-2 py-1 rounded text-[9px] font-bold bg-white/5 border border-white/10 text-slate-400 hover:text-white transition"
-        >
-          ⚡ Holo
         </button>
       </div>
     </div>
