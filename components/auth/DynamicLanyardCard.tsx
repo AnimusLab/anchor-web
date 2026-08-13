@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck, QrCode, Layers } from "lucide-react";
+import { ShieldCheck, QrCode } from "lucide-react";
 
 export interface LanyardCardData {
   name: string;
@@ -27,15 +27,15 @@ export default function DynamicLanyardCard({
 }: DynamicLanyardCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
-  // Role-Specific Spatial UI Color Mapping
+  // Role-Specific Theme Mapping
   const themeConfig = {
     hub: {
       accentGlow: "shadow-[0_0_50px_rgba(99,102,241,0.35)]",
       borderColor: "border-indigo-400/40",
       accentText: "text-indigo-300",
       badgeBg: "bg-indigo-500/20 border-indigo-400/50 text-indigo-300",
-      headerOrg: "ANIMUSLAB MESH",
       headerSub: "SOVEREIGN CLEARANCE NODE",
+      headerOrg: "ANIMUSLAB MESH",
       barcodeColor: "bg-indigo-400",
     },
     oversight: {
@@ -43,8 +43,8 @@ export default function DynamicLanyardCard({
       borderColor: "border-amber-400/40",
       accentText: "text-amber-300",
       badgeBg: "bg-amber-500/20 border-amber-400/50 text-amber-300",
-      headerOrg: "STATUTORY AGENCY",
       headerSub: "REGULATORY OVERSIGHT NODE",
+      headerOrg: "STATUTORY AGENCY",
       barcodeColor: "bg-amber-400",
     },
     admin: {
@@ -52,8 +52,8 @@ export default function DynamicLanyardCard({
       borderColor: "border-rose-400/40",
       accentText: "text-rose-300",
       badgeBg: "bg-rose-500/20 border-rose-400/50 text-rose-300",
-      headerOrg: "ANIMUSLAB INFRA",
       headerSub: "ROOT CONTROL PLANE NODE",
+      headerOrg: "ANIMUSLAB INFRA",
       barcodeColor: "bg-rose-500",
     },
   }[portalTheme];
@@ -61,7 +61,7 @@ export default function DynamicLanyardCard({
   const displayName = data.name || (data.email ? data.email.split("@")[0].toUpperCase() : "PERSONNEL NAME");
   const displayOrg = data.orgName || themeConfig.headerOrg;
   const displayHub = data.hubId ? data.hubId.toUpperCase() : "SILO_PENDING";
-  const displayClearanceId = data.clearanceId || "ID_PENDING";
+  const displayClearanceId = data.clearanceId ? data.clearanceId.toUpperCase() : "ID_PENDING";
   
   // Neutral initial role state when user hasn't filled form/authenticated
   const isInputted = Boolean(data.name || data.email || data.clearanceId);
@@ -73,11 +73,11 @@ export default function DynamicLanyardCard({
 
   return (
     <div
-      className="w-full max-w-[400px] h-[520px] relative z-10 cursor-pointer select-none group"
+      className="w-full max-w-[420px] h-[520px] relative z-10 cursor-pointer select-none group"
       onClick={() => setIsFlipped(!isFlipped)}
       style={{ perspective: "1200px" }}
     >
-      {/* 3D Flip & Subtle Weightless Floating Container */}
+      {/* 3D Flip Container with Soft Floating Hover */}
       <div
         className="w-full h-full relative transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-[1.02] group-hover:-translate-y-1.5"
         style={{
@@ -85,12 +85,12 @@ export default function DynamicLanyardCard({
           transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
         }}
       >
-        {/* ================= BADGE FRONT SIDE (SPACIOUS HIGH-CONTRAST SPATIAL UI) ================= */}
+        {/* ================= BADGE FRONT SIDE (CLEAN, SPACIOUS & HIGH-CONTRAST) ================= */}
         <div
           className={`absolute inset-0 w-full h-full rounded-3xl backdrop-blur-2xl bg-[#090d16]/90 border-2 ${themeConfig.borderColor} p-8 flex flex-col justify-between overflow-hidden font-mono text-slate-100 ${themeConfig.accentGlow}`}
           style={{ backfaceVisibility: "hidden" }}
         >
-          {/* Subtle Spatial Mesh Overlay */}
+          {/* Subtle Grid Overlay */}
           <div
             className="absolute inset-0 pointer-events-none opacity-15"
             style={{
@@ -172,11 +172,10 @@ export default function DynamicLanyardCard({
               <ShieldCheck className="w-4 h-4" />
               <span>AUTHENTICATED BY ANIMUSLAB</span>
             </span>
-            <span className="text-slate-400 font-bold">ED25519</span>
           </div>
         </div>
 
-        {/* ================= BADGE BACK SIDE (NORMAL BARCODE & SEAL) ================= */}
+        {/* ================= BADGE BACK SIDE (EXACT SPECIFICATION) ================= */}
         <div
           className={`absolute inset-0 w-full h-full rounded-3xl backdrop-blur-2xl bg-[#090d16]/90 border-2 ${themeConfig.borderColor} p-8 flex flex-col justify-between overflow-hidden font-mono text-slate-100 ${themeConfig.accentGlow}`}
           style={{
@@ -206,7 +205,7 @@ export default function DynamicLanyardCard({
             <QrCode className={`w-6 h-6 ${themeConfig.accentText}`} />
           </div>
 
-          {/* Machine-Readable Cryptographic Barcode Area */}
+          {/* Middle Section: Machine-Readable Cryptographic Barcode */}
           <div className="bg-black/60 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-center space-y-3.5 z-10 shadow-2xl">
             <div className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
               MACHINE-READABLE CRYPTOGRAPHIC BARCODE
@@ -228,21 +227,21 @@ export default function DynamicLanyardCard({
             </div>
           </div>
 
-          {/* Legal Sign-Off Statement */}
+          {/* Security Mandate Section */}
           <div className="bg-black/60 backdrop-blur-xl border border-white/20 rounded-2xl p-4 text-[10px] text-slate-300 leading-relaxed z-10">
             <div className="text-white font-bold mb-1 uppercase tracking-wider">
-              Cryptographic Security Mandate:
+              CRYPTOGRAPHIC SECURITY MANDATE:
             </div>
             This spatial credential is bound to the verified local private key layer. Any memory modification triggers immediate network revocation.
           </div>
 
-          {/* Footer Seal */}
+          {/* Bottom Section */}
           <div className="pt-3 border-t border-white/15 flex items-center justify-between text-[11px] text-slate-400 z-10">
             <span className={`flex items-center gap-1.5 ${themeConfig.accentText} font-bold`}>
               <ShieldCheck className="w-4 h-4" />
               <span>AUTHENTICATED BY ANIMUSLAB</span>
             </span>
-            <span>BACK SIDE</span>
+            <span className="font-bold text-slate-400 uppercase">BACK SIDE</span>
           </div>
         </div>
       </div>

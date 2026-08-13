@@ -18,6 +18,11 @@ import {
 export default function OversightLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
+  // If on login page, render full screen gateway without sidebar
+  if (pathname === "/oversight/login") {
+    return <>{children}</>;
+  }
+
   return (
     <div className="flex h-screen bg-[#03050a] text-slate-100 font-mono text-xs overflow-hidden relative">
       <SolarSystemBackground />
@@ -42,7 +47,7 @@ export default function OversightLayout({ children }: { children: React.ReactNod
 
           <div className="mx-4 my-3.5 p-3 glass-badge text-[10px]">
             <span className="text-slate-400 block uppercase">JURISDICTION CLEARANCE</span>
-            <span className="text-amber-400 font-bold tracking-wide">AUD-RBI-IN-009</span>
+            <span className="text-amber-400 font-bold tracking-wide">AUD-ANM-2603</span>
           </div>
 
           {/* Nav Section 1: Statutory Oversight */}
