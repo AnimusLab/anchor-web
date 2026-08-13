@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Sparkles, Eye, Layers, Sliders, Droplet, Sun, ShieldCheck, Key, Lock, QrCode, RotateCw, Activity, Cpu } from "lucide-react";
+import LiveHolographicAvatar from "@/components/auth/LiveHolographicAvatar";
 
 export default function DesignSamplesPage() {
   const [activeTab, setActiveTab] = useState<string>("all");
@@ -23,7 +24,7 @@ export default function DesignSamplesPage() {
           Sovereign Credential ID Card Showcase
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Explore the AnimusLab Sovereign Identity Card rendered across 5 distinct design paradigms: Glassmorphism, Skeuomorphism, Neomorphism, Liquid Glass, and Spatial UI (VisionOS).
+          Explore the AnimusLab Sovereign Identity Card rendered across 5 distinct design paradigms. Click any card to flip it and experience the <span className="text-cyan-300 font-bold">Live Waving Holographic Avatar</span> on the back side!
         </p>
 
         {/* Filter Tabs */}
@@ -62,17 +63,17 @@ export default function DesignSamplesPage() {
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-mono">
-              Translucent frosted glass material with backdrop blur, delicate white border strokes, colorful background orbs, and vivid status indicators.
+              Translucent frosted glass material with backdrop blur, delicate white border strokes, and live waving holographic avatar on the back side.
             </p>
 
             {/* Glassmorphism Container Backdrop */}
-            <div className="relative p-8 rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 overflow-hidden flex items-center justify-center min-h-[500px] shadow-2xl">
+            <div className="relative p-8 rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 overflow-hidden flex items-center justify-center min-h-[520px] shadow-2xl">
               <div className="absolute w-56 h-56 rounded-full bg-cyan-400 blur-3xl top-4 left-4 opacity-70 animate-pulse"></div>
               <div className="absolute w-48 h-48 rounded-full bg-pink-500 blur-3xl bottom-4 right-4 opacity-60"></div>
 
               {/* Glassmorphism ID Card Component */}
               <div
-                className="relative w-full max-w-[340px] h-[440px] cursor-pointer select-none group"
+                className="relative w-full max-w-[340px] h-[460px] cursor-pointer select-none group"
                 onClick={() => toggleFlip("glass")}
                 style={{ perspective: "1000px" }}
               >
@@ -83,7 +84,7 @@ export default function DesignSamplesPage() {
                     transform: flippedCards["glass"] ? "rotateY(180deg)" : "rotateY(0deg)",
                   }}
                 >
-                  {/* FRONT */}
+                  {/* FRONT VIEW */}
                   <div
                     className="absolute inset-0 w-full h-full p-6 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/25 shadow-2xl flex flex-col justify-between overflow-hidden font-mono text-xs"
                     style={{ backfaceVisibility: "hidden" }}
@@ -100,7 +101,7 @@ export default function DesignSamplesPage() {
 
                     <div className="bg-black/30 backdrop-blur-md border border-white/15 rounded-xl p-4 flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-cyan-400 to-indigo-500 p-0.5 flex-shrink-0 shadow-lg">
-                        <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center font-black text-sm text-cyan-300">
+                        <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center font-black text-sm text-cyan-300 font-sans">
                           TV
                         </div>
                       </div>
@@ -126,34 +127,28 @@ export default function DesignSamplesPage() {
                         KEY_FP: sha256:b49d424a21b414...
                       </div>
                       <div className="flex justify-between items-center text-white/70 pt-1">
-                        <span>Click to Flip Card</span>
+                        <span>Click to Flip for Live Avatar</span>
                         <span>GLASS V6</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* BACK */}
+                  {/* BACK VIEW - LIVE WAVING AVATAR */}
                   <div
-                    className="absolute inset-0 w-full h-full p-6 rounded-2xl bg-black/40 backdrop-blur-2xl border border-white/25 shadow-2xl flex flex-col justify-between font-mono text-xs"
+                    className="absolute inset-0 w-full h-full p-5 rounded-2xl bg-black/50 backdrop-blur-2xl border border-white/25 shadow-2xl flex flex-col justify-between font-mono text-xs"
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                   >
-                    <div className="flex justify-between items-center border-b border-white/20 pb-3">
-                      <span className="text-xs font-bold text-cyan-300 font-sans">INSTITUTIONAL SEAL</span>
-                      <QrCode className="w-5 h-5 text-cyan-300" />
+                    <div className="flex justify-between items-center border-b border-white/20 pb-2">
+                      <span className="text-[10px] font-bold text-cyan-300 font-sans uppercase">LIVE HOLOGRAPHIC AVATAR</span>
+                      <QrCode className="w-4 h-4 text-cyan-300" />
                     </div>
 
-                    <div className="bg-black/50 p-4 rounded-xl border border-white/15 text-center space-y-2">
-                      <div className="text-[9px] text-white/70 uppercase">AUTHENTICATION BARCODE</div>
-                      <div className="flex justify-center items-center h-10 space-x-1 py-1 bg-black/80 rounded border border-white/10">
-                        {[4, 2, 6, 1, 8, 3, 5, 2, 7, 4, 2, 6, 3, 8].map((w, idx) => (
-                          <div key={idx} className="h-full bg-cyan-400" style={{ width: `${w * 1.5}px` }} />
-                        ))}
-                      </div>
-                      <div className="text-[10px] text-emerald-300 font-bold">AN-SYS-SOL01-2026</div>
-                    </div>
+                    {/* LIVE WAVING AVATAR RIG */}
+                    <LiveHolographicAvatar name="TANISHQ VASWANI" role="SOVEREIGN OPERATOR" theme="cyan" />
 
-                    <div className="text-[9px] text-white/70 leading-relaxed border-t border-white/20 pt-3">
-                      This glassmorphic session token is cryptographically signed by AnimusLab Mesh Root Authority.
+                    <div className="border-t border-white/20 pt-2 flex items-center justify-between text-[9px] text-white/70">
+                      <span>AN-SYS-SOL01-2026</span>
+                      <span className="text-emerald-300 font-bold">👋 LIVE AVATAR ACTIVE</span>
                     </div>
                   </div>
                 </div>
@@ -177,13 +172,13 @@ export default function DesignSamplesPage() {
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-mono">
-              Tactile 3D analog realism. Metallic bevels, leather textures, metallic rivet pins, glowing analog LED indicators, and engraved foil text.
+              Tactile 3D analog realism with metallic bevels, engraved borders, and live gestured avatar on the back side.
             </p>
 
             {/* Skeuomorphism Container Backdrop */}
-            <div className="p-8 rounded-3xl bg-[#14161d] border border-slate-800 flex items-center justify-center min-h-[500px] shadow-2xl">
+            <div className="p-8 rounded-3xl bg-[#14161d] border border-slate-800 flex items-center justify-center min-h-[520px] shadow-2xl">
               <div
-                className="relative w-full max-w-[340px] h-[440px] cursor-pointer select-none group"
+                className="relative w-full max-w-[340px] h-[460px] cursor-pointer select-none group"
                 onClick={() => toggleFlip("skeuo")}
                 style={{ perspective: "1000px" }}
               >
@@ -194,14 +189,11 @@ export default function DesignSamplesPage() {
                     transform: flippedCards["skeuo"] ? "rotateY(180deg)" : "rotateY(0deg)",
                   }}
                 >
-                  {/* FRONT */}
+                  {/* FRONT VIEW */}
                   <div
                     className="absolute inset-0 w-full h-full p-6 rounded-2xl bg-gradient-to-b from-[#2e313a] via-[#21232b] to-[#16171d] border border-[#484d5e] shadow-[0_15px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.3)] flex flex-col justify-between font-mono text-xs"
                     style={{ backfaceVisibility: "hidden" }}
                   >
-                    {/* Metallic Top Clasp Pin */}
-                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-2 rounded-full bg-gradient-to-r from-slate-400 via-slate-200 to-slate-500 border border-slate-600 shadow-md"></div>
-
                     <div className="flex justify-between items-center border-b border-[#3c404f] pb-3 pt-2">
                       <div>
                         <span className="text-[9px] text-[#a0a5b5] font-bold block uppercase tracking-widest drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
@@ -209,12 +201,11 @@ export default function DesignSamplesPage() {
                         </span>
                         <span className="text-xs font-black text-amber-400 font-sans tracking-wide">ANIMUSLAB HEAVY</span>
                       </div>
-                      {/* Metallic LED Glow */}
                       <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-b from-amber-300 to-amber-600 border border-amber-800 shadow-[0_0_10px_rgba(245,158,11,0.9)]"></div>
                     </div>
 
                     <div className="bg-[#101217] p-4 rounded-xl border border-[#2c303c] shadow-[inset_0_2px_6px_rgba(0,0,0,0.9)] flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-b from-[#3a3e4b] to-[#1c1e25] border border-[#52586a] flex items-center justify-center font-black text-sm text-amber-400 shadow-md">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-b from-[#3a3e4b] to-[#1c1e25] border border-[#52586a] flex items-center justify-center font-black text-sm text-amber-400 font-sans shadow-md">
                         TV
                       </div>
                       <div>
@@ -239,34 +230,28 @@ export default function DesignSamplesPage() {
                         KEY_FP: ed25519:8f2a9910b42c00a1...
                       </div>
                       <div className="flex justify-between items-center text-slate-400">
-                        <span>Tactile Push to Flip</span>
+                        <span>Click to Flip for Live Avatar</span>
                         <span>SKEUO V6</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* BACK */}
+                  {/* BACK VIEW - LIVE WAVING AVATAR */}
                   <div
-                    className="absolute inset-0 w-full h-full p-6 rounded-2xl bg-gradient-to-b from-[#21232b] via-[#181920] to-[#0f1015] border border-[#484d5e] shadow-[0_15px_30px_rgba(0,0,0,0.9)] flex flex-col justify-between font-mono text-xs"
+                    className="absolute inset-0 w-full h-full p-5 rounded-2xl bg-gradient-to-b from-[#21232b] via-[#181920] to-[#0f1015] border border-[#484d5e] shadow-[0_15px_30px_rgba(0,0,0,0.9)] flex flex-col justify-between font-mono text-xs"
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                   >
-                    <div className="flex justify-between items-center border-b border-[#3c404f] pb-3">
-                      <span className="text-xs font-bold text-amber-400 font-sans uppercase">ANALOG HARDWARE SECURITY</span>
-                      <ShieldCheck className="w-5 h-5 text-amber-400" />
+                    <div className="flex justify-between items-center border-b border-[#3c404f] pb-2">
+                      <span className="text-[10px] font-bold text-amber-400 font-sans uppercase">ANALOG LIVE AVATAR RIG</span>
+                      <ShieldCheck className="w-4 h-4 text-amber-400" />
                     </div>
 
-                    <div className="bg-[#101217] p-4 rounded-xl border border-[#2c303c] shadow-[inset_0_2px_6px_rgba(0,0,0,0.9)] text-center space-y-2">
-                      <div className="text-[9px] text-slate-400 uppercase tracking-widest">ANALOG ENGRAVED BARCODE</div>
-                      <div className="flex justify-center items-center h-10 space-x-1 py-1 bg-[#050608] rounded border border-white/5">
-                        {[5, 2, 7, 1, 6, 3, 4, 2, 8, 3, 2, 6, 4, 7].map((w, idx) => (
-                          <div key={idx} className="h-full bg-amber-400" style={{ width: `${w * 1.5}px` }} />
-                        ))}
-                      </div>
-                      <div className="text-[10px] text-amber-400 font-bold">AN-SKEUO-BARCODE-2026</div>
-                    </div>
+                    {/* LIVE WAVING AVATAR RIG */}
+                    <LiveHolographicAvatar name="TANISHQ VASWANI" role="ANALOG SECURITY OFFICER" theme="gold" />
 
-                    <div className="text-[9px] text-slate-400 leading-relaxed border-t border-[#3c404f] pt-3">
-                      Tactile hardware credential engraved for high-security analog control nodes.
+                    <div className="border-t border-[#3c404f] pt-2 flex items-center justify-between text-[9px] text-slate-400">
+                      <span>AN-SKEUO-BARCODE-2026</span>
+                      <span className="text-amber-400 font-bold">👋 LIVE AVATAR ACTIVE</span>
                     </div>
                   </div>
                 </div>
@@ -290,13 +275,13 @@ export default function DesignSamplesPage() {
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-mono">
-              Soft extruded UI. The card and inner components appear to be molded directly out of the dark surface material using convex/concave drop shadows.
+              Soft molded UI crafted out of the dark surface with live holographic avatar on the back side.
             </p>
 
             {/* Neomorphism Container Backdrop */}
-            <div className="p-8 rounded-3xl bg-[#0e1726] flex items-center justify-center min-h-[500px] shadow-2xl">
+            <div className="p-8 rounded-3xl bg-[#0e1726] flex items-center justify-center min-h-[520px] shadow-2xl">
               <div
-                className="relative w-full max-w-[340px] h-[440px] cursor-pointer select-none group"
+                className="relative w-full max-w-[340px] h-[460px] cursor-pointer select-none group"
                 onClick={() => toggleFlip("neo")}
                 style={{ perspective: "1000px" }}
               >
@@ -307,7 +292,7 @@ export default function DesignSamplesPage() {
                     transform: flippedCards["neo"] ? "rotateY(180deg)" : "rotateY(0deg)",
                   }}
                 >
-                  {/* FRONT */}
+                  {/* FRONT VIEW */}
                   <div
                     className="absolute inset-0 w-full h-full p-6 rounded-3xl bg-[#0e1726] flex flex-col justify-between font-mono text-xs"
                     style={{
@@ -327,13 +312,12 @@ export default function DesignSamplesPage() {
                       </span>
                     </div>
 
-                    {/* Inset Molded Profile Block */}
                     <div
                       className="p-4 rounded-2xl bg-[#0e1726] flex items-center gap-3"
                       style={{ boxShadow: "inset 4px 4px 8px #060a11, inset -4px -4px 8px #16243b" }}
                     >
                       <div
-                        className="w-12 h-12 rounded-xl bg-[#0e1726] flex items-center justify-center font-black text-sm text-emerald-400"
+                        className="w-12 h-12 rounded-xl bg-[#0e1726] flex items-center justify-center font-black text-sm text-emerald-400 font-sans"
                         style={{ boxShadow: "3px 3px 6px #060a11, -3px -3px 6px #16243b" }}
                       >
                         TV
@@ -366,41 +350,32 @@ export default function DesignSamplesPage() {
                         KEY_FP: sha256:b49d424a21b414...
                       </div>
                       <div className="flex justify-between items-center text-slate-400">
-                        <span>Soft Molded Flip</span>
+                        <span>Click to Flip for Live Avatar</span>
                         <span>NEO V6</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* BACK */}
+                  {/* BACK VIEW - LIVE WAVING AVATAR */}
                   <div
-                    className="absolute inset-0 w-full h-full p-6 rounded-3xl bg-[#0e1726] flex flex-col justify-between font-mono text-xs"
+                    className="absolute inset-0 w-full h-full p-5 rounded-3xl bg-[#0e1726] flex flex-col justify-between font-mono text-xs"
                     style={{
                       backfaceVisibility: "hidden",
                       transform: "rotateY(180deg)",
                       boxShadow: "12px 12px 24px #060a11, -12px -12px 24px #16243b",
                     }}
                   >
-                    <div className="flex justify-between items-center pb-3 border-b border-slate-800/60">
-                      <span className="text-xs font-bold text-emerald-400 font-sans">NEOMORPHIC AUDIT SEAL</span>
-                      <Cpu className="w-5 h-5 text-emerald-400" />
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-800/60">
+                      <span className="text-[10px] font-bold text-emerald-400 font-sans uppercase">NEOMORPHIC LIVE AVATAR RIG</span>
+                      <Cpu className="w-4 h-4 text-emerald-400" />
                     </div>
 
-                    <div
-                      className="p-4 rounded-2xl bg-[#0e1726] text-center space-y-2"
-                      style={{ boxShadow: "inset 4px 4px 8px #060a11, inset -4px -4px 8px #16243b" }}
-                    >
-                      <div className="text-[9px] text-slate-400 uppercase tracking-widest">SOFT BARCODE PATTERN</div>
-                      <div className="flex justify-center items-center h-10 space-x-1 py-1 bg-[#0a101b] rounded-lg">
-                        {[3, 1, 6, 2, 7, 3, 5, 2, 8, 4, 1, 6, 3, 5].map((w, idx) => (
-                          <div key={idx} className="h-full bg-emerald-400" style={{ width: `${w * 1.5}px` }} />
-                        ))}
-                      </div>
-                      <div className="text-[10px] text-emerald-400 font-bold">AN-NEO-MATRIX-2026</div>
-                    </div>
+                    {/* LIVE WAVING AVATAR RIG */}
+                    <LiveHolographicAvatar name="TANISHQ VASWANI" role="MOLDED SECURITY OFFICER" theme="emerald" />
 
-                    <div className="text-[9px] text-slate-400 leading-relaxed pt-2">
-                      Molded UI surface structure offering zero specular glare and tactile soft shadow depth.
+                    <div className="pt-2 flex items-center justify-between text-[9px] text-slate-400">
+                      <span>AN-NEO-MATRIX-2026</span>
+                      <span className="text-emerald-400 font-bold">👋 LIVE AVATAR ACTIVE</span>
                     </div>
                   </div>
                 </div>
@@ -424,16 +399,16 @@ export default function DesignSamplesPage() {
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-mono">
-              Organic fluid glass with surface tension highlights, wet cyan/emerald fluid aura, 3D flip functionality, and refraction gloss lines.
+              Organic fluid glass with surface tension highlights and live waving holographic avatar on the back side.
             </p>
 
             {/* Liquid Glass Container Backdrop */}
-            <div className="relative p-8 rounded-3xl bg-[#040914] overflow-hidden flex items-center justify-center min-h-[500px] shadow-2xl">
+            <div className="relative p-8 rounded-3xl bg-[#040914] overflow-hidden flex items-center justify-center min-h-[520px] shadow-2xl">
               <div className="absolute w-64 h-64 rounded-full bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 blur-3xl opacity-40 animate-pulse"></div>
 
               {/* Liquid Glass ID Card */}
               <div
-                className="relative w-full max-w-[340px] h-[440px] cursor-pointer select-none group"
+                className="relative w-full max-w-[340px] h-[460px] cursor-pointer select-none group"
                 onClick={() => toggleFlip("liquid")}
                 style={{ perspective: "1000px" }}
               >
@@ -444,7 +419,7 @@ export default function DesignSamplesPage() {
                     transform: flippedCards["liquid"] ? "rotateY(180deg)" : "rotateY(0deg)",
                   }}
                 >
-                  {/* FRONT */}
+                  {/* FRONT VIEW */}
                   <div
                     className="absolute inset-0 w-full h-full p-6 rounded-3xl bg-cyan-950/30 backdrop-blur-2xl border border-cyan-400/40 shadow-[0_20px_50px_rgba(6,182,212,0.25),inset_0_2px_4px_rgba(255,255,255,0.4)] flex flex-col justify-between font-mono text-xs"
                     style={{ backfaceVisibility: "hidden" }}
@@ -460,7 +435,7 @@ export default function DesignSamplesPage() {
                     </div>
 
                     <div className="bg-cyan-950/60 p-4 rounded-2xl border border-cyan-400/30 backdrop-blur-md flex items-center gap-3 shadow-inner">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-500 flex items-center justify-center font-black text-sm text-slate-950 shadow-md">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-500 flex items-center justify-center font-black text-sm text-slate-950 font-sans shadow-md">
                         TV
                       </div>
                       <div>
@@ -485,34 +460,28 @@ export default function DesignSamplesPage() {
                         KEY_FP: sha256:b49d424a21b414...
                       </div>
                       <div className="flex justify-between items-center text-cyan-300">
-                        <span>Fluid Motion Flip</span>
+                        <span>Click to Flip for Live Avatar</span>
                         <span>LIQUID V6</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* BACK */}
+                  {/* BACK VIEW - LIVE WAVING AVATAR */}
                   <div
-                    className="absolute inset-0 w-full h-full p-6 rounded-3xl bg-cyan-950/40 backdrop-blur-2xl border border-cyan-400/40 shadow-[0_20px_50px_rgba(6,182,212,0.3)] flex flex-col justify-between font-mono text-xs"
+                    className="absolute inset-0 w-full h-full p-5 rounded-3xl bg-cyan-950/40 backdrop-blur-2xl border border-cyan-400/40 shadow-[0_20px_50px_rgba(6,182,212,0.3)] flex flex-col justify-between font-mono text-xs"
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                   >
-                    <div className="flex justify-between items-center border-b border-cyan-400/20 pb-3">
-                      <span className="text-xs font-bold text-cyan-300 font-sans">LIQUID WATER SEAL</span>
-                      <ShieldCheck className="w-5 h-5 text-cyan-300" />
+                    <div className="flex justify-between items-center border-b border-cyan-400/20 pb-2">
+                      <span className="text-[10px] font-bold text-cyan-300 font-sans uppercase">FLUID LIVE AVATAR RIG</span>
+                      <ShieldCheck className="w-4 h-4 text-cyan-300" />
                     </div>
 
-                    <div className="bg-cyan-950/70 p-4 rounded-2xl border border-cyan-400/30 text-center space-y-2">
-                      <div className="text-[9px] text-cyan-300/80 uppercase tracking-widest">FLUID REFRACTION BARCODE</div>
-                      <div className="flex justify-center items-center h-10 space-x-1 py-1 bg-black/60 rounded-xl">
-                        {[4, 2, 7, 1, 5, 3, 6, 2, 8, 4, 2, 5, 3, 7].map((w, idx) => (
-                          <div key={idx} className="h-full bg-cyan-400" style={{ width: `${w * 1.5}px` }} />
-                        ))}
-                      </div>
-                      <div className="text-[10px] text-cyan-300 font-bold">AN-LIQUID-FLUID-2026</div>
-                    </div>
+                    {/* LIVE WAVING AVATAR RIG */}
+                    <LiveHolographicAvatar name="TANISHQ VASWANI" role="FLUID SECURITY OFFICER" theme="cyan" />
 
-                    <div className="text-[9px] text-cyan-200/80 leading-relaxed border-t border-cyan-400/20 pt-3">
-                      High surface tension gloss highlights create a wet, organic liquid glass security seal.
+                    <div className="border-t border-cyan-400/20 pt-2 flex items-center justify-between text-[9px] text-cyan-300">
+                      <span>AN-LIQUID-FLUID-2026</span>
+                      <span className="text-cyan-300 font-bold">👋 LIVE AVATAR ACTIVE</span>
                     </div>
                   </div>
                 </div>
@@ -536,11 +505,11 @@ export default function DesignSamplesPage() {
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-mono">
-              3D depth hierarchy with multi-layered floating translucent spatial window panels, active focus ring indicators, and floating background spatial nodes.
+              3D depth hierarchy with multi-layered floating translucent spatial window panels and live waving holographic avatar on the back side.
             </p>
 
             {/* Spatial UI Container Backdrop */}
-            <div className="relative p-10 rounded-3xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 flex items-center justify-center min-h-[520px] overflow-hidden shadow-2xl">
+            <div className="relative p-10 rounded-3xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 flex items-center justify-center min-h-[540px] overflow-hidden shadow-2xl">
               <div className="absolute inset-0 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px] opacity-25"></div>
               <div className="absolute w-80 h-80 rounded-full bg-indigo-600/20 blur-3xl"></div>
 
@@ -551,7 +520,7 @@ export default function DesignSamplesPage() {
 
               {/* Spatial UI ID Card (Foreground Layer 02) */}
               <div
-                className="relative z-10 w-full max-w-[360px] h-[450px] cursor-pointer select-none group"
+                className="relative z-10 w-full max-w-[360px] h-[470px] cursor-pointer select-none group"
                 onClick={() => toggleFlip("spatial")}
                 style={{ perspective: "1000px" }}
               >
@@ -562,7 +531,7 @@ export default function DesignSamplesPage() {
                     transform: flippedCards["spatial"] ? "rotateY(180deg)" : "rotateY(0deg)",
                   }}
                 >
-                  {/* FRONT */}
+                  {/* FRONT VIEW */}
                   <div
                     className="absolute inset-0 w-full h-full p-6 rounded-3xl bg-slate-900/60 backdrop-blur-2xl border border-indigo-400/40 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_25px_rgba(99,102,241,0.25)] flex flex-col justify-between font-mono text-xs ring-2 ring-indigo-500/30"
                     style={{ backfaceVisibility: "hidden" }}
@@ -580,7 +549,7 @@ export default function DesignSamplesPage() {
                     </div>
 
                     <div className="bg-slate-950/80 p-4 rounded-2xl border border-white/10 flex items-center gap-3 shadow-xl">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center font-black text-sm text-indigo-300 shadow-inner">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center font-black text-sm text-indigo-300 font-sans shadow-inner">
                         TV
                       </div>
                       <div>
@@ -605,34 +574,28 @@ export default function DesignSamplesPage() {
                         KEY_FP: sha256:b49d424a21b414...
                       </div>
                       <div className="flex justify-between items-center text-slate-400">
-                        <span>Spatial 3D Flip</span>
+                        <span>Click to Flip for Live Avatar</span>
                         <span>VISIONOS V6</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* BACK */}
+                  {/* BACK VIEW - LIVE WAVING AVATAR */}
                   <div
-                    className="absolute inset-0 w-full h-full p-6 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-indigo-400/40 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] flex flex-col justify-between font-mono text-xs ring-2 ring-indigo-500/30"
+                    className="absolute inset-0 w-full h-full p-5 rounded-3xl bg-slate-900/80 backdrop-blur-2xl border border-indigo-400/40 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] flex flex-col justify-between font-mono text-xs ring-2 ring-indigo-500/30"
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                   >
-                    <div className="flex justify-between items-center border-b border-white/10 pb-3">
-                      <span className="text-xs font-bold text-indigo-300 font-sans">SPATIAL AUDIT REPOSITORY</span>
-                      <ShieldCheck className="w-5 h-5 text-indigo-400" />
+                    <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                      <span className="text-[10px] font-bold text-indigo-300 font-sans uppercase">SPATIAL LIVE AVATAR RIG</span>
+                      <ShieldCheck className="w-4 h-4 text-indigo-400" />
                     </div>
 
-                    <div className="bg-slate-950/90 p-4 rounded-2xl border border-indigo-500/30 text-center space-y-2">
-                      <div className="text-[9px] text-indigo-300 uppercase tracking-widest">3D SPATIAL MATRIX BARCODE</div>
-                      <div className="flex justify-center items-center h-10 space-x-1 py-1 bg-slate-950 rounded-xl">
-                        {[6, 2, 5, 1, 7, 3, 4, 2, 8, 3, 1, 6, 4, 5].map((w, idx) => (
-                          <div key={idx} className="h-full bg-indigo-400" style={{ width: `${w * 1.5}px` }} />
-                        ))}
-                      </div>
-                      <div className="text-[10px] text-indigo-300 font-bold">AN-SPATIAL-NODE-2026</div>
-                    </div>
+                    {/* LIVE WAVING AVATAR RIG */}
+                    <LiveHolographicAvatar name="TANISHQ VASWANI" role="SPATIAL SECURITY OFFICER" theme="indigo" />
 
-                    <div className="text-[9px] text-slate-400 leading-relaxed border-t border-white/10 pt-3">
-                      Spatial UI floating depth window layer with active focal plane tracking.
+                    <div className="border-t border-white/10 pt-2 flex items-center justify-between text-[9px] text-slate-400">
+                      <span>AN-SPATIAL-NODE-2026</span>
+                      <span className="text-indigo-300 font-bold">👋 LIVE AVATAR ACTIVE</span>
                     </div>
                   </div>
                 </div>
