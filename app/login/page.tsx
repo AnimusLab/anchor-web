@@ -82,7 +82,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex items-center space-x-3 text-xs font-mono">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
           <span className="text-slate-300 font-bold tracking-wider uppercase">
             SOVEREIGN CONTROL PLANE GATE
           </span>
@@ -90,9 +90,9 @@ export default function LoginPage() {
       </header>
 
       {/* Main Form & ID Card Container */}
-      <main className="z-20 max-w-7xl w-full mx-auto my-auto py-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center justify-items-center">
-        {/* Left Form (Spatial Glass Container) */}
-        <div className="lg:col-span-7 w-full max-w-xl bg-slate-900/65 backdrop-blur-2xl border border-white/15 p-8 md:p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] space-y-7">
+      <main className="z-20 max-w-7xl w-full mx-auto my-auto py-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center justify-items-center">
+        {/* Left Form Container (Tighter Spatial Glass) */}
+        <div className="lg:col-span-7 w-full max-w-xl bg-slate-900/75 backdrop-blur-2xl border border-white/20 p-8 md:p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.6)] space-y-6">
           <div>
             <div className="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/30 px-3.5 py-1.5 rounded-full text-xs font-mono text-indigo-300 mb-3">
               <Layers className="w-4 h-4 text-indigo-400" />
@@ -101,27 +101,9 @@ export default function LoginPage() {
             <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase font-sans">
               CRYPTOGRAPHIC ACCESS
             </h1>
-            <p className="text-sm text-slate-300 mt-2 leading-relaxed">
-              Verify your Ed25519 identity keys against the global registry node to activate your session.
+            <p className="text-sm text-slate-300 mt-2 leading-relaxed font-sans">
+              Verify your Ed25519 identity keys to activate your session.
             </p>
-          </div>
-
-          {/* Mode Switcher */}
-          <div className="flex bg-black/60 border border-white/10 p-1.5 rounded-2xl text-xs font-mono">
-            <button
-              type="button"
-              className="flex-1 py-2.5 rounded-xl font-bold bg-indigo-600 text-white shadow-lg flex items-center justify-center space-x-2 uppercase"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Sign In</span>
-            </button>
-            <Link
-              href="/demo"
-              className="flex-1 py-2.5 rounded-xl font-bold text-slate-400 hover:text-white flex items-center justify-center space-x-2 uppercase transition"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Sandbox Trial</span>
-            </Link>
           </div>
 
           {errorMsg && (
@@ -133,7 +115,7 @@ export default function LoginPage() {
           {/* Login Inputs Form */}
           <form onSubmit={handleLoginSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 font-mono">
+              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
                 Clearance ID <span className="text-indigo-400">*</span>
               </label>
               <input
@@ -141,13 +123,13 @@ export default function LoginPage() {
                 required
                 value={clearanceId}
                 onChange={(e) => setClearanceId(e.target.value)}
-                placeholder="e.g., EMG-ANM-2607"
-                className="w-full bg-black/60 border border-white/15 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition shadow-inner"
+                placeholder="EMG-ANM-2607"
+                className="w-full bg-black/60 border border-white/20 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-60 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition shadow-inner"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 font-mono">
+              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
                 Corporate Email <span className="text-indigo-400">*</span>
               </label>
               <input
@@ -155,13 +137,13 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g., tan@animuslab.dev"
-                className="w-full bg-black/60 border border-white/15 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition shadow-inner"
+                placeholder="name@company.com"
+                className="w-full bg-black/60 border border-white/20 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-60 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition shadow-inner"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 font-mono">
+              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
                 Organization Hub ID <span className="text-indigo-400">*</span>
               </label>
               <input
@@ -169,8 +151,8 @@ export default function LoginPage() {
                 required
                 value={hubId}
                 onChange={(e) => setHubId(e.target.value)}
-                placeholder="e.g., animuslab"
-                className="w-full bg-black/60 border border-white/15 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition shadow-inner"
+                placeholder="animuslab"
+                className="w-full bg-black/60 border border-white/20 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-60 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition shadow-inner"
               />
             </div>
 
@@ -185,7 +167,7 @@ export default function LoginPage() {
           </form>
 
           {/* Prominent Secondary Sandbox Button */}
-          <div className="pt-2 border-t border-white/10">
+          <div className="pt-3 border-t border-white/15">
             <button
               type="button"
               onClick={handleSandboxLaunch}
@@ -207,10 +189,8 @@ export default function LoginPage() {
               email: email,
               orgName: "ANIMUSLAB MESH",
               hubId: hubId,
-              clearanceId: clearanceId || "EMG-ANM-2607",
-              role: "ENTERPRISE MANAGER",
+              clearanceId: clearanceId,
               isVerified: Boolean(clearanceId && email),
-              fingerprint: clearanceId ? `sha256:${clearanceId.toLowerCase()}842...` : undefined,
             }}
           />
         </div>

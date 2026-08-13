@@ -81,7 +81,7 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="flex items-center space-x-3 text-xs font-mono">
-          <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-400 animate-ping" />
           <span className="text-slate-300 font-bold tracking-wider uppercase">
             ROOT AUTHORITY GATE
           </span>
@@ -89,9 +89,9 @@ export default function AdminLoginPage() {
       </header>
 
       {/* Main Form & ID Card Container */}
-      <main className="z-20 max-w-7xl w-full mx-auto my-auto py-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center justify-items-center">
+      <main className="z-20 max-w-7xl w-full mx-auto my-auto py-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center justify-items-center">
         {/* Left Form Container */}
-        <div className="lg:col-span-7 w-full max-w-xl bg-slate-900/65 backdrop-blur-2xl border border-white/15 p-8 md:p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] space-y-7">
+        <div className="lg:col-span-7 w-full max-w-xl bg-slate-900/75 backdrop-blur-2xl border border-white/20 p-8 md:p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.6)] space-y-6">
           <div>
             <div className="inline-flex items-center space-x-2 bg-rose-500/10 border border-rose-500/30 px-3.5 py-1.5 rounded-full text-xs font-mono text-rose-300 mb-3">
               <Layers className="w-4 h-4 text-rose-400" />
@@ -100,8 +100,8 @@ export default function AdminLoginPage() {
             <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase font-sans">
               ROOT ADMIN ACCESS
             </h1>
-            <p className="text-sm text-slate-300 mt-2 leading-relaxed">
-              Verify root administrator clearance keys against the global control plane node.
+            <p className="text-sm text-slate-300 mt-2 leading-relaxed font-sans">
+              Verify root administrator clearance keys to access the global control plane.
             </p>
           </div>
 
@@ -114,7 +114,7 @@ export default function AdminLoginPage() {
           {/* Form */}
           <form onSubmit={handleLoginSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 font-mono">
+              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
                 Clearance ID <span className="text-rose-400">*</span>
               </label>
               <input
@@ -122,13 +122,13 @@ export default function AdminLoginPage() {
                 required
                 value={clearanceId}
                 onChange={(e) => setClearanceId(e.target.value)}
-                placeholder="e.g., ADM-ANM-2601"
-                className="w-full bg-black/60 border border-white/15 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder-slate-500 focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-500/30 transition shadow-inner"
+                placeholder="ADM-ANM-2601"
+                className="w-full bg-black/60 border border-white/20 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-60 focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-500/30 transition shadow-inner"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 font-mono">
+              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
                 Corporate Email <span className="text-rose-400">*</span>
               </label>
               <input
@@ -136,13 +136,13 @@ export default function AdminLoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g., root@animuslab.dev"
-                className="w-full bg-black/60 border border-white/15 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder-slate-500 focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-500/30 transition shadow-inner"
+                placeholder="name@company.com"
+                className="w-full bg-black/60 border border-white/20 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-60 focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-500/30 transition shadow-inner"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 font-mono">
+              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
                 Organization Hub ID <span className="text-rose-400">*</span>
               </label>
               <input
@@ -150,8 +150,8 @@ export default function AdminLoginPage() {
                 required
                 value={hubId}
                 onChange={(e) => setHubId(e.target.value)}
-                placeholder="e.g., animus_root"
-                className="w-full bg-black/60 border border-white/15 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder-slate-500 focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-500/30 transition shadow-inner"
+                placeholder="animuslab"
+                className="w-full bg-black/60 border border-white/20 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-60 focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-500/30 transition shadow-inner"
               />
             </div>
 
@@ -165,7 +165,7 @@ export default function AdminLoginPage() {
           </form>
 
           {/* Prominent Sandbox Launcher */}
-          <div className="pt-2 border-t border-white/10">
+          <div className="pt-3 border-t border-white/15">
             <button
               type="button"
               onClick={handleSandboxLaunch}
@@ -187,10 +187,8 @@ export default function AdminLoginPage() {
               email: email,
               orgName: "ANIMUSLAB INFRA",
               hubId: hubId,
-              clearanceId: clearanceId || "ADM-ANM-2601",
-              role: "ROOT OPERATOR",
+              clearanceId: clearanceId,
               isVerified: Boolean(clearanceId && email),
-              fingerprint: clearanceId ? `sha256:${clearanceId.toLowerCase()}842...` : undefined,
             }}
           />
         </div>
