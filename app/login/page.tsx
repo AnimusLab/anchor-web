@@ -59,23 +59,24 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#03050a] text-slate-100 flex flex-col justify-between p-6 md:p-10 relative overflow-hidden font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
-      {/* Background Spatial Atmosphere Grid & Auroras */}
-      <div className="absolute inset-0 spatial-bg-grid opacity-30 pointer-events-none" />
-      <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none animate-spatial-aurora" />
-      <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-cyan-600/20 blur-[120px] pointer-events-none animate-spatial-aurora" style={{ animationDelay: "-6s" }} />
+    <div className="min-h-screen bg-[#03050a] text-slate-100 flex flex-col justify-between p-6 md:p-10 relative overflow-hidden font-sans selection:bg-indigo-500/40 selection:text-indigo-100">
+      {/* Dynamic Vibrant Colorful Mesh Background & Pulsing Orbs */}
+      <div className="absolute inset-0 colorful-bg-mesh opacity-90 animate-mesh-pulse pointer-events-none" />
+      <div className="absolute inset-0 spatial-bg-grid opacity-20 pointer-events-none" />
+      <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-indigo-500/40 via-purple-600/40 to-cyan-500/40 blur-[130px] pointer-events-none animate-spatial-aurora" />
+      <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-blue-600/40 via-indigo-600/40 to-fuchsia-500/40 blur-[130px] pointer-events-none animate-spatial-aurora" style={{ animationDelay: "-6s" }} />
 
       {/* Top Header Navigation */}
-      <header className="flex items-center justify-between z-20 max-w-7xl w-full mx-auto pb-6 border-b border-white/10">
+      <header className="flex items-center justify-between z-20 max-w-7xl w-full mx-auto pb-6 border-b border-white/20">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 font-bold text-lg font-mono shadow-[0_0_20px_rgba(99,102,241,0.3)]">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-500/30 backdrop-blur-xl border border-indigo-300/50 flex items-center justify-center text-indigo-200 font-bold text-lg font-mono shadow-[0_0_25px_rgba(99,102,241,0.5)]">
             A
           </div>
           <div>
             <span className="text-base font-black tracking-wider text-white uppercase block font-sans">
               Anchor
             </span>
-            <span className="text-[11px] font-mono text-indigo-400 font-bold tracking-widest block uppercase">
+            <span className="text-[11px] font-mono text-indigo-300 font-bold tracking-widest block uppercase">
               ENTERPRISE PORTAL
             </span>
           </div>
@@ -83,7 +84,7 @@ export default function LoginPage() {
 
         <div className="flex items-center space-x-3 text-xs font-mono">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-          <span className="text-slate-300 font-bold tracking-wider uppercase">
+          <span className="text-slate-200 font-bold tracking-wider uppercase">
             SOVEREIGN CONTROL PLANE GATE
           </span>
         </div>
@@ -91,23 +92,23 @@ export default function LoginPage() {
 
       {/* Main Form & Horizontal ID Card Container */}
       <main className="z-20 max-w-7xl w-full mx-auto my-auto py-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center justify-items-center">
-        {/* Left Form Container */}
-        <div className="lg:col-span-6 w-full max-w-lg bg-slate-900/75 backdrop-blur-2xl border border-white/20 p-8 md:p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.6)] space-y-6">
+        {/* Left Form Container (Pure Glassmorphism) */}
+        <div className="lg:col-span-6 w-full max-w-lg pure-glass-card p-8 md:p-10 rounded-3xl space-y-6">
           <div>
-            <div className="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/30 px-3.5 py-1.5 rounded-full text-xs font-mono text-indigo-300 mb-3">
-              <Layers className="w-4 h-4 text-indigo-400" />
+            <div className="inline-flex items-center space-x-2 bg-indigo-500/20 backdrop-blur-md border border-indigo-300/40 px-3.5 py-1.5 rounded-full text-xs font-mono text-indigo-200 mb-3 shadow-inner">
+              <Layers className="w-4 h-4 text-indigo-300" />
               <span>CRYPTOGRAPHIC ACCESS GATE</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase font-sans">
               CRYPTOGRAPHIC ACCESS
             </h1>
-            <p className="text-sm text-slate-300 mt-2 leading-relaxed font-sans">
+            <p className="text-sm text-slate-200 mt-2 leading-relaxed font-sans">
               Verify your Ed25519 identity keys to activate your session.
             </p>
           </div>
 
           {errorMsg && (
-            <div className="bg-rose-500/10 border border-rose-500/40 text-rose-300 p-4 rounded-2xl text-xs font-mono">
+            <div className="bg-rose-500/20 backdrop-blur-md border border-rose-400/50 text-rose-200 p-4 rounded-2xl text-xs font-mono">
               ⚠️ {errorMsg}
             </div>
           )}
@@ -116,7 +117,7 @@ export default function LoginPage() {
           <form onSubmit={handleLoginSubmit} className="space-y-5">
             <div>
               <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
-                Clearance ID <span className="text-indigo-400">*</span>
+                Clearance ID <span className="text-indigo-300">*</span>
               </label>
               <input
                 type="text"
@@ -124,13 +125,13 @@ export default function LoginPage() {
                 value={clearanceId}
                 onChange={(e) => setClearanceId(e.target.value)}
                 placeholder="EMG-ANM-2607"
-                className="w-full bg-black/60 border border-white/20 rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition shadow-inner leading-normal"
+                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
-                Corporate Email <span className="text-indigo-400">*</span>
+                Corporate Email <span className="text-indigo-300">*</span>
               </label>
               <input
                 type="email"
@@ -138,13 +139,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@company.com"
-                className="w-full bg-black/60 border border-white/20 rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition shadow-inner leading-normal"
+                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
-                Organization Hub ID <span className="text-indigo-400">*</span>
+                Organization Hub ID <span className="text-indigo-300">*</span>
               </label>
               <input
                 type="text"
@@ -152,7 +153,7 @@ export default function LoginPage() {
                 value={hubId}
                 onChange={(e) => setHubId(e.target.value)}
                 placeholder="animuslab"
-                className="w-full bg-black/60 border border-white/20 rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition shadow-inner leading-normal"
+                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
 
@@ -160,19 +161,19 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black py-4 rounded-2xl shadow-[0_0_30px_rgba(99,102,241,0.5)] hover:shadow-[0_0_40px_rgba(99,102,241,0.7)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2"
+              className="w-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-black py-4 rounded-2xl shadow-[0_0_35px_rgba(99,102,241,0.6)] hover:shadow-[0_0_50px_rgba(99,102,241,0.8)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-indigo-300/40"
             >
               <span>{isLoading ? "AUTHENTICATING..." : "AUTHENTICATE NODE →"}</span>
             </button>
           </form>
 
           {/* Prominent Secondary Sandbox Button */}
-          <div className="pt-3 border-t border-white/15">
+          <div className="pt-3 border-t border-white/20">
             <button
               type="button"
               onClick={handleSandboxLaunch}
               disabled={isLoading}
-              className="w-full bg-emerald-500/10 border border-emerald-400/40 hover:bg-emerald-500/20 text-emerald-300 py-3.5 rounded-2xl font-mono text-xs font-extrabold tracking-wider uppercase transition flex items-center justify-center space-x-2 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+              className="w-full bg-emerald-500/20 backdrop-blur-md border border-emerald-400/50 hover:bg-emerald-500/30 text-emerald-200 py-3.5 rounded-2xl font-mono text-xs font-extrabold tracking-wider uppercase transition flex items-center justify-center space-x-2 shadow-[0_0_25px_rgba(16,185,129,0.3)]"
             >
               <Rocket className="w-4 h-4 text-emerald-400 animate-bounce" />
               <span>Launch 1-Month Free Sandbox Portal</span>
@@ -197,9 +198,9 @@ export default function LoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="z-20 max-w-7xl w-full mx-auto pt-6 border-t border-white/10 flex items-center justify-between text-xs font-mono text-slate-400">
+      <footer className="z-20 max-w-7xl w-full mx-auto pt-6 border-t border-white/20 flex items-center justify-between text-xs font-mono text-slate-300">
         <div>CORE IDENTITY PROTOCOL: V6.0 // TRIPLE_FACTOR_AUTH</div>
-        <div className="text-slate-400 font-bold">SOVEREIGN RELAY ACTIVE · ANCHORGOVERNANCE.TECH</div>
+        <div className="text-slate-200 font-bold">SOVEREIGN RELAY ACTIVE · ANCHORGOVERNANCE.TECH</div>
       </footer>
     </div>
   );

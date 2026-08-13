@@ -27,37 +27,43 @@ export default function DynamicLanyardCard({
 }: DynamicLanyardCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
-  // Role-Specific Spatial Theme Mapping
+  // Pure Glassmorphism Color Theme Tokens
   const themeConfig = {
     hub: {
-      accentGlow: "shadow-[0_0_50px_rgba(99,102,241,0.35)]",
-      borderColor: "border-indigo-400/40",
-      accentBg: "bg-gradient-to-b from-indigo-600 via-indigo-700 to-indigo-900",
-      accentText: "text-indigo-300",
-      badgeBg: "bg-indigo-500/20 border-indigo-400/50 text-indigo-300",
+      accentGlow: "shadow-[0_0_50px_rgba(99,102,241,0.4)]",
+      borderColor: "border-indigo-300/40",
+      leftGlassBg: "bg-gradient-to-br from-indigo-500/30 via-purple-600/25 to-cyan-500/30",
+      badgeBorder: "border-indigo-400/50",
+      accentText: "text-indigo-200",
+      badgeBg: "bg-indigo-500/25 border-indigo-300/50 text-indigo-200",
       leftTag: "SOVEREIGN CLEARANCE",
       headerOrg: "ANIMUSLAB MESH",
-      barcodeColor: "bg-indigo-400",
+      barcodeColor: "bg-indigo-300",
+      avatarBorder: "border-indigo-300/60",
     },
     oversight: {
-      accentGlow: "shadow-[0_0_50px_rgba(245,158,11,0.35)]",
-      borderColor: "border-amber-400/40",
-      accentBg: "bg-gradient-to-b from-amber-600 via-amber-700 to-amber-900",
-      accentText: "text-amber-300",
-      badgeBg: "bg-amber-500/20 border-amber-400/50 text-amber-300",
+      accentGlow: "shadow-[0_0_50px_rgba(245,158,11,0.4)]",
+      borderColor: "border-amber-300/40",
+      leftGlassBg: "bg-gradient-to-br from-amber-500/30 via-orange-600/25 to-yellow-500/30",
+      badgeBorder: "border-amber-400/50",
+      accentText: "text-amber-200",
+      badgeBg: "bg-amber-500/25 border-amber-300/50 text-amber-200",
       leftTag: "REGULATORY OVERSIGHT",
       headerOrg: "STATUTORY AGENCY",
-      barcodeColor: "bg-amber-400",
+      barcodeColor: "bg-amber-300",
+      avatarBorder: "border-amber-300/60",
     },
     admin: {
-      accentGlow: "shadow-[0_0_50px_rgba(244,63,94,0.35)]",
-      borderColor: "border-rose-400/40",
-      accentBg: "bg-gradient-to-b from-rose-600 via-rose-700 to-rose-900",
-      accentText: "text-rose-300",
-      badgeBg: "bg-rose-500/20 border-rose-400/50 text-rose-300",
+      accentGlow: "shadow-[0_0_50px_rgba(244,63,94,0.4)]",
+      borderColor: "border-rose-300/40",
+      leftGlassBg: "bg-gradient-to-br from-rose-500/30 via-pink-600/25 to-red-500/30",
+      badgeBorder: "border-rose-400/50",
+      accentText: "text-rose-200",
+      badgeBg: "bg-rose-500/25 border-rose-300/50 text-rose-200",
       leftTag: "ROOT CONTROL PLANE",
       headerOrg: "ANIMUSLAB INFRA",
-      barcodeColor: "bg-rose-500",
+      barcodeColor: "bg-rose-300",
+      avatarBorder: "border-rose-300/60",
     },
   }[portalTheme];
 
@@ -80,7 +86,7 @@ export default function DynamicLanyardCard({
       onClick={() => setIsFlipped(!isFlipped)}
       style={{ perspective: "1200px" }}
     >
-      {/* Horizontal 3D Flip Container with Subtle Floating Hover */}
+      {/* Horizontal 3D Flip Container with Soft Glass Floating Hover */}
       <div
         className="w-full h-full relative transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-[1.02] group-hover:-translate-y-1.5"
         style={{
@@ -88,30 +94,33 @@ export default function DynamicLanyardCard({
           transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
         }}
       >
-        {/* ================= BADGE FRONT SIDE (HORIZONTAL BADGE LAYOUT) ================= */}
+        {/* ================= BADGE FRONT SIDE (FROSTED GLASSMORPHISM) ================= */}
         <div
-          className={`absolute inset-0 w-full h-full rounded-3xl backdrop-blur-2xl bg-[#080c16]/95 border-2 ${themeConfig.borderColor} flex overflow-hidden font-mono text-slate-100 ${themeConfig.accentGlow}`}
+          className={`absolute inset-0 w-full h-full rounded-3xl pure-glass-card flex overflow-hidden font-mono text-slate-100 ${themeConfig.accentGlow}`}
           style={{ backfaceVisibility: "hidden" }}
         >
-          {/* Left Block (Accent Color Spatial Glass Side Panel) */}
-          <div className={`w-[200px] ${themeConfig.accentBg} p-6 flex flex-col justify-between items-center text-center border-r border-white/20 relative overflow-hidden flex-shrink-0`}>
-            {/* Grid Overlay */}
+          {/* Glass Top Specular Reflection Highlight */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none z-20" />
+
+          {/* Left Block (Frosted Color Tinted Glass Panel) */}
+          <div className={`w-[200px] ${themeConfig.leftGlassBg} backdrop-blur-3xl p-6 flex flex-col justify-between items-center text-center border-r border-white/20 relative overflow-hidden flex-shrink-0`}>
+            {/* Subtle Glass Surface Dots */}
             <div
               className="absolute inset-0 pointer-events-none opacity-20"
               style={{
-                backgroundImage: "radial-gradient(rgba(255,255,255,0.6) 1px, transparent 1px)",
+                backgroundImage: "radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px)",
                 backgroundSize: "16px 16px",
               }}
             />
 
             {/* Large Circular Avatar Badge */}
             <div className="relative z-10 my-auto">
-              <div className="w-20 h-20 rounded-full bg-black/40 border-2 border-white/40 flex items-center justify-center font-black text-2xl text-white font-sans shadow-2xl mx-auto">
+              <div className={`w-20 h-20 rounded-full bg-black/35 backdrop-blur-xl border-2 ${themeConfig.avatarBorder} flex items-center justify-center font-black text-2xl text-white font-sans shadow-2xl mx-auto`}>
                 {displayName.substring(0, 2).toUpperCase()}
               </div>
 
               <div className="mt-4 space-y-1">
-                <span className="text-[9px] text-white/80 font-bold tracking-widest uppercase block">
+                <span className="text-[9px] text-slate-200 font-bold tracking-widest uppercase block">
                   {themeConfig.leftTag}
                 </span>
                 <span className="text-xs font-black text-white tracking-wider block font-mono">
@@ -120,18 +129,18 @@ export default function DynamicLanyardCard({
               </div>
             </div>
 
-            {/* Bottom Left Badge */}
-            <div className="relative z-10 w-full bg-black/40 border border-white/20 rounded-xl py-1.5 px-2 text-[8px] font-bold text-white uppercase tracking-wider">
+            {/* Bottom Left Glass Badge */}
+            <div className="relative z-10 w-full bg-black/40 backdrop-blur-md border border-white/25 rounded-xl py-1.5 px-2 text-[8px] font-bold text-white uppercase tracking-wider">
               AUTHENTICATED BY ANIMUSLAB
             </div>
           </div>
 
-          {/* Right Main Body (High-Contrast Spacious Content) */}
-          <div className="flex-1 p-6 flex flex-col justify-between overflow-hidden">
+          {/* Right Main Body (Crisp High-Contrast Glass Content) */}
+          <div className="flex-1 p-6 flex flex-col justify-between overflow-hidden bg-black/25 backdrop-blur-2xl">
             {/* Top Organization Header & Status Badge */}
             <div className="flex items-start justify-between pb-3 border-b border-white/15">
               <div>
-                <span className="text-[9px] text-slate-400 font-bold tracking-widest block uppercase">
+                <span className="text-[9px] text-slate-300 font-bold tracking-widest block uppercase">
                   ORGANIZATION
                 </span>
                 <span className="text-base font-black text-white tracking-wider font-sans block">
@@ -141,7 +150,7 @@ export default function DynamicLanyardCard({
               <span
                 className={`text-[9px] font-extrabold px-3 py-1 rounded-full uppercase border ${
                   statusBadgeText === "VERIFIED"
-                    ? "bg-emerald-500/20 border-emerald-400/60 text-emerald-300"
+                    ? "bg-emerald-500/25 border-emerald-400/60 text-emerald-200"
                     : themeConfig.badgeBg
                 }`}
               >
@@ -151,7 +160,7 @@ export default function DynamicLanyardCard({
 
             {/* Personnel Name & Email */}
             <div>
-              <span className="text-[9px] text-slate-400 font-bold tracking-widest block uppercase">
+              <span className="text-[9px] text-slate-300 font-bold tracking-widest block uppercase">
                 PERSONNEL NAME
               </span>
               <div className="text-lg font-black text-white tracking-wide truncate font-sans">
@@ -165,7 +174,7 @@ export default function DynamicLanyardCard({
             {/* Scope Matrix (Clearance ID & Hub ID) */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">
+                <span className="text-[9px] text-slate-300 font-bold block uppercase tracking-wider">
                   CLEARANCE ID
                 </span>
                 <span className="text-xs font-extrabold text-white tracking-wider block mt-0.5 truncate font-mono">
@@ -173,7 +182,7 @@ export default function DynamicLanyardCard({
                 </span>
               </div>
               <div>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">
+                <span className="text-[9px] text-slate-300 font-bold block uppercase tracking-wider">
                   HUB SILO ID
                 </span>
                 <span className={`text-xs font-extrabold ${themeConfig.accentText} tracking-wider block mt-0.5 truncate font-mono`}>
@@ -185,16 +194,16 @@ export default function DynamicLanyardCard({
             {/* Clearance Status & Indicator */}
             <div className="pt-2 border-t border-white/15 flex items-center justify-between">
               <div>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">
+                <span className="text-[9px] text-slate-300 font-bold block uppercase tracking-wider">
                   CLEARANCE STATUS
                 </span>
-                <span className={`text-xs font-extrabold tracking-widest block mt-0.5 uppercase ${isInputted ? "text-emerald-400" : "text-slate-400"}`}>
+                <span className={`text-xs font-extrabold tracking-widest block mt-0.5 uppercase ${isInputted ? "text-emerald-300" : "text-slate-300"}`}>
                   {displayRole}
                 </span>
               </div>
               <div className="flex items-center space-x-1.5 text-[9px] font-bold uppercase">
                 <span className={`w-2 h-2 rounded-full ${isInputted ? "bg-emerald-400 animate-ping" : "bg-amber-400"}`} />
-                <span className={isInputted ? "text-emerald-400" : "text-amber-400"}>
+                <span className={isInputted ? "text-emerald-300" : "text-amber-300"}>
                   {isInputted ? "IDENTITY VERIFIED" : "AWAITING AUTH"}
                 </span>
               </div>
@@ -202,18 +211,21 @@ export default function DynamicLanyardCard({
           </div>
         </div>
 
-        {/* ================= BADGE BACK SIDE (HORIZONTAL BARCODE LAYOUT) ================= */}
+        {/* ================= BADGE BACK SIDE (FROSTED GLASSMORPHISM) ================= */}
         <div
-          className={`absolute inset-0 w-full h-full rounded-3xl backdrop-blur-2xl bg-[#080c16]/95 border-2 ${themeConfig.borderColor} p-6 flex flex-col justify-between overflow-hidden font-mono text-slate-100 ${themeConfig.accentGlow}`}
+          className={`absolute inset-0 w-full h-full rounded-3xl pure-glass-card p-6 flex flex-col justify-between overflow-hidden font-mono text-slate-100 ${themeConfig.accentGlow}`}
           style={{
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
           }}
         >
+          {/* Glass Specular Highlight */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none z-20" />
+
           {/* Back Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-white/15">
+          <div className="flex items-center justify-between pb-3 border-b border-white/15 z-10">
             <div>
-              <span className="text-[9px] text-slate-400 font-bold tracking-widest block uppercase">
+              <span className="text-[9px] text-slate-300 font-bold tracking-widest block uppercase">
                 INSTITUTIONAL REGISTRY
               </span>
               <span className={`text-sm font-black ${themeConfig.accentText} tracking-wider font-sans`}>
@@ -224,17 +236,17 @@ export default function DynamicLanyardCard({
           </div>
 
           {/* Middle Section: Machine-Readable Barcode */}
-          <div className="bg-black/60 backdrop-blur-xl border border-white/20 rounded-2xl p-4 text-center space-y-2 shadow-2xl">
-            <div className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/20 rounded-2xl p-4 text-center space-y-2 shadow-2xl z-10">
+            <div className="text-[9px] text-slate-300 font-bold tracking-widest uppercase">
               MACHINE-READABLE CRYPTOGRAPHIC BARCODE
             </div>
 
             {/* High-Density Barcode Lines */}
-            <div className="flex justify-center items-center h-12 space-x-1.5 py-1.5 bg-black/90 rounded-xl p-2.5 border border-white/15">
+            <div className="flex justify-center items-center h-12 space-x-1.5 py-1.5 bg-black/70 rounded-xl p-2.5 border border-white/20">
               {[4, 2, 6, 1, 8, 3, 5, 2, 7, 4, 2, 6, 3, 8, 2, 5, 3, 7, 1, 6, 4, 8, 2, 5, 3, 7, 2, 4, 6].map((w, idx) => (
                 <div
                   key={idx}
-                  className={`h-full ${idx % 2 === 0 ? themeConfig.barcodeColor : "bg-slate-700"}`}
+                  className={`h-full ${idx % 2 === 0 ? themeConfig.barcodeColor : "bg-slate-500"}`}
                   style={{ width: `${w * 1.6}px` }}
                 />
               ))}
@@ -246,7 +258,7 @@ export default function DynamicLanyardCard({
           </div>
 
           {/* Security Mandate Section */}
-          <div className="bg-black/60 backdrop-blur-xl border border-white/20 rounded-2xl p-3 text-[9px] text-slate-300 leading-relaxed">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/20 rounded-2xl p-3 text-[9px] text-slate-200 leading-relaxed z-10">
             <div className="text-white font-bold mb-0.5 uppercase tracking-wider">
               CRYPTOGRAPHIC SECURITY MANDATE:
             </div>
@@ -254,12 +266,12 @@ export default function DynamicLanyardCard({
           </div>
 
           {/* Bottom Section */}
-          <div className="pt-2 border-t border-white/15 flex items-center justify-between text-[10px] text-slate-400">
+          <div className="pt-2 border-t border-white/15 flex items-center justify-between text-[10px] text-slate-300 z-10">
             <span className={`flex items-center gap-1.5 ${themeConfig.accentText} font-bold`}>
               <ShieldCheck className="w-4 h-4" />
               <span>AUTHENTICATED BY ANIMUSLAB</span>
             </span>
-            <span className="font-bold text-slate-400 uppercase">BACK SIDE</span>
+            <span className="font-bold text-slate-300 uppercase">BACK SIDE</span>
           </div>
         </div>
       </div>
