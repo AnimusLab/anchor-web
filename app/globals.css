@@ -102,3 +102,20 @@ body {
   color: #94a3b8;
   font-family: var(--font-mono);
 }
+
+/* =========================================
+   LIVE AVATAR KEYFRAME ANIMATIONS
+========================================= */
+
+@keyframes avatarWave {
+  0% {
+    transform: rotate(-10deg);
+  }
+  100% {
+    transform: rotate(35deg);
+  }
+}
+
+.animate-avatar-wave {
+  animation: avatarWave 0.8s ease-in-out infinite alternate;
+}

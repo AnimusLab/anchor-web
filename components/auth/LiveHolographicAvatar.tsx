@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Shield, Zap, RefreshCw, Eye } from "lucide-react";
 
 interface LiveHolographicAvatarProps {
   name?: string;
@@ -182,9 +181,9 @@ export default function LiveHolographicAvatar({
             
             {/* Forearm & Hand Waving Gesture Group */}
             <g
+              className={actionState === "wave" ? "animate-avatar-wave" : ""}
               style={{
                 transformOrigin: "29px 135px",
-                animation: actionState === "wave" ? "avatarWave 0.8s ease-in-out infinite alternate" : "none",
               }}
             >
               <rect x="23" y="130" width="12" height="22" rx="4" fill="#334155" />
@@ -196,17 +195,6 @@ export default function LiveHolographicAvatar({
           {/* RIGHT ARM - Rest Position */}
           <rect x="124" y="110" width="14" height="35" rx="5" fill="#1e293b" stroke="#475569" strokeWidth="1.5" />
         </svg>
-
-        <style jsx>{`
-          @keyframes avatarWave {
-            0% {
-              transform: rotate(-10deg);
-            }
-            100% {
-              transform: rotate(35deg);
-            }
-          }
-        `}</style>
       </div>
 
       {/* Avatar Live Status Label */}
