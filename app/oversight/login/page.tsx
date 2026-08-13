@@ -88,10 +88,10 @@ export default function OversightLoginPage() {
         </div>
       </header>
 
-      {/* Main Form & ID Card Container */}
+      {/* Main Form & Horizontal ID Card Container */}
       <main className="z-20 max-w-7xl w-full mx-auto my-auto py-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center justify-items-center">
         {/* Left Form Container */}
-        <div className="lg:col-span-7 w-full max-w-xl bg-slate-900/75 backdrop-blur-2xl border border-white/20 p-8 md:p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.6)] space-y-6">
+        <div className="lg:col-span-6 w-full max-w-lg bg-slate-900/75 backdrop-blur-2xl border border-white/20 p-8 md:p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.6)] space-y-6">
           <div>
             <div className="inline-flex items-center space-x-2 bg-amber-500/10 border border-amber-500/30 px-3.5 py-1.5 rounded-full text-xs font-mono text-amber-300 mb-3">
               <Layers className="w-4 h-4 text-amber-400" />
@@ -123,7 +123,7 @@ export default function OversightLoginPage() {
                 value={clearanceId}
                 onChange={(e) => setClearanceId(e.target.value)}
                 placeholder="AUD-ANM-2603"
-                className="w-full bg-black/60 border border-white/20 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-60 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 transition shadow-inner"
+                className="w-full bg-black/60 border border-white/20 rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-50 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 transition shadow-inner leading-normal"
               />
             </div>
 
@@ -137,7 +137,7 @@ export default function OversightLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@company.com"
-                className="w-full bg-black/60 border border-white/20 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-60 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 transition shadow-inner"
+                className="w-full bg-black/60 border border-white/20 rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-50 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 transition shadow-inner leading-normal"
               />
             </div>
 
@@ -151,7 +151,7 @@ export default function OversightLoginPage() {
                 value={hubId}
                 onChange={(e) => setHubId(e.target.value)}
                 placeholder="animuslab"
-                className="w-full bg-black/60 border border-white/20 rounded-2xl px-4.5 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-60 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 transition shadow-inner"
+                className="w-full bg-black/60 border border-white/20 rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-500 placeholder:opacity-50 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 transition shadow-inner leading-normal"
               />
             </div>
 
@@ -178,8 +178,8 @@ export default function OversightLoginPage() {
           </div>
         </div>
 
-        {/* Right ID Card Container */}
-        <div className="lg:col-span-5 w-full flex justify-center">
+        {/* Right Horizontal ID Card Container */}
+        <div className="lg:col-span-6 w-full flex justify-center">
           <DynamicLanyardCard
             portalTheme="oversight"
             data={{
