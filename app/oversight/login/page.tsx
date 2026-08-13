@@ -63,11 +63,11 @@ export default function OversightLoginPage() {
       {/* Dynamic Vibrant Colorful Mesh Background & Pulsing Orbs */}
       <div className="absolute inset-0 colorful-bg-oversight opacity-90 animate-mesh-pulse pointer-events-none" />
       <div className="absolute inset-0 spatial-bg-grid opacity-20 pointer-events-none" />
-      <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-amber-500/40 via-orange-600/40 to-yellow-400/40 blur-[130px] pointer-events-none animate-spatial-aurora" />
-      <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-orange-500/40 via-amber-600/40 to-yellow-500/40 blur-[130px] pointer-events-none animate-spatial-aurora" style={{ animationDelay: "-6s" }} />
+      <div className="absolute -top-32 -left-32 w-[550px] h-[550px] rounded-full bg-gradient-to-r from-amber-500/40 via-orange-600/40 to-yellow-400/40 blur-[140px] pointer-events-none animate-spatial-aurora" />
+      <div className="absolute -bottom-32 -right-32 w-[550px] h-[550px] rounded-full bg-gradient-to-r from-orange-500/40 via-amber-600/40 to-yellow-500/40 blur-[140px] pointer-events-none animate-spatial-aurora" style={{ animationDelay: "-6s" }} />
 
       {/* Top Header Navigation */}
-      <header className="flex items-center justify-between z-20 max-w-7xl w-full mx-auto pb-6 border-b border-white/20">
+      <header className="flex items-center justify-between z-20 max-w-[1550px] w-full mx-auto pb-6 border-b border-white/20">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-2xl bg-amber-500/30 backdrop-blur-xl border border-amber-300/50 flex items-center justify-center text-amber-200 font-bold text-lg font-mono shadow-[0_0_25px_rgba(245,158,11,0.5)]">
             O
@@ -90,10 +90,10 @@ export default function OversightLoginPage() {
         </div>
       </header>
 
-      {/* Main Form & Horizontal ID Card Container */}
-      <main className="z-20 max-w-7xl w-full mx-auto my-auto py-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center justify-items-center">
-        {/* Left Form Container (Pure Glassmorphism) */}
-        <div className="lg:col-span-6 w-full max-w-lg pure-glass-card p-8 md:p-10 rounded-3xl space-y-6">
+      {/* Main Form & Enlarged Horizontal ID Card Container */}
+      <main className="z-20 max-w-[1550px] w-full mx-auto my-auto py-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        {/* Left Form Container */}
+        <div className="lg:col-span-5 w-full max-w-xl justify-self-start pure-glass-card p-8 md:p-11 rounded-3xl space-y-6">
           <div>
             <div className="inline-flex items-center space-x-2 bg-amber-500/20 backdrop-blur-md border border-amber-300/40 px-3.5 py-1.5 rounded-full text-xs font-mono text-amber-200 mb-3 shadow-inner">
               <Layers className="w-4 h-4 text-amber-300" />
@@ -125,7 +125,7 @@ export default function OversightLoginPage() {
                 value={clearanceId}
                 onChange={(e) => setClearanceId(e.target.value)}
                 placeholder="AUD-ANM-2603"
-                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
+                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-4 text-white text-base font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
 
@@ -139,7 +139,7 @@ export default function OversightLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@company.com"
-                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
+                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-4 text-white text-base font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
 
@@ -153,14 +153,14 @@ export default function OversightLoginPage() {
                 value={hubId}
                 onChange={(e) => setHubId(e.target.value)}
                 placeholder="animuslab"
-                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
+                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-4 text-white text-base font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 hover:from-amber-500 hover:to-orange-400 text-white text-sm font-black py-4 rounded-2xl shadow-[0_0_35px_rgba(245,158,11,0.6)] hover:shadow-[0_0_50px_rgba(245,158,11,0.8)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-amber-300/40"
+              className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 hover:from-amber-500 hover:to-orange-400 text-white text-base font-black py-4.5 rounded-2xl shadow-[0_0_35px_rgba(245,158,11,0.6)] hover:shadow-[0_0_50px_rgba(245,158,11,0.8)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-amber-300/40"
             >
               <span>{isLoading ? "AUTHENTICATING..." : "AUTHENTICATE AUDITOR NODE →"}</span>
             </button>
@@ -180,8 +180,8 @@ export default function OversightLoginPage() {
           </div>
         </div>
 
-        {/* Right Horizontal ID Card Container */}
-        <div className="lg:col-span-6 w-full flex justify-center">
+        {/* Right Enlarged Horizontal ID Card Container */}
+        <div className="lg:col-span-7 w-full flex justify-end justify-self-end">
           <DynamicLanyardCard
             portalTheme="oversight"
             data={{
@@ -197,7 +197,7 @@ export default function OversightLoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="z-20 max-w-7xl w-full mx-auto pt-6 border-t border-white/20 flex items-center justify-between text-xs font-mono text-slate-300">
+      <footer className="z-20 max-w-[1550px] w-full mx-auto pt-6 border-t border-white/20 flex items-center justify-between text-xs font-mono text-slate-300">
         <div>REGULATORY COMPLIANCE PROTOCOL // STATUTORY_OVERSIGHT_V6</div>
         <div className="text-slate-200 font-bold">SOVEREIGN AUDIT RELAY · ANCHORGOVERNANCE.TECH</div>
       </footer>

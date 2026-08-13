@@ -63,11 +63,11 @@ export default function LoginPage() {
       {/* Dynamic Vibrant Colorful Mesh Background & Pulsing Orbs */}
       <div className="absolute inset-0 colorful-bg-mesh opacity-90 animate-mesh-pulse pointer-events-none" />
       <div className="absolute inset-0 spatial-bg-grid opacity-20 pointer-events-none" />
-      <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-indigo-500/40 via-purple-600/40 to-cyan-500/40 blur-[130px] pointer-events-none animate-spatial-aurora" />
-      <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-blue-600/40 via-indigo-600/40 to-fuchsia-500/40 blur-[130px] pointer-events-none animate-spatial-aurora" style={{ animationDelay: "-6s" }} />
+      <div className="absolute -top-32 -left-32 w-[550px] h-[550px] rounded-full bg-gradient-to-r from-indigo-500/40 via-purple-600/40 to-cyan-500/40 blur-[140px] pointer-events-none animate-spatial-aurora" />
+      <div className="absolute -bottom-32 -right-32 w-[550px] h-[550px] rounded-full bg-gradient-to-r from-blue-600/40 via-indigo-600/40 to-fuchsia-500/40 blur-[140px] pointer-events-none animate-spatial-aurora" style={{ animationDelay: "-6s" }} />
 
       {/* Top Header Navigation */}
-      <header className="flex items-center justify-between z-20 max-w-7xl w-full mx-auto pb-6 border-b border-white/20">
+      <header className="flex items-center justify-between z-20 max-w-[1550px] w-full mx-auto pb-6 border-b border-white/20">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-2xl bg-indigo-500/30 backdrop-blur-xl border border-indigo-300/50 flex items-center justify-center text-indigo-200 font-bold text-lg font-mono shadow-[0_0_25px_rgba(99,102,241,0.5)]">
             A
@@ -90,10 +90,10 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* Main Form & Horizontal ID Card Container */}
-      <main className="z-20 max-w-7xl w-full mx-auto my-auto py-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center justify-items-center">
-        {/* Left Form Container (Pure Glassmorphism) */}
-        <div className="lg:col-span-6 w-full max-w-lg pure-glass-card p-8 md:p-10 rounded-3xl space-y-6">
+      {/* Main Form & Enlarged Horizontal ID Card Container */}
+      <main className="z-20 max-w-[1550px] w-full mx-auto my-auto py-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        {/* Left Form Container (Shifted Left, Enlarged Inputs) */}
+        <div className="lg:col-span-5 w-full max-w-xl justify-self-start pure-glass-card p-8 md:p-11 rounded-3xl space-y-6">
           <div>
             <div className="inline-flex items-center space-x-2 bg-indigo-500/20 backdrop-blur-md border border-indigo-300/40 px-3.5 py-1.5 rounded-full text-xs font-mono text-indigo-200 mb-3 shadow-inner">
               <Layers className="w-4 h-4 text-indigo-300" />
@@ -125,7 +125,7 @@ export default function LoginPage() {
                 value={clearanceId}
                 onChange={(e) => setClearanceId(e.target.value)}
                 placeholder="EMG-ANM-2607"
-                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
+                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-4 text-white text-base font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
 
@@ -139,7 +139,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@company.com"
-                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
+                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-4 text-white text-base font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
 
@@ -153,7 +153,7 @@ export default function LoginPage() {
                 value={hubId}
                 onChange={(e) => setHubId(e.target.value)}
                 placeholder="animuslab"
-                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
+                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-4 text-white text-base font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
 
@@ -161,7 +161,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-black py-4 rounded-2xl shadow-[0_0_35px_rgba(99,102,241,0.6)] hover:shadow-[0_0_50px_rgba(99,102,241,0.8)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-indigo-300/40"
+              className="w-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-base font-black py-4.5 rounded-2xl shadow-[0_0_35px_rgba(99,102,241,0.6)] hover:shadow-[0_0_50px_rgba(99,102,241,0.8)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-indigo-300/40"
             >
               <span>{isLoading ? "AUTHENTICATING..." : "AUTHENTICATE NODE →"}</span>
             </button>
@@ -181,8 +181,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Horizontal ID Card Container */}
-        <div className="lg:col-span-6 w-full flex justify-center">
+        {/* Right Enlarged Horizontal ID Card Container (Shifted Right) */}
+        <div className="lg:col-span-7 w-full flex justify-end justify-self-end">
           <DynamicLanyardCard
             portalTheme="hub"
             data={{
@@ -198,7 +198,7 @@ export default function LoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="z-20 max-w-7xl w-full mx-auto pt-6 border-t border-white/20 flex items-center justify-between text-xs font-mono text-slate-300">
+      <footer className="z-20 max-w-[1550px] w-full mx-auto pt-6 border-t border-white/20 flex items-center justify-between text-xs font-mono text-slate-300">
         <div>CORE IDENTITY PROTOCOL: V6.0 // TRIPLE_FACTOR_AUTH</div>
         <div className="text-slate-200 font-bold">SOVEREIGN RELAY ACTIVE · ANCHORGOVERNANCE.TECH</div>
       </footer>
