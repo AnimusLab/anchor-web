@@ -94,7 +94,7 @@ export default function DynamicLanyardCard({
           transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
         }}
       >
-        {/* ================= BADGE FRONT SIDE (LARGE & SHARP FROSTED GLASS) ================= */}
+        {/* ================= BADGE FRONT SIDE (EXACT TYPOGRAPHY SCALE) ================= */}
         <div
           className={`absolute inset-0 w-full h-full rounded-3xl pure-glass-card flex overflow-hidden font-mono text-slate-100 ${themeConfig.accentGlow}`}
           style={{ backfaceVisibility: "hidden" }}
@@ -115,42 +115,43 @@ export default function DynamicLanyardCard({
 
             {/* Large Circular Avatar Badge */}
             <div className="relative z-10 my-auto space-y-4">
-              <div className={`w-24 h-24 rounded-full bg-black/40 backdrop-blur-xl border-2 ${themeConfig.avatarBorder} flex items-center justify-center font-black text-3xl text-white font-sans shadow-2xl mx-auto ring-4 ring-white/10`}>
+              <div className={`w-24 h-24 rounded-full bg-black/40 backdrop-blur-xl border-2 ${themeConfig.avatarBorder} flex items-center justify-center font-bold text-3xl text-white font-sans shadow-2xl mx-auto ring-4 ring-white/10`}>
                 {displayName.substring(0, 2).toUpperCase()}
               </div>
 
               <div className="space-y-1">
-                <span className="text-[10px] text-slate-200 font-bold tracking-widest uppercase block">
+                <span className="text-[11px] text-slate-200 font-medium tracking-widest uppercase block">
                   {themeConfig.leftTag}
                 </span>
-                <span className="text-sm font-black text-white tracking-wider block font-mono">
+                <span className="text-[14px] font-bold text-white tracking-wider block font-mono">
                   {displayClearanceId}
                 </span>
               </div>
             </div>
 
-            {/* Bottom Left Glass Badge */}
-            <div className="relative z-10 w-full bg-black/45 backdrop-blur-md border border-white/30 rounded-xl py-2 px-2.5 text-[9px] font-black text-white uppercase tracking-wider shadow-inner">
-              AUTHENTICATED BY ANIMUSLAB
+            {/* Bottom Left Glass Badge: AUTHENTICATED BY ANIMUSLAB (13-14px Medium/Bold) */}
+            <div className="relative z-10 w-full bg-black/45 backdrop-blur-md border border-white/30 rounded-xl py-2 px-3 text-[13.5px] font-semibold text-white uppercase tracking-wider shadow-inner flex items-center justify-center space-x-2">
+              <ShieldCheck className="w-4 h-4 text-white" />
+              <span>AUTHENTICATED BY ANIMUSLAB</span>
             </div>
           </div>
 
-          {/* Right Main Body (High-Contrast Spacious Content) */}
+          {/* Right Main Body (High-Contrast Exact Typography) */}
           <div className="flex-1 p-7 flex flex-col justify-between overflow-hidden bg-black/30 backdrop-blur-2xl">
             {/* Top Organization Header & Status Badge */}
-            <div className="flex items-start justify-between pb-4 border-b border-white/20">
+            <div className="flex items-start justify-between pb-3.5 border-b border-white/20">
               <div>
-                <span className="text-[10px] text-slate-300 font-bold tracking-widest block uppercase">
+                <span className="text-[11px] text-slate-300 font-medium tracking-widest block uppercase">
                   ORGANIZATION
                 </span>
-                <span className="text-xl font-black text-white tracking-wider font-sans block mt-0.5">
+                <span className="text-[17px] font-semibold text-white tracking-wide font-sans block mt-0.5">
                   {displayOrg}
                 </span>
               </div>
               <span
-                className={`text-xs font-black px-4 py-1.5 rounded-full uppercase border ${
+                className={`text-[12px] font-semibold px-4 py-1.5 rounded-full uppercase border shadow-sm ${
                   statusBadgeText === "VERIFIED"
-                    ? "bg-emerald-500/30 border-emerald-400/70 text-emerald-200"
+                    ? "bg-emerald-500/30 border-emerald-400/70 text-emerald-100"
                     : themeConfig.badgeBg
                 }`}
               >
@@ -160,13 +161,13 @@ export default function DynamicLanyardCard({
 
             {/* Personnel Name & Email */}
             <div className="space-y-1">
-              <span className="text-[10px] text-slate-300 font-bold tracking-widest block uppercase">
+              <span className="text-[11px] text-slate-300 font-medium tracking-widest block uppercase">
                 PERSONNEL NAME
               </span>
-              <div className="text-xl font-black text-white tracking-wide truncate font-sans">
+              <div className="text-[16px] font-semibold text-white tracking-wide truncate font-sans">
                 {displayName}
               </div>
-              <div className={`text-sm ${themeConfig.accentText} font-mono font-bold truncate`}>
+              <div className={`text-[13px] ${themeConfig.accentText} font-mono font-normal truncate`}>
                 {data.email || "identity@animuslab.dev"}
               </div>
             </div>
@@ -174,18 +175,18 @@ export default function DynamicLanyardCard({
             {/* Scope Matrix (Clearance ID & Hub ID) */}
             <div className="grid grid-cols-2 gap-5">
               <div>
-                <span className="text-[10px] text-slate-300 font-bold block uppercase tracking-wider">
+                <span className="text-[11px] text-slate-300 font-medium block uppercase tracking-wider">
                   CLEARANCE ID
                 </span>
-                <span className="text-sm font-extrabold text-white tracking-wider block mt-1 truncate font-mono">
+                <span className="text-[14px] font-medium text-white tracking-wider block mt-0.5 truncate font-mono">
                   {displayClearanceId}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-300 font-bold block uppercase tracking-wider">
+                <span className="text-[11px] text-slate-300 font-medium block uppercase tracking-wider">
                   HUB SILO ID
                 </span>
-                <span className={`text-sm font-extrabold ${themeConfig.accentText} tracking-wider block mt-1 truncate font-mono`}>
+                <span className={`text-[14px] font-medium ${themeConfig.accentText} tracking-wider block mt-0.5 truncate font-mono`}>
                   {displayHub}
                 </span>
               </div>
@@ -194,14 +195,14 @@ export default function DynamicLanyardCard({
             {/* Clearance Status & Indicator */}
             <div className="pt-3 border-t border-white/20 flex items-center justify-between">
               <div>
-                <span className="text-[10px] text-slate-300 font-bold block uppercase tracking-wider">
+                <span className="text-[11px] text-slate-300 font-medium block uppercase tracking-wider">
                   CLEARANCE STATUS
                 </span>
-                <span className={`text-xs font-extrabold tracking-widest block mt-1 uppercase ${isInputted ? "text-emerald-300" : "text-slate-300"}`}>
+                <span className={`text-[13px] font-medium tracking-wider block mt-0.5 uppercase ${isInputted ? "text-emerald-300" : "text-slate-200"}`}>
                   {displayRole}
                 </span>
               </div>
-              <div className="flex items-center space-x-2 text-xs font-bold uppercase">
+              <div className="flex items-center space-x-2 text-[12px] font-medium uppercase">
                 <span className={`w-2.5 h-2.5 rounded-full ${isInputted ? "bg-emerald-400 animate-ping" : "bg-amber-400"}`} />
                 <span className={isInputted ? "text-emerald-300" : "text-amber-300"}>
                   {isInputted ? "IDENTITY VERIFIED" : "AWAITING AUTH"}
@@ -211,7 +212,7 @@ export default function DynamicLanyardCard({
           </div>
         </div>
 
-        {/* ================= BADGE BACK SIDE (LARGE & SHARP FROSTED GLASS) ================= */}
+        {/* ================= BADGE BACK SIDE (EXACT TYPOGRAPHY SCALE) ================= */}
         <div
           className={`absolute inset-0 w-full h-full rounded-3xl pure-glass-card p-7 flex flex-col justify-between overflow-hidden font-mono text-slate-100 ${themeConfig.accentGlow}`}
           style={{
@@ -223,12 +224,12 @@ export default function DynamicLanyardCard({
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent pointer-events-none z-20" />
 
           {/* Back Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-white/20 z-10">
+          <div className="flex items-center justify-between pb-3.5 border-b border-white/20 z-10">
             <div>
-              <span className="text-[10px] text-slate-300 font-bold tracking-widest block uppercase">
+              <span className="text-[11px] text-slate-300 font-medium tracking-widest block uppercase">
                 INSTITUTIONAL REGISTRY
               </span>
-              <span className={`text-base font-black ${themeConfig.accentText} tracking-wider font-sans`}>
+              <span className={`text-[17px] font-semibold ${themeConfig.accentText} tracking-wide font-sans block mt-0.5`}>
                 SECURE AUDIT NODE
               </span>
             </div>
@@ -236,8 +237,8 @@ export default function DynamicLanyardCard({
           </div>
 
           {/* Middle Section: Machine-Readable Barcode */}
-          <div className="bg-black/50 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-center space-y-3 shadow-2xl z-10">
-            <div className="text-[10px] text-slate-300 font-bold tracking-widest uppercase">
+          <div className="bg-black/50 backdrop-blur-xl border border-white/20 rounded-2xl p-4.5 text-center space-y-2.5 shadow-2xl z-10">
+            <div className="text-[11px] text-slate-300 font-medium tracking-widest uppercase">
               MACHINE-READABLE CRYPTOGRAPHIC BARCODE
             </div>
 
@@ -252,26 +253,26 @@ export default function DynamicLanyardCard({
               ))}
             </div>
 
-            <div className={`text-sm font-extrabold ${themeConfig.accentText} tracking-widest uppercase font-mono`}>
+            <div className={`text-[13px] font-medium ${themeConfig.accentText} tracking-widest uppercase font-mono`}>
               {displayHub !== "SILO_PENDING" ? `AN-SYS-${displayHub}-2026` : "CORE_NODE_INDEX_LOCKED"}
             </div>
           </div>
 
-          {/* Security Mandate Section */}
-          <div className="bg-black/50 backdrop-blur-xl border border-white/20 rounded-2xl p-4 text-[10px] text-slate-200 leading-relaxed z-10">
-            <div className="text-white font-bold mb-1 uppercase tracking-wider">
+          {/* Security Mandate Section (13px Font + 1.5 Line Height) */}
+          <div className="bg-black/50 backdrop-blur-xl border border-white/20 rounded-2xl p-4 text-[13px] leading-[1.5] text-slate-100 font-sans z-10">
+            <div className="text-white font-semibold mb-1 uppercase tracking-wider text-[13px]">
               CRYPTOGRAPHIC SECURITY MANDATE:
             </div>
             This spatial credential is bound to the verified local private key layer. Any memory modification triggers immediate network revocation.
           </div>
 
           {/* Bottom Section */}
-          <div className="pt-3 border-t border-white/20 flex items-center justify-between text-xs text-slate-300 z-10">
-            <span className={`flex items-center gap-2 ${themeConfig.accentText} font-bold`}>
+          <div className="pt-3 border-t border-white/20 flex items-center justify-between text-[13.5px] text-slate-100 z-10 font-mono">
+            <span className={`flex items-center gap-2 ${themeConfig.accentText} font-semibold`}>
               <ShieldCheck className="w-4.5 h-4.5" />
               <span>AUTHENTICATED BY ANIMUSLAB</span>
             </span>
-            <span className="font-bold text-slate-300 uppercase tracking-wider">BACK SIDE</span>
+            <span className="font-medium text-slate-300 uppercase tracking-widest text-[11px]">BACK SIDE</span>
           </div>
         </div>
       </div>
