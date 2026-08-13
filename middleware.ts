@@ -6,12 +6,16 @@ export function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || '';
   const pathname = url.pathname;
 
-  // Bypass public static assets, API auth, and telemetry APIs
+  // Bypass public static assets, API auth, public showcase, and telemetry APIs
   if (
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/v1/telemetry/') ||
     pathname.startsWith('/api/v1/anchor/eval') ||
+    pathname.startsWith('/design-samples') ||
+    pathname.startsWith('/demo') ||
+    pathname.startsWith('/docs') ||
+    pathname === '/' ||
     pathname === '/favicon.ico'
   ) {
     return NextResponse.next();
