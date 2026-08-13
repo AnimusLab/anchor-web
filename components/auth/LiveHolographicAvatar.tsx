@@ -26,9 +26,8 @@ export default function LiveHolographicAvatar({
   const [headTilt, setHeadTilt] = useState(false);
   const [selectedGender, setSelectedGender] = useState<"male" | "female" | "auto" | "custom">(gender);
   const [uploadedPhoto, setUploadedPhoto] = useState<string | undefined>(customPhotoUrl);
-  const [imgLoadFailed, setImgLoadFailed] = useState(false);
 
-  // Auto loop expression animations
+  // Auto loop expression animations (winking and head tilting like Snapchat Bitmoji / Apple Memoji)
   useEffect(() => {
     const interval = setInterval(() => {
       setExpression((prev) => (prev === "wink" ? "smile" : "wink"));
@@ -98,7 +97,6 @@ export default function LiveHolographicAvatar({
       reader.onload = (event) => {
         const url = event.target?.result as string;
         setUploadedPhoto(url);
-        setImgLoadFailed(false);
         if (onCustomPhotoUpload) onCustomPhotoUpload(url);
       };
       reader.readAsDataURL(file);
@@ -137,71 +135,18 @@ export default function LiveHolographicAvatar({
           </>
         )}
 
-        {/* 3D Memoji Avatar Frame */}
+        {/* 3D Pixar/Apple Memoji Image Frame */}
         <div
-          className="w-32 h-32 rounded-full overflow-hidden border-2 border-white/30 shadow-2xl relative z-10 transition-transform duration-500 ease-out bg-[#1e293b]"
+          className="w-32 h-32 rounded-full overflow-hidden border-2 border-white/30 shadow-2xl relative z-10 transition-transform duration-500 ease-out bg-slate-950"
           style={{
             transform: headTilt ? "rotate(-4deg) scale(1.02)" : "rotate(3deg) scale(1)",
           }}
         >
-          {!imgLoadFailed ? (
-            <img
-              src={avatarInfo.src}
-              alt=""
-              onError={() => setImgLoadFailed(true)}
-              className="w-full h-full object-cover transition-opacity duration-300"
-            />
-          ) : (
-            /* VECTOR 3D MEMOJI RENDERER FALLBACK */
-            <svg viewBox="0 0 160 160" className="w-full h-full p-2">
-              <defs>
-                <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f5d0b0" />
-                  <stop offset="100%" stopColor="#e2b088" />
-                </linearGradient>
-                <linearGradient id="glasses" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#334155" />
-                  <stop offset="100%" stopColor="#0f172a" />
-                </linearGradient>
-              </defs>
-
-              {/* Suit / Shoulders */}
-              <path d="M 25 145 C 25 110 50 100 80 100 C 110 100 135 110 135 145 Z" fill="#1e293b" stroke={themeConfig.accent} strokeWidth="2" />
-
-              {/* Head Base */}
-              <ellipse cx="80" cy="65" rx="35" ry="42" fill="url(#skin)" />
-
-              {/* Hair */}
-              {avatarInfo.resolvedGender === "female" ? (
-                <path d="M 40 65 C 40 25 120 25 120 65 C 120 85 115 95 115 95 C 115 95 105 50 80 50 C 55 50 45 95 45 95 Z" fill="#3b2314" />
-              ) : (
-                <path d="M 45 55 C 45 30 115 30 115 55 C 115 35 100 25 80 25 C 60 25 45 35 45 55 Z" fill="#291d18" />
-              )}
-
-              {/* Rectangular Glasses */}
-              <rect x="48" y="52" width="28" height="20" rx="4" fill="none" stroke="url(#glasses)" strokeWidth="3" />
-              <rect x="84" y="52" width="28" height="20" rx="4" fill="none" stroke="url(#glasses)" strokeWidth="3" />
-              <line x1="76" y1="60" x2="84" y2="60" stroke="#0f172a" strokeWidth="3" />
-
-              {/* Eyes (Wink or Smile) */}
-              {expression === "wink" ? (
-                <>
-                  {/* Left Eye Closed Wink */}
-                  <path d="M 54 62 Q 62 56 70 62" fill="none" stroke="#291d18" strokeWidth="3" strokeLinecap="round" />
-                  {/* Right Eye Open */}
-                  <circle cx="98" cy="62" r="4" fill="#291d18" />
-                </>
-              ) : (
-                <>
-                  <circle cx="62" cy="62" r="4" fill="#291d18" />
-                  <circle cx="98" cy="62" r="4" fill="#291d18" />
-                </>
-              )}
-
-              {/* Smile Mouth */}
-              <path d="M 65 85 Q 80 98 95 85" fill="none" stroke="#991b1b" strokeWidth="3" strokeLinecap="round" />
-            </svg>
-          )}
+          <img
+            src={avatarInfo.src}
+            alt="3D Memoji Avatar"
+            className="w-full h-full object-cover transition-opacity duration-300"
+          />
 
           {/* Dynamic Expression Badge Overlay */}
           <div className="absolute bottom-1 right-1 bg-black/80 backdrop-blur-md border border-white/20 px-1.5 py-0.5 rounded-full text-xs shadow-lg">
@@ -230,7 +175,6 @@ export default function LiveHolographicAvatar({
             e.stopPropagation();
             setUploadedPhoto(undefined);
             setSelectedGender("male");
-            setImgLoadFailed(false);
           }}
           className={`px-2 py-0.5 rounded text-[9px] font-bold border transition ${
             !uploadedPhoto && avatarInfo.resolvedGender === "male" ? themeConfig.badgeBg : "bg-white/5 border-white/10 text-slate-400 hover:text-white"
@@ -244,7 +188,6 @@ export default function LiveHolographicAvatar({
             e.stopPropagation();
             setUploadedPhoto(undefined);
             setSelectedGender("female");
-            setImgLoadFailed(false);
           }}
           className={`px-2 py-0.5 rounded text-[9px] font-bold border transition ${
             !uploadedPhoto && avatarInfo.resolvedGender === "female" ? themeConfig.badgeBg : "bg-white/5 border-white/10 text-slate-400 hover:text-white"
