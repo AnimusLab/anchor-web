@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 
-// Access API key strictly via environment variables (never hardcoded in source)
+// Access API key strictly via environment variables
 const getResendClient = () => {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -24,7 +24,9 @@ export async function sendCredentialWelcomeEmail(options: SendCredentialEmailOpt
   const resend = getResendClient();
   if (!resend) return { success: false, message: 'Resend API key missing' };
 
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  // Exclusive dedicated sending domain & reply-to configuration
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'no-reply@updates.animuslab.dev';
+  const replyToEmail = process.env.RESEND_REPLY_TO || 'tan@animuslab.dev';
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -79,6 +81,7 @@ export async function sendCredentialWelcomeEmail(options: SendCredentialEmailOpt
   try {
     const data = await resend.emails.send({
       from: fromEmail,
+      replyTo: replyToEmail,
       to: [to],
       subject: `[AnimusLab] Sovereign Credentials Provisioned (${clearanceId})`,
       html: htmlContent,
@@ -104,23 +107,27 @@ export async function sendOnboardingAdminNotification(details: {
   const resend = getResendClient();
   if (!resend) return { success: false, message: 'Resend API key missing' };
 
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
-  const adminEmail = 'tan@animuslab.dev';
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'no-reply@updates.animuslab.dev';
+  const replyToEmail = process.env.RESEND_REPLY_TO || 'tan@animuslab.dev';
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'tan@animuslab.dev';
 
   try {
     const data = await resend.emails.send({
       from: fromEmail,
+      replyTo: replyToEmail,
       to: [adminEmail],
       subject: `[AnimusLab Admin Alert] New Onboarding Request: ${details.email}`,
       html: `
-        <div style="font-family: monospace; background: #04060c; color: #fff; padding: 24px; border-radius: 12px;">
-          <h2 style="color: #f59e0b;">🚨 NEW ONBOARDING PROVISIONING REQUEST</h2>
-          <p><strong>Email:</strong> ${details.email}</p>
-          <p><strong>Name:</strong> ${details.name || 'Pending'}</p>
-          <p><strong>Org Name:</strong> ${details.orgName || 'Pending'}</p>
+        <div style="font-family: monospace; background: #04060c; color: #fff; padding: 24px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15);">
+          <h2 style="color: #f59e0b; margin-top: 0;">🚨 NEW ONBOARDING PROVISIONING REQUEST</h2>
+          <p><strong>Applicant Email:</strong> ${details.email}</p>
+          <p><strong>Personnel Name:</strong> ${details.name || 'Pending'}</p>
+          <p><strong>Organization Name:</strong> ${details.orgName || 'Pending'}</p>
           <p><strong>Requested Role:</strong> ${details.role || 'HUB_MANAGER'}</p>
           <p><strong>Location:</strong> ${details.city || 'N/A'}, ${details.region || 'N/A'}</p>
-          <p style="color: #64748b; font-size: 12px; margin-top: 20px;">Review and approve in Root Admin Cockpit at /admin/pending</p>
+          <p><strong>Target Clearance ID:</strong> ${details.clearanceId || 'Auto-generated'}</p>
+          <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;" />
+          <p style="color: #64748b; font-size: 12px;">Review and approve in Root Admin Cockpit at /admin/pending</p>
         </div>
       `,
     });
