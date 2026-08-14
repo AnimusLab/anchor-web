@@ -1,0 +1,65 @@
+<svg width="64" height="64" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="favMetalLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="50%" stop-color="#d1d5db" />
+      <stop offset="100%" stop-color="#9ca3af" />
+    </linearGradient>
+
+    <linearGradient id="favMetalMid" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e5e7eb" />
+      <stop offset="100%" stop-color="#6b7280" />
+    </linearGradient>
+
+    <linearGradient id="favMetalDark" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9ca3af" />
+      <stop offset="100%" stop-color="#374151" />
+    </linearGradient>
+
+    <linearGradient id="favCubeTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#e5e7eb" />
+    </linearGradient>
+
+    <linearGradient id="favCubeLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d1d5db" />
+      <stop offset="100%" stop-color="#6b7280" />
+    </linearGradient>
+
+    <linearGradient id="favCubeRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9ca3af" />
+      <stop offset="100%" stop-color="#4b5563" />
+    </linearGradient>
+  </defs>
+
+  {/* Dark Circular Background for high contrast in browser tabs */}
+  <rect width="200" height="200" rx="40" fill="#04060c" />
+
+  {/* Left Leg Base Side */}
+  <polygon points="94,22 18,172 48,172 82,106 108,106 108,82 82,82" fill="url(#favMetalDark)" />
+
+  {/* Left Leg Facet Light Face */}
+  <polygon points="94,22 108,50 48,172 18,172" fill="url(#favMetalLight)" />
+
+  {/* Right Leg Base Side */}
+  <polygon points="106,22 182,172 152,172 118,106 92,106 92,82 118,82" fill="url(#favMetalMid)" />
+
+  {/* Right Leg Facet Light Face */}
+  <polygon points="106,22 92,50 152,172 182,172" fill="url(#favMetalLight)" />
+
+  {/* Left Ribbon Wrap Facet */}
+  <polygon points="34,142 84,106 100,134 50,170" fill="url(#favMetalDark)" />
+
+  {/* Right Ribbon Wrap Facet */}
+  <polygon points="166,142 116,106 100,134 150,170" fill="url(#favMetalMid)" />
+
+  {/* ================= CENTRAL ISOMETRIC 3D CUBE ================= */}
+  {/* Cube Top Face */}
+  <polygon points="100,74 130,90 100,106 70,90" fill="url(#favCubeTop)" stroke="#9ca3af" stroke-width="1" />
+
+  {/* Cube Left Face */}
+  <polygon points="70,90 100,106 100,140 70,124" fill="url(#favCubeLeft)" stroke="#6b7280" stroke-width="1" />
+
+  {/* Cube Right Face */}
+  <polygon points="100,106 130,90 130,124 100,140" fill="url(#favCubeRight)" stroke="#4b5563" stroke-width="1" />
+</svg>
