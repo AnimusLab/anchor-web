@@ -230,7 +230,7 @@ export default function LoginPage() {
                 required
                 value={hubId}
                 onChange={(e) => setHubId(e.target.value)}
-                placeholder="animuslab-prod | jpmc-ny"
+                placeholder="animuslab-hq | jpmc-ny"
                 className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>

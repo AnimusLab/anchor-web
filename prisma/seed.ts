@@ -3,7 +3,7 @@ import { PrismaClient, OrgType, ContractTier, Role, AdminRole, UserStatus } from
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding AnimusLab Root Admin & Whitelist Credentials...");
+  console.log("🌱 Seeding AnimusLab Root Admin & Whitelist Credentials (animuslab-hq)...");
 
   // 1. Upsert AnimusLab Organization
   const org = await prisma.organization.upsert({
@@ -26,34 +26,39 @@ async function main() {
     },
   });
 
-  // 2. Upsert AnimusLab Primary Production Hub
+  // 2. Upsert AnimusLab Primary Headquarters Hub (animuslab-hq)
   const hub = await prisma.hub.upsert({
-    where: { id: "animuslab-prod" },
+    where: { id: "animuslab-hq" },
     update: {
-      displayName: "AnimusLab Core Mesh Hub",
+      displayName: "AnimusLab Headquarters Hub",
       region: "US-EAST-1",
-      unit: "CORE-01",
+      unit: "HQ-01",
       isActive: true,
     },
     create: {
-      id: "animuslab-prod",
+      id: "animuslab-hq",
       orgId: org.id,
-      displayName: "AnimusLab Core Mesh Hub",
+      displayName: "AnimusLab Headquarters Hub",
       region: "US-EAST-1",
-      unit: "CORE-01",
-      apiKeyHash: "sha256_animuslab_prod_key_2026_tan",
+      unit: "HQ-01",
+      apiKeyHash: "sha256_animuslab_hq_key_2026_tan",
       isActive: true,
     },
   });
 
-  // 3. Upsert Tan in AdminUser Table (Root Control Plane Authority)
+  // Clean up legacy hub ID if exists
+  try {
+    await prisma.hub.deleteMany({ where: { id: "animuslab-prod" } });
+  } catch (err) {}
+
+  // 3. Upsert Tan in AdminUser Table (Zero Plaintext TOTP Exposure)
   const adminUser = await prisma.adminUser.upsert({
     where: { email: "tan@animuslab.dev" },
     update: {
       id: "AN-ADMIN-TAN",
       displayName: "Tan",
       role: AdminRole.ANIMUS_ADMIN,
-      totpSecret: "JBSWY3DPEHPK3PXP",
+      totpSecret: null, // Nullified for zero plaintext leakage
       status: UserStatus.APPROVED,
     },
     create: {
@@ -61,7 +66,7 @@ async function main() {
       email: "tan@animuslab.dev",
       displayName: "Tan",
       role: AdminRole.ANIMUS_ADMIN,
-      totpSecret: "JBSWY3DPEHPK3PXP",
+      totpSecret: null, // Nullified for zero plaintext leakage
       status: UserStatus.APPROVED,
     },
   });
@@ -75,7 +80,7 @@ async function main() {
       role: Role.HUB_MANAGER,
       orgId: org.id,
       hubId: hub.id,
-      totpSecret: "JBSWY3DPEHPK3PXP",
+      totpSecret: null, // Nullified for zero plaintext leakage
       status: UserStatus.APPROVED,
     },
     create: {
@@ -85,7 +90,7 @@ async function main() {
       role: Role.HUB_MANAGER,
       orgId: org.id,
       hubId: hub.id,
-      totpSecret: "JBSWY3DPEHPK3PXP",
+      totpSecret: null, // Nullified for zero plaintext leakage
       status: UserStatus.APPROVED,
     },
   });
@@ -128,7 +133,7 @@ async function main() {
     },
   });
 
-  console.log("✅ Credentials for Tan (tan@animuslab.dev) successfully provisioned & whitelisted!");
+  console.log("✅ Credentials for Tan (tan@animuslab.dev) updated to animuslab-hq with NULL TOTP secrets!");
 }
 
 main()
