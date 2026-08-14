@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Shield, ArrowRight, Activity, Cpu, Scale, Lock, ExternalLink, Play, CheckCircle, AlertTriangle, RefreshCw, Terminal, Code } from "lucide-react";
+import { Shield, ArrowRight, Activity, Cpu, Scale, Lock, ExternalLink, Play, CheckCircle, AlertTriangle, RefreshCw, Terminal, Code, Key } from "lucide-react";
 
 interface Scenario {
   name: string;
@@ -110,23 +110,20 @@ export default function BusinessLandingPage() {
 
       <nav className="border-b border-white/5 bg-[#070b16]/60 backdrop-blur-xl px-8 py-5 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse" />
           <span className="font-bold tracking-widest text-sm text-white font-sans">ANIMUSLAB // CONTROL_PLANE</span>
         </div>
         <div className="flex items-center gap-6 text-xs text-[#8f96b3]">
-          <a href="https://animuslab.dev/rules" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-1 uppercase tracking-wider">
-            <span>Statutory_Rules</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
-          <a href="https://anchor.animuslab.dev" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-1 uppercase tracking-wider">
-            <span>Research_Folio</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
-          <span className="text-white/20">|</span>
-          <a href="https://hub.animuslab.dev" className="text-[#6366f1] font-bold hover:text-indigo-400 transition-colors uppercase tracking-wider flex items-center gap-1.5">
-            <span>Enterprise_Portal</span>
+          <Link href="/login" className="text-[#6366f1] font-bold hover:text-indigo-400 transition-colors uppercase tracking-wider flex items-center gap-1.5">
+            <span>Enterprise_Hub</span>
             <ArrowRight className="w-3.5 h-3.5" />
-          </a>
+          </Link>
+          <Link href="/oversight/login" className="text-amber-400 font-bold hover:text-amber-300 transition-colors uppercase tracking-wider flex items-center gap-1.5">
+            <span>Oversight_Gate</span>
+          </Link>
+          <Link href="/admin/login" className="text-rose-400 font-bold hover:text-rose-300 transition-colors uppercase tracking-wider flex items-center gap-1.5">
+            <span>Admin_Gate</span>
+          </Link>
         </div>
       </nav>
 
@@ -150,17 +147,23 @@ export default function BusinessLandingPage() {
             protecting your enterprise from regulatory fines and reputational exposure.
           </p>
 
+          {/* All 3 Gateway Direct Links */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
-            <a href="https://hub.animuslab.dev">
-              <button className="bg-gradient-to-r from-[#6366f1] to-[#4f46e5] hover:brightness-110 text-white px-8 py-4 rounded-xl text-xs font-bold tracking-wider shadow-lg shadow-[#6366f1]/20 transition-all duration-200 transform hover:-translate-y-0.5 font-sans">
-                DEPLOY ENTERPRISE HUB →
+            <Link href="/login">
+              <button className="bg-gradient-to-r from-[#6366f1] to-[#4f46e5] hover:brightness-110 text-white px-7 py-4 rounded-xl text-xs font-bold tracking-wider shadow-lg shadow-[#6366f1]/20 transition-all duration-200 transform hover:-translate-y-0.5 font-sans flex items-center space-x-2">
+                <span>ENTERPRISE HUB GATEWAY →</span>
               </button>
-            </a>
-            <a href="https://oversight.animuslab.dev">
-              <button className="bg-[#070b16]/80 border border-white/10 hover:border-white/30 text-[#C5C9DB] hover:text-white px-8 py-4 rounded-xl text-xs font-bold tracking-wider backdrop-blur-md transition-all duration-200 transform hover:-translate-y-0.5 font-sans">
-                AUDITOR OVERSIGHT GATEWAY
+            </Link>
+            <Link href="/oversight/login">
+              <button className="bg-amber-500/20 border border-amber-400/40 hover:bg-amber-500/30 text-amber-200 px-7 py-4 rounded-xl text-xs font-bold tracking-wider backdrop-blur-md transition-all duration-200 transform hover:-translate-y-0.5 font-sans flex items-center space-x-2">
+                <span>AUDITOR OVERSIGHT GATEWAY →</span>
               </button>
-            </a>
+            </Link>
+            <Link href="/admin/login">
+              <button className="bg-rose-500/20 border border-rose-400/40 hover:bg-rose-500/30 text-rose-200 px-7 py-4 rounded-xl text-xs font-bold tracking-wider backdrop-blur-md transition-all duration-200 transform hover:-translate-y-0.5 font-sans flex items-center space-x-2">
+                <span>ROOT ADMIN GATEWAY →</span>
+              </button>
+            </Link>
           </div>
         </div>
 
