@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [clearanceId, setClearanceId] = useState("");
   const [email, setEmail] = useState("");
   const [hubId, setHubId] = useState("");
-  const [resolvedOrg, setResolvedOrg] = useState("ANIMUSLAB MESH");
+  const [resolvedOrg, setResolvedOrg] = useState("ENTERPRISE CONTROL HUB");
   const [resolvedName, setResolvedName] = useState("");
   const [resolvedRole, setResolvedRole] = useState("");
 
@@ -194,7 +194,7 @@ export default function LoginPage() {
                 required
                 value={clearanceId}
                 onChange={(e) => setClearanceId(e.target.value)}
-                placeholder="HUB-ANM-8810"
+                placeholder="e.g. CLR-8800-XX"
                 className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
@@ -230,7 +230,7 @@ export default function LoginPage() {
                 required
                 value={hubId}
                 onChange={(e) => setHubId(e.target.value)}
-                placeholder="animuslab-hq | jpmc-ny"
+                placeholder="e.g. jpmc-ny | citi-london"
                 className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
