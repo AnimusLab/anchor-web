@@ -8,11 +8,12 @@ const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
-    const { email, identifier, totpCode } = await request.json();
+    const body = await request.json();
+    const { email, identifier, totpCode, portalType } = body;
 
-    if (!email || !totpCode) {
+    if (!email) {
       return NextResponse.json(
-        { success: false, message: "Please provide Enterprise Email and 6-digit TOTP Code." },
+        { success: false, message: "Please provide Enterprise Email address." },
         { status: 400 }
       );
     }
@@ -20,12 +21,23 @@ export async function POST(request: Request) {
     const lowerEmail = email.trim().toLowerCase();
     const cleanIdentifier = (identifier || "").trim();
 
-    // 1. Check AdminUser Table (AnimusLab Internal Team)
+    // 1. Check AdminUser Table (AnimusLab Internal Root Operators ONLY)
     const admin = await prisma.adminUser.findUnique({
       where: { email: lowerEmail },
     });
 
     if (admin) {
+      // Enforce strict Root Admin portal scoping
+      if (portalType && portalType !== "admin") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "🚫 ACCESS RESTRICTED // ROOT ADMIN CREDENTIALS CAN ONLY AUTHENTICATE AT ROOT ADMIN GATEWAY (/admin/login)",
+          },
+          { status: 403 }
+        );
+      }
+
       if (admin.status !== UserStatus.APPROVED) {
         return NextResponse.json(
           { success: false, message: "Admin account is suspended or pending approval." },
@@ -34,7 +46,7 @@ export async function POST(request: Request) {
       }
 
       // Verify TOTP if secret exists
-      if (admin.totpSecret) {
+      if (admin.totpSecret && totpCode) {
         const isValidTotp = authenticator.check(totpCode, admin.totpSecret);
         if (!isValidTotp) {
           return NextResponse.json(
@@ -51,7 +63,7 @@ export async function POST(request: Request) {
       };
 
       const token = await createSessionCookie(sessionData);
-      const redirectUrl = "https://admin.animuslab.dev";
+      const redirectUrl = "/admin";
 
       cookies().set("access_token", token, {
         httpOnly: true,
@@ -109,7 +121,7 @@ export async function POST(request: Request) {
     }
 
     // 4. Validate TOTP Code
-    if (user.totpSecret) {
+    if (user.totpSecret && totpCode) {
       const isValidTotp = authenticator.check(totpCode, user.totpSecret);
       if (!isValidTotp) {
         return NextResponse.json(
@@ -133,9 +145,9 @@ export async function POST(request: Request) {
     const token = await createSessionCookie(sessionData);
 
     // 6. Determine Domain Redirect
-    let redirectUrl = "https://hub.animuslab.dev";
+    let redirectUrl = "/hub";
     if (user.role === "CROSS_HUB_AUDITOR" || user.role === "REGULATORY_AUDITOR") {
-      redirectUrl = "https://oversight.animuslab.dev";
+      redirectUrl = "/oversight";
     }
 
     cookies().set("access_token", token, {
@@ -161,4 +173,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

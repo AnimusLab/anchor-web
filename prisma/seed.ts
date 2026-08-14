@@ -3,7 +3,7 @@ import { PrismaClient, OrgType, ContractTier, Role, AdminRole, UserStatus } from
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding AnimusLab Root Admin & Whitelist Credentials (animuslab-hq)...");
+  console.log("🌱 Seeding AnimusLab Root Admin Credentials (ADMIN ONLY)...");
 
   // 1. Upsert AnimusLab Organization
   const org = await prisma.organization.upsert({
@@ -51,7 +51,12 @@ async function main() {
     await prisma.hub.deleteMany({ where: { id: "animuslab-prod" } });
   } catch (err) {}
 
-  // 3. Upsert Tan in AdminUser Table (Zero Plaintext TOTP Exposure)
+  // 3. Remove Tan from standard User table (ENFORCE ADMIN-ONLY ISOLATION)
+  try {
+    await prisma.user.deleteMany({ where: { email: "tan@animuslab.dev" } });
+  } catch (err) {}
+
+  // 4. Upsert Tan in AdminUser Table ONLY (Root Control Plane Authority)
   const adminUser = await prisma.adminUser.upsert({
     where: { email: "tan@animuslab.dev" },
     update: {
@@ -66,30 +71,6 @@ async function main() {
       email: "tan@animuslab.dev",
       displayName: "Tan",
       role: AdminRole.ANIMUS_ADMIN,
-      totpSecret: null, // Nullified for zero plaintext leakage
-      status: UserStatus.APPROVED,
-    },
-  });
-
-  // 4. Upsert Tan in User Table (Enterprise & Auditor Gateway Access)
-  const user = await prisma.user.upsert({
-    where: { email: "tan@animuslab.dev" },
-    update: {
-      id: "ROOT-ANM-0001",
-      displayName: "Tan",
-      role: Role.HUB_MANAGER,
-      orgId: org.id,
-      hubId: hub.id,
-      totpSecret: null, // Nullified for zero plaintext leakage
-      status: UserStatus.APPROVED,
-    },
-    create: {
-      id: "ROOT-ANM-0001",
-      email: "tan@animuslab.dev",
-      displayName: "Tan",
-      role: Role.HUB_MANAGER,
-      orgId: org.id,
-      hubId: hub.id,
       totpSecret: null, // Nullified for zero plaintext leakage
       status: UserStatus.APPROVED,
     },
@@ -133,7 +114,7 @@ async function main() {
     },
   });
 
-  console.log("✅ Credentials for Tan (tan@animuslab.dev) updated to animuslab-hq with NULL TOTP secrets!");
+  console.log("✅ Tan (tan@animuslab.dev) is now scoped EXCLUSIVELY to AdminUser table (Root Admin Portal only)!");
 }
 
 main()
