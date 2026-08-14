@@ -20,8 +20,8 @@ const MOCK_CLEARANCES: Record<string, {
     email: "tan@animuslab.dev",
     orgName: "AnimusLab Sovereign Infrastructure",
     hubId: "animuslab-hq",
-    clearanceId: "ROOT-ANM-0001",
-    role: "ROOT_OPERATOR",
+    clearanceId: "AN-ADMIN-TAN",
+    role: "ANIMUS_ADMIN",
     fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
     avatarUrl: "/avatars/memoji_smiling.jpg",
     statusText: "ANIMUSLAB ROOT OPERATOR VERIFIED // FULL CLEARANCE",
@@ -31,8 +31,8 @@ const MOCK_CLEARANCES: Record<string, {
     email: "tan@animuslab.dev",
     orgName: "AnimusLab Sovereign Infrastructure",
     hubId: "animuslab-hq",
-    clearanceId: "ROOT-ANM-0001",
-    role: "ROOT_OPERATOR",
+    clearanceId: "AN-ADMIN-TAN",
+    role: "ANIMUS_ADMIN",
     fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
     avatarUrl: "/avatars/memoji_smiling.jpg",
     statusText: "ANIMUSLAB ROOT OPERATOR VERIFIED // FULL CLEARANCE",
@@ -41,7 +41,7 @@ const MOCK_CLEARANCES: Record<string, {
     name: "Tan",
     email: "tan@animuslab.dev",
     orgName: "AnimusLab Sovereign Infrastructure",
-    hubId: "mesh-root-primary",
+    hubId: "animuslab-hq",
     clearanceId: "AN-ADMIN-TAN",
     role: "ANIMUS_ADMIN",
     fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
@@ -53,8 +53,8 @@ const MOCK_CLEARANCES: Record<string, {
     email: "tan@animuslab.dev",
     orgName: "AnimusLab Sovereign Infrastructure",
     hubId: "animuslab-hq",
-    clearanceId: "ROOT-ANM-0001",
-    role: "ROOT_OPERATOR",
+    clearanceId: "AN-ADMIN-TAN",
+    role: "ANIMUS_ADMIN",
     fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
     avatarUrl: "/avatars/memoji_smiling.jpg",
     statusText: "ANIMUSLAB ROOT OPERATOR VERIFIED // FULL CLEARANCE",
@@ -108,7 +108,7 @@ function generateFallbackIdentity(query: string) {
       name: `Root Operator (${upper})`,
       email: `${query.toLowerCase().replace(/[^a-z0-9]/g, "")}@animuslab.dev`,
       orgName: "ANIMUSLAB INFRASTRUCTURE",
-      hubId: "mesh-root-primary",
+      hubId: "animuslab-hq",
       clearanceId: upper,
       role: "ROOT_OPERATOR",
       fingerprint: `ED25519:${Array.from(upper).reduce((acc, char) => acc + char.charCodeAt(0).toString(16), "").slice(0, 16)}`,
@@ -139,8 +139,32 @@ async function performLookup(identifier: string) {
     return { found: true, ...MOCK_CLEARANCES[query] };
   }
 
-  // 2. Try DB lookup
+  // 2. Try DB lookup (AdminUser table check first for Tan/Admin)
   try {
+    const admin = await prisma.adminUser.findFirst({
+      where: {
+        OR: [
+          { email: { equals: query, mode: "insensitive" } },
+          { id: { equals: query, mode: "insensitive" } },
+        ],
+      },
+    });
+
+    if (admin) {
+      return {
+        found: true,
+        name: admin.displayName || "Tan",
+        email: admin.email,
+        orgName: "AnimusLab Sovereign Infrastructure",
+        hubId: "animuslab-hq",
+        clearanceId: admin.id,
+        role: admin.role,
+        fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
+        avatarUrl: "/avatars/memoji_smiling.jpg",
+        statusText: "ROOT PLATFORM ADMIN VERIFIED // LEVEL 1 AUTHORITY",
+      };
+    }
+
     const user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -175,7 +199,7 @@ async function performLookup(identifier: string) {
     // Database connection fallback
   }
 
-  // 3. Fallback dynamic generation for structured clearance IDs (e.g. AUD-XXX, HUB-XXX)
+  // 3. Fallback dynamic generation for structured clearance IDs
   if (query.length >= 4) {
     return generateFallbackIdentity(query);
   }

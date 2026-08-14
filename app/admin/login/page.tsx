@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
   const [clearanceId, setClearanceId] = useState("");
   const [email, setEmail] = useState("");
   const [hubId, setHubId] = useState("");
-  const [resolvedOrg, setResolvedOrg] = useState("ANIMUSLAB INFRA");
+  const [resolvedOrg, setResolvedOrg] = useState("ANIMUSLAB SOVEREIGN INFRA");
   const [resolvedName, setResolvedName] = useState("");
   const [resolvedRole, setResolvedRole] = useState("");
 
@@ -84,6 +84,7 @@ export default function AdminLoginPage() {
           clearanceId: clearanceId.trim(),
           email: email.trim(),
           hubId: hubId.trim(),
+          portalType: "admin",
         }),
       });
 
@@ -194,7 +195,7 @@ export default function AdminLoginPage() {
                 required
                 value={clearanceId}
                 onChange={(e) => setClearanceId(e.target.value)}
-                placeholder="ROOT-ANM-0001"
+                placeholder="AN-ADMIN-TAN"
                 className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
@@ -230,7 +231,7 @@ export default function AdminLoginPage() {
                 required
                 value={hubId}
                 onChange={(e) => setHubId(e.target.value)}
-                placeholder="mesh-root-primary"
+                placeholder="animuslab-hq"
                 className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
@@ -270,9 +271,9 @@ export default function AdminLoginPage() {
 
       {/* Footer */}
       <footer className="z-20 max-w-7xl w-full mx-auto pt-6 border-t border-white/20 flex items-center justify-between text-xs font-mono text-slate-300">
-        <div>ROOT CONTROL PROTOCOL // INFRA_OPERATOR_V6</div>
+        <div>CORE IDENTITY PROTOCOL: V6.0 // TRIPLE_FACTOR_AUTH</div>
         <div className="text-slate-200 font-bold tracking-wider">
-          SOVEREIGN ROOT RELAY · <span className="text-rose-300 font-mono">ANIMUSLAB.DEV</span>
+          SOVEREIGN RELAY ACTIVE · <span className="text-rose-300 font-mono">ANIMUSLAB.DEV</span>
         </div>
       </footer>
     </div>
