@@ -152,10 +152,10 @@ export default function DynamicLanyardCard({
                 </div>
               </div>
 
-              {/* Bottom Left Glass Badge */}
-              <div className="relative z-10 w-full bg-black/45 backdrop-blur-md border border-white/30 rounded-xl py-1.5 px-2.5 text-[11px] font-semibold text-white uppercase tracking-wider shadow-inner flex items-center justify-center space-x-1.5">
+              {/* Bottom Left Glass Badge: SIGNED BY ANIMUSLAB (Fits Perfectly Without Truncation) */}
+              <div className="relative z-10 w-full bg-black/45 backdrop-blur-md border border-white/30 rounded-xl py-1.5 px-2 text-[11.5px] font-bold text-white uppercase tracking-wider shadow-inner flex items-center justify-center space-x-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-white flex-shrink-0" />
-                <span className="truncate">AUTHENTICATED BY ANIMUSLAB</span>
+                <span className="whitespace-nowrap">SIGNED BY ANIMUSLAB</span>
               </div>
             </div>
 
@@ -305,7 +305,7 @@ export default function DynamicLanyardCard({
             <div className="pt-2.5 border-t border-white/20 flex items-center justify-between text-[12px] text-slate-100 z-10 font-mono">
               <span className={`flex items-center gap-1.5 ${themeConfig.accentText} font-semibold`}>
                 <ShieldCheck className="w-4 h-4" />
-                <span>AUTHENTICATED BY ANIMUSLAB</span>
+                <span className="whitespace-nowrap">SIGNED BY ANIMUSLAB</span>
               </span>
               <span className="font-medium text-slate-300 uppercase tracking-widest text-[10px]">BACK SIDE</span>
             </div>
