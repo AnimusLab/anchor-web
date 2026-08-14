@@ -1,22 +1,78 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ShieldCheck, Sparkles, Key, Lock, Layers, Rocket } from "lucide-react";
-import DynamicLanyardCard from "@/components/auth/DynamicLanyardCard";
+import { ShieldCheck, Sparkles, Key, Lock, Layers, Rocket, AlertTriangle, CheckCircle2 } from "lucide-react";
+import DynamicLanyardCard, { LanyardCardData } from "@/components/auth/DynamicLanyardCard";
 import AnimusLogo from "@/components/ui/AnimusLogo";
+
+const BLOCKED_DOMAINS = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "mail.com", "protonmail.com", "aol.com", "gmx.com", "zoho.com"];
 
 export default function OversightLoginPage() {
   const router = useRouter();
   const [clearanceId, setClearanceId] = useState("");
   const [email, setEmail] = useState("");
   const [hubId, setHubId] = useState("");
+  const [resolvedOrg, setResolvedOrg] = useState("STATUTORY AGENCY");
+  const [resolvedName, setResolvedName] = useState("");
+  const [resolvedRole, setResolvedRole] = useState("");
+
+  const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [emailWarning, setEmailWarning] = useState("");
+
+  // Validate Corporate Email Domain
+  useEffect(() => {
+    if (!email.includes("@")) {
+      setEmailWarning("");
+      return;
+    }
+    const domain = email.split("@")[1]?.toLowerCase().trim();
+    if (BLOCKED_DOMAINS.includes(domain)) {
+      setEmailWarning("🚫 PUBLIC CONSUMER DOMAIN RESTRICTED // INSTITUTIONAL CORPORATE EMAIL REQUIRED (@company.com)");
+    } else {
+      setEmailWarning("");
+    }
+  }, [email]);
+
+  // Clearance ID Auto-Lookup Hook
+  useEffect(() => {
+    const trimmed = clearanceId.trim();
+    if (trimmed.length < 3) {
+      setIsScanning(false);
+      return;
+    }
+
+    setIsScanning(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/auth/lookup?clearanceId=${encodeURIComponent(trimmed)}`);
+        const data = await res.json();
+        if (data.found) {
+          if (data.email && (!email || email === "identity@animuslab.dev")) setEmail(data.email);
+          if (data.hubId) setHubId(data.hubId);
+          if (data.orgName) setResolvedOrg(data.orgName);
+          if (data.name) setResolvedName(data.name);
+          if (data.role) setResolvedRole(data.role);
+        }
+      } catch (err) {
+        // Fallback
+      } finally {
+        setIsScanning(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [clearanceId]);
+
+  const isFormBlocked = Boolean(emailWarning);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isFormBlocked) return;
+
     setIsLoading(true);
     setErrorMsg("");
 
@@ -57,6 +113,16 @@ export default function OversightLoginPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const lanyardCardData: LanyardCardData = {
+    name: resolvedName || (email ? email.split("@")[0].toUpperCase() : ""),
+    email: email,
+    orgName: resolvedOrg,
+    hubId: hubId,
+    clearanceId: clearanceId,
+    role: resolvedRole || "STATUTORY AUDITOR",
+    isVerified: Boolean(clearanceId && email && !isFormBlocked),
   };
 
   return (
@@ -100,7 +166,7 @@ export default function OversightLoginPage() {
               OVERSIGHT ACCESS
             </h1>
             <p className="text-sm text-slate-200 mt-2 leading-relaxed font-sans">
-              Verify statutory regulatory clearance keys to access compliance nodes.
+              Enter your Clearance ID to resolve identity keypair and verify compliance node.
             </p>
           </div>
 
@@ -113,9 +179,16 @@ export default function OversightLoginPage() {
           {/* Form */}
           <form onSubmit={handleLoginSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
-                Clearance ID <span className="text-amber-300">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-2 font-mono">
+                <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider">
+                  Clearance ID <span className="text-amber-300">*</span>
+                </label>
+                {isScanning && (
+                  <span className="text-[10px] text-cyan-300 animate-pulse font-bold flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 animate-spin" /> RESOLVING KEY...
+                  </span>
+                )}
+              </div>
               <input
                 type="text"
                 required
@@ -136,28 +209,36 @@ export default function OversightLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@company.com"
-                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
+                className={`w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal ${
+                  emailWarning ? "border-rose-400 focus:border-rose-500 bg-rose-950/20" : ""
+                }`}
               />
+              {emailWarning && (
+                <div className="mt-2 text-[11px] text-rose-300 font-mono flex items-center space-x-1 bg-rose-950/40 p-2.5 rounded-xl border border-rose-500/30">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                  <span>{emailWarning}</span>
+                </div>
+              )}
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
-                Organization Hub ID <span className="text-amber-300">*</span>
+                Regulatory Body / Jurisdiction <span className="text-amber-300">*</span>
               </label>
               <input
                 type="text"
                 required
                 value={hubId}
                 onChange={(e) => setHubId(e.target.value)}
-                placeholder="animuslab"
+                placeholder="SEC | EU-AI-ACT | RBI | animuslab-prod"
                 className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
 
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 hover:from-amber-500 hover:to-orange-400 text-white text-sm font-black py-4 rounded-2xl shadow-[0_0_35px_rgba(245,158,11,0.6)] hover:shadow-[0_0_50px_rgba(245,158,11,0.8)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-amber-300/40"
+              disabled={isLoading || isFormBlocked}
+              className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 hover:from-amber-500 hover:to-orange-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-black py-4 rounded-2xl shadow-[0_0_35px_rgba(245,158,11,0.6)] hover:shadow-[0_0_50px_rgba(245,158,11,0.8)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-amber-300/40"
             >
               <span>{isLoading ? "AUTHENTICATING..." : "AUTHENTICATE AUDITOR NODE →"}</span>
             </button>
@@ -177,18 +258,12 @@ export default function OversightLoginPage() {
           </div>
         </div>
 
-        {/* Right Horizontal ID Card Container */}
+        {/* Right Horizontal ID Card Container with Auto Scanner Animation */}
         <div className="lg:col-span-6 w-full flex justify-center">
           <DynamicLanyardCard
             portalTheme="oversight"
-            data={{
-              name: email ? email.split("@")[0].toUpperCase() : "",
-              email: email,
-              orgName: "STATUTORY AGENCY",
-              hubId: hubId,
-              clearanceId: clearanceId,
-              isVerified: Boolean(clearanceId && email),
-            }}
+            isScanning={isScanning}
+            data={lanyardCardData}
           />
         </div>
       </main>

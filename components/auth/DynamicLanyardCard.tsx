@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck, QrCode, ExternalLink, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, QrCode, ExternalLink, CheckCircle2, RefreshCw } from "lucide-react";
 import AnimusLogo from "@/components/ui/AnimusLogo";
 
 export interface LanyardCardData {
@@ -19,6 +19,7 @@ interface DynamicLanyardCardProps {
   data: LanyardCardData;
   portalTheme?: "hub" | "oversight" | "admin";
   mode?: "signin" | "onboard";
+  isScanning?: boolean;
 }
 
 // Generate meaningful Code 128 barcode pattern widths based on input payload string
@@ -39,6 +40,7 @@ export default function DynamicLanyardCard({
   data,
   portalTheme = "hub",
   mode = "signin",
+  isScanning = false,
 }: DynamicLanyardCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
@@ -98,11 +100,13 @@ export default function DynamicLanyardCard({
 
   // Neutral initial role state when user hasn't filled form/authenticated
   const isInputted = Boolean(data.name || data.email || data.clearanceId);
-  const displayRole = data.role 
-    ? data.role.replace(/_/g, " ") 
-    : (isInputted ? "SOVEREIGN OPERATOR" : "PENDING CLEARANCE");
+  const displayRole = isScanning
+    ? "RESOLVING IDENTITY..."
+    : data.role 
+      ? data.role.replace(/_/g, " ") 
+      : (isInputted ? "SOVEREIGN OPERATOR" : "PENDING CLEARANCE");
 
-  const statusBadgeText = data.isVerified || isInputted ? "VERIFIED" : "AWAITING";
+  const statusBadgeText = isScanning ? "RESOLVING" : (data.isVerified || isInputted ? "VERIFIED" : "AWAITING");
 
   return (
     <div className="relative w-full flex justify-center">
@@ -124,6 +128,19 @@ export default function DynamicLanyardCard({
             className={`absolute inset-0 w-full h-full rounded-3xl pure-glass-card flex overflow-hidden font-mono text-slate-100 ${themeConfig.accentGlow}`}
             style={{ backfaceVisibility: "hidden" }}
           >
+            {/* Laser Scanning Beam Animation Overlay */}
+            {isScanning && (
+              <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden rounded-3xl">
+                <div className="w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee] animate-laserScan absolute top-0" />
+                <div className="absolute inset-0 bg-cyan-500/10 backdrop-blur-[1px] flex items-center justify-center">
+                  <div className="bg-black/80 border border-cyan-400/50 text-cyan-300 px-4 py-2 rounded-xl text-xs font-bold font-mono shadow-2xl flex items-center space-x-2 animate-pulse">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>RESOLVING SOVEREIGN REGISTRY KEY...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Glass Top Specular Reflection Highlight */}
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent pointer-events-none z-20" />
 
@@ -152,7 +169,7 @@ export default function DynamicLanyardCard({
                 </div>
               </div>
 
-              {/* Bottom Left Glass Badge: SIGNED BY ANIMUSLAB (Fits Perfectly Without Truncation) */}
+              {/* Bottom Left Glass Badge: SIGNED BY ANIMUSLAB */}
               <div className="relative z-10 w-full bg-black/45 backdrop-blur-md border border-white/30 rounded-xl py-1.5 px-2 text-[11.5px] font-bold text-white uppercase tracking-wider shadow-inner flex items-center justify-center space-x-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-white flex-shrink-0" />
                 <span className="whitespace-nowrap">SIGNED BY ANIMUSLAB</span>
@@ -175,7 +192,9 @@ export default function DynamicLanyardCard({
                   className={`text-[11px] font-semibold px-3 py-1 rounded-full uppercase border shadow-sm ${
                     statusBadgeText === "VERIFIED"
                       ? "bg-emerald-500/30 border-emerald-400/70 text-emerald-100"
-                      : themeConfig.badgeBg
+                      : isScanning
+                        ? "bg-cyan-500/30 border-cyan-400/70 text-cyan-100"
+                        : themeConfig.badgeBg
                   }`}
                 >
                   {statusBadgeText}
@@ -226,9 +245,9 @@ export default function DynamicLanyardCard({
                   </span>
                 </div>
                 <div className="flex items-center space-x-1.5 text-[11px] font-medium uppercase">
-                  <span className={`w-2 h-2 rounded-full ${isInputted ? "bg-emerald-400 animate-ping" : "bg-amber-400"}`} />
-                  <span className={isInputted ? "text-emerald-300" : "text-amber-300"}>
-                    {isInputted ? "IDENTITY VERIFIED" : "AWAITING AUTH"}
+                  <span className={`w-2 h-2 rounded-full ${isScanning ? "bg-cyan-400 animate-ping" : isInputted ? "bg-emerald-400 animate-ping" : "bg-amber-400"}`} />
+                  <span className={isScanning ? "text-cyan-300" : isInputted ? "text-emerald-300" : "text-amber-300"}>
+                    {isScanning ? "LOOKUP IN PROGRESS" : isInputted ? "IDENTITY VERIFIED" : "AWAITING AUTH"}
                   </span>
                 </div>
               </div>

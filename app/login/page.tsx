@@ -1,22 +1,78 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ShieldCheck, Sparkles, Key, Lock, ArrowRight, Layers, Rocket } from "lucide-react";
-import DynamicLanyardCard from "@/components/auth/DynamicLanyardCard";
+import { ShieldCheck, Sparkles, Key, Lock, ArrowRight, Layers, Rocket, AlertTriangle } from "lucide-react";
+import DynamicLanyardCard, { LanyardCardData } from "@/components/auth/DynamicLanyardCard";
 import AnimusLogo from "@/components/ui/AnimusLogo";
+
+const BLOCKED_DOMAINS = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "mail.com", "protonmail.com", "aol.com", "gmx.com", "zoho.com"];
 
 export default function LoginPage() {
   const router = useRouter();
   const [clearanceId, setClearanceId] = useState("");
   const [email, setEmail] = useState("");
   const [hubId, setHubId] = useState("");
+  const [resolvedOrg, setResolvedOrg] = useState("ANIMUSLAB MESH");
+  const [resolvedName, setResolvedName] = useState("");
+  const [resolvedRole, setResolvedRole] = useState("");
+
+  const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [emailWarning, setEmailWarning] = useState("");
+
+  // Validate Corporate Email Domain
+  useEffect(() => {
+    if (!email.includes("@")) {
+      setEmailWarning("");
+      return;
+    }
+    const domain = email.split("@")[1]?.toLowerCase().trim();
+    if (BLOCKED_DOMAINS.includes(domain)) {
+      setEmailWarning("🚫 PUBLIC CONSUMER DOMAIN RESTRICTED // INSTITUTIONAL CORPORATE EMAIL REQUIRED (@company.com)");
+    } else {
+      setEmailWarning("");
+    }
+  }, [email]);
+
+  // Clearance ID Auto-Lookup Hook
+  useEffect(() => {
+    const trimmed = clearanceId.trim();
+    if (trimmed.length < 3) {
+      setIsScanning(false);
+      return;
+    }
+
+    setIsScanning(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/auth/lookup?clearanceId=${encodeURIComponent(trimmed)}`);
+        const data = await res.json();
+        if (data.found) {
+          if (data.email && (!email || email === "identity@animuslab.dev")) setEmail(data.email);
+          if (data.hubId) setHubId(data.hubId);
+          if (data.orgName) setResolvedOrg(data.orgName);
+          if (data.name) setResolvedName(data.name);
+          if (data.role) setResolvedRole(data.role);
+        }
+      } catch (err) {
+        // Fallback
+      } finally {
+        setIsScanning(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [clearanceId]);
+
+  const isFormBlocked = Boolean(emailWarning);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isFormBlocked) return;
+
     setIsLoading(true);
     setErrorMsg("");
 
@@ -57,6 +113,16 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const lanyardCardData: LanyardCardData = {
+    name: resolvedName || (email ? email.split("@")[0].toUpperCase() : ""),
+    email: email,
+    orgName: resolvedOrg,
+    hubId: hubId,
+    clearanceId: clearanceId,
+    role: resolvedRole || "SOVEREIGN OPERATOR",
+    isVerified: Boolean(clearanceId && email && !isFormBlocked),
   };
 
   return (
@@ -100,7 +166,7 @@ export default function LoginPage() {
               CRYPTOGRAPHIC ACCESS
             </h1>
             <p className="text-sm text-slate-200 mt-2 leading-relaxed font-sans">
-              Verify your Ed25519 identity keys to activate your session.
+              Enter your Clearance ID to resolve identity keypair and verify node session.
             </p>
           </div>
 
@@ -113,15 +179,22 @@ export default function LoginPage() {
           {/* Login Inputs Form */}
           <form onSubmit={handleLoginSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
-                Clearance ID <span className="text-indigo-300">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-2 font-mono">
+                <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider">
+                  Clearance ID <span className="text-indigo-300">*</span>
+                </label>
+                {isScanning && (
+                  <span className="text-[10px] text-cyan-300 animate-pulse font-bold flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 animate-spin" /> RESOLVING KEY...
+                  </span>
+                )}
+              </div>
               <input
                 type="text"
                 required
                 value={clearanceId}
                 onChange={(e) => setClearanceId(e.target.value)}
-                placeholder="EMG-ANM-2607"
+                placeholder="HUB-ANM-8810"
                 className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
@@ -136,8 +209,16 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@company.com"
-                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
+                className={`w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal ${
+                  emailWarning ? "border-rose-400 focus:border-rose-500 bg-rose-950/20" : ""
+                }`}
               />
+              {emailWarning && (
+                <div className="mt-2 text-[11px] text-rose-300 font-mono flex items-center space-x-1 bg-rose-950/40 p-2.5 rounded-xl border border-rose-500/30">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                  <span>{emailWarning}</span>
+                </div>
+              )}
             </div>
 
             <div>
@@ -149,7 +230,7 @@ export default function LoginPage() {
                 required
                 value={hubId}
                 onChange={(e) => setHubId(e.target.value)}
-                placeholder="animuslab"
+                placeholder="animuslab-prod | jpmc-ny"
                 className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
             </div>
@@ -157,8 +238,8 @@ export default function LoginPage() {
             {/* Primary CTA Button */}
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-black py-4 rounded-2xl shadow-[0_0_35px_rgba(99,102,241,0.6)] hover:shadow-[0_0_50px_rgba(99,102,241,0.8)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-indigo-300/40"
+              disabled={isLoading || isFormBlocked}
+              className="w-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-black py-4 rounded-2xl shadow-[0_0_35px_rgba(99,102,241,0.6)] hover:shadow-[0_0_50px_rgba(99,102,241,0.8)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-indigo-300/40"
             >
               <span>{isLoading ? "AUTHENTICATING..." : "AUTHENTICATE NODE →"}</span>
             </button>
@@ -182,14 +263,8 @@ export default function LoginPage() {
         <div className="lg:col-span-6 w-full flex justify-center">
           <DynamicLanyardCard
             portalTheme="hub"
-            data={{
-              name: email ? email.split("@")[0].toUpperCase() : "",
-              email: email,
-              orgName: "ANIMUSLAB MESH",
-              hubId: hubId,
-              clearanceId: clearanceId,
-              isVerified: Boolean(clearanceId && email),
-            }}
+            isScanning={isScanning}
+            data={lanyardCardData}
           />
         </div>
       </main>
