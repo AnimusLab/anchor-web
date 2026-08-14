@@ -196,7 +196,9 @@ export default function AdminLoginPage() {
       {/* Footer */}
       <footer className="z-20 max-w-7xl w-full mx-auto pt-6 border-t border-white/20 flex items-center justify-between text-xs font-mono text-slate-300">
         <div>ROOT CONTROL PROTOCOL // INFRA_OPERATOR_V6</div>
-        <div className="text-slate-200 font-bold">SOVEREIGN ROOT RELAY · ANCHORGOVERNANCE.TECH</div>
+        <div className="text-slate-200 font-bold tracking-wider">
+          SOVEREIGN ROOT RELAY · <span className="text-rose-300 font-mono">ANIMUSLAB.DEV</span>
+        </div>
       </footer>
     </div>
   );

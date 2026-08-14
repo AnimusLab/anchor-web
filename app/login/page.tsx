@@ -197,7 +197,9 @@ export default function LoginPage() {
       {/* Footer */}
       <footer className="z-20 max-w-7xl w-full mx-auto pt-6 border-t border-white/20 flex items-center justify-between text-xs font-mono text-slate-300">
         <div>CORE IDENTITY PROTOCOL: V6.0 // TRIPLE_FACTOR_AUTH</div>
-        <div className="text-slate-200 font-bold">SOVEREIGN RELAY ACTIVE · ANCHORGOVERNANCE.TECH</div>
+        <div className="text-slate-200 font-bold tracking-wider">
+          SOVEREIGN RELAY ACTIVE · <span className="text-indigo-300 font-mono">ANIMUSLAB.DEV</span>
+        </div>
       </footer>
     </div>
   );

@@ -196,7 +196,9 @@ export default function OversightLoginPage() {
       {/* Footer */}
       <footer className="z-20 max-w-7xl w-full mx-auto pt-6 border-t border-white/20 flex items-center justify-between text-xs font-mono text-slate-300">
         <div>REGULATORY COMPLIANCE PROTOCOL // STATUTORY_OVERSIGHT_V6</div>
-        <div className="text-slate-200 font-bold">SOVEREIGN AUDIT RELAY · ANCHORGOVERNANCE.TECH</div>
+        <div className="text-slate-200 font-bold tracking-wider">
+          SOVEREIGN AUDIT RELAY · <span className="text-amber-300 font-mono">ANIMUSLAB.DEV</span>
+        </div>
       </footer>
     </div>
   );
