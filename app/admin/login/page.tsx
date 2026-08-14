@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ShieldCheck, Sparkles, Key, Lock, Layers, Rocket } from "lucide-react";
 import DynamicLanyardCard from "@/components/auth/DynamicLanyardCard";
+import AnimusLogo from "@/components/ui/AnimusLogo";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -59,19 +60,15 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#03050a] text-slate-100 flex flex-col justify-between p-6 md:p-10 relative overflow-hidden font-sans selection:bg-rose-500/40 selection:text-rose-100">
-      {/* Dynamic Vibrant Colorful Mesh Background & Pulsing Orbs */}
-      <div className="absolute inset-0 colorful-bg-admin opacity-90 animate-mesh-pulse pointer-events-none" />
-      <div className="absolute inset-0 spatial-bg-grid opacity-20 pointer-events-none" />
-      <div className="absolute -top-32 -left-32 w-[550px] h-[550px] rounded-full bg-gradient-to-r from-rose-500/40 via-pink-600/40 to-red-500/40 blur-[140px] pointer-events-none animate-spatial-aurora" />
-      <div className="absolute -bottom-32 -right-32 w-[550px] h-[550px] rounded-full bg-gradient-to-r from-pink-600/40 via-rose-600/40 to-purple-500/40 blur-[140px] pointer-events-none animate-spatial-aurora" style={{ animationDelay: "-6s" }} />
+    <div className="min-h-screen merged-bg-crimson text-slate-100 flex flex-col justify-between p-6 md:p-10 relative overflow-hidden font-sans selection:bg-rose-500/40 selection:text-rose-100">
+      {/* Ambient Smooth Merged Glow Orbs */}
+      <div className="ambient-glow-orb -top-32 -left-32 w-[600px] h-[600px] bg-gradient-to-br from-rose-500/40 via-pink-600/30 to-red-500/40 animate-spatial-aurora" />
+      <div className="ambient-glow-orb -bottom-32 -right-32 w-[600px] h-[600px] bg-gradient-to-br from-pink-600/40 via-rose-600/30 to-purple-600/40 animate-spatial-aurora" style={{ animationDelay: "-6s" }} />
 
       {/* Top Header Navigation */}
       <header className="flex items-center justify-between z-20 max-w-[1550px] w-full mx-auto pb-6 border-b border-white/20">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-2xl bg-rose-500/30 backdrop-blur-xl border border-rose-300/50 flex items-center justify-center text-rose-200 font-bold text-lg font-mono shadow-[0_0_25px_rgba(244,63,94,0.5)]">
-            R
-          </div>
+        <div className="flex items-center space-x-4">
+          <AnimusLogo variant="rose" size={42} />
           <div>
             <span className="text-base font-black tracking-wider text-white uppercase block font-sans">
               Anchor Admin
@@ -90,7 +87,7 @@ export default function AdminLoginPage() {
         </div>
       </header>
 
-      {/* Main Form & Enlarged Horizontal ID Card Container */}
+      {/* Main Form & Horizontal ID Card Container */}
       <main className="z-20 max-w-[1550px] w-full mx-auto my-auto py-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         {/* Left Form Container */}
         <div className="lg:col-span-5 w-full max-w-xl justify-self-start pure-glass-card p-8 md:p-11 rounded-3xl space-y-6">
@@ -180,7 +177,7 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
-        {/* Right Enlarged Horizontal ID Card Container */}
+        {/* Right Horizontal ID Card Container */}
         <div className="lg:col-span-7 w-full flex justify-end justify-self-end">
           <DynamicLanyardCard
             portalTheme="admin"
