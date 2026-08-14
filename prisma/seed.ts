@@ -3,7 +3,7 @@ import { PrismaClient, OrgType, ContractTier, Role, AdminRole, UserStatus } from
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding AnimusLab Root Admin Credentials (ADMIN ONLY)...");
+  console.log("🌱 Seeding AnimusLab Root Admin Credentials with 2FA TOTP Enforced...");
 
   // 1. Upsert AnimusLab Organization
   const org = await prisma.organization.upsert({
@@ -56,14 +56,14 @@ async function main() {
     await prisma.user.deleteMany({ where: { email: "tan@animuslab.dev" } });
   } catch (err) {}
 
-  // 4. Upsert Tan in AdminUser Table ONLY (Root Control Plane Authority)
+  // 4. Upsert Tan in AdminUser Table ONLY with 2FA TOTP Secret Enforced
   const adminUser = await prisma.adminUser.upsert({
     where: { email: "tan@animuslab.dev" },
     update: {
       id: "AN-ADMIN-TAN",
       displayName: "Tan",
       role: AdminRole.ANIMUS_ADMIN,
-      totpSecret: null, // Nullified for zero plaintext leakage
+      totpSecret: "JBSWY3DPEHPK3PXP", // Enforced 2FA TOTP Secret
       status: UserStatus.APPROVED,
     },
     create: {
@@ -71,7 +71,7 @@ async function main() {
       email: "tan@animuslab.dev",
       displayName: "Tan",
       role: AdminRole.ANIMUS_ADMIN,
-      totpSecret: null, // Nullified for zero plaintext leakage
+      totpSecret: "JBSWY3DPEHPK3PXP", // Enforced 2FA TOTP Secret
       status: UserStatus.APPROVED,
     },
   });
@@ -114,7 +114,7 @@ async function main() {
     },
   });
 
-  console.log("✅ Tan (tan@animuslab.dev) is now scoped EXCLUSIVELY to AdminUser table (Root Admin Portal only)!");
+  console.log("✅ Tan (tan@animuslab.dev) provisioned in AdminUser table with ENFORCED 2FA TOTP Secret!");
 }
 
 main()

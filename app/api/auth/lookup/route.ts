@@ -3,144 +3,11 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Known institutional demo & root admin identities for instant resolution
-const MOCK_CLEARANCES: Record<string, {
-  name: string;
-  email: string;
-  orgName: string;
-  hubId: string;
-  clearanceId: string;
-  role: string;
-  fingerprint: string;
-  avatarUrl?: string;
-  statusText: string;
-}> = {
-  "tan@animuslab.dev": {
-    name: "Tan",
-    email: "tan@animuslab.dev",
-    orgName: "AnimusLab Sovereign Infrastructure",
-    hubId: "animuslab-hq",
-    clearanceId: "AN-ADMIN-TAN",
-    role: "ANIMUS_ADMIN",
-    fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
-    avatarUrl: "/avatars/memoji_smiling.jpg",
-    statusText: "ANIMUSLAB ROOT OPERATOR VERIFIED // FULL CLEARANCE",
-  },
-  "root-anm-0001": {
-    name: "Tan",
-    email: "tan@animuslab.dev",
-    orgName: "AnimusLab Sovereign Infrastructure",
-    hubId: "animuslab-hq",
-    clearanceId: "AN-ADMIN-TAN",
-    role: "ANIMUS_ADMIN",
-    fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
-    avatarUrl: "/avatars/memoji_smiling.jpg",
-    statusText: "ANIMUSLAB ROOT OPERATOR VERIFIED // FULL CLEARANCE",
-  },
-  "an-admin-tan": {
-    name: "Tan",
-    email: "tan@animuslab.dev",
-    orgName: "AnimusLab Sovereign Infrastructure",
-    hubId: "animuslab-hq",
-    clearanceId: "AN-ADMIN-TAN",
-    role: "ANIMUS_ADMIN",
-    fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
-    avatarUrl: "/avatars/memoji_smiling.jpg",
-    statusText: "ROOT PLATFORM ADMIN VERIFIED // LEVEL 1 AUTHORITY",
-  },
-  "tan": {
-    name: "Tan",
-    email: "tan@animuslab.dev",
-    orgName: "AnimusLab Sovereign Infrastructure",
-    hubId: "animuslab-hq",
-    clearanceId: "AN-ADMIN-TAN",
-    role: "ANIMUS_ADMIN",
-    fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
-    avatarUrl: "/avatars/memoji_smiling.jpg",
-    statusText: "ANIMUSLAB ROOT OPERATOR VERIFIED // FULL CLEARANCE",
-  },
-  "aud-anm-2603": {
-    name: "Elena Rostova",
-    email: "identity@animuslab.dev",
-    orgName: "STATUTORY AUDITOR AGENCY",
-    hubId: "SEC-REG-SCI",
-    clearanceId: "AUD-ANM-2603",
-    role: "STATUTORY_AUDITOR",
-    fingerprint: "ED25519:7f920a11b8ca4549f2b828fc0e80112a",
-    avatarUrl: "/avatars/memoji_female_wink.jpg",
-    statusText: "STATUTORY AUDITOR KEY MATCHED // LEVEL 3 OVERSIGHT",
-  },
-  "hub-anm-8810": {
-    name: "Dr. Marcus Vance",
-    email: "operator@animuslab.dev",
-    orgName: "ANIMUSLAB ENTERPRISE",
-    hubId: "animuslab-hq",
-    clearanceId: "HUB-ANM-8810",
-    role: "SOVEREIGN_OPERATOR",
-    fingerprint: "ED25519:e3b0c44298fc1c149afbf4c8996fb924",
-    avatarUrl: "/avatars/memoji_smiling.jpg",
-    statusText: "ENTERPRISE HUB OPERATOR MATCHED // LEVEL 2 CLEARANCE",
-  },
-};
-
-function generateFallbackIdentity(query: string) {
-  const upper = query.toUpperCase();
-  const cleanPrefix = upper.split("-")[0] || "CLR";
-  
-  if (cleanPrefix === "AUD" || upper.includes("AUDIT") || upper.includes("SEC") || upper.includes("EU")) {
-    return {
-      found: true,
-      name: `Auditor (${upper})`,
-      email: `${query.toLowerCase().replace(/[^a-z0-9]/g, "")}@statutory-agency.gov`,
-      orgName: "STATUTORY OVERSIGHT AGENCY",
-      hubId: "EU-AI-ACT",
-      clearanceId: upper,
-      role: "STATUTORY_AUDITOR",
-      fingerprint: `ED25519:${Array.from(upper).reduce((acc, char) => acc + char.charCodeAt(0).toString(16), "").slice(0, 16)}`,
-      avatarUrl: "/avatars/memoji_female_wink.jpg",
-      statusText: "SOVEREIGN AUDITOR CLEARANCE RESOLVED",
-    };
-  }
-
-  if (cleanPrefix === "ROOT" || upper.includes("ADMIN")) {
-    return {
-      found: true,
-      name: `Root Operator (${upper})`,
-      email: `${query.toLowerCase().replace(/[^a-z0-9]/g, "")}@animuslab.dev`,
-      orgName: "ANIMUSLAB INFRASTRUCTURE",
-      hubId: "animuslab-hq",
-      clearanceId: upper,
-      role: "ROOT_OPERATOR",
-      fingerprint: `ED25519:${Array.from(upper).reduce((acc, char) => acc + char.charCodeAt(0).toString(16), "").slice(0, 16)}`,
-      avatarUrl: "/avatars/memoji_female_smile.jpg",
-      statusText: "ROOT OPERATOR CLEARANCE RESOLVED",
-    };
-  }
-
-  return {
-    found: true,
-    name: `Operator (${upper})`,
-    email: `${query.toLowerCase().replace(/[^a-z0-9]/g, "")}@enterprise-corp.com`,
-    orgName: "ENTERPRISE GOVERNANCE HUB",
-    hubId: "animuslab-hq",
-    clearanceId: upper,
-    role: "SOVEREIGN_OPERATOR",
-    fingerprint: `ED25519:${Array.from(upper).reduce((acc, char) => acc + char.charCodeAt(0).toString(16), "").slice(0, 16)}`,
-    avatarUrl: "/avatars/memoji_smiling.jpg",
-    statusText: "ENTERPRISE OPERATOR CLEARANCE RESOLVED",
-  };
-}
-
 async function performLookup(identifier: string) {
   const query = identifier.trim().toLowerCase();
 
-  // 1. Check pre-configured MOCK clearances first
-  if (MOCK_CLEARANCES[query]) {
-    return { found: true, ...MOCK_CLEARANCES[query] };
-  }
-
-  // 2. Try DB lookup (AdminUser table check first for Tan/Admin)
   try {
+    // 1. Check AdminUser Table (Root Platform Admins)
     const admin = await prisma.adminUser.findFirst({
       where: {
         OR: [
@@ -151,20 +18,27 @@ async function performLookup(identifier: string) {
     });
 
     if (admin) {
+      const identity = await prisma.governanceIdentity.findFirst({
+        where: { registeredBy: admin.email },
+      });
+
       return {
         found: true,
-        name: admin.displayName || "Tan",
+        name: admin.displayName || "Root Admin",
         email: admin.email,
         orgName: "AnimusLab Sovereign Infrastructure",
         hubId: "animuslab-hq",
         clearanceId: admin.id,
         role: admin.role,
-        fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
+        fingerprint: identity?.publicKeyFingerprint
+          ? `ED25519:${identity.publicKeyFingerprint.substring(0, 16)}`
+          : "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
         avatarUrl: "/avatars/memoji_smiling.jpg",
         statusText: "ROOT PLATFORM ADMIN VERIFIED // LEVEL 1 AUTHORITY",
       };
     }
 
+    // 2. Check User Table (Enterprise & Regulatory Auditor Users)
     const user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -184,7 +58,7 @@ async function performLookup(identifier: string) {
         found: true,
         name: user.displayName || user.email.split("@")[0].toUpperCase(),
         email: user.email,
-        orgName: user.organization?.displayName || "ANIMUSLAB MESH",
+        orgName: user.organization?.displayName || "ANIMUSLAB GOVERNANCE MESH",
         hubId: user.hub?.id || user.hubId || "animuslab-hq",
         clearanceId: user.id,
         role: user.role,
@@ -195,16 +69,34 @@ async function performLookup(identifier: string) {
         statusText: "CRYPTOGRAPHIC IDENTITY MATCHED // READY FOR AUTH",
       };
     }
+
+    // 3. Check Whitelist Table
+    const whitelisted = await prisma.whitelist.findFirst({
+      where: {
+        email: { equals: query, mode: "insensitive" },
+      },
+      include: { organization: true, hub: true },
+    });
+
+    if (whitelisted) {
+      return {
+        found: true,
+        name: whitelisted.email.split("@")[0].toUpperCase(),
+        email: whitelisted.email,
+        orgName: whitelisted.organization?.displayName || "ANIMUSLAB MESH",
+        hubId: whitelisted.hub?.id || whitelisted.hubId || "animuslab-hq",
+        clearanceId: whitelisted.id,
+        role: whitelisted.role,
+        fingerprint: "ED25519: WHITELISTED KEYPAIR",
+        avatarUrl: "/avatars/memoji_smiling.jpg",
+        statusText: "SOVEREIGN WHITELIST MATCHED // READY FOR PROVISIONING",
+      };
+    }
   } catch (err) {
-    // Database connection fallback
+    console.error("Lookup database error:", err);
   }
 
-  // 3. Fallback dynamic generation for structured clearance IDs
-  if (query.length >= 4) {
-    return generateFallbackIdentity(query);
-  }
-
-  return { found: false, message: "No identity found for given identifier" };
+  return { found: false, message: "No identity record found in Sovereign Database" };
 }
 
 export async function GET(req: NextRequest) {

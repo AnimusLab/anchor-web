@@ -45,12 +45,24 @@ export async function POST(request: Request) {
         );
       }
 
-      // Verify TOTP if secret exists
-      if (admin.totpSecret && totpCode) {
-        const isValidTotp = authenticator.check(totpCode, admin.totpSecret);
+      // Step 1: If 2FA TOTP code is NOT provided, instruct client to prompt Step 2 TOTP input
+      if (!totpCode) {
+        return NextResponse.json(
+          {
+            success: false,
+            requireTotp: true,
+            message: "🔒 Identity verified. Enter 6-digit TOTP Authenticator code to complete login.",
+          },
+          { status: 200 }
+        );
+      }
+
+      // Step 2: Validate 6-Digit TOTP Code
+      if (admin.totpSecret) {
+        const isValidTotp = authenticator.check(totpCode.trim(), admin.totpSecret);
         if (!isValidTotp) {
           return NextResponse.json(
-            { success: false, message: "Invalid 6-digit TOTP Authenticator code." },
+            { success: false, requireTotp: true, message: "❌ Invalid 6-digit TOTP Authenticator code. Check your app." },
             { status: 401 }
           );
         }
@@ -120,12 +132,24 @@ export async function POST(request: Request) {
       }
     }
 
-    // 4. Validate TOTP Code
-    if (user.totpSecret && totpCode) {
-      const isValidTotp = authenticator.check(totpCode, user.totpSecret);
+    // Step 1: If TOTP code is NOT provided, request TOTP challenge
+    if (!totpCode) {
+      return NextResponse.json(
+        {
+          success: false,
+          requireTotp: true,
+          message: "🔒 Identity verified. Enter 6-digit TOTP Authenticator code to complete login.",
+        },
+        { status: 200 }
+      );
+    }
+
+    // Step 2: Validate 6-Digit TOTP Code
+    if (user.totpSecret) {
+      const isValidTotp = authenticator.check(totpCode.trim(), user.totpSecret);
       if (!isValidTotp) {
         return NextResponse.json(
-          { success: false, message: "Invalid 6-digit TOTP Authenticator code." },
+          { success: false, requireTotp: true, message: "❌ Invalid 6-digit TOTP Authenticator code." },
           { status: 401 }
         );
       }
