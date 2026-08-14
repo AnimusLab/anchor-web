@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Known institutional demo identities for instant offline & online resolution
+// Known institutional demo & root admin identities for instant resolution
 const MOCK_CLEARANCES: Record<string, {
   name: string;
   email: string;
@@ -15,6 +15,50 @@ const MOCK_CLEARANCES: Record<string, {
   avatarUrl?: string;
   statusText: string;
 }> = {
+  "tan@animuslab.dev": {
+    name: "Tan",
+    email: "tan@animuslab.dev",
+    orgName: "AnimusLab Sovereign Infrastructure",
+    hubId: "animuslab-prod",
+    clearanceId: "ROOT-ANM-0001",
+    role: "ROOT_OPERATOR",
+    fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
+    avatarUrl: "/avatars/memoji_smiling.jpg",
+    statusText: "ANIMUSLAB ROOT OPERATOR VERIFIED // FULL CLEARANCE",
+  },
+  "root-anm-0001": {
+    name: "Tan",
+    email: "tan@animuslab.dev",
+    orgName: "AnimusLab Sovereign Infrastructure",
+    hubId: "animuslab-prod",
+    clearanceId: "ROOT-ANM-0001",
+    role: "ROOT_OPERATOR",
+    fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
+    avatarUrl: "/avatars/memoji_smiling.jpg",
+    statusText: "ANIMUSLAB ROOT OPERATOR VERIFIED // FULL CLEARANCE",
+  },
+  "an-admin-tan": {
+    name: "Tan",
+    email: "tan@animuslab.dev",
+    orgName: "AnimusLab Sovereign Infrastructure",
+    hubId: "mesh-root-primary",
+    clearanceId: "AN-ADMIN-TAN",
+    role: "ANIMUS_ADMIN",
+    fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
+    avatarUrl: "/avatars/memoji_smiling.jpg",
+    statusText: "ROOT PLATFORM ADMIN VERIFIED // LEVEL 1 AUTHORITY",
+  },
+  "tan": {
+    name: "Tan",
+    email: "tan@animuslab.dev",
+    orgName: "AnimusLab Sovereign Infrastructure",
+    hubId: "animuslab-prod",
+    clearanceId: "ROOT-ANM-0001",
+    role: "ROOT_OPERATOR",
+    fingerprint: "ED25519:8f92a11b8ca4549f2b828fc0e80112a",
+    avatarUrl: "/avatars/memoji_smiling.jpg",
+    statusText: "ANIMUSLAB ROOT OPERATOR VERIFIED // FULL CLEARANCE",
+  },
   "aud-anm-2603": {
     name: "Elena Rostova",
     email: "identity@animuslab.dev",
@@ -36,17 +80,6 @@ const MOCK_CLEARANCES: Record<string, {
     fingerprint: "ED25519:e3b0c44298fc1c149afbf4c8996fb924",
     avatarUrl: "/avatars/memoji_smiling.jpg",
     statusText: "ENTERPRISE HUB OPERATOR MATCHED // LEVEL 2 CLEARANCE",
-  },
-  "root-anm-0001": {
-    name: "Sovereign Root Engineer",
-    email: "root@animuslab.dev",
-    orgName: "ANIMUSLAB INFRASTRUCTURE",
-    hubId: "mesh-root-primary",
-    clearanceId: "ROOT-ANM-0001",
-    role: "ROOT_OPERATOR",
-    fingerprint: "ED25519:f01a399081bbcfc28ea97a31b212f0ea",
-    avatarUrl: "/avatars/memoji_female_smile.jpg",
-    statusText: "ROOT PLATFORM CLEARANCE VERIFIED // LEVEL 1 AUTHORITY",
   },
 };
 
