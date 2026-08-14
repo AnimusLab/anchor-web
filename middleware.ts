@@ -6,6 +6,24 @@ export function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || '';
   const pathname = url.pathname;
 
+  // 1. Intelligent Subdomain Rewriting & Gateway Routing
+  if (hostname.includes('admin.animuslab.dev')) {
+    if (pathname === '/' || pathname === '/login') {
+      url.pathname = '/admin/login';
+      return NextResponse.rewrite(url);
+    }
+  } else if (hostname.includes('oversight.animuslab.dev')) {
+    if (pathname === '/' || pathname === '/login') {
+      url.pathname = '/oversight/login';
+      return NextResponse.rewrite(url);
+    }
+  } else if (hostname.includes('hub.animuslab.dev')) {
+    if (pathname === '/') {
+      url.pathname = '/login';
+      return NextResponse.rewrite(url);
+    }
+  }
+
   // Bypass public static assets, API auth, public showcase, public login gateways, and telemetry APIs
   if (
     pathname.startsWith('/_next/') ||
@@ -19,7 +37,8 @@ export function middleware(request: NextRequest) {
     pathname === '/oversight/login' ||
     pathname === '/admin/login' ||
     pathname === '/' ||
-    pathname === '/favicon.ico'
+    pathname === '/favicon.ico' ||
+    pathname === '/icon.svg'
   ) {
     return NextResponse.next();
   }
@@ -56,7 +75,14 @@ export function middleware(request: NextRequest) {
 
   // Force login redirection if not authenticated
   if (!session) {
-    const loginUrl = new URL('/login', request.url);
+    let targetLogin = '/login';
+    if (hostname.includes('admin.animuslab.dev')) {
+      targetLogin = '/admin/login';
+    } else if (hostname.includes('oversight.animuslab.dev')) {
+      targetLogin = '/oversight/login';
+    }
+
+    const loginUrl = new URL(targetLogin, request.url);
     return NextResponse.redirect(loginUrl);
   }
 
