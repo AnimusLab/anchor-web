@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import {
   Building2,
   UserCheck,
@@ -13,39 +13,38 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const prisma = new PrismaClient();
-
-const DEMO_TENANT_HUBS = [
-  { id: "HUB-001", name: "AnimusLab Primary Mesh", org: "AnimusLab Dev", nodes: 14, cpu: "18%", memory: "4.2 GB", status: "HEALTHY" },
-  { id: "HUB-002", name: "Nexus Financial Silo", org: "Nexus Systems", nodes: 8, cpu: "32%", memory: "8.1 GB", status: "HEALTHY" },
-  { id: "HUB-003", name: "Alpha Cloud Governance", org: "Alpha Corp", nodes: 22, cpu: "65%", memory: "16.4 GB", status: "HEALTHY" },
-];
-
-const DEMO_PENDING_WHITELIST = [
-  { email: "sarah@acme-finance.org", role: "SOVEREIGN OPERATOR", org: "Acme Finance", domainVerified: true, time: "10 mins ago" },
-  { email: "auditor.vance@sec.gov", role: "STATUTORY AUDITOR", org: "SEC Enforcement", domainVerified: true, time: "25 mins ago" },
-];
-
 export default async function AdminPage() {
-  let activeHubsCount = DEMO_TENANT_HUBS.length;
-  let pendingWhitelistCount = DEMO_PENDING_WHITELIST.length;
+  let activeHubsCount = 0;
+  let pendingWhitelistCount = 0;
+  let activeNodesCount = 0;
+  let tenantHubs: any[] = [];
   let pendingWhitelists: any[] = [];
 
   try {
-    const [hCount, wCount, dbWhitelists] = await Promise.all([
+    const [hCount, wCount, nCount, hubsList, dbWhitelists] = await Promise.all([
       prisma.hub.count({ where: { isActive: true } }),
       prisma.whitelist.count({ where: { status: "PENDING" } }),
+      prisma.governanceIdentity.count({ where: { status: "ACTIVE" } }),
+      prisma.hub.findMany({
+        include: { organization: true },
+        take: 5,
+        orderBy: { createdAt: "desc" },
+      }),
       prisma.whitelist.findMany({
         where: { status: "PENDING" },
         include: { organization: true },
         take: 5,
+        orderBy: { createdAt: "desc" },
       }),
     ]);
-    if (hCount > 0) activeHubsCount = hCount;
-    if (wCount > 0) pendingWhitelistCount = wCount;
-    if (dbWhitelists.length > 0) pendingWhitelists = dbWhitelists;
+
+    activeHubsCount = hCount;
+    pendingWhitelistCount = wCount;
+    activeNodesCount = nCount;
+    tenantHubs = hubsList;
+    pendingWhitelists = dbWhitelists;
   } catch (err) {
-    // Fallback
+    console.error("Error fetching live dashboard metrics:", err);
   }
 
   return (
@@ -97,7 +96,7 @@ export default async function AdminPage() {
           <div className="bg-black/30 p-4 rounded-2xl border border-white/10 space-y-1">
             <span className="text-[10px] text-slate-400 uppercase tracking-widest block">P2P RELAY CLUSTER</span>
             <div className="text-2xl font-extrabold text-white flex items-center justify-between">
-              <span>12 NODES</span>
+              <span>{activeNodesCount} NODES</span>
               <Activity className="w-5 h-5 text-cyan-400 animate-pulse" />
             </div>
             <span className="text-[11px] text-cyan-300 block font-semibold">High Availability Mesh</span>
@@ -126,30 +125,9 @@ export default async function AdminPage() {
 
           <div className="space-y-3.5 font-mono text-xs">
             {pendingWhitelists.length === 0 ? (
-              DEMO_PENDING_WHITELIST.map((item, idx) => (
-                <div key={idx} className="bg-black/40 p-4 rounded-2xl border border-white/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-rose-300 font-bold text-sm">{item.email}</span>
-                      <span className="bg-rose-500/20 text-rose-200 border border-rose-400/40 px-2.5 py-0.5 rounded-md text-[10px]">
-                        {item.role}
-                      </span>
-                    </div>
-                    <div className="text-slate-400 text-xs">Org: {item.org} · Domain Check: <span className="text-emerald-400 font-bold">PASSED</span></div>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <button className="bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/30 px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1 transition text-[11px]">
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      <span>Approve</span>
-                    </button>
-                    <button className="bg-rose-500/20 border border-rose-400/50 text-rose-300 hover:bg-rose-500/30 px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1 transition text-[11px]">
-                      <XCircle className="w-3.5 h-3.5" />
-                      <span>Reject</span>
-                    </button>
-                  </div>
-                </div>
-              ))
+              <div className="text-center py-10 text-slate-500 border border-dashed border-white/10 rounded-2xl">
+                No pending whitelist requests awaiting approval.
+              </div>
             ) : (
               pendingWhitelists.map((item) => (
                 <div key={item.id} className="bg-black/40 p-4 rounded-2xl border border-white/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -184,24 +162,26 @@ export default async function AdminPage() {
           </div>
 
           <div className="space-y-3 font-mono text-xs">
-            {DEMO_TENANT_HUBS.map((hub) => (
-              <div key={hub.id} className="bg-black/40 p-3.5 rounded-2xl border border-white/15 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-white font-bold font-sans text-sm">{hub.name}</span>
-                  <span className="text-emerald-400 font-bold bg-emerald-500/20 px-2 py-0.5 rounded-md text-[10px] border border-emerald-400/30">
-                    {hub.status}
-                  </span>
-                </div>
-                <div className="text-slate-400 text-[11px] flex justify-between">
-                  <span>Org: {hub.org}</span>
-                  <span>Nodes: {hub.nodes}</span>
-                </div>
-                <div className="flex items-center justify-between pt-1 border-t border-white/10 text-[10px] text-slate-300">
-                  <span>CPU: <strong className="text-indigo-300">{hub.cpu}</strong></span>
-                  <span>RAM: <strong className="text-cyan-300">{hub.memory}</strong></span>
-                </div>
+            {tenantHubs.length === 0 ? (
+              <div className="text-center py-10 text-slate-500 border border-dashed border-white/10 rounded-2xl">
+                No active multi-tenant hubs provisioned.
               </div>
-            ))}
+            ) : (
+              tenantHubs.map((hub) => (
+                <div key={hub.id} className="bg-black/40 p-3.5 rounded-2xl border border-white/15 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white font-bold font-sans text-sm">{hub.displayName || hub.id}</span>
+                    <span className={`font-bold px-2 py-0.5 rounded-md text-[10px] border ${hub.isActive ? 'text-emerald-400 bg-emerald-500/20 border-emerald-400/30' : 'text-amber-400 bg-amber-500/20 border-amber-400/30'}`}>
+                      {hub.isActive ? 'HEALTHY' : 'INACTIVE'}
+                    </span>
+                  </div>
+                  <div className="text-slate-400 text-[11px] flex justify-between">
+                    <span>Org: {hub.organization?.displayName || "Sovereign"}</span>
+                    <span>Region: {hub.region || "US-EAST-1"}</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
