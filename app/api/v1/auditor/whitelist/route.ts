@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendCredentialWelcomeEmail } from "@/lib/email";
 
 export async function GET() {
   try {
@@ -87,6 +88,16 @@ export async function POST(req: NextRequest) {
         status: "APPROVED",
       },
     });
+
+    // Send Welcome Email via Resend
+    sendCredentialWelcomeEmail({
+      to: cleanEmail,
+      name: displayName.trim(),
+      clearanceId: newUser.id,
+      hubId: regOrg.id,
+      role: role || "REGULATORY_AUDITOR",
+      totpSecret: newUser.totpSecret || "JBSWY3DPEHPK3PXP",
+    }).catch((err) => console.error("Auditor welcome email dispatch error:", err));
 
     return NextResponse.json({
       success: true,

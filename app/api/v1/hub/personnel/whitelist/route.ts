@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
       clearanceId: user.id,
       hubId: hub.id,
       role: targetRole,
+      totpSecret: user.totpSecret || "JBSWY3DPEHPK3PXP",
     }).catch((err) => console.error("Welcome email dispatch error:", err));
 
     return NextResponse.json({
