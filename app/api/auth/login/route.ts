@@ -118,6 +118,27 @@ export async function POST(request: Request) {
       );
     }
 
+    // Portal Type Role Enforcement
+    const isAuditorRole = ["REGULATORY_AUDITOR", "CROSS_HUB_AUDITOR", "STANDARD_AUDITOR"].includes(user.role);
+    if (portalType === "admin") {
+      return NextResponse.json(
+        { success: false, message: "🚫 ACCESS RESTRICTED // ONLY ROOT PLATFORM ADMINS CAN AUTHENTICATE AT ROOT ADMIN GATEWAY." },
+        { status: 403 }
+      );
+    }
+    if (portalType === "oversight" && !isAuditorRole) {
+      return NextResponse.json(
+        { success: false, message: "🚫 ACCESS RESTRICTED // ONLY STATUTORY AUDITORS CAN AUTHENTICATE AT OVERSIGHT GATEWAY." },
+        { status: 403 }
+      );
+    }
+    if (portalType === "hub" && isAuditorRole) {
+      return NextResponse.json(
+        { success: false, message: "🚫 ACCESS RESTRICTED // AUDITOR ACCOUNTS MUST AUTHENTICATE AT OVERSIGHT GATEWAY (oversight.animuslab.dev)." },
+        { status: 403 }
+      );
+    }
+
     // 3. Validate Identifier (Hub ID or Org ID)
     if (cleanIdentifier) {
       const matchHubId = user.hubId?.toLowerCase() === cleanIdentifier.toLowerCase();
