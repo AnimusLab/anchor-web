@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
       } finally {
         setIsScanning(false);
       }
-    }, 450);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [clearanceId]);

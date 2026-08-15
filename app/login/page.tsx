@@ -65,7 +65,7 @@ export default function LoginPage() {
       } finally {
         setIsScanning(false);
       }
-    }, 450);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [clearanceId]);

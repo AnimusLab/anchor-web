@@ -62,7 +62,7 @@ export default function OversightLoginPage() {
       } finally {
         setIsScanning(false);
       }
-    }, 450);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [clearanceId]);
