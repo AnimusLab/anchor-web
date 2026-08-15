@@ -51,7 +51,7 @@ export default function OversightLoginPage() {
         const res = await fetch(`/api/auth/lookup?clearanceId=${encodeURIComponent(trimmed)}`);
         const data = await res.json();
         if (data.found) {
-          if (data.email && (!email || email === "identity@animuslab.dev")) setEmail(data.email);
+          if (data.email) setEmail(data.email);
           if (data.hubId) setHubId(data.hubId);
           if (data.orgName) setResolvedOrg(data.orgName);
           if (data.name) setResolvedName(data.name);
