@@ -101,3 +101,41 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const email = searchParams.get("email");
+    const hubId = searchParams.get("hubId");
+
+    if (!email) {
+      return NextResponse.json(
+        { error: "Email parameter is required to revoke whitelist status." },
+        { status: 400 }
+      );
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Remove from Whitelist table
+    await prisma.whitelist.deleteMany({
+      where: { email: cleanEmail },
+    });
+
+    // 2. Remove or reset from User table
+    await prisma.user.deleteMany({
+      where: { email: cleanEmail },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Personnel '${cleanEmail}' successfully removed from whitelist.`,
+    });
+  } catch (error: any) {
+    console.error("Revoke whitelist error:", error);
+    return NextResponse.json(
+      { error: "Failed to revoke whitelist status. " + (error.message || "") },
+      { status: 500 }
+    );
+  }
+}

@@ -14,7 +14,8 @@ import {
   Sparkles, 
   ShieldCheck, 
   BadgeCheck, 
-  Globe 
+  Globe,
+  UserX
 } from "lucide-react";
 
 interface WhitelistedUser {
@@ -179,6 +180,24 @@ export default function EnterpriseNodesPage() {
     setSuccessMsg("");
   };
 
+  const handleRevokePersonnel = async (email: string, hubId: string) => {
+    if (!confirm(`Are you sure you want to revoke whitelist access for ${email}?`)) return;
+
+    try {
+      const res = await fetch(`/api/v1/hub/personnel/whitelist?email=${encodeURIComponent(email)}&hubId=${encodeURIComponent(hubId)}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to revoke whitelist status.");
+
+      setSuccessMsg(data.message || `Personnel '${email}' removed from whitelist.`);
+      loadHubs();
+    } catch (err: any) {
+      setErrorMsg(err.message || "An error occurred while revoking whitelist.");
+    }
+  };
+
   return (
     <div className="space-y-8 max-w-6xl mx-auto relative z-10 font-mono text-xs">
       {/* Top Banner Header */}
@@ -308,9 +327,19 @@ export default function EnterpriseNodesPage() {
                           </div>
                         </div>
 
-                        <span className="glass-badge px-2 py-0.5 text-emerald-400 text-[9px] font-bold">
-                          APPROVED
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="glass-badge px-2 py-0.5 text-emerald-400 text-[9px] font-bold">
+                            APPROVED
+                          </span>
+
+                          <button
+                            onClick={() => handleRevokePersonnel(user.email, hub.id)}
+                            title="Revoke Whitelist Access"
+                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/30 border border-rose-400/30 text-rose-400 hover:text-rose-200 transition cursor-pointer"
+                          >
+                            <UserX className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
