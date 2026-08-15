@@ -22,8 +22,8 @@ import {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // If on login page, render full screen gateway without sidebar
-  if (pathname === "/admin/login") {
+  // If on login gateway or root entry, render full screen gateway without sidebar
+  if (pathname === "/admin/login" || pathname === "/" || pathname.endsWith("/login")) {
     return <>{children}</>;
   }
 

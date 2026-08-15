@@ -18,8 +18,8 @@ import {
 export default function OversightLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // If on login page, render full screen gateway without sidebar
-  if (pathname === "/oversight/login") {
+  // If on login gateway or root entry, render full screen gateway without sidebar
+  if (pathname === "/oversight/login" || pathname === "/" || pathname.endsWith("/login")) {
     return <>{children}</>;
   }
 
@@ -38,7 +38,7 @@ export default function OversightLayout({ children }: { children: React.ReactNod
               </div>
               <div>
                 <div className="font-bold text-xs text-slate-100 tracking-wide uppercase font-sans">
-                  Auditor Oversight
+                  Anchor Oversight
                 </div>
                 <div className="text-[10px] text-slate-400 font-mono mt-0.5">oversight.animuslab.dev</div>
               </div>
