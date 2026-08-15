@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ShieldCheck, Sparkles, Key, Lock, Layers, Rocket, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, Sparkles, Key, Lock, Layers, Rocket, AlertTriangle, CheckCircle2, UserPlus } from "lucide-react";
 import DynamicLanyardCard, { LanyardCardData } from "@/components/auth/DynamicLanyardCard";
 import AnimusLogo from "@/components/ui/AnimusLogo";
+import OnboardingModal from "@/components/auth/OnboardingModal";
 
 const BLOCKED_DOMAINS = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "mail.com", "protonmail.com", "aol.com", "gmx.com", "zoho.com"];
 
@@ -17,6 +18,7 @@ export default function OversightLoginPage() {
   const [resolvedOrg, setResolvedOrg] = useState("STATUTORY AGENCY");
   const [resolvedName, setResolvedName] = useState("");
   const [resolvedRole, setResolvedRole] = useState("");
+  const [isOnboardOpen, setIsOnboardOpen] = useState(false);
 
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -244,19 +246,34 @@ export default function OversightLoginPage() {
             </button>
           </form>
 
-          {/* Prominent Sandbox Launcher */}
-          <div className="pt-3 border-t border-white/20">
+          {/* Prominent Sandbox Launcher & Onboarding Request */}
+          <div className="pt-3 border-t border-white/20 space-y-2.5">
             <button
               type="button"
               onClick={handleSandboxLaunch}
               disabled={isLoading}
-              className="w-full bg-emerald-500/20 backdrop-blur-md border border-emerald-400/50 hover:bg-emerald-500/30 text-emerald-200 py-3.5 rounded-2xl font-mono text-xs font-extrabold tracking-wider uppercase transition flex items-center justify-center space-x-2 shadow-[0_0_25px_rgba(16,185,129,0.3)]"
+              className="w-full bg-emerald-500/20 backdrop-blur-md border border-emerald-400/50 hover:bg-emerald-500/30 text-emerald-200 py-3.5 rounded-2xl font-mono text-xs font-extrabold tracking-wider uppercase transition flex items-center justify-center space-x-2 shadow-[0_0_25px_rgba(16,185,129,0.3)] cursor-pointer"
             >
               <Rocket className="w-4 h-4 text-emerald-400 animate-bounce" />
               <span>Launch 1-Month Free Sandbox Portal</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setIsOnboardOpen(true)}
+              className="w-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/30 text-amber-200 py-2.5 rounded-2xl font-mono text-[11px] font-bold tracking-wider uppercase transition flex items-center justify-center space-x-2 cursor-pointer"
+            >
+              <UserPlus className="w-3.5 h-3.5 text-amber-400" />
+              <span>Don't have a Clearance ID? Request Whitelist Clearance →</span>
+            </button>
           </div>
         </div>
+
+        <OnboardingModal
+          isOpen={isOnboardOpen}
+          onClose={() => setIsOnboardOpen(false)}
+          portalType="oversight"
+        />
 
         {/* Right Horizontal ID Card Container with Auto Scanner Animation */}
         <div className="lg:col-span-6 w-full flex justify-center">
