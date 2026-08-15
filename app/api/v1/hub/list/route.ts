@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const [hubs, allUsers, allWhitelists, allAdmins] = await Promise.all([
+    const [hubs, allUsers, allWhitelists] = await Promise.all([
       prisma.hub.findMany({
         include: { organization: true },
         orderBy: { createdAt: "desc" },
@@ -29,20 +29,12 @@ export async function GET() {
           orgId: true,
         },
       }),
-      prisma.adminUser.findMany({
-        select: {
-          id: true,
-          email: true,
-          displayName: true,
-          role: true,
-        },
-      }),
     ]);
 
     const formattedHubs = hubs.map((hub) => {
       const userMap = new Map<string, any>();
 
-      // 1. Add User table matches
+      // 1. Add explicitly assigned User table matches
       for (const u of allUsers) {
         if (u.hubId === hub.id || u.orgId === hub.orgId) {
           userMap.set(u.email.toLowerCase(), {
@@ -55,7 +47,7 @@ export async function GET() {
         }
       }
 
-      // 2. Add Whitelist table matches
+      // 2. Add explicitly assigned Whitelist table matches
       for (const w of allWhitelists) {
         const cleanEmail = w.email.toLowerCase();
         if ((w.hubId === hub.id || w.orgId === hub.orgId) && !userMap.has(cleanEmail)) {
@@ -66,23 +58,6 @@ export async function GET() {
             role: w.role,
             status: w.status,
           });
-        }
-      }
-
-      // 3. Add AdminUser table matches if email domain matches
-      const domain = hub.organization?.domain?.toLowerCase();
-      if (domain) {
-        for (const a of allAdmins) {
-          const cleanEmail = a.email.toLowerCase();
-          if (cleanEmail.endsWith(`@${domain}`) && !userMap.has(cleanEmail)) {
-            userMap.set(cleanEmail, {
-              id: a.id,
-              email: a.email,
-              displayName: a.displayName || "Root Platform Admin",
-              role: a.role,
-              status: "APPROVED",
-            });
-          }
         }
       }
 
