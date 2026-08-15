@@ -73,7 +73,10 @@ export default function EnterpriseNodesPage() {
   const loadHubs = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/hub/list");
+      const res = await fetch(`/api/v1/hub/list?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Pragma": "no-cache" },
+      });
       if (res.ok) {
         const data = await res.json();
         setHubs(data.hubs || []);
