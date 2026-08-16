@@ -142,9 +142,9 @@ export default function BusinessLandingPage() {
           </h1>
 
           <p className="text-xs sm:text-sm text-[#a5adc7] max-w-2xl mx-auto leading-relaxed font-sans font-light">
-            Replacing passive safety dashboards with real-time mathematical enforcement. 
-            Anchor intercepts model drift, data leaks, and algorithmic failures in under 500 microseconds, 
-            protecting your enterprise from regulatory fines and reputational exposure.
+            Replacing passive safety dashboards with runtime AI guardrails and inference-time policy enforcement. 
+            Anchor pre-compiles enforcement paths (AnchorJIT) adding negligible overhead (&lt;0.4ms latency), 
+            substantially reducing exposure to regulatory fines and reputational risk.
           </p>
 
           {/* All 3 Gateway Direct Links */}
@@ -308,7 +308,7 @@ export default function BusinessLandingPage() {
               title: "Automated Interception",
               icon: Cpu,
               iconColor: "text-amber-400 border-amber-500/20 bg-amber-500/5",
-              desc: "Anchor doesn't just log errors after damage is done. The Rust kernel applies immediate circuit-breakers to prompt injections or loop crashes, returning structured rerouting directives to guide agents safely."
+              desc: "Anchor doesn't just log errors after damage occurs. The enforcement engine applies instant circuit-breakers to prompt injections or loop crashes, returning deterministic rule-based template substitutions kept current by Canon."
             }
           ].map((pillar, i) => {
             const IconComponent = pillar.icon;
@@ -331,8 +331,10 @@ export default function BusinessLandingPage() {
       </main>
 
       <footer className="border-t border-white/5 bg-[#04050a] py-8 text-center text-[10px] text-[#6c7293] relative z-10 font-mono">
-        <div>CORE_ENGINE_STATUS: <span className="text-[#10b981] font-bold">ENFORCED</span> // REGISTRY_NODE_ID: sha256:b49d424a21e428ba...</div>
-        <div className="mt-2 text-slate-500">🛡️ Certified & Logged by the AnimusLab Open-Source Infrastructure Council</div>
+        <div>CORE_ENGINE_STATUS: <span className="text-[#10b981] font-bold">ENFORCED (v6.0.1)</span> // REGISTRY_NODE_ID: sha256:b49d424a21e428ba...</div>
+        <div className="mt-3 text-slate-400 max-w-3xl mx-auto leading-normal font-sans font-light text-[11px] px-4">
+          Reviewed by a practitioner at a Tier-1 financial institution, via a FINOS/DTCC hackathon collaboration. Reviewer identity withheld per their employer&apos;s compliance policy — feedback directly shaped Anchor&apos;s v6 architecture.
+        </div>
       </footer>
     </div>
   );
