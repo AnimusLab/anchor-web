@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, identifier, totpCode, portalType } = body;
+    const { email, identifier, hubId, clearanceId, totpCode, portalType } = body;
 
     if (!email) {
       return NextResponse.json(
@@ -18,26 +18,31 @@ export async function POST(request: Request) {
       );
     }
 
-    const lowerEmail = email.trim().toLowerCase();
-    const cleanIdentifier = (identifier || "").trim();
+    const lowerEmail = email ? email.trim().toLowerCase() : "";
+    const cleanIdentifier = (identifier || hubId || clearanceId || "").trim();
 
-    // 1. Check AdminUser Table (AnimusLab Internal Root Operators ONLY)
-    const admin = await prisma.adminUser.findUnique({
-      where: { email: lowerEmail },
-    });
+    // Build OR query to match by Clearance ID (id) OR Corporate Email (email)
+    const userOrConditions: any[] = [];
+    if (lowerEmail) userOrConditions.push({ email: lowerEmail });
+    if (cleanIdentifier) userOrConditions.push({ id: cleanIdentifier });
+
+    if (userOrConditions.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "Please provide Clearance ID or Corporate Email." },
+        { status: 400 }
+      );
+    }
+
+    // 1. Check AdminUser Table — ONLY when portalType is "admin" (or unset for backward compat).
+    const isAdminPortal = !portalType || portalType === "admin";
+
+    const admin = isAdminPortal
+      ? await prisma.adminUser.findFirst({
+          where: { OR: userOrConditions },
+        })
+      : null;
 
     if (admin) {
-      // Enforce strict Root Admin portal scoping
-      if (portalType && portalType !== "admin") {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "🚫 ACCESS RESTRICTED // ROOT ADMIN CREDENTIALS CAN ONLY AUTHENTICATE AT ROOT ADMIN GATEWAY (/admin/login)",
-          },
-          { status: 403 }
-        );
-      }
-
       if (admin.status !== UserStatus.APPROVED) {
         return NextResponse.json(
           { success: false, message: "Admin account is suspended or pending approval." },
@@ -94,9 +99,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, redirectUrl, session: sessionData });
     }
 
-    // 2. Query Enterprise / Auditor User Table
-    const user = await prisma.user.findUnique({
-      where: { email: lowerEmail },
+    // 2. Query Enterprise / Auditor User Table (Matches by Clearance ID OR Email)
+    const user = await prisma.user.findFirst({
+      where: { OR: userOrConditions },
       include: {
         organization: true,
         hub: true,
@@ -106,7 +111,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: "Authentication failed. Email not found in Sovereign Whitelist." },
+        { success: false, message: "Authentication failed. Clearance ID / Email not found in Sovereign Whitelist." },
         { status: 401 }
       );
     }
