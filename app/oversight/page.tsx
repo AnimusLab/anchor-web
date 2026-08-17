@@ -17,43 +17,36 @@ export const dynamic = "force-dynamic";
 
 const prisma = new PrismaClient();
 
-// Demo fallback data for Statutory Auditor Oversight Control Plane
-const DEMO_REGULATED_INSTITUTIONS = [
-  { id: "INST-001", name: "AnimusLab Mesh Silo", jurisdiction: "EU AI Act & SEC", compliance: "98.7%", riskTier: "LOW", auditDate: "19:42:01", status: "VERIFIED" },
-  { id: "INST-002", name: "FinTech Global Silo", jurisdiction: "SEBI & RBI Cyber Rules", compliance: "99.4%", riskTier: "LOW", auditDate: "19:40:15", status: "VERIFIED" },
-  { id: "INST-003", name: "HealthAI Systems Node", jurisdiction: "HIPAA & EU AI Act", compliance: "94.1%", riskTier: "MEDIUM", auditDate: "19:35:00", status: "WARNING (1 Violation)" },
-  { id: "INST-004", name: "Alpha Algo Treasury", jurisdiction: "CFPB & FCA Algorithmic Trading", compliance: "100.0%", riskTier: "LOW", auditDate: "19:30:22", status: "VERIFIED" },
-];
-
-const DEMO_OVERSIGHT_DECISIONS = [
-  { time: "19:41:10", inst: "AnimusLab Mesh", model: "LLM-Credit-Assessor", rule: "EU-AI-ACT-ART-14", hash: "0x8f2a...c419", verdict: "AUDITED_COMPLIANT" },
-  { time: "19:38:44", inst: "HealthAI Systems", model: "Clinical-Diagnostic-Agent", rule: "HIPAA-PRV-901", hash: "0x3e11...b820", verdict: "AUDITED_WARNING" },
-  { time: "19:32:00", inst: "FinTech Global", model: "Fraud-Detection-Model", rule: "SEBI-SEC-402", hash: "0x7d94...e102", verdict: "AUDITED_COMPLIANT" },
-];
-
 export default async function OversightDashboardPage() {
   const session = await getSession();
   const jurisdiction = session?.jurisdiction || "GLOBAL (EU AI ACT / SEC)";
   const auditorEmail = session?.email || "auditor@statutory.gov";
 
-  let entitiesCount = DEMO_REGULATED_INSTITUTIONS.length;
-  let auditedCount = 1420890;
-  let p2pPullsCount = 4;
+  let entitiesCount = 0;
+  let auditedCount = 0;
+  let p2pPullsCount = 0;
   let noticesCount = 0;
+  let dbOrgs: any[] = [];
+  let dbLedger: any[] = [];
 
   try {
-    const [eCount, dCount, pCount, nCount] = await Promise.all([
+    const [eCount, dCount, pCount, nCount, orgs, ledger] = await Promise.all([
       prisma.organization.count({ where: { orgType: "ENTERPRISE" } }),
-      prisma.ledgerEntry.count({ where: { entityType: "AI_AGENT" } }),
+      prisma.ledgerEntry.count(),
       prisma.governanceAccessRequest.count(),
       prisma.enforcementNotice.count(),
+      prisma.organization.findMany({ take: 5, include: { _count: { select: { hubs: true } } } }),
+      prisma.ledgerEntry.findMany({ take: 5, orderBy: { timestamp: "desc" } }),
     ]);
-    if (eCount > 0) entitiesCount = eCount;
-    if (dCount > 0) auditedCount = dCount;
-    if (pCount > 0) p2pPullsCount = pCount;
-    if (nCount > 0) noticesCount = nCount;
+
+    entitiesCount = eCount;
+    auditedCount = dCount;
+    p2pPullsCount = pCount;
+    noticesCount = nCount;
+    dbOrgs = orgs;
+    dbLedger = ledger;
   } catch (err) {
-    // Graceful fallback
+    console.error("Oversight page live query error:", err);
   }
 
   return (

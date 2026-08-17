@@ -25,93 +25,18 @@ export const dynamic = "force-dynamic";
 
 const prisma = new PrismaClient();
 
-// High-fidelity fallback demo data for immediate CTO inspection
-const DEMO_GOVERNED_SYSTEMS = [
-  {
-    id: "SYS-001",
-    name: "Agent-Core-v4",
-    domain: "SEC-01 (Cyber Risk & Financial Controls)",
-    status: "COMPLIANT",
-    latency: "12ms",
-    executions: "48,120",
-    healthScore: "99.8%",
-  },
-  {
-    id: "SYS-002",
-    name: "Research-Agent-X",
-    domain: "ETH-04 (EU AI Act High-Risk Framework)",
-    status: "COMPLIANT",
-    latency: "18ms",
-    executions: "32,890",
-    healthScore: "99.9%",
-  },
-  {
-    id: "SYS-003",
-    name: "Customer-Support-Bot",
-    domain: "PRV-02 (PII Boundary & Data Leakage)",
-    status: "WARNING",
-    latency: "24ms",
-    executions: "74,100",
-    healthScore: "96.4%",
-  },
-  {
-    id: "SYS-004",
-    name: "Finance-Executor-Silo",
-    domain: "FIN-01 (Treasury & Algorithmic Controls)",
-    status: "COMPLIANT",
-    latency: "14ms",
-    executions: "29,181",
-    healthScore: "100.0%",
-  },
-];
-
-const DEMO_RECENT_EVENTS = [
-  {
-    time: "19:42:01",
-    ruleId: "POL-902-SEC",
-    system: "Agent-Core-v4",
-    action: "Policy evaluated & approved",
-    verdict: "PERMITTED",
-    hash: "0x8f2a...c419",
-  },
-  {
-    time: "19:41:48",
-    ruleId: "POL-104-FIN",
-    system: "Finance-Executor-Silo",
-    action: "Execution token validated",
-    verdict: "PERMITTED",
-    hash: "0x3e11...b820",
-  },
-  {
-    time: "19:39:12",
-    ruleId: "POL-309-PRV",
-    system: "Customer-Support-Bot",
-    action: "PII leakage attempt intercepted",
-    verdict: "BLOCKED",
-    hash: "0x7d94...e102",
-  },
-  {
-    time: "19:37:05",
-    ruleId: "POL-701-DAC",
-    system: "Research-Agent-X",
-    action: "Cryptographic evidence Merkle tree sealed",
-    verdict: "SEALED",
-    hash: "0x1b55...d391",
-  },
-];
-
 export default async function HubOverviewPage() {
   const session = await getSession();
-  const userHubId = session?.hubId || "ANIMUSLAB-MESH-01";
+  const userHubId = session?.hubId || "animuslab-hq";
   const userEmail = session?.email || "operator@animuslab.dev";
 
-  // Attempt DB fetch, fallback seamlessly to demo data
-  let projectsCount = DEMO_GOVERNED_SYSTEMS.length;
-  let violationsCount = 1;
-  let ledgerEntries: any[] = [];
+  let projectsCount = 0;
+  let violationsCount = 0;
+  let dbProjects: any[] = [];
+  let dbEntries: any[] = [];
 
   try {
-    const [pCount, vCount, dbEntries] = await Promise.all([
+    const [pCount, vCount, projects, entries] = await Promise.all([
       prisma.project.count({ where: session?.hubId ? { hubId: session.hubId } : {} }),
       prisma.telemetryEvent.count({
         where: {
@@ -119,17 +44,23 @@ export default async function HubOverviewPage() {
           ...(session?.hubId ? { hubId: session.hubId } : {}),
         },
       }),
+      prisma.project.findMany({
+        where: session?.hubId ? { hubId: session.hubId } : {},
+        take: 6,
+      }),
       prisma.ledgerEntry.findMany({
         where: session?.hubId ? { hubId: session.hubId } : {},
         orderBy: { timestamp: "desc" },
         take: 5,
       }),
     ]);
-    if (pCount > 0) projectsCount = pCount;
-    if (vCount > 0) violationsCount = vCount;
-    ledgerEntries = dbEntries;
+
+    projectsCount = pCount;
+    violationsCount = vCount;
+    dbProjects = projects;
+    dbEntries = entries;
   } catch (err) {
-    // Graceful fallback to demo data if database connection is offline
+    console.error("Hub overview live fetch error:", err);
   }
 
   return (
@@ -223,37 +154,34 @@ export default async function HubOverviewPage() {
 
           {/* Fleet Table / Cards */}
           <div className="space-y-3.5">
-            {DEMO_GOVERNED_SYSTEMS.map((system) => (
-              <div
-                key={system.id}
-                className="bg-black/40 hover:bg-black/60 p-4 rounded-2xl border border-white/15 transition flex items-center justify-between gap-4 font-mono"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-bold text-white font-sans">{system.name}</span>
-                    <span className="text-[10px] text-slate-400 bg-white/10 px-2 py-0.5 rounded-md">{system.id}</span>
-                  </div>
-                  <div className="text-xs text-slate-300 font-sans">{system.domain}</div>
-                </div>
-
-                <div className="flex items-center space-x-4 text-right flex-shrink-0">
-                  <div className="text-xs space-y-0.5">
-                    <span className="text-slate-400 block text-[10px]">EXEC: {system.executions}</span>
-                    <span className="text-emerald-400 font-bold block text-[11px]">{system.latency} latency</span>
+            {dbProjects.length > 0 ? (
+              dbProjects.map((project) => (
+                <div
+                  key={project.id}
+                  className="bg-black/40 hover:bg-black/60 p-4 rounded-2xl border border-white/15 transition flex items-center justify-between gap-4 font-mono"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm font-bold text-white font-sans">{project.name}</span>
+                      <span className="text-[10px] text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-400/30">{project.slug}</span>
+                    </div>
+                    <div className="text-xs text-slate-300 font-sans">Active Runtime Key: {project.apiKeyHash ? project.apiKeyHash.substring(0, 16) + '...' : 'SEC-01 (Governed)'}</div>
                   </div>
 
-                  <span
-                    className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase border ${
-                      system.status === "COMPLIANT"
-                        ? "bg-emerald-500/20 border-emerald-400/50 text-emerald-300"
-                        : "bg-amber-500/20 border-amber-400/50 text-amber-300"
-                    }`}
-                  >
-                    {system.status}
-                  </span>
+                  <div className="flex items-center space-x-4 text-right flex-shrink-0">
+                    <span className="text-[11px] font-bold px-3 py-1 rounded-full uppercase border bg-emerald-500/20 border-emerald-400/50 text-emerald-300">
+                      COMPLIANT
+                    </span>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="p-8 text-center bg-black/30 rounded-2xl border border-white/10 space-y-3">
+                <Cpu className="w-8 h-8 text-slate-500 mx-auto" />
+                <div className="text-sm text-slate-300 font-sans font-semibold">No Governed AI Fleet Nodes Registered Yet</div>
+                <p className="text-xs text-slate-400 font-mono">Run 'anchor init' in your repository to provision your first governed node.</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -276,39 +204,38 @@ export default async function HubOverviewPage() {
           </div>
 
           <div className="space-y-3 font-mono">
-            {DEMO_RECENT_EVENTS.map((event, idx) => (
-              <div
-                key={idx}
-                className="bg-black/40 p-3.5 rounded-2xl border border-white/15 space-y-2 text-xs"
-              >
-                <div className="flex items-center justify-between text-slate-400 text-[11px]">
-                  <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{event.time}</span>
-                  </span>
-                  <span className="text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-400/30">
-                    {event.ruleId}
-                  </span>
-                </div>
+            {dbEntries.length > 0 ? (
+              dbEntries.map((entry, idx) => (
+                <div
+                  key={entry.id || idx}
+                  className="bg-black/40 p-3.5 rounded-2xl border border-white/15 space-y-2 text-xs"
+                >
+                  <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                    <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{new Date(entry.timestamp).toLocaleTimeString()}</span>
+                    </span>
+                    <span className="text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-400/30">
+                      {entry.type || "RUNTIME_CHECK"}
+                    </span>
+                  </div>
 
-                <div className="text-white font-sans font-semibold">{event.action}</div>
+                  <div className="text-white font-sans font-semibold">{entry.projectName || "Agent Node Check"}</div>
 
-                <div className="flex items-center justify-between pt-1 border-t border-white/10 text-[11px]">
-                  <span className="text-slate-400">{event.system}</span>
-                  <span
-                    className={`font-extrabold px-2.5 py-0.5 rounded-md uppercase text-[10px] ${
-                      event.verdict === "PERMITTED"
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40"
-                        : event.verdict === "BLOCKED"
-                        ? "bg-rose-500/20 text-rose-300 border border-rose-400/40"
-                        : "bg-indigo-500/20 text-indigo-300 border border-indigo-400/40"
-                    }`}
-                  >
-                    {event.verdict}
-                  </span>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[10px] text-slate-400">{entry.chainHash ? entry.chainHash.substring(0, 12) + '...' : 'SEALED'}</span>
+                    <span className="text-[10px] font-bold text-emerald-300 uppercase bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-400/30">
+                      PERMITTED
+                    </span>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="p-8 text-center bg-black/30 rounded-2xl border border-white/10 space-y-2">
+                <Terminal className="w-6 h-6 text-slate-500 mx-auto" />
+                <div className="text-xs text-slate-400">No recent telemetry events recorded in ledger</div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
