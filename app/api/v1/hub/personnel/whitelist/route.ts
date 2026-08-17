@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendCredentialWelcomeEmail } from "@/lib/email";
+import { generateClearanceId } from "@/lib/auth/clearanceId";
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,15 +32,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Generate Unique Clearance ID (e.g. CLR-CITI-9412)
-    const hubSlug = hubId.split("-")[0].toUpperCase();
-    const randomCode = Math.floor(1000 + Math.random() * 9000);
-    const clearanceId = `CLR-${hubSlug}-${randomCode}`;
+    // 2. Generate Unique Clearance ID (e.g. TAN-MGR-L3)
+    const clearanceId = generateClearanceId(cleanName, targetRole);
 
     // 3. Upsert User in database
+    const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    let finalId = clearanceId;
+
+    if (existingUser) {
+      // If user exists with old CLR- format or missing ID format, update ID to new scheme
+      finalId = existingUser.id.startsWith("CLR-") ? clearanceId : existingUser.id;
+    }
+
     const user = await prisma.user.upsert({
       where: { email: cleanEmail },
       update: {
+        id: finalId,
         displayName: cleanName,
         role: targetRole as any,
         orgId: hub.orgId,
