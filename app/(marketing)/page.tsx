@@ -111,7 +111,7 @@ export default function BusinessLandingPage() {
       <nav className="border-b border-white/5 bg-[#070b16]/60 backdrop-blur-xl px-8 py-5 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse" />
-          <span className="font-bold tracking-widest text-sm text-white font-sans">ANIMUSLAB // CONTROL_PLANE</span>
+          <span className="font-bold tracking-widest text-sm text-white font-sans">ANIMUSLAB // GOVERNANCE_PLATFORM</span>
         </div>
         <div className="flex items-center gap-6 text-xs text-[#8f96b3]">
           <Link href="/login" className="text-[#6366f1] font-bold hover:text-indigo-400 transition-colors uppercase tracking-wider flex items-center gap-1.5">
@@ -119,10 +119,10 @@ export default function BusinessLandingPage() {
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
           <Link href="/oversight/login" className="text-amber-400 font-bold hover:text-amber-300 transition-colors uppercase tracking-wider flex items-center gap-1.5">
-            <span>Oversight_Gate</span>
+            <span>Oversight_Portal</span>
           </Link>
           <Link href="/admin/login" className="text-rose-400 font-bold hover:text-rose-300 transition-colors uppercase tracking-wider flex items-center gap-1.5">
-            <span>Admin_Gate</span>
+            <span>Admin_Portal</span>
           </Link>
         </div>
       </nav>
@@ -151,17 +151,17 @@ export default function BusinessLandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
             <Link href="/login">
               <button className="bg-gradient-to-r from-[#6366f1] to-[#4f46e5] hover:brightness-110 text-white px-7 py-4 rounded-xl text-xs font-bold tracking-wider shadow-lg shadow-[#6366f1]/20 transition-all duration-200 transform hover:-translate-y-0.5 font-sans flex items-center space-x-2">
-                <span>ENTERPRISE HUB GATEWAY →</span>
+                <span>ENTERPRISE HUB PORTAL →</span>
               </button>
             </Link>
             <Link href="/oversight/login">
               <button className="bg-amber-500/20 border border-amber-400/40 hover:bg-amber-500/30 text-amber-200 px-7 py-4 rounded-xl text-xs font-bold tracking-wider backdrop-blur-md transition-all duration-200 transform hover:-translate-y-0.5 font-sans flex items-center space-x-2">
-                <span>AUDITOR OVERSIGHT GATEWAY →</span>
+                <span>REGULATORY OVERSIGHT PORTAL →</span>
               </button>
             </Link>
             <Link href="/admin/login">
               <button className="bg-rose-500/20 border border-rose-400/40 hover:bg-rose-500/30 text-rose-200 px-7 py-4 rounded-xl text-xs font-bold tracking-wider backdrop-blur-md transition-all duration-200 transform hover:-translate-y-0.5 font-sans flex items-center space-x-2">
-                <span>ROOT ADMIN GATEWAY →</span>
+                <span>PLATFORM ADMIN PORTAL →</span>
               </button>
             </Link>
           </div>

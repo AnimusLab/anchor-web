@@ -150,7 +150,7 @@ export default function OversightLoginPage() {
         <div className="flex items-center space-x-3 text-xs font-mono">
           <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
           <span className="text-slate-200 font-bold tracking-wider uppercase">
-            REGULATORY CONTROL GATE
+            REGULATORY AUDIT PORTAL
           </span>
         </div>
       </header>
@@ -162,13 +162,13 @@ export default function OversightLoginPage() {
           <div>
             <div className="inline-flex items-center space-x-2 bg-amber-500/20 backdrop-blur-md border border-amber-300/40 px-3.5 py-1.5 rounded-full text-xs font-mono text-amber-200 mb-3 shadow-inner">
               <Layers className="w-4 h-4 text-amber-300" />
-              <span>STATUTORY AUDITOR ACCESS GATE</span>
+              <span>AUDITOR SECURITY PORTAL</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase font-sans">
               OVERSIGHT ACCESS
             </h1>
             <p className="text-sm text-slate-200 mt-2 leading-relaxed font-sans">
-              Enter your Clearance ID to resolve identity keypair and verify compliance node.
+              Enter your Authorization Token ID to verify statutory auditor access.
             </p>
           </div>
 
@@ -183,7 +183,7 @@ export default function OversightLoginPage() {
             <div>
               <div className="flex items-center justify-between mb-2 font-mono">
                 <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider">
-                  Clearance ID <span className="text-amber-300">*</span>
+                  Authorization Token ID <span className="text-amber-300">*</span>
                 </label>
                 {isScanning && (
                   <span className="text-[10px] text-cyan-300 animate-pulse font-bold flex items-center gap-1">
