@@ -128,7 +128,7 @@ model Project {
 }
 
 model User {
-  id           String     @id // e.g. "OWN-JPMC-MUM-042" or "AUD-RBI-IN-009"
+  id           String     @id // Clearance ID format: [NAME]-[ROLE]-[LEVEL] (e.g. "TAN-MGR-L3", "SAM-DEV-L1", "ALE-CH-L4")
   email        String     @unique
   displayName  String
   role         Role
@@ -167,7 +167,7 @@ model UserHubAssignment {
 }
 
 model AdminUser {
-  id          String     @id // e.g. "AN-ADMIN-001"
+  id          String     @id // Root Admin Clearance ID format: [NAME]-ADM-L5 (e.g. "TAN-ADM-L5")
   email       String     @unique // e.g. "tan@animuslab.dev"
   displayName String
   role        AdminRole  @default(ANIMUS_ADMIN)
