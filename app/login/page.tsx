@@ -8,8 +8,6 @@ import DynamicLanyardCard, { LanyardCardData } from "@/components/auth/DynamicLa
 import AnimusLogo from "@/components/ui/AnimusLogo";
 import OnboardingModal from "@/components/auth/OnboardingModal";
 
-const BLOCKED_DOMAINS = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "mail.com", "protonmail.com", "aol.com", "gmx.com", "zoho.com"];
-
 export default function LoginPage() {
   const router = useRouter();
   const [clearanceId, setClearanceId] = useState("");
@@ -26,21 +24,6 @@ export default function LoginPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [emailWarning, setEmailWarning] = useState("");
-
-  // Validate Corporate Email Domain
-  useEffect(() => {
-    if (!email.includes("@")) {
-      setEmailWarning("");
-      return;
-    }
-    const domain = email.split("@")[1]?.toLowerCase().trim();
-    if (BLOCKED_DOMAINS.includes(domain)) {
-      setEmailWarning("🚫 PUBLIC CONSUMER DOMAIN RESTRICTED // INSTITUTIONAL CORPORATE EMAIL REQUIRED (@company.com)");
-    } else {
-      setEmailWarning("");
-    }
-  }, [email]);
 
   // Clearance ID Auto-Lookup Hook
   useEffect(() => {
@@ -72,11 +55,8 @@ export default function LoginPage() {
     return () => clearTimeout(timer);
   }, [clearanceId]);
 
-  const isFormBlocked = Boolean(emailWarning);
-
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isFormBlocked) return;
 
     setIsLoading(true);
     setErrorMsg("");
@@ -125,27 +105,29 @@ export default function LoginPage() {
         router.push("/hub");
       }
     } catch (err) {
-      router.push("/demo");
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
   const lanyardCardData: LanyardCardData = {
-    name: resolvedName || (email ? email.split("@")[0].toUpperCase() : ""),
-    email: email,
+    name: resolvedName || (email ? email.split("@")[0].toUpperCase() : "PERSONNEL NAME"),
+    email: email || "identity@animuslab.dev",
     orgName: resolvedOrg,
-    hubId: hubId,
-    clearanceId: clearanceId,
-    role: resolvedRole || "SOVEREIGN OPERATOR",
-    isVerified: Boolean(clearanceId && email && !isFormBlocked),
+    hubId: hubId || "SILO_PENDING",
+    clearanceId: clearanceId || "ID_PENDING",
+    role: resolvedRole || "HUB_MANAGER",
+    isVerified: Boolean(clearanceId && email),
   };
 
   return (
-    <div className="min-h-screen merged-bg-indigo text-slate-100 flex flex-col justify-between p-6 md:p-10 relative overflow-hidden font-sans selection:bg-indigo-500/40 selection:text-indigo-100">
-      {/* Ambient Smooth Merged Glow Orbs */}
-      <div className="ambient-glow-orb -top-32 -left-32 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/40 via-purple-600/30 to-cyan-500/40 animate-spatial-aurora" />
-      <div className="ambient-glow-orb -bottom-32 -right-32 w-[600px] h-[600px] bg-gradient-to-br from-blue-600/40 via-indigo-600/30 to-purple-600/40 animate-spatial-aurora" style={{ animationDelay: "-6s" }} />
+    <div className="min-h-screen relative flex flex-col justify-between p-4 md:p-8 bg-[#030014] overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+      {/* Background Ambience */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/15 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/15 rounded-full blur-[140px] animate-pulse delay-1000" />
+      </div>
 
       {/* Top Header Navigation */}
       <header className="flex items-center justify-between z-20 max-w-7xl w-full mx-auto pb-6 border-b border-white/20">
@@ -229,16 +211,8 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@company.com"
-                    className={`w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal ${
-                      emailWarning ? "border-rose-400 focus:border-rose-500 bg-rose-950/20" : ""
-                    }`}
+                    className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
                   />
-                  {emailWarning && (
-                    <div className="mt-2 text-[11px] text-rose-300 font-mono flex items-center space-x-1 bg-rose-950/40 p-2.5 rounded-xl border border-rose-500/30">
-                      <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
-                      <span>{emailWarning}</span>
-                    </div>
-                  )}
                 </div>
 
                 <div>
@@ -257,7 +231,7 @@ export default function LoginPage() {
 
                 <button
                   type="submit"
-                  disabled={isLoading || isFormBlocked}
+                  disabled={isLoading}
                   className="w-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-black py-4 rounded-2xl shadow-[0_0_35px_rgba(99,102,241,0.6)] hover:shadow-[0_0_50px_rgba(99,102,241,0.8)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-indigo-300/40"
                 >
                   <span>{isLoading ? "AUTHENTICATING..." : "AUTHENTICATE NODE →"}</span>

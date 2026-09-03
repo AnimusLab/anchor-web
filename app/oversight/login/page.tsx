@@ -8,8 +8,6 @@ import DynamicLanyardCard, { LanyardCardData } from "@/components/auth/DynamicLa
 import AnimusLogo from "@/components/ui/AnimusLogo";
 import OnboardingModal from "@/components/auth/OnboardingModal";
 
-const BLOCKED_DOMAINS = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "mail.com", "protonmail.com", "aol.com", "gmx.com", "zoho.com"];
-
 export default function OversightLoginPage() {
   const router = useRouter();
   const [clearanceId, setClearanceId] = useState("");
@@ -23,21 +21,6 @@ export default function OversightLoginPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [emailWarning, setEmailWarning] = useState("");
-
-  // Validate Corporate Email Domain
-  useEffect(() => {
-    if (!email.includes("@")) {
-      setEmailWarning("");
-      return;
-    }
-    const domain = email.split("@")[1]?.toLowerCase().trim();
-    if (BLOCKED_DOMAINS.includes(domain)) {
-      setEmailWarning("🚫 PUBLIC CONSUMER DOMAIN RESTRICTED // INSTITUTIONAL CORPORATE EMAIL REQUIRED (@company.com)");
-    } else {
-      setEmailWarning("");
-    }
-  }, [email]);
 
   // Clearance ID Auto-Lookup Hook
   useEffect(() => {
@@ -69,11 +52,8 @@ export default function OversightLoginPage() {
     return () => clearTimeout(timer);
   }, [clearanceId]);
 
-  const isFormBlocked = Boolean(emailWarning);
-
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isFormBlocked) return;
 
     setIsLoading(true);
     setErrorMsg("");
@@ -124,7 +104,7 @@ export default function OversightLoginPage() {
     hubId: hubId,
     clearanceId: clearanceId,
     role: resolvedRole || "STATUTORY AUDITOR",
-    isVerified: Boolean(clearanceId && email && !isFormBlocked),
+    isVerified: Boolean(clearanceId && email),
   };
 
   return (
@@ -211,16 +191,8 @@ export default function OversightLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@company.com"
-                className={`w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal ${
-                  emailWarning ? "border-rose-400 focus:border-rose-500 bg-rose-950/20" : ""
-                }`}
+                className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
               />
-              {emailWarning && (
-                <div className="mt-2 text-[11px] text-rose-300 font-mono flex items-center space-x-1 bg-rose-950/40 p-2.5 rounded-xl border border-rose-500/30">
-                  <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
-                  <span>{emailWarning}</span>
-                </div>
-              )}
             </div>
 
             <div>
@@ -239,7 +211,7 @@ export default function OversightLoginPage() {
 
             <button
               type="submit"
-              disabled={isLoading || isFormBlocked}
+              disabled={isLoading}
               className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 hover:from-amber-500 hover:to-orange-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-black py-4 rounded-2xl shadow-[0_0_35px_rgba(245,158,11,0.6)] hover:shadow-[0_0_50px_rgba(245,158,11,0.8)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-amber-300/40"
             >
               <span>{isLoading ? "AUTHENTICATING..." : "AUTHENTICATE AUDITOR NODE →"}</span>

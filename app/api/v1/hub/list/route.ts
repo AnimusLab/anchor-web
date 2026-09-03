@@ -23,6 +23,7 @@ export async function GET() {
           status: true,
           hubId: true,
           orgId: true,
+          createdAt: true,
         },
       }),
       prisma.whitelist.findMany({
@@ -33,11 +34,15 @@ export async function GET() {
           id: true,
           email: true,
           displayName: true,
+          department: true,
+          region: true,
+          source: true,
           previewClearanceId: true,
           role: true,
           status: true,
           hubId: true,
           orgId: true,
+          createdAt: true,
         },
       }),
     ]);
@@ -54,6 +59,10 @@ export async function GET() {
             displayName: u.displayName || u.email.split("@")[0].toUpperCase(),
             role: u.role,
             status: u.status,
+            createdAt: u.createdAt,
+            department: null,
+            region: hub.region,
+            source: "PROVISIONED_USER",
           });
         }
       }
@@ -64,10 +73,15 @@ export async function GET() {
         if ((w.hubId === hub.id || (!w.hubId && w.orgId === hub.orgId)) && !userMap.has(cleanEmail)) {
           userMap.set(cleanEmail, {
             id: w.previewClearanceId || w.id,
+            whitelistId: w.id,
             email: w.email,
             displayName: w.displayName || w.email.split("@")[0].toUpperCase(),
+            department: w.department,
+            region: w.region || hub.region,
             role: w.role,
             status: w.status,
+            source: w.source || "SELF_REGISTERED_GATEWAY",
+            createdAt: w.createdAt,
           });
         }
       }
