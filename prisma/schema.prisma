@@ -104,6 +104,7 @@ model Hub {
   createdAt          DateTime         @default(now())
 
   projects           Project[]
+  apiKeys            ApiKey[]
   users              User[]
   userAssignments    UserHubAssignment[]
   ledgerEntries      LedgerEntry[]
@@ -125,6 +126,25 @@ model Project {
   createdAt   DateTime @default(now())
 
   users       User[]
+  apiKeys     ApiKey[]
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String
+  keyPrefix   String    // e.g. "anc_live_8f92"
+  keyHash     String    @unique // SHA-256 hash of raw key
+  hubId       String
+  hub         Hub       @relation(fields: [hubId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  role        Role      @default(DEVELOPER)
+  scope       String    @default("INGEST_ONLY") // "INGEST_ONLY" | "FULL_ACCESS" | "ADMIN_KEY"
+  createdBy   String?   // User clearance ID
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  isActive    Boolean   @default(true)
 }
 
 model User {
