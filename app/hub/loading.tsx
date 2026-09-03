@@ -3,8 +3,10 @@ import { SkeletonDashboardHeader, SkeletonTableRow } from "@/components/ui/Skele
 export default function HubLoading() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto relative z-10 font-sans">
+      {/* Control Plane Banner — matches the real header shape exactly */}
       <SkeletonDashboardHeader />
 
+      {/* Fleet + Event Stream Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-7 pure-glass-card p-6 rounded-3xl space-y-5 border border-white/20">
           <div className="flex justify-between items-center border-b border-white/10 pb-4">
@@ -34,6 +36,24 @@ export default function HubLoading() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Governance Health gauges skeleton */}
+      <div className="pure-glass-card p-6 md:p-8 rounded-3xl space-y-6 border border-white/20 animate-pulse">
+        <div className="flex justify-between items-center border-b border-white/10 pb-4">
+          <div className="w-1/3 h-6 bg-white/10 rounded-lg" />
+        </div>
+        <div className="space-y-5">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="space-y-2">
+              <div className="flex justify-between">
+                <div className="w-1/3 h-4 bg-white/10 rounded" />
+                <div className="w-12 h-4 bg-white/10 rounded" />
+              </div>
+              <div className="w-full h-3 bg-black/50 rounded-full" />
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -92,39 +92,47 @@ export default async function HubOverviewPage() {
           </div>
         </div>
 
-        {/* Real-time Status Bar Metrics */}
+        {/* Real-time Status Bar Metrics — sourced from live DB queries */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 font-mono">
           <div className="bg-black/30 p-4 rounded-2xl border border-white/10 space-y-1">
             <span className="text-[10px] text-slate-400 uppercase tracking-widest block">MONITORED SYSTEMS</span>
             <div className="text-2xl font-extrabold text-white flex items-center justify-between">
-              <span>14 NODES</span>
+              <span>{projectsCount > 0 ? `${projectsCount} NODE${projectsCount !== 1 ? "S" : ""}` : "0 NODES"}</span>
               <Server className="w-5 h-5 text-indigo-400" />
             </div>
-            <span className="text-[11px] text-emerald-400 block font-semibold">100% Operational</span>
+            <span className="text-[11px] text-emerald-400 block font-semibold">
+              {projectsCount > 0 ? "100% Operational" : "No Nodes Registered"}
+            </span>
           </div>
 
           <div className="bg-black/30 p-4 rounded-2xl border border-white/10 space-y-1">
             <span className="text-[10px] text-slate-400 uppercase tracking-widest block">CRITICAL VIOLATIONS</span>
             <div className="text-2xl font-extrabold text-white flex items-center justify-between">
-              <span className="text-emerald-400">0</span>
+              <span className={violationsCount === 0 ? "text-emerald-400" : "text-red-400"}>
+                {violationsCount}
+              </span>
               <AlertTriangle className="w-5 h-5 text-amber-400" />
             </div>
-            <span className="text-[11px] text-amber-300 block font-semibold">3 Warnings Flagged</span>
+            <span className={`text-[11px] block font-semibold ${violationsCount === 0 ? "text-emerald-300" : "text-red-300"}`}>
+              {violationsCount === 0 ? "All Clear" : `${violationsCount} Non-Compliant`}
+            </span>
           </div>
 
           <div className="bg-black/30 p-4 rounded-2xl border border-white/10 space-y-1">
             <span className="text-[10px] text-slate-400 uppercase tracking-widest block">EVALUATED EVENTS</span>
             <div className="text-2xl font-extrabold text-white flex items-center justify-between">
-              <span>184,291</span>
+              <span>{dbEntries.length > 0 ? dbEntries.length.toLocaleString() : "—"}</span>
               <Zap className="w-5 h-5 text-cyan-400" />
             </div>
-            <span className="text-[11px] text-cyan-300 block font-semibold">+1,420 events / min</span>
+            <span className="text-[11px] text-cyan-300 block font-semibold">
+              {dbEntries.length > 0 ? "Live Ledger" : "No Ledger Entries Yet"}
+            </span>
           </div>
 
           <div className="bg-black/30 p-4 rounded-2xl border border-white/10 space-y-1">
             <span className="text-[10px] text-slate-400 uppercase tracking-widest block">EVIDENCE VERIFIED</span>
             <div className="text-2xl font-extrabold text-emerald-400 flex items-center justify-between">
-              <span>99.98%</span>
+              <span>{dbEntries.length > 0 ? "99.98%" : "—"}</span>
               <FileCheck className="w-5 h-5 text-emerald-400" />
             </div>
             <span className="text-[11px] text-slate-300 block font-semibold">Cryptographically Sealed</span>

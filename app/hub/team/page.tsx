@@ -1,56 +1,69 @@
-"use client";
+import { PrismaClient } from "@prisma/client";
+import { getSession } from "@/lib/auth/session";
+import { Users, UserPlus, Shield } from "lucide-react";
 
-import { Users, UserPlus, Shield, Lock, Mail } from "lucide-react";
+export const dynamic = "force-dynamic";
 
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: "HUB_MANAGER" | "PROJECT_LEAD" | "DEVELOPER";
-  projectAccess: string;
-  joined: string;
-}
+const prisma = new PrismaClient();
 
-const MOCK_TEAM: TeamMember[] = [
-  { id: "usr_01", name: "Tanishq Vaswani", email: "tanishq@animuslab.dev", role: "HUB_MANAGER", projectAccess: "ALL PROJECTS", joined: "2026-01-10" },
-  { id: "usr_02", name: "Alex Chen", email: "alex.c@jpmc.com", role: "PROJECT_LEAD", projectAccess: "payments-service", joined: "2026-05-15" },
-  { id: "usr_03", name: "Sarah Jenkins", email: "sarah.j@jpmc.com", role: "DEVELOPER", projectAccess: "wealth-advisor-agent", joined: "2026-06-20" }
-];
+const ROLE_COLOUR: Record<string, string> = {
+  HUB_MANAGER: "text-emerald-400",
+  PROJECT_LEAD: "text-indigo-400",
+  DEVELOPER: "text-sky-400",
+  STANDARD_AUDITOR: "text-amber-400",
+};
 
-export default function TeamSeatsPage() {
+export default async function TeamSeatsPage() {
+  const session = await getSession();
+  const hubId = session?.hubId;
+
+  let members: any[] = [];
+  let managerCount = 0;
+  let subCount = 0;
+
+  try {
+    members = await prisma.user.findMany({
+      where: {
+        ...(hubId ? { hubId } : {}),
+        status: "APPROVED",
+      },
+      orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+    });
+    managerCount = members.filter((m) => m.role === "HUB_MANAGER").length;
+    subCount = members.filter((m) => m.role !== "HUB_MANAGER").length;
+  } catch (e) {
+    console.error("Team seats fetch error:", e);
+  }
+
   return (
     <div className="space-y-8 max-w-6xl mx-auto relative z-10">
-      {/* Header Banner */}
       <div className="flex justify-between items-end border-b border-white/[0.08] pb-6">
         <div>
           <div className="animus-label mb-1 text-sky-400">ORGANIZATION ACCESS CONTROL</div>
-          <h1 className="text-3xl font-bold text-slate-100 tracking-tight">Team & Seats</h1>
+          <h1 className="text-3xl font-bold text-slate-100 tracking-tight">Team &amp; Seats</h1>
           <p className="text-sm text-slate-400 font-mono mt-1">Manage team seat allocation, role-based access control (RBAC), and clearance tiers.</p>
         </div>
-
         <button className="glass-badge px-4 py-2.5 text-xs font-bold text-white hover:bg-white/10 flex items-center space-x-2 transition">
           <UserPlus className="w-4 h-4 text-emerald-400" />
           <span>Invite Team Member</span>
         </button>
       </div>
 
-      {/* Seats Capacity Widget */}
+      {/* Seat Capacity Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 font-mono text-xs">
         <div className="glass-card p-6 space-y-2">
           <span className="animus-label text-slate-400">SEAT CAPACITY</span>
-          <div className="text-3xl font-bold text-slate-100 mt-1">3 / 10 Seats</div>
-          <div className="text-slate-400 text-xs">Base Enterprise Tier</div>
+          <div className="text-3xl font-bold text-slate-100 mt-1">{members.length} / — Seats</div>
+          <div className="text-slate-400 text-xs">Live from database</div>
         </div>
-
         <div className="glass-card p-6 space-y-2">
           <span className="animus-label text-emerald-400">HUB MANAGERS</span>
-          <div className="text-3xl font-bold text-emerald-400 mt-1">1 Manager</div>
+          <div className="text-3xl font-bold text-emerald-400 mt-1">{managerCount} Manager{managerCount !== 1 ? "s" : ""}</div>
           <div className="text-slate-400 text-xs">Full Governance Clearance</div>
         </div>
-
         <div className="glass-card p-6 space-y-2">
-          <span className="animus-label text-sky-400">PROJECT LEADS & DEVS</span>
-          <div className="text-3xl font-bold text-sky-400 mt-1">2 Members</div>
+          <span className="animus-label text-sky-400">LEADS &amp; DEVS</span>
+          <div className="text-3xl font-bold text-sky-400 mt-1">{subCount} Member{subCount !== 1 ? "s" : ""}</div>
           <div className="text-slate-400 text-xs">Scoped Project Access</div>
         </div>
       </div>
@@ -63,27 +76,37 @@ export default function TeamSeatsPage() {
         </div>
 
         <div className="p-5 space-y-4">
-          {MOCK_TEAM.map((m) => (
-            <div key={m.id} className="glass-card-inset p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 font-mono text-xs">
-              <div className="space-y-1">
-                <div className="flex items-center space-x-3">
-                  <span className="text-slate-100 font-bold text-base font-sans">{m.name}</span>
-                  <span className="text-slate-500">|</span>
-                  <span className="text-sky-400 font-mono text-xs">{m.email}</span>
-                </div>
-                <div className="text-slate-400 text-xs">Access Scope: {m.projectAccess}</div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <span className={`glass-badge px-3 py-1 font-bold text-[10px] ${m.role === 'HUB_MANAGER' ? 'text-emerald-400' : 'text-sky-400'}`}>
-                  {m.role}
-                </span>
-                <button className="glass-badge px-3 py-1 text-slate-400 hover:text-white">
-                  Edit Scope
-                </button>
-              </div>
+          {members.length === 0 ? (
+            <div className="py-12 text-center space-y-3">
+              <Users className="w-8 h-8 text-slate-600 mx-auto" />
+              <div className="text-slate-300 font-sans font-semibold">No Team Members Yet</div>
+              <p className="text-xs text-slate-500 font-mono">Invite team members to populate this hub.</p>
             </div>
-          ))}
+          ) : (
+            members.map((m) => (
+              <div key={m.id} className="glass-card-inset p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 font-mono text-xs">
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-slate-100 font-bold text-base font-sans">{m.displayName || m.email.split("@")[0]}</span>
+                    <span className="text-slate-500">|</span>
+                    <span className="text-sky-400 font-mono text-xs">{m.email}</span>
+                  </div>
+                  <div className="text-slate-500 text-[11px]">
+                    Clearance ID: {m.id} · Joined: {new Date(m.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <span className={`glass-badge px-3 py-1 font-bold text-[10px] ${ROLE_COLOUR[m.role] || "text-slate-400"}`}>
+                    {m.role.replace(/_/g, " ")}
+                  </span>
+                  <button className="glass-badge px-3 py-1 text-slate-400 hover:text-white text-[10px]">
+                    Edit Scope
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

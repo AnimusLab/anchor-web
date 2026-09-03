@@ -34,9 +34,65 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const clearanceId = `AUD-${jurisdiction ? jurisdiction.toUpperCase() : "REG"}-${Math.floor(100 + Math.random() * 900)}`;
+    const targetRole = role || "CROSS_HUB_AUDITOR";
+    const targetHubId = body.hubId;
 
-    // Find or create Regulatory Organization
+    // 1. Check if user already exists
+    const existing = await prisma.user.findUnique({
+      where: { email: cleanEmail },
+      include: { hub: true, organization: true },
+    });
+
+    if (existing) {
+      const isAuditorRole = ["REGULATORY_AUDITOR", "CROSS_HUB_AUDITOR", "STANDARD_AUDITOR"].includes(existing.role);
+
+      if (isAuditorRole) {
+        // If a specific hubId is provided, link it
+        if (targetHubId) {
+          const targetHub = await prisma.hub.findUnique({ where: { id: targetHubId } });
+          if (targetHub) {
+            await prisma.userHubAssignment.upsert({
+              where: {
+                userId_hubId: {
+                  userId: existing.id,
+                  hubId: targetHub.id,
+                },
+              },
+              update: { reason: "Multi-Hub Auditor access expanded" },
+              create: {
+                userId: existing.id,
+                hubId: targetHub.id,
+                reason: "Multi-Hub Auditor access granted",
+              },
+            });
+
+            return NextResponse.json({
+              success: true,
+              auditor: existing,
+              clearanceId: existing.id,
+              message: `Cross-Hub Auditor '${existing.displayName}' (${existing.id}) assigned access to Hub '${targetHub.displayName}' (${targetHub.id}).`,
+            });
+          }
+        }
+
+        return NextResponse.json({
+          success: true,
+          auditor: existing,
+          clearanceId: existing.id,
+          message: `Auditor '${existing.displayName}' is already active with Clearance ID: ${existing.id}.`,
+        });
+      }
+
+      // Existing user is an operational developer/manager
+      return NextResponse.json(
+        {
+          error: `Cannot register '${cleanEmail}' as an Auditor: this email is already registered as internal personnel (${existing.role}, Clearance ID: ${existing.id}). Under regulatory compliance rules, auditor identities must be independent from operational personnel.`,
+        },
+        { status: 409 }
+      );
+    }
+
+    // 2. Find or create Regulatory Organization
     let regOrg = await prisma.organization.findFirst({
       where: { orgType: "REGULATORY_BODY" },
     });
@@ -54,48 +110,59 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Check if user already exists
-    const existing = await prisma.user.findUnique({ where: { email: cleanEmail } });
-    if (existing) {
-      return NextResponse.json(
-        { error: `Auditor account for '${cleanEmail}' already exists in database.` },
-        { status: 409 }
-      );
-    }
+    // 3. Generate Clearance ID (e.g. AUD-CH-L4 or AUD-REG-892)
+    const clearanceId = targetRole === "CROSS_HUB_AUDITOR"
+      ? `AUD-CH-L4-${Math.floor(100 + Math.random() * 900)}`
+      : `AUD-${jurisdiction ? jurisdiction.toUpperCase() : "REG"}-${Math.floor(100 + Math.random() * 900)}`;
 
-    // Create Statutory Auditor User
+    // 4. Create Statutory Auditor User
     const newUser = await prisma.user.create({
       data: {
         id: clearanceId,
         email: cleanEmail,
         displayName: displayName.trim(),
-        role: role || "REGULATORY_AUDITOR",
+        role: targetRole as any,
         orgId: regOrg.id,
+        jurisdiction: jurisdiction || "GL",
         status: "APPROVED",
         totpSecret: "JBSWY3DPEHPK3PXP", // Default TOTP seed
       },
       include: { organization: true },
     });
 
-    // Also add to Whitelist as approved
+    // 5. If specific target hub is provided, link it via UserHubAssignment
+    if (targetHubId) {
+      const targetHub = await prisma.hub.findUnique({ where: { id: targetHubId } });
+      if (targetHub) {
+        await prisma.userHubAssignment.create({
+          data: {
+            userId: newUser.id,
+            hubId: targetHub.id,
+            reason: "Initial auditor hub assignment",
+          },
+        });
+      }
+    }
+
+    // 6. Also add to Whitelist as approved
     await prisma.whitelist.upsert({
       where: { email: cleanEmail },
-      update: { status: "APPROVED", role: role || "REGULATORY_AUDITOR", orgId: regOrg.id },
+      update: { status: "APPROVED", role: targetRole as any, orgId: regOrg.id },
       create: {
         email: cleanEmail,
         orgId: regOrg.id,
-        role: role || "REGULATORY_AUDITOR",
+        role: targetRole as any,
         status: "APPROVED",
       },
     });
 
-    // Send Welcome Email via Resend
+    // 7. Send Welcome Email via Resend
     sendCredentialWelcomeEmail({
       to: cleanEmail,
       name: displayName.trim(),
       clearanceId: newUser.id,
-      hubId: regOrg.id,
-      role: role || "REGULATORY_AUDITOR",
+      hubId: targetHubId || regOrg.id,
+      role: targetRole,
       totpSecret: newUser.totpSecret || "JBSWY3DPEHPK3PXP",
     }).catch((err) => console.error("Auditor welcome email dispatch error:", err));
 

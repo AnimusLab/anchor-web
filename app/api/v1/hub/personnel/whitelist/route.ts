@@ -32,29 +32,83 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Generate Unique Clearance ID (e.g. TAN-MGR-L3)
-    const clearanceId = generateClearanceId(cleanName, targetRole);
-
-    // 3. Upsert User in database
-    const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
-    let finalId = clearanceId;
+    // 2. Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: cleanEmail },
+      include: { hub: true, organization: true },
+    });
 
     if (existingUser) {
-      // If user exists with old CLR- format or missing ID format, update ID to new scheme
-      finalId = existingUser.id.startsWith("CLR-") ? clearanceId : existingUser.id;
+      const isAuditorRole = ["CROSS_HUB_AUDITOR", "REGULATORY_AUDITOR", "STANDARD_AUDITOR"].includes(existingUser.role);
+
+      // Scenario A: Existing User is a Cross-Hub / Regulatory Auditor -> Link to this Hub via UserHubAssignment
+      if (isAuditorRole) {
+        const existingAssignment = await prisma.userHubAssignment.findUnique({
+          where: {
+            userId_hubId: {
+              userId: existingUser.id,
+              hubId: hub.id,
+            },
+          },
+        });
+
+        if (!existingAssignment) {
+          await prisma.userHubAssignment.create({
+            data: {
+              userId: existingUser.id,
+              hubId: hub.id,
+              reason: "Multi-Hub Auditor access granted",
+            },
+          });
+        }
+
+        return NextResponse.json({
+          success: true,
+          user: existingUser,
+          clearanceId: existingUser.id,
+          message: `Cross-Hub Auditor '${existingUser.displayName}' (${existingUser.id}) assigned access to Hub '${hub.displayName}' (${hub.id}).`,
+        });
+      }
+
+      // Scenario B: Existing User is internal personnel (Manager / Dev / Lead)
+      if (existingUser.hubId === hub.id) {
+        if (existingUser.role === targetRole) {
+          return NextResponse.json({
+            success: true,
+            user: existingUser,
+            clearanceId: existingUser.id,
+            message: `Personnel '${cleanName}' is already active on Hub '${hub.displayName}' as ${existingUser.role} (Clearance ID: ${existingUser.id}).`,
+          });
+        }
+
+        return NextResponse.json(
+          {
+            error: `Personnel '${cleanName}' is already registered on Hub '${hub.id}' as ${existingUser.role} (Clearance ID: ${existingUser.id}). A single personnel identity cannot hold dual conflicting roles on the same Hub.`,
+          },
+          { status: 409 }
+        );
+      }
+
+      // Scenario C: User is registered on a different Hub
+      return NextResponse.json(
+        {
+          error: `Personnel '${cleanName}' is already assigned to Hub '${existingUser.hubId}' as ${existingUser.role} (Clearance ID: ${existingUser.id}). Enterprise operational personnel must have unique assigned identities per Hub.`,
+        },
+        { status: 409 }
+      );
     }
 
-    const user = await prisma.user.upsert({
-      where: { email: cleanEmail },
-      update: {
-        id: finalId,
-        displayName: cleanName,
-        role: targetRole as any,
-        orgId: hub.orgId,
-        hubId: hub.id,
-        status: "APPROVED",
-      },
-      create: {
+    // 3. Generate Unique Clearance ID (with auto-sequence collision resolver)
+    let seq = 1;
+    let clearanceId = generateClearanceId(cleanName, targetRole);
+    while (await prisma.user.findUnique({ where: { id: clearanceId } })) {
+      seq += 1;
+      clearanceId = generateClearanceId(cleanName, targetRole, seq);
+    }
+
+    // 4. Create new User row
+    const user = await prisma.user.create({
+      data: {
         id: clearanceId,
         email: cleanEmail,
         displayName: cleanName,
@@ -67,7 +121,16 @@ export async function POST(req: NextRequest) {
       include: { organization: true, hub: true },
     });
 
-    // 4. Upsert Whitelist entry
+    // 5. Create Hub Assignment Record
+    await prisma.userHubAssignment.create({
+      data: {
+        userId: user.id,
+        hubId: hub.id,
+        reason: "Primary hub clearance assignment",
+      },
+    });
+
+    // 6. Upsert Whitelist entry
     await prisma.whitelist.upsert({
       where: { email: cleanEmail },
       update: {
@@ -85,7 +148,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 5. Send Welcome Email via Resend
+    // 7. Send Welcome Email via Resend
     sendCredentialWelcomeEmail({
       to: cleanEmail,
       name: cleanName,

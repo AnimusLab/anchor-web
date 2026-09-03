@@ -33,6 +33,14 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/design-samples') ||
     pathname.startsWith('/demo') ||
     pathname.startsWith('/docs') ||
+    pathname.startsWith('/pricing') ||
+    pathname.startsWith('/compare') ||
+    pathname.startsWith('/benchmarks') ||
+    pathname.startsWith('/case-studies') ||
+    pathname === '/pricing' ||
+    pathname === '/compare' ||
+    pathname === '/benchmarks' ||
+    pathname === '/case-studies' ||
     pathname === '/login' ||
     pathname === '/oversight/login' ||
     pathname === '/admin/login' ||

@@ -2,21 +2,205 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── DEFAULT: LIGHT MODE ── */
 :root {
-  --background: #03050a;
-  --foreground: #f8fafc;
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 221.2 83.2% 53.3%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221.2 83.2% 53.3%;
   --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-serif: Georgia, "Palatino Linotype", Palatino, "Book Antiqua", serif;
+
+  /* Landing page global tokens (Light Mode) */
+  --lp-bg:        #FFFFFF;
+  --lp-surface:   #FFFFFF;
+  --lp-surface-sub: #F8F9FA;
+  --lp-border:    #E2E8F0;
+  --lp-border-subtle: #F1F5F9;
+  --lp-text:      #000000;
+  --lp-sub:       #1E293B;
+  --lp-muted:     #475569;
+  --lp-watermark-base: rgba(0, 0, 0, 0.05);
+  --lp-watermark-glint: rgba(37, 99, 235, 0.30);
+  --lp-watermark-highlight: rgba(0, 0, 0, 0.16);
+  --lp-indigo:    #2563EB;
+  --lp-indigo-bg: rgba(37, 99, 235, 0.08);
+  --lp-chip-bg:   #FFFFFF;
+  --lp-chip-border: #CBD5E1;
+  --lp-chip-text: #000000;
+  --lp-sun-flare: radial-gradient(circle, rgba(255,215,140,0.22) 0%, rgba(255,245,210,0.12) 40%, transparent 70%);
 }
 
+/* ── DARK MODE: only when html has .dark class ── */
+html.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217.2 91.2% 59.8%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 224.3 76.3% 48%;
+
+  /* Landing page global tokens (Dark Mode) */
+  --lp-bg:        #09090C;
+  --lp-surface:   #121217;
+  --lp-surface-sub: #17171E;
+  --lp-border:    rgba(255,255,255,0.12);
+  --lp-border-subtle: rgba(255,255,255,0.06);
+  --lp-text:      #FFFFFF;
+  --lp-sub:       #CBD5E1;
+  --lp-muted:     #94A3B8;
+  --lp-watermark-base: rgba(255, 255, 255, 0.07);
+  --lp-watermark-glint: rgba(96, 165, 250, 0.45);
+  --lp-watermark-highlight: rgba(255, 255, 255, 0.32);
+  --lp-indigo:    #60A5FA;
+  --lp-indigo-bg: rgba(96, 165, 250, 0.12);
+  --lp-chip-bg:   #15151B;
+  --lp-chip-border: rgba(255,255,255,0.12);
+  --lp-chip-text: #FFFFFF;
+  --lp-sun-flare: radial-gradient(circle, rgba(147,197,253,0.18) 0%, rgba(199,210,254,0.08) 40%, transparent 70%);
+}
+
+/* ── EXPLICIT BODY DEFAULTS — always white in light mode ── */
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  line-height: 1.6;
-  text-rendering: optimizeLegibility;
+  background-color: #FFFFFF;
+  color: #000000;
+}
+html.dark body {
+  background-color: #09090C;
+  color: #FFFFFF;
+}
+
+/* ── Landing page class overrides for backwards compatibility ── */
+.lp-root {
+  --lp-bg:        #FFFFFF;
+  --lp-surface:   #FFFFFF;
+  --lp-surface-sub: #F8F9FA;
+  --lp-border:    #E2E8F0;
+  --lp-border-subtle: #F1F5F9;
+  --lp-text:      #000000;
+  --lp-sub:       #1E293B;
+  --lp-muted:     #475569;
+  --lp-watermark-base: rgba(0, 0, 0, 0.05);
+  --lp-watermark-glint: rgba(37, 99, 235, 0.30);
+  --lp-watermark-highlight: rgba(0, 0, 0, 0.16);
+  --lp-indigo:    #2563EB;
+  --lp-indigo-bg: rgba(37, 99, 235, 0.08);
+  --lp-chip-bg:   #FFFFFF;
+  --lp-chip-border: #CBD5E1;
+  --lp-chip-text: #000000;
+  --lp-sun-flare: radial-gradient(circle, rgba(255,215,140,0.22) 0%, rgba(255,245,210,0.12) 40%, transparent 70%);
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+.lp-root.dark,
+html.dark .lp-root {
+  --lp-bg:        #09090C;
+  --lp-surface:   #121217;
+  --lp-surface-sub: #17171E;
+  --lp-border:    rgba(255,255,255,0.12);
+  --lp-border-subtle: rgba(255,255,255,0.06);
+  --lp-text:      #FFFFFF;
+  --lp-sub:       #CBD5E1;
+  --lp-muted:     #94A3B8;
+  --lp-watermark-base: rgba(255, 255, 255, 0.07);
+  --lp-watermark-glint: rgba(96, 165, 250, 0.45);
+  --lp-watermark-highlight: rgba(255, 255, 255, 0.32);
+  --lp-indigo:    #60A5FA;
+  --lp-indigo-bg: rgba(96, 165, 250, 0.12);
+  --lp-chip-bg:   #15151B;
+  --lp-chip-border: rgba(255,255,255,0.12);
+  --lp-chip-text: #FFFFFF;
+  --lp-sun-flare: radial-gradient(circle, rgba(147,197,253,0.18) 0%, rgba(199,210,254,0.08) 40%, transparent 70%);
+}
+
+/* Serif italic accent — used inside headings */
+.serif-em {
+  font-style: italic;
+  font-family: var(--font-serif);
+  font-weight: 400;
+}
+
+/* ── 3D Physical Cards for Case Studies & Comparisons ── */
+.lp-card-3d {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border: 1.5px solid #E2E8F0 !important;
+  border-bottom: 3.5px solid #CBD5E1 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 20px -3px rgba(0, 0, 0, 0.08) !important;
+  border-radius: 24px;
+  /* Fix blurry text: force GPU layer upfront so compositing is stable */
+  transform: translateZ(0) translateY(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.lp-card-3d:hover {
+  transform: translateZ(0) translateY(-3px);
+  border-bottom: 4px solid #2563EB !important;
+  box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.15), 0 16px 32px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark .lp-card-3d,
+.lp-root.dark .lp-card-3d {
+  background-color: #13131A !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+  border-bottom: 3.5px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 16px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark .lp-card-3d:hover,
+.lp-root.dark .lp-card-3d:hover {
+  transform: translateZ(0) translateY(-3px);
+  border-bottom: 4px solid #60A5FA !important;
+  box-shadow: 0 12px 28px rgba(96, 165, 250, 0.2), 0 20px 40px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* ── Selected Interactive Item Highlight ── */
+.lp-item-selected {
+  background-color: #EFF6FF !important;
+  border: 2px solid #2563EB !important;
+  box-shadow: 0 0 0 1px #2563EB, 0 4px 12px rgba(37, 99, 235, 0.15) !important;
+}
+
+.dark .lp-item-selected,
+.lp-root.dark .lp-item-selected {
+  background-color: #1E293B !important;
+  border: 2px solid #60A5FA !important;
+  box-shadow: 0 0 0 1px #60A5FA, 0 4px 12px rgba(96, 165, 250, 0.25) !important;
 }
 
 /* =========================================
@@ -99,3 +283,586 @@ body {
     0 0 20px rgba(255, 255, 255, 0.2),
     inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
+
+/* =========================================
+   LANDING PAGE — MINIMALIST REWORK ANIMATIONS
+========================================= */
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.cursor-blink {
+  display: inline-block;
+  width: 2px;
+  height: 0.9em;
+  background: #F0F0ED;
+  margin-left: 3px;
+  vertical-align: text-bottom;
+  animation: cursorBlink 0.72s step-end infinite;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0);     }
+}
+
+.animate-fadeInUp {
+  opacity: 0;
+  animation: fadeInUp 520ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+.delay-700 { animation-delay: 700ms; }
+.delay-800 { animation-delay: 800ms; }
+.delay-900 { animation-delay: 900ms; }
+
+.underline-slide {
+  position: relative;
+  text-decoration: none;
+}
+.underline-slide::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #5B5CF6;
+  transition: width 150ms ease;
+}
+.underline-slide:hover::after { width: 100%; }
+
+.lp-section-label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6B7385;
+  font-weight: 500;
+}
+
+/* ── Feature chip — raised keycap 3D + black hover ─── */
+.lp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 999px;
+  color: #444;
+  background: #FFFFFF;
+  cursor: default;
+  /* Raised keycap depth */
+  box-shadow:
+    0 1px 0 #c8c8c8,
+    0 2px 0 #bebebe,
+    0 3px 0 #b4b4b4,
+    0 4px 0 #aaaaaa,
+    0 5px 8px rgba(0,0,0,0.18);
+  transform: translateY(0px);
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+.lp-chip:hover {
+  background: #111111;
+  color: #FFFFFF;
+  border-color: #111111;
+  /* Push-down on hover — pressed state */
+  box-shadow:
+    0 1px 0 #000,
+    0 2px 4px rgba(0,0,0,0.35);
+  transform: translateY(3px);
+}
+.lp-chip:hover svg {
+  color: #FFFFFF !important;
+}
+
+/* ── 3D artifact card (light) — visible stacked-edge ── */
+.lp-card-3d {
+  border-radius: 24px;
+  background: #FFFFFF;
+  border: 1px solid rgba(0,0,0,0.08);
+  /* Solid stacked physical edge */
+  box-shadow:
+    0 1px 0 #d8d8d8,
+    0 2px 0 #cecece,
+    0 3px 0 #c4c4c4,
+    0 4px 0 #bababa,
+    0 5px 0 #b0b0b0,
+    0 6px 0 #a6a6a6,
+    0 12px 28px rgba(0,0,0,0.12),
+    0 24px 44px rgba(0,0,0,0.06);
+  transform: perspective(800px) rotateX(3deg) rotateY(-2deg);
+  transition: transform 320ms cubic-bezier(0.16,1,0.3,1), box-shadow 320ms ease;
+}
+.lp-card-3d:hover {
+  transform: perspective(800px) rotateX(0deg) rotateY(0deg) translateY(-8px);
+  box-shadow:
+    0 1px 0 #d8d8d8,
+    0 2px 0 #cecece,
+    0 3px 0 #c4c4c4,
+    0 4px 0 #bababa,
+    0 5px 0 #b0b0b0,
+    0 6px 0 #a6a6a6,
+    0 20px 40px rgba(0,0,0,0.18),
+    0 36px 60px rgba(0,0,0,0.10);
+}
+
+/* ── 3D pricing card — curved with soft depth ───────── */
+/* Used on light (white) tier */
+.lp-price-3d-light {
+  border-radius: 24px;
+  box-shadow:
+    0 1px 0 #d4d4d4,
+    0 2px 0 #cacaca,
+    0 3px 0 #c0c0c0,
+    0 4px 0 #b6b6b6,
+    0 5px 0 #acacac,
+    0 6px 0 #a2a2a2,
+    0 14px 28px rgba(0,0,0,0.18),
+    0 28px 48px rgba(0,0,0,0.08);
+  transform: translateY(0);
+  transition: transform 300ms cubic-bezier(0.16,1,0.3,1), box-shadow 300ms ease;
+}
+.lp-price-3d-light:hover {
+  transform: translateZ(0) translateY(-10px);
+  box-shadow:
+    0 1px 0 #d4d4d4,
+    0 2px 0 #cacaca,
+    0 3px 0 #c0c0c0,
+    0 4px 0 #b6b6b6,
+    0 5px 0 #acacac,
+    0 6px 0 #a2a2a2,
+    0 24px 48px rgba(0,0,0,0.22),
+    0 44px 68px rgba(0,0,0,0.12);
+}
+
+/* Used on dark tiers */
+.lp-price-3d-dark {
+  border-radius: 24px;
+  box-shadow:
+    0 1px 0 #000,
+    0 2px 0 #000,
+    0 3px 0 #000,
+    0 4px 0 #000,
+    0 5px 0 #000,
+    0 6px 0 #000,
+    0 14px 32px rgba(0,0,0,0.5),
+    0 28px 56px rgba(0,0,0,0.35);
+  transform: translateY(0);
+  transition: transform 300ms cubic-bezier(0.16,1,0.3,1), box-shadow 300ms ease;
+}
+.lp-price-3d-dark:hover {
+  transform: translateZ(0) translateY(-10px);
+  box-shadow:
+    0 1px 0 #000,
+    0 2px 0 #000,
+    0 3px 0 #000,
+    0 4px 0 #000,
+    0 5px 0 #000,
+    0 6px 0 #000,
+    0 24px 54px rgba(0,0,0,0.65),
+    0 48px 76px rgba(0,0,0,0.40);
+}
+
+/* ── Use-case grid card 3D (clean white, no permanent blue border) ─── */
+.lp-usecase-3d {
+  border-radius: 22px;
+  background: #FFFFFF;
+  border: 1px solid rgba(0,0,0,0.07);
+  box-shadow:
+    0 1px 0 #dcdcdc,
+    0 2px 0 #d2d2d2,
+    0 3px 0 #c8c8c8,
+    0 4px 0 #bebebe,
+    0 5px 0 #b4b4b4,
+    0 8px 18px rgba(0,0,0,0.10),
+    0 16px 32px rgba(0,0,0,0.05);
+  transform: translateZ(0) translateY(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: transform 280ms cubic-bezier(0.16,1,0.3,1), box-shadow 280ms ease, border-color 200ms ease;
+}
+/* ── Dark mode adaptations for 3D cards ───────────── */
+.lp-root.dark .lp-chip {
+  background: #15151B;
+  border-color: rgba(255,255,255,0.08);
+  color: #EEEEF2;
+  box-shadow:
+    0 1px 0 #000,
+    0 2px 0 #000,
+    0 3px 0 #000,
+    0 4px 0 #000,
+    0 6px 14px rgba(0,0,0,0.4);
+}
+.lp-root.dark .lp-chip:hover {
+  background: #FFFFFF;
+  color: #000000;
+  border-color: #FFFFFF;
+  box-shadow:
+    0 1px 0 #cccccc,
+    0 2px 0 #bbbbbb,
+    0 3px 6px rgba(0,0,0,0.3);
+}
+
+.lp-root.dark .lp-card-3d {
+  background: #131318;
+  border-color: rgba(255,255,255,0.08);
+  box-shadow:
+    0 1px 0 #000,
+    0 2px 0 #000,
+    0 3px 0 #000,
+    0 4px 0 #000,
+    0 5px 0 #000,
+    0 6px 0 #000,
+    0 16px 36px rgba(0,0,0,0.6),
+    0 30px 60px rgba(0,0,0,0.4);
+}
+.lp-root.dark .lp-card-3d:hover {
+  box-shadow:
+    0 1px 0 #000,
+    0 2px 0 #000,
+    0 3px 0 #000,
+    0 4px 0 #000,
+    0 5px 0 #000,
+    0 6px 0 #000,
+    0 24px 50px rgba(0,0,0,0.75),
+    0 44px 75px rgba(0,0,0,0.5);
+}
+
+.lp-root.dark .lp-usecase-3d {
+  background: #131317;
+  border-color: rgba(255,255,255,0.08);
+  box-shadow:
+    0 1px 0 #000,
+    0 2px 0 #000,
+    0 3px 0 #000,
+    0 4px 0 #000,
+    0 5px 0 #000,
+    0 12px 24px rgba(0,0,0,0.5);
+}
+.lp-root.dark .lp-usecase-3d:hover {
+  border-color: rgba(255,255,255,0.22);
+  box-shadow:
+    0 1px 0 #000,
+    0 2px 0 #000,
+    0 3px 0 #000,
+    0 4px 0 #000,
+    0 5px 0 #000,
+    0 22px 44px rgba(0,0,0,0.7);
+}
+
+.lp-root.dark .lp-price-3d-light {
+  background: #15151B !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    0 1px 0 #000,
+    0 2px 0 #000,
+    0 3px 0 #000,
+    0 4px 0 #000,
+    0 5px 0 #000,
+    0 6px 0 #000,
+    0 16px 36px rgba(0,0,0,0.55);
+}
+
+/* ── Floating 3D Nav Capsule ── */
+.lp-nav-3d {
+  background: #18181B;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+    0 1px 0 #000,
+    0 2px 0 #000,
+    0 3px 0 #000,
+    0 4px 0 #000,
+    0 12px 28px rgba(0, 0, 0, 0.4),
+    0 24px 56px rgba(0, 0, 0, 0.25);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.lp-nav-3d:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+    0 1px 0 #000,
+    0 2px 0 #000,
+    0 3px 0 #000,
+    0 5px 0 #000,
+    0 16px 36px rgba(0, 0, 0, 0.45),
+    0 32px 64px rgba(0, 0, 0, 0.3);
+}
+
+.lp-nav-btn-3d {
+  background: #FFFFFF;
+  color: #111111;
+  box-shadow:
+    0 1px 0 #cccccc,
+    0 2px 0 #aaaaaa,
+    0 3px 0 #888888,
+    0 6px 14px rgba(0, 0, 0, 0.25);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.lp-nav-btn-3d:hover {
+  transform: translateZ(0) translateY(-1px);
+  box-shadow:
+    0 1px 0 #cccccc,
+    0 2px 0 #aaaaaa,
+    0 3px 0 #888888,
+    0 4px 0 #666666,
+    0 8px 18px rgba(0, 0, 0, 0.3);
+}
+
+.lp-nav-btn-3d:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 #888888,
+    0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* ── 3D Physical Cards for Case Studies & Comparisons ── */
+.lp-card-3d {
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  border-bottom: 3px solid #9CA3AF;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 10px 15px -3px rgba(0, 0, 0, 0.08),
+    0 20px 25px -5px rgba(0, 0, 0, 0.04);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.lp-card-3d:hover {
+  transform: translateZ(0) translateY(-4px);
+  border-bottom: 4px solid #5B5CF6;
+  box-shadow:
+    0 12px 24px -4px rgba(91, 92, 246, 0.12),
+    0 20px 30px -6px rgba(0, 0, 0, 0.12);
+}
+
+.lp-root.dark .lp-card-3d {
+  background: #14141A;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    0 16px 32px rgba(0, 0, 0, 0.4);
+}
+
+.lp-root.dark .lp-card-3d:hover {
+  transform: translateZ(0) translateY(-4px);
+  border-bottom: 4px solid #6366F1;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 12px 28px rgba(99, 102, 241, 0.2),
+    0 24px 48px rgba(0, 0, 0, 0.7);
+}
+
+/* ── Natural Sun / Light Reflection Sweep Across Watermark ── */
+@keyframes naturalSunSweep {
+  0% {
+    transform: translate3d(-140%, -90%, 0) rotate(26deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  65% {
+    opacity: 0.7;
+    transform: translate3d(70%, 50%, 0) rotate(26deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(160%, 120%, 0) rotate(26deg);
+  }
+}
+
+.animate-natural-sunbeam {
+  animation: naturalSunSweep 4.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+/* ── Watermark Animation 1: Slow Atmospheric Drift & Breathing Glow ── */
+@keyframes watermarkBreathe {
+  0%, 100% {
+    transform: translateY(-8px) scale(1);
+    opacity: 0.055;
+  }
+  50% {
+    transform: translateY(-22px) scale(1.02);
+    opacity: 0.095;
+  }
+}
+
+.animate-watermark-breathe {
+  animation: watermarkBreathe 14s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ── Watermark Animation 2: Reflective Light-Sheen Sweep ── */
+@keyframes sheenSweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-watermark-sheen {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.05) 0%,
+    rgba(0, 0, 0, 0.05) 35%,
+    rgba(91, 92, 246, 0.25) 50%,
+    rgba(0, 0, 0, 0.05) 65%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: sheenSweep 8s ease-in-out infinite;
+}
+
+/* ── Watermark Animation 3: Cryptographic Shimmer Wave ── */
+@keyframes cryptoShimmer {
+  0%, 100% {
+    filter: blur(0px);
+    opacity: 0.06;
+    letter-spacing: -0.05em;
+  }
+  50% {
+    filter: blur(1.5px);
+    opacity: 0.09;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ── Watermark Opening Intro: Hardware-Accelerated Convergence ── */
+@keyframes watermarkIntroFocus {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -56px, 0) scale3d(1.48, 1.48, 1);
+  }
+  25% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, -16px, 0) scale3d(1, 1, 1);
+  }
+}
+
+@keyframes watermarkContinuousFloat {
+  0%, 100% {
+    transform: translate3d(0, -14px, 0) scale3d(1, 1, 1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate3d(0, -34px, 0) scale3d(1.03, 1.03, 1);
+    opacity: 1;
+  }
+}
+
+.hero-watermark-text {
+  display: inline-block;
+  font-size: clamp(120px, 23vw, 380px);
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  line-height: 1;
+  user-select: none;
+  background: radial-gradient(
+    circle 540px at var(--mx, 50%) var(--my, 45%),
+    var(--lp-watermark-highlight) 0%,
+    var(--lp-watermark-glint) 28%,
+    var(--lp-watermark-base) 68%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transform: translate3d(0, -16px, 0) scale3d(1, 1, 1);
+  animation: watermarkIntroFocus 3.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Watermark Opening Intro 02: Letter-by-Letter Staggered Elevation ── */
+@keyframes letterRiseIn {
+  0% {
+    opacity: 0;
+    transform: translateY(60px) rotateX(-20deg);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 0.075;
+    transform: translateY(0px) rotateX(0deg);
+    filter: blur(0px);
+  }
+}
+
+.animate-letter-rise {
+  animation: letterRiseIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Watermark Opening Intro 03: Central Aperture Wipe & Glow ── */
+@keyframes apertureWipe {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 50% 0 50%);
+    filter: blur(12px);
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 0.14;
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 0.075;
+    clip-path: inset(0 0% 0 0%);
+    filter: blur(0px);
+    transform: scale(1);
+  }
+}
+
+.animate-watermark-intro-wipe {
+  animation: apertureWipe 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Watermark Opening Intro 04: Ambient Light Bloom & Lock ── */
+@keyframes bloomLock {
+  0% {
+    opacity: 0;
+    filter: drop-shadow(0 0 0px transparent);
+    transform: scale(0.92) translateY(10px);
+  }
+  45% {
+    opacity: 0.16;
+    filter: drop-shadow(0 0 40px rgba(91,92,246,0.6));
+    transform: scale(1.02) translateY(-4px);
+  }
+  100% {
+    opacity: 0.075;
+    filter: drop-shadow(0 0 0px transparent);
+    transform: scale(1) translateY(0px);
+  }
+}
+
+.animate-watermark-intro-bloom {
+  animation: bloomLock 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
+

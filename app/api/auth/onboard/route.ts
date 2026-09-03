@@ -1,13 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { sendOnboardingAdminNotification } from "@/lib/email";
+import { getClientIp, checkRateLimit, recordFailedAttempt } from "@/lib/auth/rateLimiter";
 
 const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req);
+    // Rate limit onboarding: Max 3 submissions per 10 minutes per IP
+    const ipCheck = checkRateLimit(`onboard:${clientIp}`, 3, 10 * 60 * 1000, 10 * 60 * 1000);
+    if (!ipCheck.allowed) {
+      return NextResponse.json(
+        { 
+          error: "Too many onboarding registration attempts from this IP. Please wait a few minutes before trying again.",
+          retryAfterSeconds: ipCheck.retryAfterSeconds 
+        }, 
+        { 
+          status: 429,
+          headers: {
+            "Retry-After": String(ipCheck.retryAfterSeconds || 600)
+          }
+        }
+      );
+    }
+
     const body = await req.json();
     const { name, email, orgName, city, region, department, requestedHubId, jurisdiction, portalType } = body;
+
+    // Track attempt
+    recordFailedAttempt(`onboard:${clientIp}`, 3, 10 * 60 * 1000, 10 * 60 * 1000);
 
     if (!email || !name) {
       return NextResponse.json({ error: "Name and Email are required for onboarding submission" }, { status: 400 });

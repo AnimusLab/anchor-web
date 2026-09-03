@@ -117,6 +117,7 @@ export default async function OversightDashboardPage() {
 
       {/* Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Regulated Institutions — real orgs from DB */}
         <div className="lg:col-span-7 pure-glass-card p-6 rounded-3xl space-y-5 border border-white/20">
           <div className="flex items-center justify-between border-b border-white/15 pb-4">
             <h2 className="text-lg font-bold text-white uppercase font-sans flex items-center space-x-2">
@@ -126,30 +127,32 @@ export default async function OversightDashboardPage() {
           </div>
 
           <div className="space-y-3.5 font-mono">
-            {DEMO_REGULATED_INSTITUTIONS.map((inst) => (
-              <div key={inst.id} className="bg-black/40 p-4 rounded-2xl border border-white/15 flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-bold text-white font-sans">{inst.name}</span>
-                    <span className="text-[10px] text-slate-400 bg-white/10 px-2 py-0.5 rounded-md">{inst.id}</span>
+            {dbOrgs.length === 0 ? (
+              <div className="py-8 text-center text-slate-500 text-xs">
+                No regulated institutions onboarded yet.
+              </div>
+            ) : (
+              dbOrgs.map((org: any) => (
+                <div key={org.id} className="bg-black/40 p-4 rounded-2xl border border-white/15 flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm font-bold text-white font-sans">{org.displayName}</span>
+                      <span className="text-[10px] text-slate-400 bg-white/10 px-2 py-0.5 rounded-md">{org.id}</span>
+                    </div>
+                    <div className="text-xs text-slate-300 font-sans">
+                      {org.region} · {org._count?.hubs ?? 0} Hub{(org._count?.hubs ?? 0) !== 1 ? "s" : ""}
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-300 font-sans">{inst.jurisdiction}</div>
-                </div>
-
-                <div className="flex items-center space-x-4 text-right flex-shrink-0">
-                  <div className="text-xs space-y-0.5">
-                    <span className="text-slate-400 block text-[10px]">AUDIT: {inst.auditDate}</span>
-                    <span className="text-amber-300 font-bold block text-[11px]">{inst.compliance} COMPLIANCE</span>
-                  </div>
-                  <span className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase border ${inst.riskTier === "LOW" ? "bg-emerald-500/20 border-emerald-400/50 text-emerald-300" : "bg-amber-500/20 border-amber-400/50 text-amber-300"}`}>
-                    {inst.status}
+                  <span className="text-[11px] font-bold px-3 py-1 rounded-full uppercase border bg-emerald-500/20 border-emerald-400/50 text-emerald-300">
+                    {org.status}
                   </span>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
+        {/* Decision Audit Chain — real ledger entries from DB */}
         <div className="lg:col-span-5 pure-glass-card p-6 rounded-3xl space-y-5 border border-white/20">
           <div className="flex items-center justify-between border-b border-white/15 pb-4">
             <h2 className="text-lg font-bold text-white uppercase font-sans flex items-center space-x-2">
@@ -159,22 +162,32 @@ export default async function OversightDashboardPage() {
           </div>
 
           <div className="space-y-3 font-mono">
-            {DEMO_OVERSIGHT_DECISIONS.map((entry, idx) => (
-              <div key={idx} className="bg-black/40 p-3.5 rounded-2xl border border-white/15 space-y-2 text-xs">
-                <div className="flex items-center justify-between text-slate-400 text-[11px]">
-                  <span className="text-slate-200 font-bold">{entry.inst}</span>
-                  <span className="text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-400/30">{entry.rule}</span>
-                </div>
-                <div className="text-white font-sans font-semibold">{entry.model}</div>
-                <div className="text-[10px] text-slate-400 font-mono">Chain Hash: {entry.hash}</div>
-                <div className="flex items-center justify-between pt-1 border-t border-white/10 text-[11px]">
-                  <span className="text-emerald-400 font-bold">{entry.verdict}</span>
-                  <button className="bg-amber-500/20 border border-amber-400/40 text-amber-200 px-2.5 py-1 rounded-md hover:bg-amber-500/30 transition text-[10px]">
-                    Request P2P Pull →
-                  </button>
-                </div>
+            {dbLedger.length === 0 ? (
+              <div className="py-8 text-center text-slate-500 text-xs">
+                No ledger entries recorded yet.
               </div>
-            ))}
+            ) : (
+              dbLedger.map((entry: any) => (
+                <div key={entry.id} className="bg-black/40 p-3.5 rounded-2xl border border-white/15 space-y-2 text-xs">
+                  <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                    <span className="text-slate-200 font-bold">{entry.projectName}</span>
+                    <span className="text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-400/30">
+                      {entry.type?.toUpperCase() || "RUNTIME_CHECK"}
+                    </span>
+                  </div>
+                  <div className="text-white font-sans font-semibold">{entry.evidenceClassification}</div>
+                  <div className="text-[10px] text-slate-400 font-mono">
+                    Chain Hash: {entry.chainHash?.slice(0, 20)}…
+                  </div>
+                  <div className="flex items-center justify-between pt-1 border-t border-white/10 text-[11px]">
+                    <span className="text-emerald-400 font-bold">SEALED</span>
+                    <button className="bg-amber-500/20 border border-amber-400/40 text-amber-200 px-2.5 py-1 rounded-md hover:bg-amber-500/30 transition text-[10px]">
+                      Request P2P Pull →
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

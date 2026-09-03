@@ -17,11 +17,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var theme = localStorage.getItem('anchor-theme');
+                if (theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                  if (theme !== 'light') {
+                    localStorage.setItem('anchor-theme', 'light');
+                  }
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
       </head>
-      <body className="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+      <body className="min-h-screen font-sans antialiased bg-[#F8F9FA] dark:bg-[#09090C] text-black dark:text-white">
         {children}
       </body>
     </html>

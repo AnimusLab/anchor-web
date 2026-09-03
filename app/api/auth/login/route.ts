@@ -3,13 +3,35 @@ import { cookies } from "next/headers";
 import { PrismaClient, UserStatus } from "@prisma/client";
 import { authenticator } from "otplib";
 import { createSessionCookie } from "@/lib/auth/session";
+import { getClientIp, checkRateLimit, recordFailedAttempt, resetRateLimit, consumeTotpToken } from "@/lib/auth/rateLimiter";
 
 const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
     const body = await request.json();
     const { email, identifier, hubId, clearanceId, totpCode, portalType } = body;
+
+    // Check IP-level rate limiting
+    const ipCheck = checkRateLimit(clientIp, 5, 15 * 60 * 1000);
+    if (!ipCheck.allowed) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: ipCheck.message || "Too many failed attempts. Temporary lockout active.",
+          retryAfterSeconds: ipCheck.retryAfterSeconds,
+          lockedUntil: ipCheck.lockedUntilIso
+        },
+        { 
+          status: 429,
+          headers: {
+            "Retry-After": String(ipCheck.retryAfterSeconds || 900),
+            "X-RateLimit-Remaining": "0"
+          }
+        }
+      );
+    }
 
     if (!email) {
       return NextResponse.json(
@@ -20,6 +42,27 @@ export async function POST(request: Request) {
 
     const lowerEmail = email ? email.trim().toLowerCase() : "";
     const cleanIdentifier = (identifier || hubId || clearanceId || "").trim();
+
+    // Check Email/Identity-level rate limiting
+    const identityKey = lowerEmail || cleanIdentifier;
+    const identityCheck = checkRateLimit(`user:${identityKey}`, 5, 15 * 60 * 1000);
+    if (!identityCheck.allowed) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: identityCheck.message || "Account temporarily locked due to excessive failed attempts.",
+          retryAfterSeconds: identityCheck.retryAfterSeconds,
+          lockedUntil: identityCheck.lockedUntilIso
+        },
+        { 
+          status: 429,
+          headers: {
+            "Retry-After": String(identityCheck.retryAfterSeconds || 900),
+            "X-RateLimit-Remaining": "0"
+          }
+        }
+      );
+    }
 
     // Build OR query to match by Clearance ID (id) OR Corporate Email (email)
     const userOrConditions: any[] = [];
@@ -45,7 +88,7 @@ export async function POST(request: Request) {
     if (admin) {
       if (admin.status !== UserStatus.APPROVED) {
         return NextResponse.json(
-          { success: false, message: "Admin account is suspended or pending approval." },
+          { success: false, message: "Authentication failed. Account not authorized." },
           { status: 403 }
         );
       }
@@ -62,16 +105,31 @@ export async function POST(request: Request) {
         );
       }
 
-      // Step 2: Validate 6-Digit TOTP Code
+      // Step 2: Validate 6-Digit TOTP Code with Replay Prevention
       if (admin.totpSecret) {
         const isValidTotp = authenticator.check(totpCode.trim(), admin.totpSecret);
-        if (!isValidTotp) {
+        const isNotReplayed = isValidTotp ? consumeTotpToken(`admin:${admin.id}`, totpCode) : false;
+
+        if (!isValidTotp || !isNotReplayed) {
+          const failResult = recordFailedAttempt(clientIp, 5, 15 * 60 * 1000);
+          recordFailedAttempt(`user:${identityKey}`, 5, 15 * 60 * 1000);
           return NextResponse.json(
-            { success: false, requireTotp: true, message: "❌ Invalid 6-digit TOTP Authenticator code. Check your app." },
+            { 
+              success: false, 
+              requireTotp: true, 
+              message: !isValidTotp
+                ? `❌ Invalid 6-digit TOTP Authenticator code. (${failResult.remaining} attempt(s) remaining before lockout).`
+                : `❌ Security Alert: TOTP code was already consumed. Wait for the next 30-second token in your app.`,
+              remainingAttempts: failResult.remaining
+            },
             { status: 401 }
           );
         }
       }
+
+      // Success: Clear failed attempts
+      resetRateLimit(clientIp);
+      resetRateLimit(`user:${identityKey}`);
 
       const sessionData = {
         id: admin.id,
@@ -110,15 +168,21 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
+      const failResult = recordFailedAttempt(clientIp, 5, 15 * 60 * 1000);
+      recordFailedAttempt(`user:${identityKey}`, 5, 15 * 60 * 1000);
       return NextResponse.json(
-        { success: false, message: "Authentication failed. Clearance ID / Email not found in Sovereign Whitelist." },
+        { 
+          success: false, 
+          message: `Authentication failed. Invalid clearance credentials or organization mapping. (${failResult.remaining} attempt(s) remaining).`,
+          remainingAttempts: failResult.remaining
+        },
         { status: 401 }
       );
     }
 
     if (user.status !== UserStatus.APPROVED) {
       return NextResponse.json(
-        { success: false, message: "User account is pending whitelist activation." },
+        { success: false, message: "Authentication failed. Account pending authorization." },
         { status: 403 }
       );
     }
@@ -144,16 +208,22 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Validate Identifier (Hub ID or Org ID)
+    // 3. Validate Identifier (Hub ID or Org ID) — Unified symmetric error to prevent oracle enumeration
     if (cleanIdentifier) {
       const matchHubId = user.hubId?.toLowerCase() === cleanIdentifier.toLowerCase();
       const matchOrgId = user.orgId.toLowerCase() === cleanIdentifier.toLowerCase();
       const matchOrgDomain = user.organization.domain.toLowerCase() === cleanIdentifier.toLowerCase();
 
       if (!matchHubId && !matchOrgId && !matchOrgDomain) {
+        const failResult = recordFailedAttempt(clientIp, 5, 15 * 60 * 1000);
+        recordFailedAttempt(`user:${identityKey}`, 5, 15 * 60 * 1000);
         return NextResponse.json(
-          { success: false, message: `Access denied. Identifier '${cleanIdentifier}' does not match assigned Hub or Organization.` },
-          { status: 403 }
+          { 
+            success: false, 
+            message: `Authentication failed. Invalid clearance credentials or organization mapping. (${failResult.remaining} attempt(s) remaining).`,
+            remainingAttempts: failResult.remaining
+          },
+          { status: 401 }
         );
       }
     }
@@ -170,16 +240,31 @@ export async function POST(request: Request) {
       );
     }
 
-    // Step 2: Validate 6-Digit TOTP Code
+    // Step 2: Validate 6-Digit TOTP Code with Replay Prevention
     if (user.totpSecret) {
       const isValidTotp = authenticator.check(totpCode.trim(), user.totpSecret);
-      if (!isValidTotp) {
+      const isNotReplayed = isValidTotp ? consumeTotpToken(`user:${user.id}`, totpCode) : false;
+
+      if (!isValidTotp || !isNotReplayed) {
+        const failResult = recordFailedAttempt(clientIp, 5, 15 * 60 * 1000);
+        recordFailedAttempt(`user:${identityKey}`, 5, 15 * 60 * 1000);
         return NextResponse.json(
-          { success: false, requireTotp: true, message: "❌ Invalid 6-digit TOTP Authenticator code." },
+          { 
+            success: false, 
+            requireTotp: true, 
+            message: !isValidTotp
+              ? `❌ Invalid 6-digit TOTP Authenticator code. (${failResult.remaining} attempt(s) remaining before lockout).`
+              : `❌ Security Alert: TOTP code was already consumed. Wait for the next 30-second token in your app.`,
+            remainingAttempts: failResult.remaining
+          },
           { status: 401 }
         );
       }
     }
+
+    // Success: Clear failed attempts
+    resetRateLimit(clientIp);
+    resetRateLimit(`user:${identityKey}`);
 
     // 5. Build Session Payload & Generate Signed JWT
     const sessionData = {
