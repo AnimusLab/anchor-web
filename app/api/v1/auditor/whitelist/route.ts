@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendCredentialWelcomeEmail } from "@/lib/email";
+import { authenticator } from "otplib";
 
 export async function GET() {
   try {
@@ -135,7 +136,8 @@ export async function POST(req: NextRequest) {
       ? `AUD-CH-L4-${Math.floor(100 + Math.random() * 900)}`
       : `AUD-${jurisdiction ? jurisdiction.toUpperCase() : "REG"}-${Math.floor(100 + Math.random() * 900)}`;
 
-    // 4. Create Statutory Auditor User
+    // 4. Create Statutory Auditor User with unique cryptographically random Base32 TOTP secret
+    const uniqueTotpSecret = authenticator.generateSecret();
     const newUser = await prisma.user.create({
       data: {
         id: clearanceId,
@@ -145,7 +147,7 @@ export async function POST(req: NextRequest) {
         orgId: regOrg.id,
         jurisdiction: jurisdiction || "GL",
         status: "APPROVED",
-        totpSecret: "JBSWY3DPEHPK3PXP", // Default TOTP seed
+        totpSecret: uniqueTotpSecret,
       },
       include: { organization: true },
     });
@@ -167,23 +169,30 @@ export async function POST(req: NextRequest) {
     // 6. Also add to Whitelist as approved
     await prisma.whitelist.upsert({
       where: { email: cleanEmail },
-      update: { status: "APPROVED", role: targetRole as any, orgId: regOrg.id },
+      update: {
+        status: "APPROVED",
+        role: targetRole as any,
+        orgId: regOrg.id,
+        previewClearanceId: newUser.id,
+      },
       create: {
         email: cleanEmail,
+        displayName: displayName.trim(),
         orgId: regOrg.id,
         role: targetRole as any,
         status: "APPROVED",
+        previewClearanceId: newUser.id,
       },
     });
 
-    // 7. Send Welcome Email via Resend
+    // 7. Send Welcome Email via Resend with unique TOTP secret
     sendCredentialWelcomeEmail({
       to: cleanEmail,
       name: displayName.trim(),
       clearanceId: newUser.id,
       hubId: targetHubId || regOrg.id,
       role: targetRole,
-      totpSecret: newUser.totpSecret || "JBSWY3DPEHPK3PXP",
+      totpSecret: uniqueTotpSecret,
     }).catch((err) => console.error("Auditor welcome email dispatch error:", err));
 
     return NextResponse.json({

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendCredentialWelcomeEmail } from "@/lib/email";
 import { generateClearanceId } from "@/lib/auth/clearanceId";
+import { authenticator } from "otplib";
 
 export async function POST(req: NextRequest) {
   try {
@@ -106,7 +107,8 @@ export async function POST(req: NextRequest) {
       clearanceId = generateClearanceId(cleanName, targetRole, seq);
     }
 
-    // 4. Create new User row
+    // 4. Create new User row with unique cryptographically random Base32 TOTP secret
+    const uniqueTotpSecret = authenticator.generateSecret();
     const user = await prisma.user.create({
       data: {
         id: clearanceId,
@@ -116,7 +118,7 @@ export async function POST(req: NextRequest) {
         orgId: hub.orgId,
         hubId: hub.id,
         status: "APPROVED",
-        totpSecret: "JBSWY3DPEHPK3PXP", // Standard default TOTP seed
+        totpSecret: uniqueTotpSecret,
       },
       include: { organization: true, hub: true },
     });
@@ -138,24 +140,27 @@ export async function POST(req: NextRequest) {
         role: targetRole as any,
         orgId: hub.orgId,
         hubId: hub.id,
+        previewClearanceId: user.id,
       },
       create: {
         email: cleanEmail,
+        displayName: cleanName,
         orgId: hub.orgId,
         hubId: hub.id,
         role: targetRole as any,
         status: "APPROVED",
+        previewClearanceId: user.id,
       },
     });
 
-    // 7. Send Welcome Email via Resend
+    // 7. Send Welcome Email via Resend with unique TOTP secret
     sendCredentialWelcomeEmail({
       to: cleanEmail,
       name: cleanName,
       clearanceId: user.id,
       hubId: hub.id,
       role: targetRole,
-      totpSecret: user.totpSecret || "JBSWY3DPEHPK3PXP",
+      totpSecret: uniqueTotpSecret,
     }).catch((err) => console.error("Welcome email dispatch error:", err));
 
     return NextResponse.json({

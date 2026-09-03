@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendCredentialWelcomeEmail } from "@/lib/email";
 import { generateClearanceId } from "@/lib/auth/clearanceId";
+import { authenticator } from "otplib";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,6 +31,9 @@ export async function POST(req: NextRequest) {
     const cleanName = whitelist.displayName || cleanEmail.split("@")[0];
     const targetRole = whitelist.role;
     const isAuditorRole = ["REGULATORY_AUDITOR", "CROSS_HUB_AUDITOR", "STANDARD_AUDITOR"].includes(targetRole);
+
+    // Generate unique cryptographically secure Base32 TOTP secret
+    const uniqueTotpSecret = authenticator.generateSecret();
 
     // 1. Check if user already exists
     let user = await prisma.user.findUnique({ where: { email: cleanEmail } });
@@ -65,7 +69,7 @@ export async function POST(req: NextRequest) {
         targetHubId = orgHub ? orgHub.id : "animuslab-hq";
       }
 
-      // Create User row
+      // Create User row with unique TOTP secret
       user = await prisma.user.create({
         data: {
           id: finalId,
@@ -76,7 +80,7 @@ export async function POST(req: NextRequest) {
           hubId: targetHubId || null,
           jurisdiction: whitelist.region || "GL",
           status: "APPROVED",
-          totpSecret: "JBSWY3DPEHPK3PXP",
+          totpSecret: uniqueTotpSecret,
         },
       });
 
@@ -91,10 +95,14 @@ export async function POST(req: NextRequest) {
         });
       }
     } else {
-      // Activate existing user status
+      // Activate existing user status and refresh totpSecret if it was legacy/default
+      const newSecret = (!user.totpSecret || user.totpSecret === "JBSWY3DPEHPK3PXP") ? uniqueTotpSecret : user.totpSecret;
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { status: "APPROVED" },
+        data: { 
+          status: "APPROVED",
+          totpSecret: newSecret,
+        },
       });
     }
 
@@ -107,14 +115,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 3. Dispatch Welcome Credential Email
+    // 3. Dispatch Welcome Credential Email with unique TOTP secret
     sendCredentialWelcomeEmail({
       to: cleanEmail,
       name: cleanName,
       clearanceId: user.id,
       hubId: user.hubId || whitelist.orgId,
       role: user.role,
-      totpSecret: user.totpSecret || "JBSWY3DPEHPK3PXP",
+      totpSecret: user.totpSecret || uniqueTotpSecret,
     }).catch((err) => console.error("Welcome email dispatch error:", err));
 
     return NextResponse.json({
