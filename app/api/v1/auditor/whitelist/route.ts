@@ -4,15 +4,35 @@ import { sendCredentialWelcomeEmail } from "@/lib/email";
 
 export async function GET() {
   try {
-    const auditors = await prisma.user.findMany({
-      where: {
-        role: { in: ["REGULATORY_AUDITOR", "STANDARD_AUDITOR", "CROSS_HUB_AUDITOR"] },
-      },
-      include: { organization: true, hub: true },
-      orderBy: { createdAt: "desc" },
-    });
+    const [auditorUsers, pendingWhitelists] = await Promise.all([
+      prisma.user.findMany({
+        where: {
+          role: { in: ["REGULATORY_AUDITOR", "STANDARD_AUDITOR", "CROSS_HUB_AUDITOR"] },
+        },
+        include: { organization: true, hub: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.whitelist.findMany({
+        where: {
+          role: { in: ["REGULATORY_AUDITOR", "STANDARD_AUDITOR", "CROSS_HUB_AUDITOR"] },
+          status: "PENDING",
+        },
+        include: { organization: true, hub: true },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
-    return NextResponse.json({ auditors }, { status: 200 });
+    const formattedPending = pendingWhitelists.map((w) => ({
+      id: w.previewClearanceId || w.id,
+      email: w.email,
+      displayName: w.displayName || w.email.split("@")[0],
+      role: w.role,
+      status: w.status,
+      organization: w.organization || { displayName: w.orgName || "Regulatory Agency" },
+      jurisdiction: w.region || "GL",
+    }));
+
+    return NextResponse.json({ auditors: [...auditorUsers, ...formattedPending] }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
       { error: "Failed to fetch statutory auditors", details: error.message },

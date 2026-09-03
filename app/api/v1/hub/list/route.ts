@@ -12,6 +12,9 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
       }),
       prisma.user.findMany({
+        where: {
+          role: { in: ["HUB_MANAGER", "PROJECT_LEAD", "DEVELOPER"] },
+        },
         select: {
           id: true,
           email: true,
@@ -23,9 +26,14 @@ export async function GET() {
         },
       }),
       prisma.whitelist.findMany({
+        where: {
+          role: { in: ["HUB_MANAGER", "PROJECT_LEAD", "DEVELOPER"] },
+        },
         select: {
           id: true,
           email: true,
+          displayName: true,
+          previewClearanceId: true,
           role: true,
           status: true,
           hubId: true,
@@ -39,7 +47,7 @@ export async function GET() {
 
       // 1. Add explicitly assigned User table matches
       for (const u of allUsers) {
-        if (u.hubId === hub.id || u.orgId === hub.orgId) {
+        if (u.hubId === hub.id || (!u.hubId && u.orgId === hub.orgId)) {
           userMap.set(u.email.toLowerCase(), {
             id: u.id,
             email: u.email,
@@ -53,11 +61,11 @@ export async function GET() {
       // 2. Add explicitly assigned Whitelist table matches
       for (const w of allWhitelists) {
         const cleanEmail = w.email.toLowerCase();
-        if ((w.hubId === hub.id || w.orgId === hub.orgId) && !userMap.has(cleanEmail)) {
+        if ((w.hubId === hub.id || (!w.hubId && w.orgId === hub.orgId)) && !userMap.has(cleanEmail)) {
           userMap.set(cleanEmail, {
-            id: w.id || `W-CLR-${Math.floor(1000 + Math.random() * 9000)}`,
+            id: w.previewClearanceId || w.id,
             email: w.email,
-            displayName: w.email.split("@")[0].toUpperCase(),
+            displayName: w.displayName || w.email.split("@")[0].toUpperCase(),
             role: w.role,
             status: w.status,
           });

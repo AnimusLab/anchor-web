@@ -11,6 +11,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
+import WhitelistProvisioningQueue from "./components/WhitelistProvisioningQueue";
+
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
@@ -33,7 +35,7 @@ export default async function AdminPage() {
       prisma.whitelist.findMany({
         where: { status: "PENDING" },
         include: { organization: true },
-        take: 5,
+        take: 10,
         orderBy: { createdAt: "desc" },
       }),
     ]);
@@ -123,34 +125,7 @@ export default async function AdminPage() {
             </h2>
           </div>
 
-          <div className="space-y-3.5 font-mono text-xs">
-            {pendingWhitelists.length === 0 ? (
-              <div className="text-center py-10 text-slate-500 border border-dashed border-white/10 rounded-2xl">
-                No pending whitelist requests awaiting approval.
-              </div>
-            ) : (
-              pendingWhitelists.map((item) => (
-                <div key={item.id} className="bg-black/40 p-4 rounded-2xl border border-white/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-rose-300 font-bold text-sm">{item.email}</span>
-                      <span className="bg-rose-500/20 text-rose-200 border border-rose-400/40 px-2.5 py-0.5 rounded-md text-[10px]">
-                        {item.role}
-                      </span>
-                    </div>
-                    <div className="text-slate-400 text-xs">Org: {item.organization?.displayName || "Enterprise"}</div>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <button className="bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1 transition text-[11px]">
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      <span>Approve</span>
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          <WhitelistProvisioningQueue initialItems={pendingWhitelists} />
         </div>
 
         <div className="lg:col-span-5 pure-glass-card p-6 rounded-3xl space-y-5 border border-white/20">

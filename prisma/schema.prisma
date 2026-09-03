@@ -210,17 +210,24 @@ model AuditorTrail {
 }
 
 model Whitelist {
-  id         String       @id @default(cuid())
-  email      String       @unique
-  orgId      String
-  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  hubId      String?
-  hub        Hub?         @relation(fields: [hubId], references: [id], onDelete: SetNull)
-  role       Role
-  invitedBy  String?
-  admin      AdminUser?   @relation(fields: [invitedBy], references: [id], onDelete: SetNull)
-  status     UserStatus   @default(APPROVED)
-  createdAt  DateTime     @default(now())
+  id                 String       @id @default(cuid())
+  email              String       @unique
+  displayName        String?
+  orgName            String?
+  orgDomain          String?
+  department         String?
+  region             String?
+  previewClearanceId String?
+  source             String?      @default("SELF_REGISTERED_GATEWAY")
+  orgId              String
+  organization       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  hubId              String?
+  hub                Hub?         @relation(fields: [hubId], references: [id], onDelete: SetNull)
+  role               Role
+  invitedBy          String?
+  admin              AdminUser?   @relation(fields: [invitedBy], references: [id], onDelete: SetNull)
+  status             UserStatus   @default(APPROVED)
+  createdAt          DateTime     @default(now())
 }
 
 model OrgInvite {
