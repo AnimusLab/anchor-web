@@ -24,8 +24,8 @@ export const CLEARANCE_MATRIX = {
   // Routes accessible by Role
   routes: {
     ANIMUS_ADMIN: ["/admin", "/admin/*"],
-    HUB_MANAGER: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay", "/hub/projects", "/hub/keys", "/hub/reports", "/hub/verifier", "/hub/team", "/hub/requests", "/hub/settings", "/hub/profile"],
-    PROJECT_LEAD: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay", "/hub/projects", "/hub/keys", "/hub/reports", "/hub/verifier", "/hub/profile"],
+    HUB_MANAGER: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay", "/hub/projects", "/hub/keys", "/hub/reports", "/hub/verifier", "/hub/team", "/hub/team/activity", "/hub/requests", "/hub/settings", "/hub/profile"],
+    PROJECT_LEAD: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay", "/hub/projects", "/hub/keys", "/hub/reports", "/hub/verifier", "/hub/team/activity", "/hub/profile"],
     DEVELOPER: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay", "/hub/profile"],
     STANDARD_AUDITOR: ["/hub", "/hub/telemetry", "/hub/violations", "/hub/replay", "/hub/reports", "/hub/verifier", "/hub/profile"],
     CROSS_HUB_AUDITOR: ["/oversight", "/oversight/dac", "/oversight/heatmap", "/oversight/requests", "/oversight/replay", "/oversight/dialects", "/oversight/verify", "/oversight/profile"],
