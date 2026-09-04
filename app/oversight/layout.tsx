@@ -1,8 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SolarSystemBackground from "@/components/SolarSystemBackground";
+import OversightLoading from "./loading";
 import { 
   LayoutDashboard, 
   Layers, 
@@ -111,9 +113,11 @@ export default function OversightLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content Area with Suspense Streaming */}
       <main className="flex-1 overflow-y-auto p-8 relative z-10">
-        {children}
+        <Suspense fallback={<OversightLoading />}>
+          {children}
+        </Suspense>
       </main>
     </div>
   );

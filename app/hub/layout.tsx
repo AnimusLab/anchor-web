@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import DynamicSidebar from "@/components/DynamicSidebar";
 import SolarSystemBackground from "@/components/SolarSystemBackground";
 import { getSession } from "@/lib/auth/session";
 import { generateClearanceId } from "@/lib/auth/clearanceId";
+import HubLoading from "./loading";
 
 export default async function HubLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -27,9 +29,11 @@ export default async function HubLayout({ children }: { children: React.ReactNod
         hubId={hubId}
       />
 
-      {/* Main Content Area */}
+      {/* Main Content Area with Suspense Streaming */}
       <main className="flex-1 overflow-y-auto p-8 relative z-10">
-        {children}
+        <Suspense fallback={<HubLoading />}>
+          {children}
+        </Suspense>
       </main>
     </div>
   );

@@ -1,8 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SolarSystemBackground from "@/components/SolarSystemBackground";
+import AdminLoading from "./loading";
 import { 
   LayoutDashboard, 
   Globe, 
@@ -145,9 +147,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* Main Area */}
+      {/* Main Area with Suspense Streaming */}
       <main className="flex-1 overflow-y-auto p-8 relative z-10">
-        {children}
+        <Suspense fallback={<AdminLoading />}>
+          {children}
+        </Suspense>
       </main>
     </div>
   );

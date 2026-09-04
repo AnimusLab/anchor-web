@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
+import TopNavigationProgress from "@/components/ui/TopNavigationProgress";
 
 export const metadata: Metadata = {
   title: "Anchor Governance Hub — Deterministic AI Governance",
@@ -39,6 +41,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen font-sans antialiased bg-[#F8F9FA] dark:bg-[#09090C] text-black dark:text-white">
+        <Suspense fallback={null}>
+          <TopNavigationProgress />
+        </Suspense>
         {children}
       </body>
     </html>
