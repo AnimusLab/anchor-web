@@ -10,7 +10,11 @@ export async function GET() {
         where: {
           role: { in: ["REGULATORY_AUDITOR", "STANDARD_AUDITOR", "CROSS_HUB_AUDITOR"] },
         },
-        include: { organization: true, hub: true },
+        include: {
+          organization: true,
+          hub: true,
+          hubAssignments: { include: { hub: true } },
+        },
         orderBy: { createdAt: "desc" },
       }),
       prisma.whitelist.findMany({
@@ -23,20 +27,50 @@ export async function GET() {
       }),
     ]);
 
+    const formattedApproved = auditorUsers.map((u) => ({
+      id: u.id,
+      clearanceId: u.id,
+      email: u.email,
+      displayName: u.displayName,
+      role: u.role,
+      status: u.status,
+      organization: u.organization?.displayName || "Statutory Agency",
+      orgDomain: u.organization?.domain || u.email.split("@")[1],
+      jurisdiction: u.jurisdiction || "GLOBAL",
+      hubName: u.hub?.displayName || "Multi-Hub Mesh",
+      assignedHubsCount: u.hubAssignments?.length || (u.hubId ? 1 : 0),
+      createdAt: u.createdAt,
+      source: "STATUTORY_AUTHORITY",
+    }));
+
     const formattedPending = pendingWhitelists.map((w) => ({
       id: w.previewClearanceId || w.id,
+      whitelistId: w.id,
+      clearanceId: w.previewClearanceId || "ID_PENDING",
       email: w.email,
       displayName: w.displayName || w.email.split("@")[0],
       role: w.role,
-      status: w.status,
-      organization: w.organization || { displayName: w.orgName || "Regulatory Agency" },
+      status: "PENDING",
+      organization: w.organization?.displayName || w.orgName || "Statutory Agency",
+      orgDomain: w.orgDomain || w.email.split("@")[1],
+      department: w.department || "Regulatory Compliance",
       jurisdiction: w.region || "GL",
+      hubName: w.hub?.displayName || "Cross-Hub Multi-Tenant",
+      assignedHubsCount: 0,
+      createdAt: w.createdAt,
+      source: w.source || "SELF_REGISTERED_GATEWAY",
     }));
 
-    return NextResponse.json({ auditors: [...auditorUsers, ...formattedPending] }, { status: 200 });
+    return NextResponse.json({
+      success: true,
+      auditors: formattedApproved,
+      pending: formattedPending,
+      all: [...formattedPending, ...formattedApproved],
+    }, { status: 200 });
   } catch (error: any) {
+    console.error("Auditor registry fetch error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch statutory auditors", details: error.message },
+      { error: "Failed to fetch statutory auditors: " + (error.message || "") },
       { status: 500 }
     );
   }
@@ -45,7 +79,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, displayName, role, jurisdiction } = body;
+    const { email, displayName, role, jurisdiction, orgName } = body;
 
     if (!email || !displayName) {
       return NextResponse.json(
@@ -68,7 +102,6 @@ export async function POST(req: NextRequest) {
       const isAuditorRole = ["REGULATORY_AUDITOR", "CROSS_HUB_AUDITOR", "STANDARD_AUDITOR"].includes(existing.role);
 
       if (isAuditorRole) {
-        // If a specific hubId is provided, link it
         if (targetHubId) {
           const targetHub = await prisma.hub.findUnique({ where: { id: targetHubId } });
           if (targetHub) {
@@ -104,26 +137,31 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Existing user is an operational developer/manager
       return NextResponse.json(
         {
-          error: `Cannot register '${cleanEmail}' as an Auditor: this email is already registered as internal personnel (${existing.role}, Clearance ID: ${existing.id}). Under regulatory compliance rules, auditor identities must be independent from operational personnel.`,
+          error: `Cannot register '${cleanEmail}' as an Auditor: this email is already registered as internal operational personnel (${existing.role}, Clearance ID: ${existing.id}). Under regulatory compliance rules, auditor identities must be independent from operational personnel.`,
         },
         { status: 409 }
       );
     }
 
     // 2. Find or create Regulatory Organization
+    const resolvedOrgName = orgName || (jurisdiction === "RBI-IN" ? "Reserve Bank of India" : jurisdiction === "SEC-US" ? "Securities and Exchange Commission" : "Statutory Regulatory Oversight Authority");
     let regOrg = await prisma.organization.findFirst({
-      where: { orgType: "REGULATORY_BODY" },
+      where: { 
+        OR: [
+          { displayName: resolvedOrgName },
+          { orgType: "REGULATORY_BODY" },
+        ]
+      },
     });
 
     if (!regOrg) {
-      const domain = `reg-${Date.now()}.animuslab.dev`;
+      const domain = `${cleanEmail.split("@")[1] || `reg-${Date.now()}.animuslab.dev`}`;
       regOrg = await prisma.organization.create({
         data: {
-          id: `org-regulatory-${Date.now()}`,
-          displayName: displayName.trim(),
+          id: `org-reg-${Date.now()}`,
+          displayName: resolvedOrgName,
           domain: domain,
           orgType: "REGULATORY_BODY",
           contractTier: "SOVEREIGN",
@@ -131,12 +169,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 3. Generate Clearance ID (e.g. AUD-CH-L4 or AUD-REG-892)
+    // 3. Generate Clearance ID
     const clearanceId = targetRole === "CROSS_HUB_AUDITOR"
-      ? `AUD-CH-L4-${Math.floor(100 + Math.random() * 900)}`
-      : `AUD-${jurisdiction ? jurisdiction.toUpperCase() : "REG"}-${Math.floor(100 + Math.random() * 900)}`;
+      ? `AUD-CH-L2-${Math.floor(100 + Math.random() * 900)}`
+      : targetRole === "STANDARD_AUDITOR"
+      ? `AUD-SA-L1-${Math.floor(100 + Math.random() * 900)}`
+      : `AUD-${jurisdiction ? jurisdiction.replace(/-/g, "").slice(0, 4).toUpperCase() : "REG"}-L4-${Math.floor(100 + Math.random() * 900)}`;
 
-    // 4. Create Statutory Auditor User with unique cryptographically random Base32 TOTP secret
+    // 4. Create Statutory Auditor User with unique Base32 TOTP secret
     const uniqueTotpSecret = authenticator.generateSecret();
     const newUser = await prisma.user.create({
       data: {
@@ -199,12 +239,12 @@ export async function POST(req: NextRequest) {
       success: true,
       auditor: newUser,
       clearanceId: newUser.id,
-      message: `Statutory Auditor '${newUser.displayName}' whitelisted. Clearance ID: ${newUser.id}`,
+      message: `Statutory Auditor '${displayName}' whitelisted with Clearance ID: ${newUser.id}. Credentials email dispatched.`,
     });
   } catch (error: any) {
-    console.error("Auditor whitelist error:", error);
+    console.error("Auditor Whitelist error:", error);
     return NextResponse.json(
-      { error: "Failed to whitelist auditor. " + (error.message || "") },
+      { error: "Failed to whitelist auditor: " + (error.message || "") },
       { status: 500 }
     );
   }
