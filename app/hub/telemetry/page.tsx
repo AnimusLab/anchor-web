@@ -1,11 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
 import { Search, RefreshCw, Eye, CheckCircle2, AlertTriangle, Clock } from "lucide-react";
 import { Terminal } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-
-const prisma = new PrismaClient();
 
 const VERDICT_COLOUR: Record<string, string> = {
   COMPLIANT: "text-emerald-400",

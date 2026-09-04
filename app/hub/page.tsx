@@ -1,5 +1,5 @@
 import { getSession } from "@/lib/auth/session";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import {
   ShieldCheck,
   Layers,
@@ -22,8 +22,6 @@ import {
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
-
-const prisma = new PrismaClient();
 
 export default async function HubOverviewPage() {
   const session = await getSession();

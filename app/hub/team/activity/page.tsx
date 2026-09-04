@@ -1,11 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
 import { Users, GitCommit, Shield } from "lucide-react";
 import { CLEARANCE_MATRIX } from "@/lib/auth/clearance";
 
 export const dynamic = "force-dynamic";
-
-const prisma = new PrismaClient();
 
 const ROLE_COLOUR: Record<string, string> = {
   HUB_MANAGER: "text-emerald-400",

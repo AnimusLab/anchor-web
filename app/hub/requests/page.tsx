@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
 import { UserCheck, CheckCircle2, XCircle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-
-const prisma = new PrismaClient();
 
 const STATUS_COLOUR: Record<string, string> = {
   PENDING: "text-amber-400",

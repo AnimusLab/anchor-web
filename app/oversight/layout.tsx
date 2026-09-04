@@ -54,15 +54,15 @@ export default function OversightLayout({ children }: { children: React.ReactNod
           <div className="p-4 space-y-2">
             <div className="animus-label text-[9px]">STATUTORY OVERSIGHT</div>
             <nav className="space-y-1">
-              <Link href="/oversight" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/oversight" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
                 <span>Overview</span>
               </Link>
-              <Link href="/oversight/dac" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/dac' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/oversight/dac" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/dac' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Layers className="w-3.5 h-3.5 text-sky-400" />
                 <span>Decision Audit Chain</span>
               </Link>
-              <Link href="/oversight/heatmap" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/heatmap' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/oversight/heatmap" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/heatmap' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Building2 className="w-3.5 h-3.5 text-rose-400" />
                 <span>Violation Heatmap</span>
               </Link>
@@ -73,11 +73,11 @@ export default function OversightLayout({ children }: { children: React.ReactNod
           <div className="p-4 pt-0 space-y-2">
             <div className="animus-label text-[9px]">FORENSIC INSPECTION</div>
             <nav className="space-y-1">
-              <Link href="/oversight/requests" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/requests' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/oversight/requests" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/requests' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Send className="w-3.5 h-3.5 text-sky-400" />
                 <span>P2P Pull Requests</span>
               </Link>
-              <Link href="/oversight/replay" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/replay' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/oversight/replay" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/replay' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <PlaySquare className="w-3.5 h-3.5 text-purple-400" />
                 <span>Gated Mission Replay</span>
               </Link>
@@ -88,15 +88,15 @@ export default function OversightLayout({ children }: { children: React.ReactNod
           <div className="p-4 pt-0 space-y-2">
             <div className="animus-label text-[9px]">VERIFICATION & FILINGS</div>
             <nav className="space-y-1">
-              <Link href="/oversight/dialects" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/dialects' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/oversight/dialects" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/dialects' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <FileCheck className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Dialect Generator</span>
               </Link>
-              <Link href="/oversight/verify" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/verify' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/oversight/verify" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/verify' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Search className="w-3.5 h-3.5 text-amber-400" />
                 <span>Chain Verifier</span>
               </Link>
-              <Link href="/oversight/profile" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/profile' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/oversight/profile" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/oversight/profile' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <User className="w-3.5 h-3.5 text-emerald-400" />
                 <span>My Profile</span>
               </Link>

@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
 import { Layers, Plus, Cpu, Key } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-
-const prisma = new PrismaClient();
 
 export default async function ProjectInventoryPage() {
   const session = await getSession();

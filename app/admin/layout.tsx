@@ -58,15 +58,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-4 space-y-2">
             <div className="animus-label text-[9px]">OVERSIGHT & ANALYTICS</div>
             <nav className="space-y-1">
-              <Link href="/admin" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/admin" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <LayoutDashboard className="w-3.5 h-3.5 text-sky-400" />
                 <span>Overview</span>
               </Link>
-              <Link href="/admin/telemetry" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/telemetry' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/admin/telemetry" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/telemetry' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Globe className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Global Telemetry</span>
               </Link>
-              <Link href="/admin/fleet" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/fleet' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/admin/fleet" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/fleet' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Server className="w-3.5 h-3.5 text-sky-400" />
                 <span>Fleet Inspection</span>
               </Link>
@@ -77,11 +77,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-4 pt-0 space-y-2">
             <div className="animus-label text-[9px]">ACCESS & AUDIT CONTROL</div>
             <nav className="space-y-1">
-              <Link href="/admin/pending" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/pending' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/admin/pending" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/pending' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <UserCheck className="w-3.5 h-3.5 text-amber-400" />
                 <span>Pending Approvals</span>
               </Link>
-              <Link href="/admin/audit-trail" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/audit-trail' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/admin/audit-trail" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/audit-trail' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <FileSpreadsheet className="w-3.5 h-3.5 text-rose-400" />
                 <span>Anti-Collusion Audit Trail</span>
               </Link>
@@ -92,15 +92,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-4 pt-0 space-y-2">
             <div className="animus-label text-[9px]">SAAS CONTROL PLANE</div>
             <nav className="space-y-1">
-              <Link href="/admin/nodes" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/nodes' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/admin/nodes" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/nodes' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Building2 className="w-3.5 h-3.5" />
                 <span>Enterprise Nodes</span>
               </Link>
-              <Link href="/admin/auditors" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/auditors' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/admin/auditors" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/auditors' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
                 <span>Regulatory Officials</span>
               </Link>
-              <Link href="/admin/billing" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/billing' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/admin/billing" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/billing' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <CreditCard className="w-3.5 h-3.5" />
                 <span>Billing & Subscriptions</span>
               </Link>
@@ -111,15 +111,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-4 pt-0 space-y-2">
             <div className="animus-label text-[9px]">CRYPTOGRAPHIC ENGINE</div>
             <nav className="space-y-1">
-              <Link href="/admin/resolution" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/resolution' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/admin/resolution" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/resolution' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Key className="w-3.5 h-3.5" />
                 <span>Identity Resolution</span>
               </Link>
-              <Link href="/admin/recovery" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/recovery' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/admin/recovery" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/recovery' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Identity Recovery</span>
               </Link>
-              <Link href="/admin/overrides" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/overrides' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/admin/overrides" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/overrides' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Sliders className="w-3.5 h-3.5 text-rose-400" />
                 <span>Network Overrides</span>
               </Link>
@@ -130,7 +130,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-4 pt-0 space-y-2">
             <div className="animus-label text-[9px]">LIVE OPERATIONS</div>
             <nav className="space-y-1">
-              <Link href="/admin/noc" className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/noc' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
+              <Link href="/admin/noc" prefetch={true} className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${pathname === '/admin/noc' ? 'glass-nav-active' : 'text-slate-300 hover:text-white'}`}>
                 <Activity className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Live NOC</span>
               </Link>
