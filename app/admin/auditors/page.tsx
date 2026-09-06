@@ -402,7 +402,7 @@ export default function RegulatoryOfficialsPage() {
             {/* Field Matrix */}
             <div className="grid grid-cols-2 gap-3 text-xs font-mono">
               <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Clearance Token</span>
+                <span className="text-[10px] text-slate-400 uppercase block font-bold">Anchor Credential Token</span>
                 <span className="text-amber-300 font-bold break-all">{selectedAuditor.clearanceId}</span>
               </div>
 

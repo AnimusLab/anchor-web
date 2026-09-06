@@ -98,7 +98,7 @@ export default function HubSettingsClient({ initialSettings }: HubSettingsProps)
           <span>Dual-Plane Sovereign Architecture</span>
         </div>
         <p className="text-slate-300 leading-relaxed text-[11px]">
-          Anchor operates on a strict zero-knowledge segregation model: <strong>all unredacted decision reports, proprietary AST source code scans, and customer PII remain 100% on-premise within your private server</strong>. The external P2P mesh relay only transmits 32-byte cryptographic SHA-256 Merkle root proofs to statutory oversight bodies.
+          Anchor operates on a strict zero-knowledge segregation model: <strong>all unredacted decision reports, proprietary AST source code scans, and customer PII remain 100% on-premise within your private server</strong>. The external P2P mesh relay only transmits 32-byte cryptographic SHA-256 chain hashes to statutory oversight bodies.
         </p>
       </div>
 
@@ -179,7 +179,7 @@ export default function HubSettingsClient({ initialSettings }: HubSettingsProps)
               />
             </div>
             <p className="text-[11px] text-slate-400 font-sans">
-              Workstations and agent SDKs stream raw decisions to this on-premise endpoint. This server computes the cryptographic Merkle root hash before submitting proofs to the P2P wire.
+              Workstations and agent SDKs stream raw decisions to this on-premise endpoint. This server computes the cryptographic SHA-256 chain hash before submitting proofs to the P2P wire.
             </p>
           </div>
         </div>
@@ -200,7 +200,7 @@ export default function HubSettingsClient({ initialSettings }: HubSettingsProps)
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="text-slate-300 font-bold font-mono">P2P RELAY ENDPOINT URL</label>
-                <span className="text-slate-400 text-[10px]">Encrypted pipe for SHA-256 Merkle proofs &amp; audit notifications</span>
+                <span className="text-slate-400 text-[10px]">Encrypted pipe for SHA-256 chain proofs &amp; audit notifications</span>
               </div>
               <input
                 type="text"

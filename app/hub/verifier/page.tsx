@@ -11,7 +11,7 @@ export default function AuditChainVerifierPage() {
     project: string;
     timestamp: string;
     blockNumber: number;
-    merkleRoot: string;
+    chainHash: string;
   }>(null);
 
   const handleVerify = (e: React.FormEvent) => {
@@ -26,7 +26,7 @@ export default function AuditChainVerifierPage() {
         project: "payments-service",
         timestamp: "2026-08-04 12:45:12 UTC",
         blockNumber: 1482910,
-        merkleRoot: "0x3f11a88b901ff2a00188c991a02b"
+        chainHash: "0x3f11a88b901ff2a00188c991a02b"
       });
     } else {
       setResult({
@@ -35,7 +35,7 @@ export default function AuditChainVerifierPage() {
         project: "N/A",
         timestamp: "N/A",
         blockNumber: 0,
-        merkleRoot: "N/A"
+        chainHash: "N/A"
       });
     }
   };
@@ -56,7 +56,7 @@ export default function AuditChainVerifierPage() {
         <form onSubmit={handleVerify} className="space-y-4 font-mono text-xs">
           <div>
             <label className="text-slate-300 block mb-2 font-sans text-sm font-semibold">
-              ENTER DECISION CHAIN HASH OR MERKLE PROOF
+              ENTER DECISION CHAIN HASH (SHA-256)
             </label>
             <div className="flex gap-3">
               <input
