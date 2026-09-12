@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/auth/session';
 
 export async function GET() {
   try {
+    const session = await getSession();
+    if (!session || (session.role !== "ANIMUS_ADMIN" && session.role !== "HUB_MANAGER")) {
+      return NextResponse.json(
+        { error: "Access Denied: Administrator or Hub Manager clearance required." },
+        { status: 403 }
+      );
+    }
     const pendingNodes = await prisma.governanceIdentity.findMany({
       where: { status: "PENDING_WHITELIST" },
       orderBy: { registeredAt: 'desc' }

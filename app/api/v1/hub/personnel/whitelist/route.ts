@@ -3,11 +3,27 @@ import { prisma } from "@/lib/prisma";
 import { sendCredentialWelcomeEmail } from "@/lib/email";
 import { generateClearanceId } from "@/lib/auth/clearanceId";
 import { authenticator } from "otplib";
+import { getSession } from "@/lib/auth/session";
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session || !session.role) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { hubId, email, name, role } = body;
+
+    const isGlobalAdmin = session.role === "ANIMUS_ADMIN";
+    const isHubManager = session.role === "HUB_MANAGER" && session.hubId === hubId;
+
+    if (!isGlobalAdmin && !isHubManager) {
+      return NextResponse.json(
+        { error: "Access Denied: Only Hub Managers assigned to this Hub or Global Administrators can whitelist personnel." },
+        { status: 403 }
+      );
+    }
 
     if (!hubId || !email || !name) {
       return NextResponse.json(
@@ -180,9 +196,24 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session || !session.role) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const email = searchParams.get("email");
     const hubId = searchParams.get("hubId");
+
+    const isGlobalAdmin = session.role === "ANIMUS_ADMIN";
+    const isHubManager = session.role === "HUB_MANAGER" && (!hubId || session.hubId === hubId);
+
+    if (!isGlobalAdmin && !isHubManager) {
+      return NextResponse.json(
+        { error: "Access Denied: Only Hub Managers or Global Administrators can revoke whitelist status." },
+        { status: 403 }
+      );
+    }
 
     if (!email) {
       return NextResponse.json(

@@ -26,13 +26,13 @@ export async function createSessionCookie(user: UserSession): Promise<string> {
 }
 
 export async function getSession(): Promise<UserSession | null> {
-  const cookieStore = cookies();
-  const token = cookieStore.get("access_token")?.value || cookieStore.get("session")?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
 
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, JWT_SECRET, { algorithms: ["HS256"] });
     return {
       id: payload.uid as string,
       email: payload.sub as string,
@@ -44,24 +44,6 @@ export async function getSession(): Promise<UserSession | null> {
       jurisdiction: payload.jurisdiction as string | undefined,
     };
   } catch (err) {
-    // If fallback is raw JSON (legacy format)
-    try {
-      const parsed = JSON.parse(token);
-      if (parsed && parsed.email) {
-        return {
-          id: parsed.id || "user_id",
-          email: parsed.email,
-          role: parsed.role as Role,
-          auditorType: parsed.auditorType as AuditorType | undefined,
-          orgId: parsed.orgId as string | undefined,
-          hubId: parsed.hubId as string | undefined,
-          projectId: parsed.projectId as string | undefined,
-          jurisdiction: parsed.jurisdiction as string | undefined,
-        };
-      }
-    } catch (e) {
-      // Ignore
-    }
     return null;
   }
 }

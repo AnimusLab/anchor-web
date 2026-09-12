@@ -19,7 +19,8 @@ import {
   Sparkles,
   Clock,
   Send,
-  UserCheck
+  UserCheck,
+  XCircle
 } from "lucide-react";
 
 interface AuditorRecord {
@@ -59,6 +60,7 @@ export default function RegulatoryOfficialsPage() {
   
   const [submitting, setSubmitting] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [denyingId, setDenyingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -148,6 +150,39 @@ export default function RegulatoryOfficialsPage() {
     }
   };
 
+  const handleDenyPending = async (auditor: AuditorRecord, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!confirm(`Are you sure you want to decline registration for ${auditor.displayName || auditor.email}?`)) return;
+    setDenyingId(auditor.id);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      const res = await fetch("/api/v1/whitelist/deny", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          whitelistId: auditor.whitelistId,
+          email: auditor.email,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to decline auditor registration.");
+
+      setSuccessMsg(`Registration for '${auditor.displayName}' declined.`);
+      if (selectedAuditor?.id === auditor.id) {
+        setSelectedAuditor(null);
+      }
+      loadAuditors();
+      setTimeout(() => setSuccessMsg(""), 4000);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to decline auditor.");
+    } finally {
+      setDenyingId(null);
+    }
+  };
+
   const copyToClipboard = (text: string, id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     navigator.clipboard.writeText(text);
@@ -168,20 +203,20 @@ export default function RegulatoryOfficialsPage() {
       case "REGULATORY_AUDITOR":
         return {
           label: "STATUTORY REGULATORY AUDITOR (L4)",
-          color: "bg-amber-500/20 text-amber-300 border-amber-400/40",
-          icon: <Gavel className="w-3.5 h-3.5 text-amber-400" />,
+          color: "bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-400/40",
+          icon: <Gavel className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />,
         };
       case "CROSS_HUB_AUDITOR":
         return {
           label: "CROSS-HUB GOVERNANCE AUDITOR (L2)",
-          color: "bg-purple-500/20 text-purple-300 border-purple-400/40",
-          icon: <Globe className="w-3.5 h-3.5 text-purple-400" />,
+          color: "bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-400/40",
+          icon: <Globe className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />,
         };
       default:
         return {
           label: "STANDARD HUB AUDITOR (L1)",
-          color: "bg-slate-500/20 text-slate-300 border-slate-400/40",
-          icon: <Shield className="w-3.5 h-3.5 text-slate-400" />,
+          color: "bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-400/40",
+          icon: <Shield className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />,
         };
     }
   };
@@ -189,11 +224,11 @@ export default function RegulatoryOfficialsPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto relative z-10 font-mono text-xs">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/[0.08] pb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 dark:border-white/[0.08] pb-6 gap-4">
         <div>
-          <div className="animus-label mb-1 text-amber-400">REGULATORY CREDENTIALS REGISTRY</div>
-          <h1 className="text-3xl font-bold text-slate-100 tracking-tight font-sans">Regulatory Officials</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <div className="animus-label mb-1 text-amber-600 dark:text-amber-400">REGULATORY CREDENTIALS REGISTRY</div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight font-sans">Regulatory Officials</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Directory of accredited government regulators, standard inspectors, and cross-Hub audit officers.
           </p>
         </div>
@@ -203,35 +238,35 @@ export default function RegulatoryOfficialsPage() {
             setIsWhitelistModalOpen(true);
             setErrorMsg("");
           }}
-          className="glass-badge px-4 py-2.5 text-xs font-bold text-amber-300 hover:bg-amber-500/20 border-amber-400/40 flex items-center space-x-2 transition cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.25)]"
+          className="glass-badge px-4 py-2.5 text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 border-amber-300 dark:border-amber-400/40 flex items-center space-x-2 transition cursor-pointer shadow-sm"
         >
-          <Plus className="w-4 h-4 text-amber-400" />
+          <Plus className="w-4 h-4 text-amber-600 dark:text-amber-400" />
           <span>+ Whitelist Statutory Auditor</span>
         </button>
       </div>
 
       {/* Notifications */}
       {successMsg && (
-        <div className="glass-card p-4 border border-emerald-500/40 text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-400" />
+        <div className="glass-card p-4 border border-emerald-500/40 text-emerald-700 dark:text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
+          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="glass-card p-4 border border-rose-500/40 text-rose-300 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+        <div className="glass-card p-4 border border-rose-500/40 text-rose-700 dark:text-rose-300 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-600 dark:text-rose-400" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Metrics & Filter Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex space-x-2 bg-[#060913]/80 p-1.5 rounded-2xl border border-white/10">
+        <div className="flex space-x-2 bg-slate-200/80 dark:bg-[#060913]/80 p-1.5 rounded-2xl border border-slate-300 dark:border-white/10">
           <button
             onClick={() => setActiveTab("all")}
             className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
-              activeTab === "all" ? "bg-amber-500/20 text-amber-300 border border-amber-400/40" : "text-slate-400 hover:text-white"
+              activeTab === "all" ? "bg-white dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-slate-300 dark:border-amber-400/40 shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white"
             }`}
           >
             All Officials ({auditors.length + pendingAuditors.length})
@@ -239,7 +274,7 @@ export default function RegulatoryOfficialsPage() {
           <button
             onClick={() => setActiveTab("approved")}
             className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
-              activeTab === "approved" ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40" : "text-slate-400 hover:text-white"
+              activeTab === "approved" ? "bg-white dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-slate-300 dark:border-emerald-400/40 shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white"
             }`}
           >
             Accredited Active ({auditors.length})
@@ -247,7 +282,7 @@ export default function RegulatoryOfficialsPage() {
           <button
             onClick={() => setActiveTab("pending")}
             className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer flex items-center space-x-1.5 ${
-              activeTab === "pending" ? "bg-amber-500/20 text-amber-300 border border-amber-400/40" : "text-slate-400 hover:text-white"
+              activeTab === "pending" ? "bg-white dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-slate-300 dark:border-amber-400/40 shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white"
             }`}
           >
             <span>Pending Review</span>
@@ -259,9 +294,9 @@ export default function RegulatoryOfficialsPage() {
           </button>
         </div>
 
-        <div className="text-[11px] text-slate-400 flex items-center space-x-2">
+        <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center space-x-2">
           <span>Sovereign Oversight Protocol:</span>
-          <span className="glass-badge px-2.5 py-0.5 text-amber-400 font-bold border-amber-400/30">
+          <span className="glass-badge px-2.5 py-0.5 text-amber-700 dark:text-amber-400 font-bold border-amber-300 dark:border-amber-400/30">
             ZERO-KNOWLEDGE AUDIT MESH
           </span>
         </div>
@@ -269,16 +304,16 @@ export default function RegulatoryOfficialsPage() {
 
       {/* Auditor Cards Grid */}
       {loading ? (
-        <div className="pure-glass-card p-16 text-center space-y-3 rounded-3xl border border-white/15">
-          <Gavel className="w-8 h-8 text-amber-400 mx-auto animate-bounce" />
-          <div className="text-amber-300 font-bold text-xs uppercase tracking-widest animate-pulse">
+        <div className="pure-glass-card p-16 text-center space-y-3 rounded-3xl border border-slate-200 dark:border-white/15">
+          <Gavel className="w-8 h-8 text-amber-600 dark:text-amber-400 mx-auto animate-bounce" />
+          <div className="text-amber-700 dark:text-amber-300 font-bold text-xs uppercase tracking-widest animate-pulse">
             LOADING ACCREDITED AUDITOR REGISTRY...
           </div>
         </div>
       ) : displayList.length === 0 ? (
-        <div className="pure-glass-card p-16 text-center space-y-4 rounded-3xl border border-white/10">
-          <ShieldAlert className="w-10 h-10 text-slate-600 mx-auto" />
-          <div className="text-slate-300 font-sans font-semibold text-base">No Regulatory Officials in this View</div>
+        <div className="pure-glass-card p-16 text-center space-y-4 rounded-3xl border border-slate-200 dark:border-white/10">
+          <ShieldAlert className="w-10 h-10 text-slate-400 dark:text-slate-600 mx-auto" />
+          <div className="text-slate-900 dark:text-slate-300 font-sans font-semibold text-base">No Regulatory Officials in this View</div>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
             Click <strong>+ Whitelist Statutory Auditor</strong> above to provision statutory clearance keys for regulatory inspectors.
           </p>
@@ -296,12 +331,12 @@ export default function RegulatoryOfficialsPage() {
               <div
                 key={auditor.id}
                 onClick={() => setSelectedAuditor(auditor)}
-                className={`pure-glass-card p-6 rounded-3xl space-y-4 cursor-pointer transition border hover:scale-[1.01] relative overflow-hidden ${
-                  isPending ? "border-amber-400/40 hover:border-amber-400/80" : "border-white/15 hover:border-amber-400/60"
+                className={`pure-glass-card p-6 rounded-3xl space-y-4 cursor-pointer transition border hover:scale-[1.01] relative overflow-hidden shadow-sm hover:shadow-md ${
+                  isPending ? "border-amber-300 dark:border-amber-400/40 hover:border-amber-400 dark:hover:border-amber-400/80" : "border-slate-200 dark:border-white/15 hover:border-amber-400/60"
                 }`}
               >
                 {/* Top Role & Status Bar */}
-                <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-3">
+                <div className="flex items-center justify-between gap-2 border-b border-slate-200 dark:border-white/10 pb-3">
                   <div className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border ${roleMeta.color}`}>
                     {roleMeta.icon}
                     <span>{roleMeta.label}</span>
@@ -309,7 +344,7 @@ export default function RegulatoryOfficialsPage() {
 
                   <span
                     className={`glass-badge px-2.5 py-0.5 text-[9px] font-mono font-bold ${
-                      isPending ? "text-amber-400 border-amber-400/40 animate-pulse" : "text-emerald-400 border-emerald-400/30"
+                      isPending ? "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-400/40 animate-pulse" : "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300 dark:border-emerald-400/30"
                     }`}
                   >
                     {isPending ? "PENDING REVIEW" : "ACCREDITED"}
@@ -318,29 +353,29 @@ export default function RegulatoryOfficialsPage() {
 
                 {/* Profile Details */}
                 <div className="flex items-start space-x-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-600 flex items-center justify-center font-mono font-bold text-slate-950 text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-600 flex items-center justify-center font-mono font-bold text-white text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] shrink-0">
                     {initials}
                   </div>
                   <div className="space-y-1 min-w-0 flex-1">
-                    <h3 className="text-base font-bold text-white truncate font-sans">{auditor.displayName}</h3>
-                    <p className="text-slate-300 text-xs font-mono truncate">{auditor.email}</p>
-                    <div className="flex items-center space-x-2 text-[11px] text-slate-400 font-mono pt-0.5">
-                      <Building2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white truncate font-sans">{auditor.displayName}</h3>
+                    <p className="text-slate-600 dark:text-slate-300 text-xs font-mono truncate">{auditor.email}</p>
+                    <div className="flex items-center space-x-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono pt-0.5">
+                      <Building2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
                       <span className="truncate">{auditor.organization}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Clearance ID & Jurisdiction Info */}
-                <div className="p-3 bg-black/40 rounded-2xl border border-white/10 flex items-center justify-between gap-2 font-mono text-[11px]">
+                <div className="p-3 bg-slate-100 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 flex items-center justify-between gap-2 font-mono text-[11px]">
                   <div className="space-y-0.5">
-                    <span className="text-slate-400 text-[9px] block uppercase font-bold">Clearance Token</span>
-                    <span className="text-amber-300 font-bold">{auditor.clearanceId}</span>
+                    <span className="text-slate-500 dark:text-slate-400 text-[9px] block uppercase font-bold">Clearance Token</span>
+                    <span className="text-amber-700 dark:text-amber-300 font-bold">{auditor.clearanceId}</span>
                   </div>
 
                   <div className="text-right space-y-0.5">
-                    <span className="text-slate-400 text-[9px] block uppercase font-bold">Jurisdiction</span>
-                    <span className="text-slate-200 font-bold bg-white/10 px-2 py-0.5 rounded text-[10px]">
+                    <span className="text-slate-500 dark:text-slate-400 text-[9px] block uppercase font-bold">Jurisdiction</span>
+                    <span className="text-slate-700 dark:text-slate-200 font-bold bg-slate-200 dark:bg-white/10 px-2 py-0.5 rounded text-[10px]">
                       {auditor.jurisdiction || "GLOBAL"}
                     </span>
                   </div>
@@ -348,27 +383,37 @@ export default function RegulatoryOfficialsPage() {
 
                 {/* Card Action Footer */}
                 <div className="flex items-center justify-between pt-1 text-xs">
-                  <span className="text-[10px] text-slate-400 font-mono">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
                     Accredited: {new Date(auditor.createdAt).toLocaleDateString()}
                   </span>
 
                   <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                     {isPending ? (
-                      <button
-                        onClick={(e) => handleApprovePending(auditor, e)}
-                        disabled={approvingId === auditor.id}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 font-bold text-[11px] flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50"
-                      >
-                        <UserCheck className="w-3.5 h-3.5" />
-                        <span>{approvingId === auditor.id ? "Approving..." : "Approve"}</span>
-                      </button>
+                      <>
+                        <button
+                          onClick={(e) => handleDenyPending(auditor, e)}
+                          disabled={denyingId === auditor.id || approvingId === auditor.id}
+                          className="px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/30 border border-rose-300 dark:border-rose-400/50 text-rose-700 dark:text-rose-300 font-bold text-[11px] flex items-center space-x-1 transition cursor-pointer disabled:opacity-50 shadow-sm"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                          <span>{denyingId === auditor.id ? "Declining..." : "Decline"}</span>
+                        </button>
+                        <button
+                          onClick={(e) => handleApprovePending(auditor, e)}
+                          disabled={approvingId === auditor.id || denyingId === auditor.id}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/30 border border-emerald-300 dark:border-emerald-400/50 text-emerald-700 dark:text-emerald-300 font-bold text-[11px] flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50 shadow-sm"
+                        >
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span>{approvingId === auditor.id ? "Approving..." : "Approve"}</span>
+                        </button>
+                      </>
                     ) : (
                       <button
                         onClick={() => setSelectedAuditor(auditor)}
-                        className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-slate-200 font-bold text-[11px] flex items-center space-x-1 transition cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl bg-slate-200/80 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-200 font-bold text-[11px] flex items-center space-x-1 transition cursor-pointer"
                       >
                         <span>View Dossier</span>
-                        <ExternalLink className="w-3 h-3 text-slate-400" />
+                        <ExternalLink className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                       </button>
                     )}
                   </div>
@@ -381,56 +426,56 @@ export default function RegulatoryOfficialsPage() {
 
       {/* MODAL 1: Auditor Security Dossier Modal */}
       {selectedAuditor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="w-full max-w-lg pure-glass-card p-6 md:p-8 rounded-3xl space-y-6 relative border border-amber-400/50 shadow-2xl font-sans">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 dark:bg-black/85 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="w-full max-w-lg pure-glass-card p-6 md:p-8 rounded-3xl space-y-6 relative border border-amber-300 dark:border-amber-400/50 shadow-2xl font-sans bg-white/95 dark:bg-[#090d1a]/90">
             <button
               onClick={() => setSelectedAuditor(null)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white transition p-1"
+              className="absolute top-5 right-5 text-slate-500 hover:text-black dark:text-slate-400 dark:hover:text-white transition p-1 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div>
-              <div className="inline-flex items-center space-x-2 bg-amber-500/20 border border-amber-300/40 px-3.5 py-1 rounded-full text-xs font-mono text-amber-200 mb-2">
-                <Gavel className="w-3.5 h-3.5 text-amber-300" />
+              <div className="inline-flex items-center space-x-2 bg-amber-50 dark:bg-amber-500/20 border border-amber-200 dark:border-amber-300/40 px-3.5 py-1 rounded-full text-xs font-mono text-amber-700 dark:text-amber-200 mb-2">
+                <Gavel className="w-3.5 h-3.5 text-amber-600 dark:text-amber-300" />
                 <span>STATUTORY AUDITOR SECURITY DOSSIER</span>
               </div>
-              <h2 className="text-2xl font-black text-white uppercase">{selectedAuditor.displayName}</h2>
-              <p className="text-xs text-slate-300 mt-1 font-mono">{selectedAuditor.email}</p>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase">{selectedAuditor.displayName}</h2>
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-mono">{selectedAuditor.email}</p>
             </div>
 
             {/* Field Matrix */}
             <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-              <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Anchor Credential Token</span>
-                <span className="text-amber-300 font-bold break-all">{selectedAuditor.clearanceId}</span>
+              <div className="p-3 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase block font-bold">Anchor Credential Token</span>
+                <span className="text-amber-700 dark:text-amber-300 font-bold break-all">{selectedAuditor.clearanceId}</span>
               </div>
 
-              <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Accreditation Status</span>
-                <span className={`font-bold ${selectedAuditor.status === "APPROVED" ? "text-emerald-400" : "text-amber-400"}`}>
+              <div className="p-3 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase block font-bold">Accreditation Status</span>
+                <span className={`font-bold ${selectedAuditor.status === "APPROVED" ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
                   {selectedAuditor.status}
                 </span>
               </div>
 
-              <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Statutory Agency</span>
-                <span className="text-slate-100 font-bold">{selectedAuditor.organization}</span>
+              <div className="p-3 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase block font-bold">Statutory Agency</span>
+                <span className="text-slate-900 dark:text-slate-100 font-bold">{selectedAuditor.organization}</span>
               </div>
 
-              <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Primary Jurisdiction</span>
-                <span className="text-slate-100 font-bold">{selectedAuditor.jurisdiction || "GLOBAL"}</span>
+              <div className="p-3 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase block font-bold">Primary Jurisdiction</span>
+                <span className="text-slate-900 dark:text-slate-100 font-bold">{selectedAuditor.jurisdiction || "GLOBAL"}</span>
               </div>
 
-              <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Agency Domain</span>
-                <span className="text-slate-300">{selectedAuditor.orgDomain || "N/A"}</span>
+              <div className="p-3 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase block font-bold">Agency Domain</span>
+                <span className="text-slate-700 dark:text-slate-300">{selectedAuditor.orgDomain || "N/A"}</span>
               </div>
 
-              <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Registration Date</span>
-                <span className="text-slate-300">{new Date(selectedAuditor.createdAt).toLocaleString()}</span>
+              <div className="p-3 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase block font-bold">Registration Date</span>
+                <span className="text-slate-700 dark:text-slate-300">{new Date(selectedAuditor.createdAt).toLocaleString()}</span>
               </div>
             </div>
 
@@ -439,20 +484,32 @@ export default function RegulatoryOfficialsPage() {
               <button
                 type="button"
                 onClick={() => setSelectedAuditor(null)}
-                className="w-1/2 bg-white/10 hover:bg-white/20 text-slate-200 py-3 rounded-xl font-bold transition cursor-pointer"
+                className="w-1/4 bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-slate-200 py-3 rounded-xl font-bold transition cursor-pointer border border-slate-300 dark:border-white/10 text-xs"
               >
-                Close Dossier
+                Close
               </button>
 
               {selectedAuditor.status === "PENDING" ? (
-                <button
-                  type="button"
-                  onClick={() => handleApprovePending(selectedAuditor)}
-                  disabled={approvingId === selectedAuditor.id}
-                  className="w-1/2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold uppercase tracking-wider transition shadow-[0_0_20px_rgba(16,185,129,0.3)] cursor-pointer disabled:opacity-50"
-                >
-                  {approvingId === selectedAuditor.id ? "APPROVING..." : "APPROVE AUDITOR →"}
-                </button>
+                <div className="w-3/4 flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => handleDenyPending(selectedAuditor)}
+                    disabled={denyingId === selectedAuditor.id || approvingId === selectedAuditor.id}
+                    className="w-1/2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 border border-rose-300 dark:border-rose-400/50 text-rose-700 dark:text-rose-300 py-3 rounded-xl font-bold uppercase tracking-wider transition shadow-sm cursor-pointer disabled:opacity-50 text-xs flex items-center justify-center space-x-1.5"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    <span>{denyingId === selectedAuditor.id ? "DECLINING..." : "DECLINE"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApprovePending(selectedAuditor)}
+                    disabled={approvingId === selectedAuditor.id || denyingId === selectedAuditor.id}
+                    className="w-1/2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold uppercase tracking-wider transition shadow-[0_0_20px_rgba(16,185,129,0.3)] cursor-pointer disabled:opacity-50 text-xs flex items-center justify-center space-x-1.5"
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    <span>{approvingId === selectedAuditor.id ? "APPROVING..." : "APPROVE"}</span>
+                  </button>
+                </div>
               ) : (
                 <button
                   type="button"

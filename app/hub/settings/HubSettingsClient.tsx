@@ -56,11 +56,11 @@ export default function HubSettingsClient({ initialSettings }: HubSettingsProps)
   return (
     <div className="space-y-8 max-w-6xl mx-auto relative z-10 font-mono text-xs">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-white/[0.08] pb-6 gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-slate-200 dark:border-white/[0.08] pb-6 gap-4">
         <div>
-          <div className="animus-label mb-1 text-sky-400">SOVEREIGN SILO INFRASTRUCTURE</div>
-          <h1 className="text-3xl font-bold text-slate-100 tracking-tight font-sans">Hub Settings</h1>
-          <p className="text-sm text-slate-400 mt-1 font-mono">
+          <div className="animus-label mb-1 text-sky-600 dark:text-sky-400 font-bold uppercase text-[10px] tracking-widest">SOVEREIGN SILO INFRASTRUCTURE</div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight font-sans">Hub Settings</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 font-mono">
             Configure on-premise data vaults, zero-knowledge P2P synchronization, and cryptographic policy boundaries.
           </p>
         </div>
@@ -68,16 +68,16 @@ export default function HubSettingsClient({ initialSettings }: HubSettingsProps)
         <button
           onClick={handleSave}
           disabled={saving}
-          className="glass-badge px-5 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-950/40 flex items-center space-x-2 transition cursor-pointer disabled:opacity-50 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+          className="pure-glass-badge px-5 py-2.5 text-xs font-bold text-emerald-800 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center space-x-2 transition cursor-pointer disabled:opacity-50 rounded-xl shadow-sm border border-emerald-300 dark:border-emerald-500/30"
         >
           {saved ? (
             <>
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>Configuration Saved!</span>
             </>
           ) : (
             <>
-              <Save className="w-4 h-4" />
+              <Save className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>{saving ? "Saving..." : "Save Hub Configuration"}</span>
             </>
           )}
@@ -85,19 +85,19 @@ export default function HubSettingsClient({ initialSettings }: HubSettingsProps)
       </div>
 
       {saved && (
-        <div className="glass-card p-4 border border-emerald-500/40 text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-400" />
+        <div className="pure-glass-card rounded-xl p-4 border border-emerald-500/40 text-emerald-700 dark:text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
+          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>Hub silo parameters &amp; Dual-Key topology updated successfully. Local policy locks verified.</span>
         </div>
       )}
 
       {/* Architecture Visual Callout */}
-      <div className="glass-card p-5 border border-sky-500/20 bg-[#070e20]/60 space-y-3 font-sans text-xs">
-        <div className="flex items-center space-x-2 text-sky-300 font-bold font-mono text-[11px] uppercase tracking-wider">
-          <Info className="w-4 h-4 text-sky-400" />
+      <div className="pure-glass-card rounded-2xl p-5 border border-sky-300/40 dark:border-sky-500/20 bg-sky-50/60 dark:bg-[#070e20]/60 space-y-3 font-sans text-xs shadow-sm">
+        <div className="flex items-center space-x-2 text-sky-700 dark:text-sky-300 font-bold font-mono text-[11px] uppercase tracking-wider">
+          <Info className="w-4 h-4 text-sky-600 dark:text-sky-400" />
           <span>Dual-Plane Sovereign Architecture</span>
         </div>
-        <p className="text-slate-300 leading-relaxed text-[11px]">
+        <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
           Anchor operates on a strict zero-knowledge segregation model: <strong>all unredacted decision reports, proprietary AST source code scans, and customer PII remain 100% on-premise within your private server</strong>. The external P2P mesh relay only transmits 32-byte cryptographic SHA-256 chain hashes to statutory oversight bodies.
         </p>
       </div>
@@ -105,37 +105,37 @@ export default function HubSettingsClient({ initialSettings }: HubSettingsProps)
       {/* Settings Sections */}
       <form onSubmit={handleSave} className="space-y-6">
         {/* Section 1: Enterprise Silo Identity */}
-        <div className="glass-card p-6 space-y-4">
-          <div className="border-b border-white/10 pb-3 flex justify-between items-center">
+        <div className="pure-glass-card rounded-2xl p-6 space-y-4 shadow-sm border border-slate-200 dark:border-white/10">
+          <div className="border-b border-slate-200 dark:border-white/10 pb-3 flex justify-between items-center">
             <div className="flex items-center space-x-2">
-              <Building2 className="w-4 h-4 text-sky-400" />
-              <span className="animus-label text-sky-400">ENTERPRISE SILO IDENTIFIER</span>
+              <Building2 className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+              <span className="animus-label text-sky-600 dark:text-sky-400 font-bold uppercase text-[10px]">ENTERPRISE SILO IDENTIFIER</span>
             </div>
-            <span className="text-slate-400 text-[11px]">
-              Silo ID: <strong className="text-slate-100">{initialSettings.hubId}</strong>
+            <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+              Silo ID: <strong className="text-slate-900 dark:text-slate-100">{initialSettings.hubId}</strong>
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-slate-400 block mb-1 font-bold">ENTERPRISE NAME</label>
+              <label className="text-slate-700 dark:text-slate-400 block mb-1 font-bold">ENTERPRISE NAME</label>
               <input
                 type="text"
                 value={enterpriseName}
                 onChange={(e) => setEnterpriseName(e.target.value)}
                 placeholder="e.g. Sovereign Enterprise Node"
-                className="w-full bg-[#040711] border border-white/10 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none"
+                className="w-full bg-white dark:bg-[#040711] border border-slate-300 dark:border-white/10 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500 shadow-inner"
               />
             </div>
 
             <div>
-              <label className="text-slate-400 block mb-1 font-bold">CORPORATE DOMAIN</label>
+              <label className="text-slate-700 dark:text-slate-400 block mb-1 font-bold">CORPORATE DOMAIN</label>
               <input
                 type="text"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
                 placeholder="e.g. company.com"
-                className="w-full bg-[#040711] border border-white/10 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none"
+                className="w-full bg-white dark:bg-[#040711] border border-slate-300 dark:border-white/10 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500 shadow-inner"
               />
             </div>
 

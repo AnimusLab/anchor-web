@@ -23,6 +23,7 @@ import {
   Mail,
   Loader2,
   CheckCircle,
+  XCircle,
   Copy,
   Check,
   ExternalLink,
@@ -82,6 +83,7 @@ export default function EnterpriseNodesPage() {
   // Notifications & Action States
   const [submitting, setSubmitting] = useState(false);
   const [approvingEmail, setApprovingEmail] = useState<string | null>(null);
+  const [denyingEmail, setDenyingEmail] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -225,6 +227,39 @@ export default function EnterpriseNodesPage() {
     }
   };
 
+  const handleDenyPersonnel = async (user: WhitelistedUser, hubId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!confirm(`Are you sure you want to decline registration for ${user.displayName || user.email}?`)) return;
+    setDenyingEmail(user.email);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      const res = await fetch("/api/v1/whitelist/deny", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          whitelistId: user.whitelistId,
+          email: user.email,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to decline registration.");
+
+      setSuccessMsg(`Registration for ${user.displayName || user.email} declined.`);
+      loadHubs();
+      if (inspectedUser?.user.email === user.email) {
+        setInspectedUser(null);
+      }
+      setTimeout(() => setSuccessMsg(""), 4000);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to decline user.");
+    } finally {
+      setDenyingEmail(null);
+    }
+  };
+
   const handleRevokePersonnel = async (email: string, hubId: string) => {
     if (!confirm(`Are you sure you want to revoke whitelist access for ${email}?`)) return;
 
@@ -294,26 +329,26 @@ export default function EnterpriseNodesPage() {
       case "HUB_MANAGER":
         return {
           label: "HUB MANAGER (L3)",
-          color: "bg-emerald-500/20 text-emerald-300 border-emerald-400/40",
-          icon: <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />,
+          color: "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-400/40",
+          icon: <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />,
         };
       case "PROJECT_LEAD":
         return {
           label: "PROJECT LEAD (L2)",
-          color: "bg-indigo-500/20 text-indigo-300 border-indigo-400/40",
-          icon: <Sparkles className="w-3.5 h-3.5 text-indigo-400" />,
+          color: "bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-400/40",
+          icon: <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />,
         };
       case "DEVELOPER":
         return {
           label: "AI DEVELOPER (L1)",
-          color: "bg-sky-500/20 text-sky-300 border-sky-400/40",
-          icon: <Server className="w-3.5 h-3.5 text-sky-400" />,
+          color: "bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-400/40",
+          icon: <Server className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />,
         };
       default:
         return {
           label: roleStr.replace(/_/g, " "),
-          color: "bg-slate-500/20 text-slate-300 border-slate-400/40",
-          icon: <Shield className="w-3.5 h-3.5 text-slate-400" />,
+          color: "bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-400/40",
+          icon: <Shield className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />,
         };
     }
   };
@@ -321,11 +356,11 @@ export default function EnterpriseNodesPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto relative z-10 font-mono text-xs">
       {/* Top Banner Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/[0.08] pb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 dark:border-white/[0.08] pb-6 gap-4">
         <div>
-          <div className="animus-label mb-1 text-sky-400">SAAS CONTROL PLANE</div>
-          <h1 className="text-3xl font-bold text-slate-100 tracking-tight font-sans">Enterprise Nodes &amp; Personnel Matrix</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <div className="animus-label mb-1 text-sky-600 dark:text-sky-400">SAAS CONTROL PLANE</div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight font-sans">Enterprise Nodes &amp; Personnel Matrix</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Auto-provision sovereign enterprise Hubs and manage personnel whitelists across multi-tenant mesh.
           </p>
         </div>
@@ -336,35 +371,35 @@ export default function EnterpriseNodesPage() {
             setErrorMsg("");
             setSuccessMsg("");
           }}
-          className="glass-badge px-4 py-2.5 text-xs font-bold text-sky-300 hover:bg-sky-500/20 border-sky-400/40 flex items-center space-x-2 transition cursor-pointer shadow-[0_0_20px_rgba(56,189,248,0.25)]"
+          className="glass-badge px-4 py-2.5 text-xs font-bold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 border-sky-300 dark:border-sky-400/40 flex items-center space-x-2 transition cursor-pointer shadow-sm"
         >
-          <Sparkles className="w-4 h-4 text-sky-400" />
+          <Sparkles className="w-4 h-4 text-sky-600 dark:text-sky-400" />
           <span>+ Provision New Sovereign Hub</span>
         </button>
       </div>
 
       {/* Global Notifications */}
       {successMsg && (
-        <div className="glass-card p-4 border border-emerald-500/40 text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-400" />
+        <div className="glass-card p-4 border border-emerald-500/40 text-emerald-700 dark:text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
+          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="glass-card p-4 border border-rose-500/40 text-rose-300 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+        <div className="glass-card p-4 border border-rose-500/40 text-rose-700 dark:text-rose-300 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-600 dark:text-rose-400" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Metrics & Filter Tabs */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex space-x-2 bg-[#060913]/80 p-1.5 rounded-2xl border border-white/10">
+        <div className="flex space-x-2 bg-slate-200/80 dark:bg-[#060913]/80 p-1.5 rounded-2xl border border-slate-300 dark:border-white/10">
           <button
             onClick={() => setActiveTab("all")}
             className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
-              activeTab === "all" ? "bg-sky-500/20 text-sky-300 border border-sky-400/40" : "text-slate-400 hover:text-white"
+              activeTab === "all" ? "bg-white dark:bg-sky-500/20 text-sky-800 dark:text-sky-300 border border-slate-300 dark:border-sky-400/40 shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white"
             }`}
           >
             All Hubs ({hubs.length})
@@ -372,7 +407,7 @@ export default function EnterpriseNodesPage() {
           <button
             onClick={() => setActiveTab("active")}
             className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
-              activeTab === "active" ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40" : "text-slate-400 hover:text-white"
+              activeTab === "active" ? "bg-white dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-slate-300 dark:border-emerald-400/40 shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white"
             }`}
           >
             Provisioned Active ({hubs.filter((h) => h.isActive).length})
@@ -380,7 +415,7 @@ export default function EnterpriseNodesPage() {
           <button
             onClick={() => setActiveTab("pending")}
             className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer flex items-center space-x-1.5 ${
-              activeTab === "pending" ? "bg-amber-500/20 text-amber-300 border border-amber-400/40" : "text-slate-400 hover:text-white"
+              activeTab === "pending" ? "bg-white dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-slate-300 dark:border-amber-400/40 shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white"
             }`}
           >
             <span>Pending Approvals</span>
@@ -400,7 +435,7 @@ export default function EnterpriseNodesPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by Company, Domain, or Personnel..."
-            className="w-full pure-glass-input rounded-xl pl-10 pr-4 py-2 text-white text-xs placeholder:text-slate-500 focus:outline-none font-sans"
+            className="w-full pure-glass-input rounded-xl pl-10 pr-4 py-2 text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:outline-none font-sans"
           />
         </div>
       </div>
@@ -408,16 +443,16 @@ export default function EnterpriseNodesPage() {
       {/* Hubs & Personnel Cards Matrix */}
       <div className="space-y-6">
         {loading ? (
-          <div className="pure-glass-card p-16 text-center space-y-3 rounded-3xl border border-white/15">
-            <Building2 className="w-8 h-8 text-sky-400 mx-auto animate-bounce" />
-            <div className="text-sky-300 font-bold text-xs uppercase tracking-widest animate-pulse">
+          <div className="pure-glass-card p-16 text-center space-y-3 rounded-3xl border border-slate-200 dark:border-white/15">
+            <Building2 className="w-8 h-8 text-sky-600 dark:text-sky-400 mx-auto animate-bounce" />
+            <div className="text-sky-700 dark:text-sky-300 font-bold text-xs uppercase tracking-widest animate-pulse">
               LOADING SOVEREIGN ENTERPRISE MESH &amp; PERSONNEL WHITELISTS...
             </div>
           </div>
         ) : filteredHubs.length === 0 ? (
-          <div className="pure-glass-card p-16 text-center space-y-4 rounded-3xl border border-white/10">
-            <Building2 className="w-10 h-10 text-slate-600 mx-auto" />
-            <div className="text-slate-300 font-sans font-semibold text-base">No Enterprise Hubs Found</div>
+          <div className="pure-glass-card p-16 text-center space-y-4 rounded-3xl border border-slate-200 dark:border-white/10">
+            <Building2 className="w-10 h-10 text-slate-400 dark:text-slate-600 mx-auto" />
+            <div className="text-slate-900 dark:text-slate-300 font-sans font-semibold text-base">No Enterprise Hubs Found</div>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
               {searchQuery
                 ? `No hubs matching search query '${searchQuery}'`
@@ -434,42 +469,42 @@ export default function EnterpriseNodesPage() {
             return (
               <div
                 key={hub.id}
-                className="pure-glass-card p-6 md:p-8 rounded-3xl space-y-6 border border-white/15 hover:border-sky-400/40 transition shadow-2xl relative overflow-hidden"
+                className="pure-glass-card p-6 md:p-8 rounded-3xl space-y-6 border border-slate-200 dark:border-white/15 hover:border-sky-300 dark:hover:border-sky-400/40 transition shadow-xl relative overflow-hidden"
               >
                 {/* Hub Header Card Banner */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-5">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-white/10 pb-5">
                   <div className="space-y-1.5">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-slate-950 text-sm shadow-[0_0_15px_rgba(56,189,248,0.3)] shrink-0">
-                        <Building2 className="w-5 h-5 text-slate-950" />
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-white text-sm shadow-[0_0_15px_rgba(56,189,248,0.3)] shrink-0">
+                        <Building2 className="w-5 h-5 text-white" />
                       </div>
                       <div>
                         <div className="flex items-center space-x-2">
-                          <h3 className="text-lg font-bold text-white font-sans">{hub.displayName}</h3>
-                          <span className="glass-badge px-2 py-0.5 text-sky-300 font-mono text-[10px] font-bold">
+                          <h3 className="text-lg font-bold text-slate-900 dark:text-white font-sans">{hub.displayName}</h3>
+                          <span className="glass-badge px-2 py-0.5 text-sky-700 dark:text-sky-300 font-mono text-[10px] font-bold">
                             {hub.id}
                           </span>
                         </div>
-                        <div className="text-slate-300 text-xs font-mono flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
-                          <span>Org: <strong className="text-white">{hub.organization?.displayName || "Enterprise Node"}</strong></span>
-                          <span>Domain: <strong className="text-sky-300">@{hub.organization?.domain || "citi.com"}</strong></span>
-                          <span>Region: <strong className="text-amber-300">{hub.region || "US-EAST-1"}</strong></span>
+                        <div className="text-slate-600 dark:text-slate-300 text-xs font-mono flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
+                          <span>Org: <strong className="text-slate-900 dark:text-white">{hub.organization?.displayName || "Enterprise Node"}</strong></span>
+                          <span>Domain: <strong className="text-sky-600 dark:text-sky-300">@{hub.organization?.domain || "animuslab.dev"}</strong></span>
+                          <span>Region: <strong className="text-amber-600 dark:text-amber-300">{hub.region || "US-EAST-1"}</strong></span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-3 shrink-0">
-                    <span className="glass-badge px-3 py-1 text-emerald-400 font-bold text-[10px] flex items-center space-x-1.5 border-emerald-400/30">
-                      <BadgeCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="glass-badge px-3 py-1 text-emerald-700 dark:text-emerald-400 font-bold text-[10px] flex items-center space-x-1.5 border-emerald-300 dark:border-emerald-400/30">
+                      <BadgeCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>{hub.personnelCount || hub.users?.length || 0} WHITELISTED</span>
                     </span>
 
                     <button
                       onClick={(e) => openWhitelistModal(hub, e)}
-                      className="glass-badge px-3.5 py-2 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 border-emerald-400/40 flex items-center space-x-1.5 transition cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                      className="glass-badge px-3.5 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border-emerald-300 dark:border-emerald-400/40 flex items-center space-x-1.5 transition cursor-pointer shadow-sm"
                     >
-                      <UserPlus className="w-3.5 h-3.5 text-emerald-400" />
+                      <UserPlus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>+ Whitelist Personnel</span>
                     </button>
                   </div>
@@ -477,13 +512,13 @@ export default function EnterpriseNodesPage() {
 
                 {/* Whitelisted Personnel Grid */}
                 <div className="space-y-3">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center space-x-2 px-1">
-                    <Users className="w-3.5 h-3.5 text-sky-400" />
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-2 px-1">
+                    <Users className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
                     <span>WHITELISTED PERSONNEL &amp; CLEARANCE TOKENS FOR {hub.id.toUpperCase()}</span>
                   </div>
 
                   {displayedUsers.length === 0 ? (
-                    <div className="p-6 rounded-2xl bg-black/40 text-slate-500 text-center text-xs font-mono border border-dashed border-white/10">
+                    <div className="p-6 rounded-2xl bg-slate-50 dark:bg-black/40 text-slate-500 text-center text-xs font-mono border border-dashed border-slate-300 dark:border-white/10">
                       No personnel match this filter for {hub.displayName}. Click '+ Whitelist Personnel' above to provision access.
                     </div>
                   ) : (
@@ -499,14 +534,14 @@ export default function EnterpriseNodesPage() {
                           <div
                             key={user.id}
                             onClick={() => setInspectedUser({ user, hub })}
-                            className={`p-5 rounded-2xl bg-black/50 border transition cursor-pointer hover:scale-[1.01] space-y-3 relative overflow-hidden ${
+                            className={`p-5 rounded-2xl bg-slate-50/90 dark:bg-black/50 border transition cursor-pointer hover:scale-[1.01] space-y-3 relative overflow-hidden shadow-sm hover:shadow-md ${
                               isPending
-                                ? "border-amber-400/40 hover:border-amber-400/80 shadow-[0_0_20px_rgba(245,158,11,0.1)]"
-                                : "border-white/10 hover:border-sky-400/50 shadow-[0_0_20px_rgba(56,189,248,0.1)]"
+                                ? "border-amber-300 dark:border-amber-400/40 hover:border-amber-400 dark:hover:border-amber-400/80"
+                                : "border-slate-200 dark:border-white/10 hover:border-sky-300 dark:hover:border-sky-400/50"
                             }`}
                           >
                             {/* Card Header: Role & Status Badge */}
-                            <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+                            <div className="flex items-center justify-between gap-2 border-b border-slate-200 dark:border-white/10 pb-2.5">
                               <div className={`inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${roleMeta.color}`}>
                                 {roleMeta.icon}
                                 <span>{roleMeta.label}</span>
@@ -514,7 +549,7 @@ export default function EnterpriseNodesPage() {
 
                               <span
                                 className={`glass-badge px-2 py-0.5 text-[9px] font-mono font-bold ${
-                                  isPending ? "text-amber-400 border-amber-400/40 animate-pulse" : "text-emerald-400 border-emerald-400/30"
+                                  isPending ? "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-400/40 animate-pulse" : "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300 dark:border-emerald-400/30"
                                 }`}
                               >
                                 {isPending ? "PENDING APPROVAL" : "APPROVED"}
@@ -523,14 +558,14 @@ export default function EnterpriseNodesPage() {
 
                             {/* Personnel Profile Row */}
                             <div className="flex items-start space-x-3.5">
-                              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-500 to-emerald-500 flex items-center justify-center font-mono font-bold text-slate-950 text-xs shadow-md shrink-0">
+                              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-500 to-emerald-500 flex items-center justify-center font-mono font-bold text-white text-xs shadow-md shrink-0">
                                 {initials}
                               </div>
                               <div className="space-y-0.5 min-w-0 flex-1">
-                                <h4 className="text-sm font-bold text-white truncate font-sans">{user.displayName}</h4>
-                                <p className="text-slate-300 text-xs font-mono truncate">{user.email}</p>
+                                <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate font-sans">{user.displayName}</h4>
+                                <p className="text-slate-600 dark:text-slate-300 text-xs font-mono truncate">{user.email}</p>
                                 {user.department && (
-                                  <p className="text-[11px] text-slate-400 font-mono truncate">
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
                                     Dept: {user.department}
                                   </p>
                                 )}
@@ -538,15 +573,15 @@ export default function EnterpriseNodesPage() {
                             </div>
 
                             {/* Clearance ID Box */}
-                            <div className="p-2.5 bg-black/60 rounded-xl border border-white/10 flex items-center justify-between gap-2 font-mono text-[11px]">
+                            <div className="p-3 bg-slate-100 dark:bg-black/60 rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-between gap-2 font-mono text-[11px]">
                               <div className="space-y-0.5">
-                                <span className="text-slate-400 text-[9px] block uppercase font-bold">Clearance ID</span>
-                                <span className="text-sky-300 font-bold">{user.clearanceId || user.id}</span>
+                                <span className="text-slate-500 dark:text-slate-400 text-[9px] block uppercase font-bold">Clearance ID</span>
+                                <span className="text-sky-700 dark:text-sky-300 font-bold">{user.clearanceId || user.id}</span>
                               </div>
 
                               <div className="text-right space-y-0.5">
-                                <span className="text-slate-400 text-[9px] block uppercase font-bold">Hub Silo</span>
-                                <span className="text-slate-300 font-bold text-[10px] bg-white/10 px-2 py-0.5 rounded">
+                                <span className="text-slate-500 dark:text-slate-400 text-[9px] block uppercase font-bold">Hub Silo</span>
+                                <span className="text-slate-700 dark:text-slate-300 font-bold text-[10px] bg-slate-200 dark:bg-white/10 px-2 py-0.5 rounded">
                                   {hub.id}
                                 </span>
                               </div>
@@ -554,27 +589,37 @@ export default function EnterpriseNodesPage() {
 
                             {/* Footer Action */}
                             <div className="flex items-center justify-between pt-1 text-xs">
-                              <span className="text-[10px] text-slate-400 font-mono">
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
                                 Click card to view dossier
                               </span>
 
                               <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                                 {isPending ? (
-                                  <button
-                                    onClick={(e) => handleApprovePersonnel(user, hub.id, e)}
-                                    disabled={approvingEmail === user.email}
-                                    className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 font-bold text-[11px] flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50"
-                                  >
-                                    <UserCheck className="w-3.5 h-3.5" />
-                                    <span>{approvingEmail === user.email ? "Approving..." : "Approve"}</span>
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={(e) => handleDenyPersonnel(user, hub.id, e)}
+                                      disabled={denyingEmail === user.email || approvingEmail === user.email}
+                                      className="px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/30 border border-rose-300 dark:border-rose-400/50 text-rose-700 dark:text-rose-300 font-bold text-[11px] flex items-center space-x-1 transition cursor-pointer disabled:opacity-50 shadow-sm"
+                                    >
+                                      <XCircle className="w-3.5 h-3.5" />
+                                      <span>{denyingEmail === user.email ? "Declining..." : "Decline"}</span>
+                                    </button>
+                                    <button
+                                      onClick={(e) => handleApprovePersonnel(user, hub.id, e)}
+                                      disabled={approvingEmail === user.email || denyingEmail === user.email}
+                                      className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/30 border border-emerald-300 dark:border-emerald-400/50 text-emerald-700 dark:text-emerald-300 font-bold text-[11px] flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50 shadow-sm"
+                                    >
+                                      <UserCheck className="w-3.5 h-3.5" />
+                                      <span>{approvingEmail === user.email ? "Approving..." : "Approve"}</span>
+                                    </button>
+                                  </>
                                 ) : (
                                   <button
                                     onClick={() => setInspectedUser({ user, hub })}
-                                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 font-bold text-[10px] flex items-center space-x-1 transition cursor-pointer"
+                                    className="px-2.5 py-1 rounded-lg bg-slate-200/80 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-slate-200 font-bold text-[10px] flex items-center space-x-1 transition cursor-pointer border border-slate-300 dark:border-white/10"
                                   >
                                     <span>Dossier</span>
-                                    <ExternalLink className="w-3 h-3 text-slate-400" />
+                                    <ExternalLink className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                                   </button>
                                 )}
                               </div>
@@ -593,54 +638,54 @@ export default function EnterpriseNodesPage() {
 
       {/* MODAL 1: Personnel Security Dossier Drawer */}
       {inspectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="w-full max-w-lg pure-glass-card p-6 md:p-8 rounded-3xl space-y-6 relative border border-sky-400/50 shadow-2xl font-sans">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 dark:bg-black/85 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="w-full max-w-lg pure-glass-card p-6 md:p-8 rounded-3xl space-y-6 relative border border-sky-300 dark:border-sky-400/50 shadow-2xl font-sans bg-white/95 dark:bg-[#090d1a]/90">
             <button
               onClick={() => setInspectedUser(null)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white transition p-1"
+              className="absolute top-5 right-5 text-slate-500 hover:text-black dark:text-slate-400 dark:hover:text-white transition p-1 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div>
-              <div className="inline-flex items-center space-x-2 bg-sky-500/20 border border-sky-300/40 px-3.5 py-1 rounded-full text-xs font-mono text-sky-200 mb-2">
-                <ShieldCheck className="w-3.5 h-3.5 text-sky-300" />
+              <div className="inline-flex items-center space-x-2 bg-sky-50 dark:bg-sky-500/20 border border-sky-200 dark:border-sky-300/40 px-3.5 py-1 rounded-full text-xs font-mono text-sky-700 dark:text-sky-200 mb-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-sky-600 dark:text-sky-300" />
                 <span>PERSONNEL SECURITY DOSSIER</span>
               </div>
-              <h2 className="text-2xl font-black text-white uppercase">{inspectedUser.user.displayName}</h2>
-              <p className="text-xs text-slate-300 mt-1 font-mono">{inspectedUser.user.email}</p>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase">{inspectedUser.user.displayName}</h2>
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-mono">{inspectedUser.user.email}</p>
             </div>
 
             {/* Field Matrix */}
             <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-              <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Clearance Token</span>
-                <span className="text-sky-300 font-bold break-all">{inspectedUser.user.clearanceId || inspectedUser.user.id}</span>
+              <div className="p-3 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase block font-bold">Clearance Token</span>
+                <span className="text-sky-700 dark:text-sky-300 font-bold break-all">{inspectedUser.user.clearanceId || inspectedUser.user.id}</span>
               </div>
 
-              <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Assigned Role</span>
-                <span className="text-emerald-400 font-bold">{inspectedUser.user.role.replace(/_/g, " ")}</span>
+              <div className="p-3 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase block font-bold">Assigned Role</span>
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold">{inspectedUser.user.role.replace(/_/g, " ")}</span>
               </div>
 
-              <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Assigned Hub Silo</span>
-                <span className="text-slate-100 font-bold">{inspectedUser.hub.displayName}</span>
+              <div className="p-3 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase block font-bold">Assigned Hub Silo</span>
+                <span className="text-slate-900 dark:text-slate-100 font-bold">{inspectedUser.hub.displayName}</span>
               </div>
 
-              <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Corporate Domain</span>
-                <span className="text-sky-300">@{inspectedUser.hub.organization?.domain || "citi.com"}</span>
+              <div className="p-3 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase block font-bold">Corporate Domain</span>
+                <span className="text-sky-700 dark:text-sky-300">@{inspectedUser.hub.organization?.domain || "citi.com"}</span>
               </div>
 
-              <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Department / Division</span>
-                <span className="text-slate-200">{inspectedUser.user.department || "Enterprise Engineering"}</span>
+              <div className="p-3 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase block font-bold">Department / Division</span>
+                <span className="text-slate-800 dark:text-slate-200">{inspectedUser.user.department || "Enterprise Engineering"}</span>
               </div>
 
-              <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Clearance Status</span>
-                <span className={`font-bold ${inspectedUser.user.status === "APPROVED" ? "text-emerald-400" : "text-amber-400"}`}>
+              <div className="p-3 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase block font-bold">Clearance Status</span>
+                <span className={`font-bold ${inspectedUser.user.status === "APPROVED" ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
                   {inspectedUser.user.status}
                 </span>
               </div>
@@ -651,25 +696,37 @@ export default function EnterpriseNodesPage() {
               <button
                 type="button"
                 onClick={() => setInspectedUser(null)}
-                className="w-1/3 bg-white/10 hover:bg-white/20 text-slate-200 py-3 rounded-xl font-bold transition cursor-pointer"
+                className="w-1/4 bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-slate-200 py-3 rounded-xl font-bold transition cursor-pointer border border-slate-300 dark:border-white/10 text-xs"
               >
                 Close
               </button>
 
               {inspectedUser.user.status === "PENDING" ? (
-                <button
-                  type="button"
-                  onClick={() => handleApprovePersonnel(inspectedUser.user, inspectedUser.hub.id)}
-                  disabled={approvingEmail === inspectedUser.user.email}
-                  className="w-2/3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold uppercase tracking-wider transition shadow-[0_0_20px_rgba(16,185,129,0.3)] cursor-pointer disabled:opacity-50"
-                >
-                  {approvingEmail === inspectedUser.user.email ? "APPROVING..." : "APPROVE CLEARANCE →"}
-                </button>
+                <div className="w-3/4 flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => handleDenyPersonnel(inspectedUser.user, inspectedUser.hub.id)}
+                    disabled={denyingEmail === inspectedUser.user.email || approvingEmail === inspectedUser.user.email}
+                    className="w-1/2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 border border-rose-300 dark:border-rose-400/50 text-rose-700 dark:text-rose-300 py-3 rounded-xl font-bold uppercase tracking-wider transition shadow-sm cursor-pointer disabled:opacity-50 text-xs flex items-center justify-center space-x-1.5"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    <span>{denyingEmail === inspectedUser.user.email ? "DECLINING..." : "DECLINE"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApprovePersonnel(inspectedUser.user, inspectedUser.hub.id)}
+                    disabled={approvingEmail === inspectedUser.user.email || denyingEmail === inspectedUser.user.email}
+                    className="w-1/2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold uppercase tracking-wider transition shadow-md cursor-pointer disabled:opacity-50 text-xs flex items-center justify-center space-x-1.5"
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    <span>{approvingEmail === inspectedUser.user.email ? "APPROVING..." : "APPROVE"}</span>
+                  </button>
+                </div>
               ) : (
                 <button
                   type="button"
                   onClick={() => copyToClipboard(inspectedUser.user.clearanceId || inspectedUser.user.id, inspectedUser.user.id)}
-                  className="w-2/3 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-300 py-3 rounded-xl font-bold transition flex items-center justify-center space-x-2 cursor-pointer"
+                  className="w-2/3 bg-sky-50 hover:bg-sky-100 dark:bg-sky-500/20 dark:hover:bg-sky-500/30 border border-sky-300 dark:border-sky-400/40 text-sky-700 dark:text-sky-300 py-3 rounded-xl font-bold transition flex items-center justify-center space-x-2 cursor-pointer shadow-sm"
                 >
                   {copiedId === inspectedUser.user.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   <span>{copiedId === inspectedUser.user.id ? "Token Copied!" : "Copy Clearance Token"}</span>

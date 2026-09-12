@@ -135,11 +135,11 @@ export default function ApiKeyVaultClient({
   return (
     <div className="space-y-8 max-w-6xl mx-auto relative z-10 font-mono text-xs">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/[0.08] pb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 dark:border-white/[0.08] pb-6 gap-4">
         <div>
-          <div className="animus-label mb-1 text-emerald-400">CRYPTOGRAPHIC KEY VAULT</div>
-          <h1 className="text-3xl font-bold text-slate-100 tracking-tight font-sans">API Key Vault</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <div className="animus-label mb-1 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-widest text-[10px]">CRYPTOGRAPHIC KEY VAULT</div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight font-sans">API Key Vault</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Generate and manage sovereign API keys, AI agent telemetry tokens, and CI/CD signing keys.
           </p>
         </div>
@@ -150,13 +150,13 @@ export default function ApiKeyVaultClient({
               setIsGenerateModalOpen(true);
               setErrorMsg("");
             }}
-            className="glass-badge px-4 py-2.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 border-emerald-400/40 flex items-center space-x-2 transition cursor-pointer shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+            className="pure-glass-badge px-4 py-2.5 text-xs font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/20 border-emerald-300 dark:border-emerald-400/40 flex items-center space-x-2 transition cursor-pointer rounded-xl shadow-sm"
           >
-            <Plus className="w-4 h-4 text-emerald-400" />
+            <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>+ Generate New API Key</span>
           </button>
         ) : (
-          <span className="glass-badge px-3 py-2 text-xs font-bold text-rose-400 flex items-center space-x-2">
+          <span className="pure-glass-badge px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center space-x-2 rounded-xl">
             <Lock className="w-3.5 h-3.5" />
             <span>KEY CREATION: DEVELOPER ACCESS DENIED</span>
           </span>
@@ -165,45 +165,45 @@ export default function ApiKeyVaultClient({
 
       {/* Notifications */}
       {successMsg && (
-        <div className="glass-card p-4 border border-emerald-500/40 text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-400" />
+        <div className="pure-glass-card rounded-xl p-4 border border-emerald-500/40 text-emerald-700 dark:text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
+          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="glass-card p-4 border border-rose-500/40 text-rose-300 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+        <div className="pure-glass-card rounded-xl p-4 border border-rose-500/40 text-rose-700 dark:text-rose-300 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-600 dark:text-rose-400" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Clearance Banner */}
-      <div className="glass-card p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+      <div className="pure-glass-card rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 shadow-sm border border-slate-200 dark:border-white/10">
         <div className="flex items-center space-x-3">
-          <Shield className="w-4 h-4 text-emerald-400" />
-          <span>
-            CURRENT CLEARANCE: <strong className="text-slate-100">{userRole.replace(/_/g, " ")}</strong>
+          <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span className="text-slate-700 dark:text-slate-300">
+            CURRENT CLEARANCE: <strong className="text-slate-900 dark:text-slate-100">{userRole.replace(/_/g, " ")}</strong>
           </span>
         </div>
-        <span className="text-slate-400 text-[11px]">
-          Hub Silo: <strong className="text-sky-300">{hubId}</strong>
+        <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+          Hub Silo: <strong className="text-sky-600 dark:text-sky-300">{hubId}</strong>
         </span>
       </div>
 
       {/* Active Keys Table */}
-      <div className="glass-card overflow-hidden space-y-0">
-        <div className="p-5 border-b border-white/[0.08] flex justify-between items-center bg-[#070b16]/60">
-          <span className="animus-label text-slate-300">ACTIVE CRYPTOGRAPHIC ACCESS TOKENS</span>
-          <span className="text-slate-400">{keys.filter((k) => k.isActive).length} Keys Active</span>
+      <div className="pure-glass-card rounded-2xl overflow-hidden space-y-0 shadow-sm border border-slate-200 dark:border-white/10">
+        <div className="p-5 border-b border-slate-200 dark:border-white/[0.08] flex justify-between items-center bg-slate-50/80 dark:bg-[#070b16]/60">
+          <span className="animus-label text-slate-700 dark:text-slate-300 font-bold uppercase text-[10px] tracking-wider">ACTIVE CRYPTOGRAPHIC ACCESS TOKENS</span>
+          <span className="text-slate-500 dark:text-slate-400">{keys.filter((k) => k.isActive).length} Keys Active</span>
         </div>
 
         <div className="p-5 space-y-4">
           {keys.length === 0 ? (
             <div className="p-12 text-center space-y-3">
-              <Key className="w-8 h-8 text-slate-600 mx-auto" />
-              <div className="text-slate-300 font-sans font-semibold text-sm">No API Keys Generated Yet</div>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
+              <Key className="w-8 h-8 text-slate-400 dark:text-slate-600 mx-auto" />
+              <div className="text-slate-900 dark:text-slate-300 font-sans font-semibold text-sm">No API Keys Generated Yet</div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
                 Click <strong>+ Generate New API Key</strong> above to create runtime ingestion keys for your Python agent SDKs or CI/CD pipelines.
               </p>
             </div>
@@ -215,25 +215,25 @@ export default function ApiKeyVaultClient({
               return (
                 <div
                   key={k.id}
-                  className="glass-card-inset p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-emerald-500/30 transition"
+                  className="bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-emerald-500/50 transition shadow-sm"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center space-x-3">
-                      <Key className="w-4 h-4 text-emerald-400" />
-                      <span className="text-slate-100 font-bold text-sm font-sans">{k.name}</span>
+                      <Key className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-slate-900 dark:text-slate-100 font-bold text-sm font-sans">{k.name}</span>
                       <span
                         className={`text-[9px] font-bold px-2 py-0.5 rounded-md border ${
                           k.scope === "ADMIN_KEY"
-                            ? "bg-rose-500/20 border-rose-400/40 text-rose-300"
+                            ? "bg-rose-50 dark:bg-rose-500/20 border-rose-200 dark:border-rose-400/40 text-rose-700 dark:text-rose-300"
                             : k.scope === "FULL_ACCESS"
-                            ? "bg-indigo-500/20 border-indigo-400/40 text-indigo-300"
-                            : "bg-sky-500/20 border-sky-400/40 text-sky-300"
+                            ? "bg-indigo-50 dark:bg-indigo-500/20 border-indigo-200 dark:border-indigo-400/40 text-indigo-700 dark:text-indigo-300"
+                            : "bg-sky-50 dark:bg-sky-500/20 border-sky-200 dark:border-sky-400/40 text-sky-700 dark:text-sky-300"
                         }`}
                       >
                         {k.scope}
                       </span>
                       {k.projectName && (
-                        <span className="text-[10px] text-slate-400 bg-white/5 px-2 py-0.5 rounded">
+                        <span className="text-[10px] text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-transparent px-2 py-0.5 rounded">
                           Project: {k.projectName}
                         </span>
                       )}

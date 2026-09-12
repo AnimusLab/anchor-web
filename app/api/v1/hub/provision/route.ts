@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth/session";
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session || session.role !== "ANIMUS_ADMIN") {
+      return NextResponse.json(
+        { error: "Access Denied: Only Root Platform Administrators (ANIMUS_ADMIN) can provision new Sovereign Hub Silos." },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { companyName, domain, city } = body;
 

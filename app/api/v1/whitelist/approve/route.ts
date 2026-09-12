@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendCredentialWelcomeEmail } from "@/lib/email";
-import { generateClearanceId } from "@/lib/auth/clearanceId";
+import { generateClearanceId, generateSequentialClearanceId } from "@/lib/auth/clearanceId";
 import { authenticator } from "otplib";
+import { getSession } from "@/lib/auth/session";
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session || session.role !== "ANIMUS_ADMIN") {
+      return NextResponse.json(
+        { error: "Access Denied: Only Root Platform Administrators (ANIMUS_ADMIN) can approve whitelist registrations." },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { whitelistId, email, assignedHubId } = body;
 
@@ -39,18 +48,17 @@ export async function POST(req: NextRequest) {
     let user = await prisma.user.findUnique({ where: { email: cleanEmail } });
 
     if (!user) {
-      // Determine clearance ID
+      // Determine clearance ID sequentially
       let clearanceId = whitelist.previewClearanceId;
-      if (!clearanceId) {
-        if (targetRole === "REGULATORY_AUDITOR") {
-          clearanceId = `AUD-${whitelist.region ? whitelist.region.toUpperCase().slice(0, 4) : "REG"}-L4-${Math.floor(100 + Math.random() * 900)}`;
-        } else if (targetRole === "CROSS_HUB_AUDITOR") {
-          clearanceId = `AUD-CH-L2-${Math.floor(100 + Math.random() * 900)}`;
-        } else if (targetRole === "STANDARD_AUDITOR") {
-          clearanceId = `AUD-SA-L1-${Math.floor(100 + Math.random() * 900)}`;
-        } else {
-          clearanceId = generateClearanceId(cleanName, targetRole);
-        }
+      if (!clearanceId || (isAuditorRole && /-\d{3}$/.test(clearanceId) && parseInt(clearanceId.slice(-3), 10) >= 100)) {
+        clearanceId = await generateSequentialClearanceId({
+          name: cleanName,
+          role: targetRole,
+          orgName: whitelist.orgName || whitelist.organization?.displayName,
+          orgId: whitelist.orgId,
+          jurisdiction: whitelist.region || whitelist.organization?.region,
+          region: whitelist.region,
+        });
       }
 
       // Check for ID collision

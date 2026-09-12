@@ -26,13 +26,15 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                var theme = localStorage.getItem('anchor-theme');
-                if (theme === 'dark') {
-                  document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
-                  if (theme !== 'light') {
-                    localStorage.setItem('anchor-theme', 'light');
+                if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function') {
+                  var theme = localStorage.getItem('anchor-theme');
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                    if (theme !== 'light') {
+                      localStorage.setItem('anchor-theme', 'light');
+                    }
                   }
                 }
               } catch (_) {}

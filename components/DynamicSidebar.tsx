@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { Role, AuditorType, CLEARANCE_MATRIX } from "@/lib/auth/clearance";
 
+import ThemeToggle from "@/components/ThemeToggle";
+
 interface DynamicSidebarProps {
   userRole?: Role;
   role?: Role;
@@ -39,13 +41,13 @@ const ROLE_DISPLAY: Record<Role, string> = {
 };
 
 const ROLE_COLOUR: Record<Role, string> = {
-  ANIMUS_ADMIN: "text-red-400",
-  HUB_MANAGER: "text-emerald-400",
-  PROJECT_LEAD: "text-indigo-400",
-  DEVELOPER: "text-sky-400",
-  STANDARD_AUDITOR: "text-amber-400",
-  CROSS_HUB_AUDITOR: "text-purple-400",
-  REGULATORY_AUDITOR: "text-orange-400",
+  ANIMUS_ADMIN: "text-red-500 dark:text-red-400",
+  HUB_MANAGER: "text-emerald-600 dark:text-emerald-400",
+  PROJECT_LEAD: "text-indigo-600 dark:text-indigo-400",
+  DEVELOPER: "text-sky-600 dark:text-sky-400",
+  STANDARD_AUDITOR: "text-amber-600 dark:text-amber-400",
+  CROSS_HUB_AUDITOR: "text-purple-600 dark:text-purple-400",
+  REGULATORY_AUDITOR: "text-orange-600 dark:text-orange-400",
 };
 
 /** Returns whether a route is accessible for the given role */
@@ -75,10 +77,10 @@ function NavItem({ href, icon, label, role, pathname, requiredRole }: NavItemPro
         title={`Requires ${requiredRole || "higher"} clearance`}
       >
         <div className="flex items-center space-x-2.5">
-          <span className="text-slate-500">{icon}</span>
-          <span className="text-slate-500 line-through">{label}</span>
+          <span className="text-slate-400 dark:text-slate-500">{icon}</span>
+          <span className="text-slate-400 dark:text-slate-500 line-through">{label}</span>
         </div>
-        <Lock className="w-2.5 h-2.5 text-slate-600 flex-shrink-0" />
+        <Lock className="w-2.5 h-2.5 text-slate-400 dark:text-slate-600 flex-shrink-0" />
       </div>
     );
   }
@@ -88,7 +90,9 @@ function NavItem({ href, icon, label, role, pathname, requiredRole }: NavItemPro
       href={href}
       prefetch={true}
       className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition ${
-        isActive ? "glass-nav-active" : "text-slate-300 hover:text-white"
+        isActive
+          ? "glass-nav-active"
+          : "text-slate-600 dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-white/5"
       }`}
     >
       {icon}
@@ -110,75 +114,78 @@ export default function DynamicSidebar({
   const roleColour = ROLE_COLOUR[effectiveRole] || "text-slate-400";
 
   return (
-    <aside className="w-64 glass-sidebar flex flex-col justify-between flex-shrink-0 z-20 font-mono text-xs">
+    <aside className="w-64 glass-sidebar flex flex-col justify-between flex-shrink-0 z-20 font-mono text-xs shadow-md">
       <div className="overflow-y-auto no-scrollbar">
-        {/* Header */}
-        <div className="p-4 border-b border-white/[0.08]">
-          <div className="p-3.5 glass-header-box flex items-center space-x-3">
-            <div className="p-2 glass-badge">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div>
-              <div className="font-bold text-xs text-slate-100 tracking-wide uppercase font-sans">
-                Governance Hub
+        {/* Header with Theme Toggle */}
+        <div className="p-4 border-b border-slate-200 dark:border-white/[0.08]">
+          <div className="p-3.5 glass-header-box flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 pure-glass-badge rounded-lg">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <div className="text-[10px] text-slate-400 font-mono mt-0.5">hub.animuslab.dev</div>
+              <div>
+                <div className="font-bold text-xs text-slate-900 dark:text-slate-100 tracking-wide uppercase font-sans">
+                  Governance Hub
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">hub.animuslab.dev</div>
+              </div>
             </div>
+            <ThemeToggle className="scale-90" />
           </div>
         </div>
 
-        {/* Clearance Badge — role label, not UUID */}
-        <div className="mx-4 my-3.5 p-3 glass-badge text-[10px] space-y-0.5">
-          <span className="text-slate-400 block uppercase tracking-wider">Clearance: {roleLabel}</span>
+        {/* Clearance Badge */}
+        <div className="mx-4 my-3.5 p-3 pure-glass-badge rounded-xl text-[10px] space-y-0.5">
+          <span className="text-slate-500 dark:text-slate-400 block uppercase tracking-wider">Clearance: {roleLabel}</span>
           <span className={`font-bold tracking-wide ${roleColour}`}>{clearanceId}</span>
         </div>
 
         {/* ── Section 1: Governance & Telemetry ── */}
-        <div className="p-4 space-y-2 border-b border-white/[0.04]">
-          <div className="animus-label text-[9px]">GOVERNANCE &amp; TELEMETRY</div>
+        <div className="p-4 space-y-2 border-b border-slate-200/60 dark:border-white/[0.04]">
+          <div className="text-[9px] font-bold tracking-widest text-slate-400 dark:text-slate-500 uppercase">GOVERNANCE &amp; TELEMETRY</div>
           <nav className="space-y-1">
-            <NavItem href="/hub" icon={<LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />} label="Overview" role={effectiveRole} pathname={pathname} />
-            <NavItem href="/hub/telemetry" icon={<Activity className="w-3.5 h-3.5 text-sky-400" />} label="Decision Telemetry" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
-            <NavItem href="/hub/violations" icon={<ShieldAlert className="w-3.5 h-3.5 text-amber-400" />} label="Violation Feed" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
-            <NavItem href="/hub/replay" icon={<PlaySquare className="w-3.5 h-3.5 text-purple-400" />} label="Mission Replay" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
+            <NavItem href="/hub" icon={<LayoutDashboard className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />} label="Overview" role={effectiveRole} pathname={pathname} />
+            <NavItem href="/hub/telemetry" icon={<Activity className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />} label="Decision Telemetry" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
+            <NavItem href="/hub/violations" icon={<ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />} label="Violation Feed" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
+            <NavItem href="/hub/replay" icon={<PlaySquare className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />} label="Mission Replay" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
           </nav>
         </div>
 
         {/* ── Section 2: Projects & Ingestion ── */}
-        <div className="p-4 pt-3 space-y-2 border-b border-white/[0.04]">
-          <div className="animus-label text-[9px]">PROJECTS &amp; INGESTION</div>
+        <div className="p-4 pt-3 space-y-2 border-b border-slate-200/60 dark:border-white/[0.04]">
+          <div className="text-[9px] font-bold tracking-widest text-slate-400 dark:text-slate-500 uppercase">PROJECTS &amp; INGESTION</div>
           <nav className="space-y-1">
-            <NavItem href="/hub/projects" icon={<FolderKanban className="w-3.5 h-3.5 text-sky-400" />} label="Project Inventory" role={effectiveRole} pathname={pathname} />
-            <NavItem href="/hub/keys" icon={<Key className="w-3.5 h-3.5 text-emerald-400" />} label="API Key Vault" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
+            <NavItem href="/hub/projects" icon={<FolderKanban className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />} label="Project Inventory" role={effectiveRole} pathname={pathname} />
+            <NavItem href="/hub/keys" icon={<Key className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />} label="API Key Vault" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
           </nav>
         </div>
 
         {/* ── Section 3: Compliance & Reports ── */}
-        <div className="p-4 pt-3 space-y-2 border-b border-white/[0.04]">
-          <div className="animus-label text-[9px]">COMPLIANCE &amp; REPORTS</div>
+        <div className="p-4 pt-3 space-y-2 border-b border-slate-200/60 dark:border-white/[0.04]">
+          <div className="text-[9px] font-bold tracking-widest text-slate-400 dark:text-slate-500 uppercase">COMPLIANCE &amp; REPORTS</div>
           <nav className="space-y-1">
-            <NavItem href="/hub/reports" icon={<FileText className="w-3.5 h-3.5 text-amber-400" />} label="Dialect Reports" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
-            <NavItem href="/hub/verifier" icon={<ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />} label="Audit Chain Verifier" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
+            <NavItem href="/hub/reports" icon={<FileText className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />} label="Dialect Reports" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
+            <NavItem href="/hub/verifier" icon={<ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />} label="Audit Chain Verifier" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
           </nav>
         </div>
 
         {/* ── Section 4: Hub Management (Manager-only items locked for lower roles) ── */}
         <div className="p-4 pt-3 space-y-2">
-          <div className="animus-label text-[9px]">HUB MANAGEMENT</div>
+          <div className="text-[9px] font-bold tracking-widest text-slate-400 dark:text-slate-500 uppercase">HUB MANAGEMENT</div>
           <nav className="space-y-1">
-            <NavItem href="/hub/profile" icon={<User className="w-3.5 h-3.5 text-emerald-400" />} label="My Profile" role={effectiveRole} pathname={pathname} />
-            <NavItem href="/hub/team/activity" icon={<History className="w-3.5 h-3.5 text-sky-400" />} label="Team Activity" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
-            <NavItem href="/hub/team" icon={<Users className="w-3.5 h-3.5 text-sky-400" />} label="Team & Seats" role={effectiveRole} pathname={pathname} requiredRole="Hub Manager" />
-            <NavItem href="/hub/requests" icon={<GitPullRequest className="w-3.5 h-3.5 text-amber-400" />} label="P2P Access Requests" role={effectiveRole} pathname={pathname} requiredRole="Hub Manager" />
+            <NavItem href="/hub/profile" icon={<User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />} label="My Profile" role={effectiveRole} pathname={pathname} />
+            <NavItem href="/hub/team/activity" icon={<History className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />} label="Team Activity" role={effectiveRole} pathname={pathname} requiredRole="Project Lead" />
+            <NavItem href="/hub/team" icon={<Users className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />} label="Team & Seats" role={effectiveRole} pathname={pathname} requiredRole="Hub Manager" />
+            <NavItem href="/hub/requests" icon={<GitPullRequest className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />} label="P2P Access Requests" role={effectiveRole} pathname={pathname} requiredRole="Hub Manager" />
             <NavItem href="/hub/settings" icon={<Settings className="w-3.5 h-3.5 text-slate-400" />} label="Hub Settings" role={effectiveRole} pathname={pathname} requiredRole="Hub Manager" />
           </nav>
         </div>
       </div>
 
       {/* Footer — real hubId from session */}
-      <div className="p-4 border-t border-white/[0.08] text-[10px] text-slate-400 flex justify-between items-center bg-[#070b16]/80">
+      <div className="p-4 border-t border-slate-200 dark:border-white/[0.08] text-[10px] text-slate-500 dark:text-slate-400 flex justify-between items-center bg-slate-100/70 dark:bg-[#070b16]/80">
         <span>Silo: {hubId}</span>
-        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
       </div>
     </aside>
   );

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { sendOnboardingAdminNotification } from "@/lib/email";
 import { getClientIp, checkRateLimit, recordFailedAttempt } from "@/lib/auth/rateLimiter";
-
-const prisma = new PrismaClient();
+import { generateSequentialClearanceId } from "@/lib/auth/clearanceId";
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,17 +25,32 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, email, orgName, orgDomain, city, region, department, requestedHubId, jurisdiction, portalType, requestedRole } = body;
+    const { 
+      name, 
+      displayName, 
+      email, 
+      orgName, 
+      organizationName, 
+      orgDomain, 
+      city, 
+      region, 
+      department, 
+      requestedHubId, 
+      jurisdiction, 
+      portalType, 
+      requestedRole 
+    } = body;
+
+    const cleanEmail = (email || "").trim().toLowerCase();
+    const cleanName = (name || displayName || "").trim();
+    const resolvedOrgName = (orgName || organizationName || "").trim();
 
     // Track attempt
     recordFailedAttempt(`onboard:${clientIp}`, 3, 10 * 60 * 1000, 10 * 60 * 1000);
 
-    if (!email || !name) {
-      return NextResponse.json({ error: "Full Name and Email are required for onboarding submission" }, { status: 400 });
+    if (!cleanEmail || !cleanName) {
+      return NextResponse.json({ error: "Full Name and Email are required for onboarding submission." }, { status: 400 });
     }
-
-    const cleanEmail = email.trim().toLowerCase();
-    const cleanName = name.trim();
 
     // 1. Check if user already exists in User table
     const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
@@ -74,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     const isOversight = portalType === "oversight";
     const targetOrgType = isOversight ? "REGULATORY_BODY" : "ENTERPRISE";
-    const cleanOrgName = (orgName || "").trim() || (isOversight ? "Regulatory Authority" : cleanDomain.split(".")[0].toUpperCase());
+    const cleanOrgName = resolvedOrgName || (isOversight ? "Regulatory Authority" : cleanDomain.split(".")[0].toUpperCase());
 
     // Find or dynamically create Organization
     let targetOrg = await prisma.organization.findFirst({
@@ -111,20 +125,15 @@ export async function POST(req: NextRequest) {
       finalRole = validEnterpriseRoles.includes(requestedRole) ? requestedRole : "HUB_MANAGER";
     }
 
-    // 5. Generate Formatted Preview Clearance ID
-    let previewClearanceId: string;
-    if (finalRole === "REGULATORY_AUDITOR") {
-      const jurTag = jurisdiction ? jurisdiction.toUpperCase().slice(0, 4) : "REG";
-      previewClearanceId = `AUD-${jurTag}-L4-${Math.floor(100 + Math.random() * 900)}`;
-    } else if (finalRole === "CROSS_HUB_AUDITOR") {
-      previewClearanceId = `AUD-CH-L2-${Math.floor(100 + Math.random() * 900)}`;
-    } else if (finalRole === "STANDARD_AUDITOR") {
-      previewClearanceId = `AUD-SA-L1-${Math.floor(100 + Math.random() * 900)}`;
-    } else {
-      const namePrefix = cleanName.replace(/[^a-zA-Z]/g, "").slice(0, 3).toUpperCase().padEnd(3, "X");
-      const roleCode = finalRole === "HUB_MANAGER" ? "MGR-L3" : finalRole === "PROJECT_LEAD" ? "PJ-L2" : "DEV-L1";
-      previewClearanceId = `${namePrefix}-${roleCode}`;
-    }
+    // 5. Generate Sequential Clearance ID
+    const previewClearanceId = await generateSequentialClearanceId({
+      name: cleanName,
+      role: finalRole,
+      orgName: cleanOrgName,
+      orgId: targetOrg.id,
+      jurisdiction: jurisdiction || region || targetOrg.region,
+      region: region,
+    });
 
     // 6. Create Whitelist Record
     await prisma.whitelist.create({

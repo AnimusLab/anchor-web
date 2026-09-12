@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/auth/session';
 
 export async function POST(request: Request) {
   try {
+    const session = await getSession();
+    if (!session || (session.role !== "ANIMUS_ADMIN" && session.role !== "HUB_MANAGER")) {
+      return NextResponse.json(
+        { error: "Access Denied: Administrator or Hub Manager clearance required to approve node identities." },
+        { status: 403 }
+      );
+    }
+
     const { fingerprint, action } = await request.json();
 
     if (!fingerprint) {

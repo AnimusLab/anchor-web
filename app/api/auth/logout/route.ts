@@ -16,13 +16,15 @@ export async function POST(request: Request) {
     // Ignored if invalid/expired
   }
 
-  cookies().delete("session");
-  cookies().delete("access_token");
+  const cookieStore = await cookies();
+  cookieStore.delete("session");
+  cookieStore.delete("access_token");
   return NextResponse.json({ success: true, message: "Logged out and session invalidated." });
 }
 
 export async function GET() {
-  cookies().delete("session");
-  cookies().delete("access_token");
+  const cookieStore = await cookies();
+  cookieStore.delete("session");
+  cookieStore.delete("access_token");
   return NextResponse.redirect("https://hub.animuslab.dev/login");
 }

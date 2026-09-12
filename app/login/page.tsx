@@ -7,6 +7,7 @@ import { ShieldCheck, Sparkles, Key, Lock, ArrowRight, Layers, Rocket, AlertTria
 import DynamicLanyardCard, { LanyardCardData } from "@/components/auth/DynamicLanyardCard";
 import AnimusLogo from "@/components/ui/AnimusLogo";
 import OnboardingModal from "@/components/auth/OnboardingModal";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,6 +25,22 @@ export default function LoginPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [countdown, setCountdown] = useState<number | null>(null);
+
+  // Countdown timer for rate limiting lockout
+  useEffect(() => {
+    if (countdown === null || countdown <= 0) return;
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [countdown]);
 
   // Clearance ID Auto-Lookup Hook
   useEffect(() => {
@@ -83,6 +100,9 @@ export default function LoginPage() {
       }
 
       if (!res.ok || !data.success) {
+        if (res.status === 429 && data.retryAfterSeconds) {
+          setCountdown(Number(data.retryAfterSeconds));
+        }
         throw new Error(data.message || "Authentication failed");
       }
 
@@ -122,32 +142,35 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen relative flex flex-col justify-between p-4 md:p-8 bg-[#030014] overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen relative flex flex-col justify-between p-4 md:p-8 bg-slate-50 dark:bg-[#030014] text-slate-900 dark:text-slate-100 overflow-x-hidden selection:bg-indigo-500 selection:text-white transition-colors duration-300">
       {/* Background Ambience */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/15 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/15 rounded-full blur-[140px] animate-pulse delay-1000" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-600/15 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 dark:bg-purple-600/15 rounded-full blur-[140px] animate-pulse delay-1000" />
       </div>
 
       {/* Top Header Navigation */}
-      <header className="flex items-center justify-between z-20 max-w-7xl w-full mx-auto pb-6 border-b border-white/20">
+      <header className="flex items-center justify-between z-20 max-w-7xl w-full mx-auto pb-6 border-b border-slate-200 dark:border-white/20">
         <div className="flex items-center space-x-4">
           <AnimusLogo variant="silver" size={44} />
           <div>
-            <span className="text-base font-black tracking-wider text-white uppercase block font-sans">
+            <span className="text-base font-black tracking-wider text-slate-900 dark:text-white uppercase block font-sans">
               Anchor
             </span>
-            <span className="text-[11px] font-mono text-indigo-300 font-bold tracking-widest block uppercase">
+            <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-300 font-bold tracking-widest block uppercase">
               ENTERPRISE PORTAL
             </span>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3 text-xs font-mono">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-          <span className="text-slate-200 font-bold tracking-wider uppercase">
-            ENTERPRISE GOVERNANCE PORTAL
-          </span>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3 text-xs font-mono">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
+            <span className="text-slate-600 dark:text-slate-200 font-bold tracking-wider uppercase">
+              ENTERPRISE GOVERNANCE PORTAL
+            </span>
+          </div>
+          <ThemeToggle />
         </div>
       </header>
 
@@ -156,14 +179,14 @@ export default function LoginPage() {
         {/* Left Form Container */}
         <div className="lg:col-span-6 w-full max-w-lg pure-glass-card p-8 md:p-10 rounded-3xl space-y-6">
           <div>
-            <div className="inline-flex items-center space-x-2 bg-indigo-500/20 backdrop-blur-md border border-indigo-300/40 px-3.5 py-1.5 rounded-full text-xs font-mono text-indigo-200 mb-3 shadow-inner">
-              <Layers className="w-4 h-4 text-indigo-300" />
+            <div className="inline-flex items-center space-x-2 bg-indigo-500/15 dark:bg-indigo-500/20 backdrop-blur-md border border-indigo-400/40 px-3.5 py-1.5 rounded-full text-xs font-mono text-indigo-700 dark:text-indigo-200 mb-3 shadow-inner">
+              <Layers className="w-4 h-4 text-indigo-600 dark:text-indigo-300" />
               <span>ENTERPRISE ACCESS PORTAL</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase font-sans">
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white uppercase font-sans">
               {step === "totp" ? "2FA AUTHENTICATOR" : "ENTERPRISE LOGIN"}
             </h1>
-            <p className="text-sm text-slate-200 mt-2 leading-relaxed font-sans">
+            <p className="text-sm text-slate-600 dark:text-slate-200 mt-2 leading-relaxed font-sans">
               {step === "totp"
                 ? "Enter the 6-digit TOTP code generated by your Authenticator app."
                 : "Enter your Access Credential ID to authenticate your enterprise session."}
@@ -182,11 +205,11 @@ export default function LoginPage() {
               <>
                 <div>
                   <div className="flex items-center justify-between mb-2 font-mono">
-                    <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider">
-                      Access Credential ID <span className="text-indigo-300">*</span>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+                      Access Credential ID <span className="text-indigo-600 dark:text-indigo-300">*</span>
                     </label>
                     {isScanning && (
-                      <span className="text-[10px] text-cyan-300 animate-pulse font-bold flex items-center gap-1">
+                      <span className="text-[10px] text-cyan-600 dark:text-cyan-300 animate-pulse font-bold flex items-center gap-1">
                         <Sparkles className="w-3 h-3 animate-spin" /> RESOLVING KEY...
                       </span>
                     )}
@@ -197,13 +220,13 @@ export default function LoginPage() {
                     value={clearanceId}
                     onChange={(e) => setClearanceId(e.target.value)}
                     placeholder="e.g. CLR-8800-XX"
-                    className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
+                    className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-sm font-sans placeholder:text-slate-400 focus:outline-none transition leading-normal"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
-                    Corporate Email <span className="text-indigo-300">*</span>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-2 font-mono">
+                    Corporate Email <span className="text-indigo-600 dark:text-indigo-300">*</span>
                   </label>
                   <input
                     type="email"
@@ -211,13 +234,13 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@company.com"
-                    className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
+                    className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-sm font-sans placeholder:text-slate-400 focus:outline-none transition leading-normal"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
-                    Organization Hub ID <span className="text-indigo-300">*</span>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-2 font-mono">
+                    Organization Hub ID <span className="text-indigo-600 dark:text-indigo-300">*</span>
                   </label>
                   <input
                     type="text"
@@ -225,32 +248,38 @@ export default function LoginPage() {
                     value={hubId}
                     onChange={(e) => setHubId(e.target.value)}
                     placeholder="e.g. jpmc-ny | citi-london"
-                    className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-white text-sm font-sans placeholder:text-slate-400 placeholder:opacity-70 focus:outline-none transition shadow-inner leading-normal"
+                    className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-3.5 text-sm font-sans placeholder:text-slate-400 focus:outline-none transition leading-normal"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-black py-4 rounded-2xl shadow-[0_0_35px_rgba(99,102,241,0.6)] hover:shadow-[0_0_50px_rgba(99,102,241,0.8)] transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-indigo-300/40"
+                  disabled={isLoading || (countdown !== null && countdown > 0)}
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 dark:bg-gradient-to-r dark:from-indigo-600 dark:via-indigo-500 dark:to-purple-600 hover:dark:from-indigo-500 hover:dark:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-black py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all uppercase tracking-wider flex items-center justify-center space-x-2 border border-indigo-400/30"
                 >
-                  <span>{isLoading ? "AUTHENTICATING..." : "AUTHENTICATE NODE →"}</span>
+                  <span>
+                    {isLoading
+                      ? "AUTHENTICATING..."
+                      : countdown !== null && countdown > 0
+                      ? `🔒 LOCKED OUT (${countdown}s)`
+                      : "AUTHENTICATE NODE →"}
+                  </span>
                 </button>
               </>
             ) : (
               <>
                 {/* STEP 2: 2FA TOTP Code Entry */}
-                <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-3 font-mono text-xs text-indigo-200">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-indigo-300">
+                <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-500/30 space-y-3 font-mono text-xs text-indigo-900 dark:text-indigo-200 shadow-sm">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-indigo-700 dark:text-indigo-300">
                     <span>CLEARANCE ID: {clearanceId}</span>
                     <span>HUB: {hubId}</span>
                   </div>
-                  <div className="text-[11px] text-slate-300">USER: {email}</div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-300">USER: {email}</div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">
-                    6-Digit Authenticator Code (TOTP) <span className="text-indigo-300">*</span>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-2 font-mono">
+                    6-Digit Authenticator Code (TOTP) <span className="text-indigo-600 dark:text-indigo-300">*</span>
                   </label>
                   <input
                     type="text"
@@ -260,7 +289,7 @@ export default function LoginPage() {
                     value={totpCode}
                     onChange={(e) => setTotpCode(e.target.value.replace(/[^0-9]/g, ""))}
                     placeholder="123456"
-                    className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-4 text-white text-2xl font-mono tracking-[0.5em] text-center placeholder:text-slate-500 focus:outline-none transition shadow-inner"
+                    className="w-full pure-glass-input rounded-2xl pl-6 pr-4 py-4 text-slate-900 dark:text-white text-2xl font-mono tracking-[0.5em] text-center placeholder:text-slate-400 focus:outline-none transition shadow-inner"
                   />
                 </div>
 
@@ -268,7 +297,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setStep("credentials")}
-                    className="px-4 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-slate-200 font-mono text-xs font-bold transition flex items-center justify-center space-x-1"
+                    className="px-4 py-3.5 rounded-2xl bg-slate-200/70 hover:bg-slate-300/70 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-slate-200 font-mono text-xs font-bold transition flex items-center justify-center space-x-1 border border-slate-300 dark:border-white/10"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     <span>Back</span>
@@ -288,23 +317,23 @@ export default function LoginPage() {
           </form>
 
           {/* Prominent Secondary Sandbox Button & Onboarding Request */}
-          <div className="pt-3 border-t border-white/20 space-y-2.5">
+          <div className="pt-3 border-t border-slate-200 dark:border-white/20 space-y-2.5">
             <button
               type="button"
               onClick={handleSandboxLaunch}
               disabled={isLoading}
-              className="w-full bg-emerald-500/20 backdrop-blur-md border border-emerald-400/50 hover:bg-emerald-500/30 text-emerald-200 py-3.5 rounded-2xl font-mono text-xs font-extrabold tracking-wider uppercase transition flex items-center justify-center space-x-2 shadow-[0_0_25px_rgba(16,185,129,0.3)] cursor-pointer"
+              className="w-full bg-emerald-500/15 dark:bg-emerald-500/20 backdrop-blur-md border border-emerald-500/40 hover:bg-emerald-500/25 text-emerald-800 dark:text-emerald-200 py-3.5 rounded-2xl font-mono text-xs font-extrabold tracking-wider uppercase transition flex items-center justify-center space-x-2 shadow-sm cursor-pointer"
             >
-              <Rocket className="w-4 h-4 text-emerald-400 animate-bounce" />
+              <Rocket className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-bounce" />
               <span>Launch 1-Month Free Sandbox Portal</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsOnboardOpen(true)}
-              className="w-full bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 py-2.5 rounded-2xl font-mono text-[11px] font-bold tracking-wider uppercase transition flex items-center justify-center space-x-2 cursor-pointer"
+              className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 border border-slate-300 dark:border-indigo-400/30 text-slate-700 dark:text-indigo-200 py-2.5 rounded-2xl font-mono text-[11px] font-bold tracking-wider uppercase transition flex items-center justify-center space-x-2 cursor-pointer"
             >
-              <UserPlus className="w-3.5 h-3.5 text-indigo-400" />
+              <UserPlus className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>Don't have a Clearance ID? Request Whitelist Clearance →</span>
             </button>
           </div>
@@ -327,10 +356,10 @@ export default function LoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="z-20 max-w-7xl w-full mx-auto pt-6 border-t border-white/20 flex items-center justify-between text-xs font-mono text-slate-300">
+      <footer className="z-20 max-w-7xl w-full mx-auto pt-6 border-t border-slate-200 dark:border-white/20 flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-300">
         <div>CORE IDENTITY PROTOCOL: V6.0 // TRIPLE_FACTOR_AUTH</div>
-        <div className="text-slate-200 font-bold tracking-wider">
-          SOVEREIGN RELAY ACTIVE · <span className="text-indigo-300 font-mono">ANIMUSLAB.DEV</span>
+        <div className="text-slate-800 dark:text-slate-200 font-bold tracking-wider">
+          SOVEREIGN RELAY ACTIVE · <span className="text-indigo-600 dark:text-indigo-300 font-mono">ANIMUSLAB.DEV</span>
         </div>
       </footer>
     </div>

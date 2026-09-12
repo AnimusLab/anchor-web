@@ -2,9 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendCredentialWelcomeEmail } from "@/lib/email";
 import { authenticator } from "otplib";
+import { generateSequentialClearanceId } from "@/lib/auth/clearanceId";
+import { getSession } from "@/lib/auth/session";
 
 export async function GET() {
   try {
+    const session = await getSession();
+    if (!session || session.role !== "ANIMUS_ADMIN") {
+      return NextResponse.json(
+        { error: "Access Denied: Only Root Platform Administrators can inspect statutory auditor registry." },
+        { status: 403 }
+      );
+    }
     const [auditorUsers, pendingWhitelists] = await Promise.all([
       prisma.user.findMany({
         where: {
@@ -78,6 +87,14 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session || session.role !== "ANIMUS_ADMIN") {
+      return NextResponse.json(
+        { error: "Access Denied: Only Root Platform Administrators (ANIMUS_ADMIN) can whitelist statutory auditors." },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { email, displayName, role, jurisdiction, orgName } = body;
 
@@ -169,12 +186,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 3. Generate Clearance ID
-    const clearanceId = targetRole === "CROSS_HUB_AUDITOR"
-      ? `AUD-CH-L2-${Math.floor(100 + Math.random() * 900)}`
-      : targetRole === "STANDARD_AUDITOR"
-      ? `AUD-SA-L1-${Math.floor(100 + Math.random() * 900)}`
-      : `AUD-${jurisdiction ? jurisdiction.replace(/-/g, "").slice(0, 4).toUpperCase() : "REG"}-L4-${Math.floor(100 + Math.random() * 900)}`;
+    // 3. Generate Sequential Clearance ID based on Organization / Jurisdiction
+    const clearanceId = await generateSequentialClearanceId({
+      role: targetRole,
+      orgName: resolvedOrgName,
+      orgId: regOrg.id,
+      jurisdiction: jurisdiction,
+    });
 
     // 4. Create Statutory Auditor User with unique Base32 TOTP secret
     const uniqueTotpSecret = authenticator.generateSecret();

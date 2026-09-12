@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
 
-export function middleware(request: NextRequest) {
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'anchor-governance-secret-key-change-in-production-min-32-chars'
+);
+
+export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   const hostname = (request.headers.get('host') || '').toLowerCase();
   const pathname = url.pathname;
@@ -51,39 +56,33 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 3. Inspect Session Cookie (JWT or JSON payload)
-  const sessionCookie = request.cookies.get('session') || request.cookies.get('access_token');
-  let session: any = null;
-
-  if (sessionCookie) {
-    try {
-      session = JSON.parse(sessionCookie.value);
-    } catch (e) {
-      try {
-        const parts = sessionCookie.value.split('.');
-        if (parts.length === 3) {
-          const payloadJson = Buffer.from(parts[1], 'base64').toString('utf-8');
-          const payload = JSON.parse(payloadJson);
-          session = {
-            id: payload.uid,
-            email: payload.sub,
-            role: payload.role,
-            auditorType: payload.auditorType,
-            orgId: payload.orgId,
-            hubId: payload.hubId,
-            projectId: payload.projectId,
-            jurisdiction: payload.jurisdiction,
-          };
-        }
-      } catch (err) {
-        // Ignored invalid payload
-      }
-    }
+  // 3. Cryptographically Verify Signed JWT Access Token (Strict Zero-Trust)
+  const token = request.cookies.get('access_token')?.value;
+  if (!token) {
+    return redirectToPortalLogin(hostname, request);
   }
 
-  // 4. Force Login Redirection if Unauthenticated
+  let session: any = null;
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET, { algorithms: ['HS256'] });
+    session = {
+      id: payload.uid as string,
+      email: payload.sub as string,
+      role: payload.role as string,
+      auditorType: payload.auditorType as string | undefined,
+      orgId: payload.orgId as string | undefined,
+      hubId: payload.hubId as string | undefined,
+      projectId: payload.projectId as string | undefined,
+      jurisdiction: payload.jurisdiction as string | undefined,
+    };
+  } catch (err) {
+    // Cryptographic signature invalid, expired, or tampered with
+    return redirectToPortalLogin(hostname, request, true);
+  }
+
+  // 4. Force Login Redirection if Payload Missing or Invalid Role
   if (!session || !session.role) {
-    return redirectToPortalLogin(hostname, request);
+    return redirectToPortalLogin(hostname, request, true);
   }
 
   // 5. Strict Subdomain Role-Based Access Control (RBAC) Enforcement
@@ -120,9 +119,10 @@ export function middleware(request: NextRequest) {
 
 function redirectToPortalLogin(hostname: string, request: NextRequest, clearCookies = false) {
   let targetLogin = '/login';
-  if (hostname.includes('admin.animuslab.dev')) {
+  const pathname = request.nextUrl.pathname;
+  if (hostname.includes('admin.animuslab.dev') || pathname.startsWith('/admin')) {
     targetLogin = '/admin/login';
-  } else if (hostname.includes('oversight.animuslab.dev')) {
+  } else if (hostname.includes('oversight.animuslab.dev') || pathname.startsWith('/oversight')) {
     targetLogin = '/oversight/login';
   }
 
@@ -142,3 +142,4 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
+

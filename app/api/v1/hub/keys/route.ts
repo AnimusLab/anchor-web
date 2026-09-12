@@ -104,8 +104,15 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "API Key not found." }, { status: 404 });
     }
 
-    if (session.role !== "HUB_MANAGER" && session.role !== "ANIMUS_ADMIN" && apiKey.createdBy !== session.id) {
-      return NextResponse.json({ error: "Access Denied: You cannot revoke this key." }, { status: 403 });
+    const isGlobalAdmin = session.role === "ANIMUS_ADMIN";
+    const isHubManager = session.role === "HUB_MANAGER" && apiKey.hubId === session.hubId;
+    const isKeyCreator = apiKey.createdBy === session.id && apiKey.hubId === session.hubId;
+
+    if (!isGlobalAdmin && !isHubManager && !isKeyCreator) {
+      return NextResponse.json(
+        { error: "Access Denied: You do not have clearance to revoke API keys belonging to this Hub or Project." },
+        { status: 403 }
+      );
     }
 
     await prisma.apiKey.update({

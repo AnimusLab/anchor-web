@@ -35,25 +35,25 @@ export default function AntiCollusionAuditTrailPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto relative z-10 font-mono text-xs">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/[0.08] pb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 dark:border-white/[0.08] pb-6 gap-4">
         <div>
-          <div className="animus-label mb-1 text-rose-400">ANTI-COLLUSION MASTER TRAIL</div>
-          <h1 className="text-3xl font-bold text-slate-100 tracking-tight font-sans">Anti-Collusion Audit Trail</h1>
-          <p className="text-sm text-slate-400 mt-1">Read-only master audit log tracking all actions across Auditors, Managers, Project Leads, and Developers.</p>
+          <div className="animus-label mb-1 text-rose-600 dark:text-rose-400">ANTI-COLLUSION MASTER TRAIL</div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight font-sans">Anti-Collusion Audit Trail</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Read-only master audit log tracking all actions across Auditors, Managers, Project Leads, and Developers.</p>
         </div>
 
         <button
           onClick={handleExport}
-          className="glass-badge px-4 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-950/40 flex items-center space-x-2 transition"
+          className="glass-badge px-4 py-2.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center space-x-2 transition cursor-pointer border border-emerald-300 dark:border-emerald-500/30"
         >
-          <Download className="w-4 h-4 text-emerald-400" />
+          <Download className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           <span>Export Certified Legal Audit Package</span>
         </button>
       </div>
 
       {exportedMsg && (
-        <div className="glass-card p-4 border border-emerald-500/40 text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-400" />
+        <div className="glass-card p-4 border border-emerald-500/40 text-emerald-700 dark:text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
+          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>{exportedMsg}</span>
         </div>
       )}
@@ -67,21 +67,21 @@ export default function AntiCollusionAuditTrailPage() {
             placeholder="Search Actor Email, PR Number, Git SHA (e.g. c7a8910), or Action..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#070b16]/70 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-rose-400/50 font-mono transition"
+            className="w-full bg-slate-50 dark:bg-[#070b16]/70 border border-slate-300 dark:border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:border-rose-400/50 font-mono transition"
           />
         </div>
       </div>
 
       {/* Audit Log Stream */}
       <div className="glass-card overflow-hidden">
-        <div className="p-5 border-b border-white/[0.08] flex justify-between items-center bg-[#070b16]/60">
-          <span className="animus-label text-slate-300">MASTER SYSTEM AUDIT LOG</span>
-          <span className="text-slate-400">{filtered.length} Monitored Actions</span>
+        <div className="p-5 border-b border-slate-200 dark:border-white/[0.08] flex justify-between items-center bg-slate-100/70 dark:bg-[#070b16]/60">
+          <span className="animus-label text-slate-700 dark:text-slate-300">MASTER SYSTEM AUDIT LOG</span>
+          <span className="text-slate-500 dark:text-slate-400">{filtered.length} Monitored Actions</span>
         </div>
 
         <div className="p-5 space-y-4">
           {filtered.length === 0 ? (
-            <div className="p-8 text-center font-mono text-xs text-slate-500 border border-dashed border-white/10 rounded-xl">
+            <div className="p-8 text-center font-mono text-xs text-slate-600 dark:text-slate-500 border border-dashed border-slate-300 dark:border-white/10 rounded-xl bg-slate-50 dark:bg-black/30">
               NO AUDIT LOG RECORDS FOUND // SYSTEM SECURE
             </div>
           ) : (
@@ -89,16 +89,16 @@ export default function AntiCollusionAuditTrailPage() {
               <div key={log.id} className="glass-card-inset p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center space-x-3">
-                    <span className="text-slate-100 font-bold font-sans text-sm">{log.actor}</span>
-                    <span className="glass-badge px-2 py-0.5 text-[10px] text-amber-400 font-bold">{log.role}</span>
-                    <span className="text-slate-500">|</span>
-                    <span className="text-sky-400 font-bold">{log.commitOrPr}</span>
+                    <span className="text-slate-900 dark:text-slate-100 font-bold font-sans text-sm">{log.actor}</span>
+                    <span className="glass-badge px-2 py-0.5 text-[10px] text-amber-700 dark:text-amber-400 font-bold">{log.role}</span>
+                    <span className="text-slate-400 dark:text-slate-500">|</span>
+                    <span className="text-sky-700 dark:text-sky-400 font-bold">{log.commitOrPr}</span>
                   </div>
-                  <div className="text-slate-300 font-sans text-xs">{log.action}</div>
+                  <div className="text-slate-700 dark:text-slate-300 font-sans text-xs">{log.action}</div>
                   <div className="text-slate-500 text-[10px]">Target: {log.targetEntity} · {log.timestamp}</div>
                 </div>
 
-                <span className={`glass-badge px-3 py-1 font-bold text-[10px] ${log.flagStatus === 'CLEAN' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <span className={`glass-badge px-3 py-1 font-bold text-[10px] ${log.flagStatus === 'CLEAN' ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
                   {log.flagStatus}
                 </span>
               </div>

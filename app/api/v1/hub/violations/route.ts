@@ -1,17 +1,33 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/auth/session';
 
 export async function GET(request: Request) {
   try {
+    const session = await getSession();
+    if (!session || !session.role) {
+      return NextResponse.json({ error: "Unauthorized: Authentication required." }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const projectName = searchParams.get('projectName');
+    const requestedHubId = searchParams.get('hubId');
 
     // Build the query constraints matrix
     const queryConditions: any = {
       complianceVerdict: "NON_COMPLIANT"
     };
+
+    const isCrossHubRole = ["ANIMUS_ADMIN", "CROSS_HUB_AUDITOR", "REGULATORY_AUDITOR"].includes(session.role);
+
+    if (isCrossHubRole) {
+      if (requestedHubId) {
+        queryConditions.hubId = requestedHubId;
+      }
+    } else {
+      // Internal personnel are strictly locked to their own Hub / Silo
+      queryConditions.hubId = session.hubId || "animuslab-hq";
+    }
 
     if (projectName) {
       queryConditions.projectName = projectName;

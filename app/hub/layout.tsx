@@ -17,7 +17,7 @@ export default async function HubLayout({ children }: { children: React.ReactNod
   const auditorType = session?.auditorType;
 
   return (
-    <div className="flex h-screen bg-[#03050a] text-slate-100 font-sans text-xs overflow-hidden relative">
+    <div className="flex h-screen bg-slate-50 dark:bg-[#03050a] text-slate-900 dark:text-slate-100 font-sans text-xs overflow-hidden relative transition-colors duration-300">
       {/* Animated Solar System Background */}
       <SolarSystemBackground />
       

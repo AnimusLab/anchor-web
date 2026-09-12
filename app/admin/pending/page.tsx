@@ -61,17 +61,17 @@ export default function PendingApprovalsPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto relative z-10 font-mono text-xs">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/[0.08] pb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 dark:border-white/[0.08] pb-6 gap-4">
         <div>
-          <div className="animus-label mb-1 text-amber-400">ACCESS CONTROL & WHITELIST INGESTION</div>
-          <h1 className="text-3xl font-bold text-slate-100 tracking-tight font-sans">Pending Approvals & Node Registry</h1>
-          <p className="text-sm text-slate-400 mt-1">Review pending cryptographic key identities from anchor init and provision active enterprise node access.</p>
+          <div className="animus-label mb-1 text-amber-600 dark:text-amber-400">ACCESS CONTROL &amp; WHITELIST INGESTION</div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight font-sans">Pending Approvals &amp; Node Registry</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Review pending cryptographic key identities from anchor init and provision active enterprise node access.</p>
         </div>
 
         <div className="flex space-x-3">
           <button
             onClick={fetchNodes}
-            className="glass-badge px-4 py-2.5 text-xs font-bold text-sky-400 hover:bg-sky-950/40 flex items-center space-x-2 transition"
+            className="glass-badge px-4 py-2.5 text-xs font-bold text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40 flex items-center space-x-2 transition cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             <span>Refresh Registry</span>
@@ -81,8 +81,8 @@ export default function PendingApprovalsPage() {
 
       {/* Action Success Alert */}
       {actionSuccessMsg && (
-        <div className="glass-card p-4 border border-emerald-500/40 text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-400" />
+        <div className="glass-card p-4 border border-emerald-500/40 text-emerald-700 dark:text-emerald-400 font-sans text-xs flex items-center space-x-3 animate-fadeIn">
+          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>{actionSuccessMsg}</span>
         </div>
       )}
@@ -90,17 +90,17 @@ export default function PendingApprovalsPage() {
       {/* Zero Signup Policy Notice */}
       <div className="glass-card p-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <Shield className="w-4 h-4 text-amber-400" />
-          <span>POLICY: Zero Un-whitelisted Access. Telemetry packets from un-whitelisted node fingerprints are dropped with 401 Unauthorized.</span>
+          <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          <span className="text-slate-700 dark:text-slate-300">POLICY: Zero Un-whitelisted Access. Telemetry packets from un-whitelisted node fingerprints are dropped with 401 Unauthorized.</span>
         </div>
-        <span className="glass-badge px-3 py-1 text-amber-400 font-bold text-[10px]">ENFORCED</span>
+        <span className="glass-badge px-3 py-1 text-amber-600 dark:text-amber-400 font-bold text-[10px]">ENFORCED</span>
       </div>
 
       {/* Pending Whitelist Queue */}
       <div className="glass-card overflow-hidden">
-        <div className="p-5 border-b border-white/[0.08] flex justify-between items-center bg-[#070b16]/60">
-          <span className="animus-label text-amber-400 font-bold">PENDING NODE IDENTITY APPROVAL QUEUE</span>
-          <span className="text-slate-400">{pendingNodes.length} Nodes Awaiting Approval</span>
+        <div className="p-5 border-b border-slate-200 dark:border-white/[0.08] flex justify-between items-center bg-slate-100/70 dark:bg-[#070b16]/60">
+          <span className="animus-label text-amber-600 dark:text-amber-400 font-bold">PENDING NODE IDENTITY APPROVAL QUEUE</span>
+          <span className="text-slate-500 dark:text-slate-400">{pendingNodes.length} Nodes Awaiting Approval</span>
         </div>
 
         <div className="p-5 space-y-4">
@@ -113,11 +113,11 @@ export default function PendingApprovalsPage() {
               <div key={item.id} className="glass-card-inset p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-2 border-amber-500">
                 <div>
                   <div className="flex items-center space-x-3">
-                    <span className="text-sky-400 font-bold text-base">{item.projectName}</span>
-                    <span className="glass-badge px-2.5 py-0.5 text-amber-400 font-bold text-[10px]">PENDING_WHITELIST</span>
+                    <span className="text-sky-600 dark:text-sky-400 font-bold text-base">{item.projectName}</span>
+                    <span className="glass-badge px-2.5 py-0.5 text-amber-600 dark:text-amber-400 font-bold text-[10px]">PENDING_WHITELIST</span>
                   </div>
-                  <div className="text-slate-400 text-xs mt-2 font-mono break-all">
-                    Fingerprint: <span className="text-slate-200 font-bold">{item.publicKeyFingerprint}</span>
+                  <div className="text-slate-600 dark:text-slate-400 text-xs mt-2 font-mono break-all">
+                    Fingerprint: <span className="text-slate-900 dark:text-slate-200 font-bold">{item.publicKeyFingerprint}</span>
                   </div>
                   <div className="text-slate-500 text-[10px] mt-1">
                     Registered: {new Date(item.registeredAt).toLocaleString()} · Source: {item.registeredBy || "CLI"}
@@ -127,14 +127,14 @@ export default function PendingApprovalsPage() {
                 <div className="flex space-x-3 flex-shrink-0">
                   <button
                     onClick={() => handleApproveNode(item.publicKeyFingerprint, "APPROVE")}
-                    className="glass-badge text-emerald-400 px-4 py-2 font-bold text-xs hover:bg-emerald-950/40 flex items-center space-x-2 transition"
+                    className="glass-badge text-emerald-600 dark:text-emerald-400 px-4 py-2 font-bold text-xs hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center space-x-2 transition cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Approve & Provision</span>
+                    <span>Approve &amp; Provision</span>
                   </button>
                   <button
                     onClick={() => handleApproveNode(item.publicKeyFingerprint, "REJECT")}
-                    className="glass-badge text-rose-400 px-4 py-2 font-bold text-xs hover:bg-rose-950/40 flex items-center space-x-2 transition"
+                    className="glass-badge text-rose-600 dark:text-rose-400 px-4 py-2 font-bold text-xs hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center space-x-2 transition cursor-pointer"
                   >
                     <XCircle className="w-4 h-4" />
                     <span>Reject</span>
@@ -148,9 +148,9 @@ export default function PendingApprovalsPage() {
 
       {/* Active Whitelisted Nodes */}
       <div className="glass-card overflow-hidden">
-        <div className="p-5 border-b border-white/[0.08] flex justify-between items-center bg-[#070b16]/60">
-          <span className="animus-label text-emerald-400 font-bold">ACTIVE PROVISIONED ENTERPRISE NODES</span>
-          <span className="text-slate-400">{activeNodes.length} Active Telemetry Streams</span>
+        <div className="p-5 border-b border-slate-200 dark:border-white/[0.08] flex justify-between items-center bg-slate-100/70 dark:bg-[#070b16]/60">
+          <span className="animus-label text-emerald-600 dark:text-emerald-400 font-bold">ACTIVE PROVISIONED ENTERPRISE NODES</span>
+          <span className="text-slate-500 dark:text-slate-400">{activeNodes.length} Active Telemetry Streams</span>
         </div>
 
         <div className="p-5 space-y-4">
@@ -163,14 +163,14 @@ export default function PendingApprovalsPage() {
               <div key={item.id} className="glass-card-inset p-4 flex justify-between items-center border-l-2 border-emerald-500">
                 <div>
                   <div className="flex items-center space-x-3">
-                    <span className="text-slate-100 font-bold text-sm">{item.projectName}</span>
-                    <span className="glass-badge px-2.5 py-0.5 text-emerald-400 font-bold text-[10px]">ACTIVE & STREAMING</span>
+                    <span className="text-slate-900 dark:text-slate-100 font-bold text-sm">{item.projectName}</span>
+                    <span className="glass-badge px-2.5 py-0.5 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">ACTIVE &amp; STREAMING</span>
                   </div>
-                  <div className="text-slate-400 text-[11px] mt-1 font-mono">
+                  <div className="text-slate-600 dark:text-slate-400 text-[11px] mt-1 font-mono">
                     FP: {item.publicKeyFingerprint}
                   </div>
                 </div>
-                <span className="glass-badge px-3 py-1 text-emerald-400 font-bold text-[10px]">
+                <span className="glass-badge px-3 py-1 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
                   TELEMETRY AUTHORIZED
                 </span>
               </div>
