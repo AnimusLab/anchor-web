@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/auth/session';
 
 export async function GET(request: Request) {
   try {
+    const session = await getSession();
+    if (!session || !['ANIMUS_ADMIN', 'REGULATORY_AUDITOR', 'CROSS_HUB_AUDITOR', 'STANDARD_AUDITOR'].includes(session.role)) {
+      return NextResponse.json(
+        { error: "Access Denied: Statutory Regulatory Auditor clearance required for Gated Mission Replay." },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get('eventId');
 
