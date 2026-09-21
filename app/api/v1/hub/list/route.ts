@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET() {
   try {
+    const session = await getSession();
+    if (!session || (session.role !== "ANIMUS_ADMIN" && session.role !== "HUB_MANAGER")) {
+      return NextResponse.json(
+        { error: "Access Denied: Only Root Administrators or Hub Managers can inspect the enterprise node list." },
+        { status: 403 }
+      );
+    }
+
     const [hubs, allUsers, allWhitelists] = await Promise.all([
       prisma.hub.findMany({
         include: { organization: true },

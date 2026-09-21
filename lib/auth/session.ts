@@ -2,11 +2,19 @@ import { cookies } from "next/headers";
 import { jwtVerify, SignJWT } from "jose";
 import { Role, AuditorType, UserSession } from "./clearance";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "anchor-governance-secret-key-change-in-production-min-32-chars"
-);
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.trim().length < 32) {
+    throw new Error(
+      "FATAL: JWT_SECRET environment variable is missing, empty, or shorter than 32 characters. " +
+      "The application refuses to operate with an insecure or fallback secret."
+    );
+  }
+  return new TextEncoder().encode(secret.trim());
+}
 
 export async function createSessionCookie(user: UserSession): Promise<string> {
+  const secretKey = getJwtSecret();
   const token = await new SignJWT({
     sub: user.email,
     uid: user.id,
@@ -20,7 +28,7 @@ export async function createSessionCookie(user: UserSession): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("8h")
-    .sign(JWT_SECRET);
+    .sign(secretKey);
 
   return token;
 }
@@ -32,7 +40,8 @@ export async function getSession(): Promise<UserSession | null> {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET, { algorithms: ["HS256"] });
+    const secretKey = getJwtSecret();
+    const { payload } = await jwtVerify(token, secretKey, { algorithms: ["HS256"] });
     return {
       id: payload.uid as string,
       email: payload.sub as string,

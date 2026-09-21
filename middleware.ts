@@ -2,27 +2,43 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'anchor-governance-secret-key-change-in-production-min-32-chars'
-);
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.trim().length < 32) {
+    throw new Error(
+      "FATAL: JWT_SECRET environment variable is missing, empty, or shorter than 32 characters. " +
+      "The application refuses to operate with an insecure or fallback secret."
+    );
+  }
+  return new TextEncoder().encode(secret.trim());
+}
+
+const ADMIN_HOSTS = new Set(['admin.animuslab.dev', 'admin.localhost']);
+const OVERSIGHT_HOSTS = new Set(['oversight.animuslab.dev', 'oversight.localhost']);
+const HUB_HOSTS = new Set(['hub.animuslab.dev', 'hub.localhost']);
 
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
-  const hostname = (request.headers.get('host') || '').toLowerCase();
+  const rawHost = (request.headers.get('host') || '').toLowerCase();
+  const host = rawHost.split(':')[0];
   const pathname = url.pathname;
 
+  const isAdminSubdomain = ADMIN_HOSTS.has(host);
+  const isOversightSubdomain = OVERSIGHT_HOSTS.has(host);
+  const isHubSubdomain = HUB_HOSTS.has(host);
+
   // 1. Intelligent Subdomain Gateway Rewriting
-  if (hostname.includes('admin.animuslab.dev')) {
+  if (isAdminSubdomain) {
     if (pathname === '/' || pathname === '/login') {
       url.pathname = '/admin/login';
       return NextResponse.rewrite(url);
     }
-  } else if (hostname.includes('oversight.animuslab.dev')) {
+  } else if (isOversightSubdomain) {
     if (pathname === '/' || pathname === '/login') {
       url.pathname = '/oversight/login';
       return NextResponse.rewrite(url);
     }
-  } else if (hostname.includes('hub.animuslab.dev')) {
+  } else if (isHubSubdomain) {
     if (pathname === '/') {
       url.pathname = '/login';
       return NextResponse.rewrite(url);
@@ -59,12 +75,13 @@ export async function middleware(request: NextRequest) {
   // 3. Cryptographically Verify Signed JWT Access Token (Strict Zero-Trust)
   const token = request.cookies.get('access_token')?.value;
   if (!token) {
-    return redirectToPortalLogin(hostname, request);
+    return redirectToPortalLogin(host, request);
   }
 
   let session: any = null;
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET, { algorithms: ['HS256'] });
+    const secretKey = getJwtSecret();
+    const { payload } = await jwtVerify(token, secretKey, { algorithms: ['HS256'] });
     session = {
       id: payload.uid as string,
       email: payload.sub as string,
@@ -75,54 +92,54 @@ export async function middleware(request: NextRequest) {
       projectId: payload.projectId as string | undefined,
       jurisdiction: payload.jurisdiction as string | undefined,
     };
-  } catch (err) {
-    // Cryptographic signature invalid, expired, or tampered with
-    return redirectToPortalLogin(hostname, request, true);
+  } catch (err: any) {
+    console.warn(`[Middleware JWT Error] token verify failed: ${err?.message || err}`);
+    return redirectToPortalLogin(host, request, true);
   }
 
   // 4. Force Login Redirection if Payload Missing or Invalid Role
   if (!session || !session.role) {
-    return redirectToPortalLogin(hostname, request, true);
+    return redirectToPortalLogin(host, request, true);
   }
 
   // 5. Strict Subdomain Role-Based Access Control (RBAC) Enforcement
   const role = (session.role || '').toUpperCase();
 
   // A. Admin Subdomain (/admin/*): Strictly requires ANIMUS_ADMIN
-  if (hostname.includes('admin.animuslab.dev') || pathname.startsWith('/admin')) {
+  if (isAdminSubdomain || pathname.startsWith('/admin')) {
     if (role !== 'ANIMUS_ADMIN') {
       console.warn(`[RBAC Guard] Denied ${session.email} (${role}) access to Admin Portal.`);
-      return redirectToPortalLogin('admin.animuslab.dev', request, true);
+      return redirectToPortalLogin(host, request, true);
     }
   }
 
   // B. Oversight Subdomain (/oversight/*): Strictly requires Statutory / Cross-Hub Auditors
-  else if (hostname.includes('oversight.animuslab.dev') || pathname.startsWith('/oversight')) {
+  else if (isOversightSubdomain || pathname.startsWith('/oversight')) {
     const isAuditor = ['REGULATORY_AUDITOR', 'CROSS_HUB_AUDITOR', 'STANDARD_AUDITOR'].includes(role);
     if (!isAuditor) {
       console.warn(`[RBAC Guard] Denied ${session.email} (${role}) access to Oversight Portal.`);
-      return redirectToPortalLogin('oversight.animuslab.dev', request, true);
+      return redirectToPortalLogin(host, request, true);
     }
   }
 
   // C. Hub Subdomain (/hub/*): Strictly requires Hub Manager, Project Lead, or Developer
-  else if (hostname.includes('hub.animuslab.dev') || pathname.startsWith('/hub')) {
+  else if (isHubSubdomain || pathname.startsWith('/hub')) {
     const isHubPersonnel = ['HUB_MANAGER', 'PROJECT_LEAD', 'DEVELOPER'].includes(role);
     if (!isHubPersonnel) {
       console.warn(`[RBAC Guard] Denied ${session.email} (${role}) access to Hub Portal.`);
-      return redirectToPortalLogin('hub.animuslab.dev', request, true);
+      return redirectToPortalLogin(host, request, true);
     }
   }
 
   return NextResponse.next();
 }
 
-function redirectToPortalLogin(hostname: string, request: NextRequest, clearCookies = false) {
+function redirectToPortalLogin(host: string, request: NextRequest, clearCookies = false) {
   let targetLogin = '/login';
   const pathname = request.nextUrl.pathname;
-  if (hostname.includes('admin.animuslab.dev') || pathname.startsWith('/admin')) {
+  if (ADMIN_HOSTS.has(host) || pathname.startsWith('/admin')) {
     targetLogin = '/admin/login';
-  } else if (hostname.includes('oversight.animuslab.dev') || pathname.startsWith('/oversight')) {
+  } else if (OVERSIGHT_HOSTS.has(host) || pathname.startsWith('/oversight')) {
     targetLogin = '/oversight/login';
   }
 

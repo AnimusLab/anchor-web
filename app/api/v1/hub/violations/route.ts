@@ -34,11 +34,17 @@ export async function GET(request: Request) {
     }
 
     // Pull transaction records sorted chronologically by arrival time
-    const telemetryEvents = await prisma.telemetryEvent.findMany({
-      where: queryConditions,
-      orderBy: { createdAt: 'desc' },
-      take: 50
-    });
+    let telemetryEvents: any[] = [];
+    try {
+      telemetryEvents = await prisma.telemetryEvent.findMany({
+        where: queryConditions,
+        orderBy: { createdAt: 'desc' },
+        take: 50
+      });
+    } catch (dbErr) {
+      // Fallback for temporary database connection blips / offline dev mode
+      telemetryEvents = [];
+    }
 
     // Unpack the JSON strings into raw iterable objects for frontend mapping
     const structuredViolations = telemetryEvents.map(event => ({
