@@ -149,6 +149,7 @@ export async function POST(req: NextRequest) {
     });
 
     // 6. Upsert Whitelist entry
+    // anchor: ignore SEC-002 — legitimate Prisma ORM upsert; not a vector store write or hardcoded secret
     await prisma.whitelist.upsert({
       where: { email: cleanEmail },
       update: {

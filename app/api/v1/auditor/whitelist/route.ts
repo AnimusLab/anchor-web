@@ -122,6 +122,7 @@ export async function POST(req: NextRequest) {
         if (targetHubId) {
           const targetHub = await prisma.hub.findUnique({ where: { id: targetHubId } });
           if (targetHub) {
+            // anchor: ignore SEC-002 — legitimate Prisma ORM upsert; not a vector store write or hardcoded secret
             await prisma.userHubAssignment.upsert({
               where: {
                 userId_hubId: {
@@ -225,6 +226,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 6. Also add to Whitelist as approved
+    // anchor: ignore SEC-002 — legitimate Prisma ORM upsert; not a vector store write or hardcoded secret
     await prisma.whitelist.upsert({
       where: { email: cleanEmail },
       update: {

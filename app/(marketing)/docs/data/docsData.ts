@@ -110,6 +110,7 @@ export const DOCS_TAXONOMY: DocCategory[] = [
                 "Many legacy systems attempt to evaluate compliance by calling a secondary LLM (e.g. GPT-4) to judge if an agent's response was safe. This approach fails in institutional finance and healthcare for three fatal reasons:",
                 "1. Non-Determinism: An LLM judge can evaluate the exact same payload differently across attempts, violating fundamental legal predictability standards.",
                 "2. Latency Penalty: Remote LLM evaluations add 400ms to 2,500ms of network latency per agent step, destroying high-frequency performance.",
+                // anchor: ignore SEC-001 — documentation text explaining what jailbreaks are; not executable prompt injection
                 "3. Vulnerability to Jailbreaks: Secondary LLMs are susceptible to prompt injection and indirect goal manipulation.",
                 "Anchor compiles human laws (EU AI Act, RBI FREE-AI, SEC Reg SCI) into formal mathematical AST invariants and zero-copy Rust bytecode that executes deterministically in sub-millisecond time.",
               ],

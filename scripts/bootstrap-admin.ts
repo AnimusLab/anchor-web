@@ -13,6 +13,7 @@ async function bootstrap() {
   const secret = authenticator.generateSecret();
   const otpauth = authenticator.keyuri(email, "AnimusLab Admin", secret);
 
+  // anchor: ignore SEC-002 — legitimate Prisma ORM upsert into relational DB; not a vector store write or hardcoded secret
   const admin = await prisma.adminUser.upsert({
     where: { email: email.toLowerCase() },
     update: {

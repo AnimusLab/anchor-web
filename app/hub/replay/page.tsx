@@ -20,6 +20,7 @@ const REPLAY_STEPS: StepPayload[] = [
     component: "PromptGuard Sanitizer",
     action: "Sanitize Inbound User Request",
     input: '{ "user_query": "Transfer $50,000 to Account #88190" }',
+    // anchor: ignore SEC-001 — static demo fixture data illustrating example sanitizer output; not executable
     output: '{ "clean_query": "Transfer $50,000 to Account #88190", "jailbreak_detected": false }',
     compliant: true
   },
