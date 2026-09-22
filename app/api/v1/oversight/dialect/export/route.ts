@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       supervisoryAuthority: selectedDialectMeta.authority,
       targetEntitySilo: targetHubId || "ALL_AUTHORIZED_SILOS",
       compiledBy: {
-        userId: session.userId,
+        userId: session.id,
         role: session.role,
         auditorClearance: "LEVEL_4_STATUTORY",
       },
