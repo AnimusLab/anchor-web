@@ -433,11 +433,12 @@ export default function ApiKeyVaultClient({
             {/* Quick SDK Usage Snippet */}
             <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 space-y-1.5 text-[11px]">
               <span className="text-slate-400 block font-bold">SDK USAGE EXAMPLE:</span>
-              {/* anchor: ignore SEC-002 — api_key below is a runtime value from API response for one-time display; not a hardcoded secret */}
+              {/* Quick SDK usage — api_key is a runtime value from API response, not a hardcoded secret */}
               <pre className="text-sky-300 font-mono text-[10px] overflow-x-auto p-2 bg-[#04060c] rounded-lg">
 {`from anchor import AnchorClient
 
 client = AnchorClient(
+    # anchor: ignore SEC-002 — runtime API response value; not a hardcoded secret
     api_key="${newKeyResult.rawKey}",
     hub_id="${hubId}"
 )`}
