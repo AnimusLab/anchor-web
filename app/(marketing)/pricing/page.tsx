@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Shield, Lock, FileCheck, Scale, Cpu, Globe, Server, Key, Users, ChevronRight, Download, HelpCircle, Sun, Moon, Layers, BadgeCheck, AlertCircle } from "lucide-react";
 import { AnchorLogo } from "@/components/AnchorLogo";
+import { PricingCalculator } from "@/components/PricingCalculator";
 import { useTheme } from "@/lib/theme";
 
 /* ─────────────────────────────────────────────────────────
@@ -249,7 +250,7 @@ const ADD_ON_CATALOG = [
   { item: "Cross-Hub Auditor Pack (3 seats)", price: "$25,500 / yr", desc: "Multi-Hub global explorer, mesh auditing & consolidated statutory filings ($8,500/seat)" },
   { item: "Extra Hub Manager (1 seat)", price: "$9,000 / yr", desc: "Apex L3 administrator with dual-key cryptographic approval sovereignty (sold individually)" },
   { item: "Additional Hub Container", price: "$7,000 / yr", desc: "Isolated digital branch infrastructure container for new physical/business divisions" },
-  { item: "Additional Governed AI Model Slot", price: "$2,500 / yr", desc: "Dedicated statutory mapping and risk boundary slot per additional production model" },
+  { item: "Additional Governed AI Model Slot", price: "$2,500 / yr", desc: "Dedicated statutory mapping, risk-boundary tracking, and DAC segmentation per additional production model. Priced at ~½ Project Lead oversight scope ($2,500 confirmed rate)." },
 ];
 
 const PROFESSIONAL_SERVICES = [
@@ -794,12 +795,15 @@ export default function PricingPage() {
 
           <div className="p-6 rounded-2xl bg-white dark:bg-[#121217] border border-slate-200 dark:border-white/10 text-center text-xs text-slate-600 dark:text-slate-400 max-w-3xl mx-auto space-y-1.5 shadow-sm">
             <p className="font-bold text-black dark:text-white">Standing 15% Bundle Discount &amp; Multi-Year Commitments</p>
-            <p>Every custom configuration is priced at list rates with a standing 15% bundle discount applied. 12% to 18% additional discounts apply for 3+ year enterprise agreements.</p>
+            <p>All configurations — named tiers and custom builds — are priced at list rates with a standing 15% bundle discount already applied. Multi-year enterprise agreements earn an additional term discount: <strong className="text-black dark:text-white">3-year = 12% · 4-year = 15% · 5+-year = 18%</strong> off the post-bundle annual rate (+3% per year of commitment, floor 12%, ceiling 18%). Term discounts require prepayment of the full contract value.</p>
           </div>
         </div>
       </section>
 
-      {/* ── 03. ADD-ON CATALOG & EXPANSION PACKS ──────────────────────────── */}
+      {/* ── 03. INTERACTIVE PRICING CALCULATOR ───────────────────────────── */}
+      <PricingCalculator />
+
+      {/* ── 04. ADD-ON CATALOG & EXPANSION PACKS ──────────────────────────── */}
       <section className="py-20 px-6">
         <div className="max-w-6xl mx-auto space-y-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -807,7 +811,7 @@ export default function PricingPage() {
             {/* Add-ons List */}
             <div className="space-y-6">
               <div>
-                <p className="text-[11px] font-mono font-semibold tracking-widest text-blue-600 dark:text-blue-400 uppercase">03 // Standalone Add-On Catalog</p>
+                <p className="text-[11px] font-mono font-semibold tracking-widest text-blue-600 dark:text-blue-400 uppercase">04 // Standalone Add-On Catalog</p>
                 <h3 className="text-2xl font-bold text-black dark:text-white">Expansion Packs &amp; Role Top-Ups</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Scale teams and project capacity without altering base tier contracts.</p>
               </div>
@@ -828,7 +832,7 @@ export default function PricingPage() {
             {/* Professional Services */}
             <div className="space-y-6">
               <div>
-                <p className="text-[11px] font-mono font-semibold tracking-widest text-blue-600 dark:text-blue-400 uppercase">04 // Professional Services</p>
+                <p className="text-[11px] font-mono font-semibold tracking-widest text-blue-600 dark:text-blue-400 uppercase">05 // Professional Services</p>
                 <h3 className="text-2xl font-bold text-black dark:text-white">Consulting &amp; Custom Deployments</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Standalone engineering engagements that build institutional readiness.</p>
               </div>
@@ -855,7 +859,7 @@ export default function PricingPage() {
       <section className="py-20 px-6 bg-slate-50/70 dark:bg-white/[0.02] border-y border-slate-200 dark:border-white/10">
         <div className="max-w-6xl mx-auto space-y-12">
           <div className="space-y-3 text-center max-w-2xl mx-auto">
-            <p className="text-[11px] font-mono font-semibold tracking-widest text-blue-600 dark:text-blue-400 uppercase">05 // Market Segmentation</p>
+            <p className="text-[11px] font-mono font-semibold tracking-widest text-blue-600 dark:text-blue-400 uppercase">06 // Market Segmentation</p>
             <h2 className="text-3xl font-bold" style={{ color: "var(--lp-text)" }}>Converging Statutory Deadlines</h2>
             <p className="text-sm text-slate-600 dark:text-slate-400">Three statutory mandates are active: EU AI Act (Aug 2026), RBI FREE-AI, and SEC 2026 Examination Priorities.</p>
           </div>
@@ -889,7 +893,7 @@ export default function PricingPage() {
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto p-10 sm:p-12 rounded-3xl bg-white dark:bg-[#121217] border-2 border-slate-200 dark:border-white/10 text-center space-y-8 shadow-md">
           <div className="space-y-3">
-            <p className="text-[11px] font-mono font-semibold tracking-widest text-blue-600 dark:text-blue-400 uppercase">06 // Engagement Protocol</p>
+            <p className="text-[11px] font-mono font-semibold tracking-widest text-blue-600 dark:text-blue-400 uppercase">07 // Engagement Protocol</p>
             <h2 className="text-3xl font-bold text-black dark:text-white">Next Steps for Prospects</h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
               Every step proves mathematical value before the next commitment. Move from zero risk to full production governance.
