@@ -289,15 +289,15 @@ const PROFESSIONAL_SERVICES = [
 const TARGET_MARKETS = [
   {
     segment: "Indian NBFCs & Fintechs",
-    pain: "RBI FREE-AI 26 recommendations active now",
+    pain: "RBI FREE-AI 26 recommendations (advisory framework, binding circular pending)",
     entry: "Governance Assessment → Launch ($29K/yr) or Starter ($60K/yr)",
     timing: "Immediate",
   },
   {
     segment: "EU-Regulated Financial Institutions",
-    pain: "EU AI Act statutory enforcement (August 2026)",
+    pain: "EU AI Act: Art. 50 transparency live Aug 2026; Annex III high-risk obligations Dec 2027 (deferred by Digital Omnibus, Reg. (EU) 2026/1744)",
     entry: "Assessment → Starter ($60K/yr) or Professional ($95K/yr)",
-    timing: "Urgent",
+    timing: "Planning Window",
   },
   {
     segment: "Quant Funds & High-Frequency AI",
@@ -307,7 +307,7 @@ const TARGET_MARKETS = [
   },
   {
     segment: "Tier-1 Indian & Global Banks",
-    pain: "RBI CIMS reporting & multi-jurisdiction cross-border audit",
+    pain: "RBI EmTech Repository reporting & multi-jurisdiction cross-border audit",
     entry: "Consulting Engagement → Sovereign Enterprise ($600K/yr)",
     timing: "6–12 months",
   },
@@ -861,7 +861,7 @@ export default function PricingPage() {
           <div className="space-y-3 text-center max-w-2xl mx-auto">
             <p className="text-[11px] font-mono font-semibold tracking-widest text-blue-600 dark:text-blue-400 uppercase">06 // Market Segmentation</p>
             <h2 className="text-3xl font-bold" style={{ color: "var(--lp-text)" }}>Converging Statutory Deadlines</h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400">Three statutory mandates are active: EU AI Act (Aug 2026), RBI FREE-AI, and SEC 2026 Examination Priorities.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">EU AI Act Article 50 transparency obligations are live (August 2026). Annex III high-risk obligations (financial AI, biometrics) apply December 2, 2027 following the Digital Omnibus deferral (Reg. (EU) 2026/1744). RBI FREE-AI and SEC 2026 Examination Priorities run parallel.</p>
           </div>
 
           <div className="overflow-x-auto rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#121217] shadow-sm">
