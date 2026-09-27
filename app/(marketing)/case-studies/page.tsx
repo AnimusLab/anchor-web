@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { ANCHOR_CORE_LABEL } from "@/lib/version";
 import { 
   ArrowRight, Shield, Lock, FileCheck, Scale, Cpu, Globe, Server, 
   Key, Users, Play, CheckCircle2, AlertTriangle, Terminal, RefreshCw, Sun, Moon, ExternalLink 
@@ -337,7 +338,7 @@ export default function CaseStudiesPage() {
                       }`}>
                         STATUS: {selectedScenario.verdict === "BLOCKED" ? "BLOCKED_BY_ANCHOR" : "PERMIT_GRANTED"}
                       </span>
-                      <span className="text-xs font-mono text-slate-700 dark:text-slate-300 font-bold">Core Protocol v6.0.4</span>
+                      <span className="text-xs font-mono text-slate-700 dark:text-slate-300 font-bold">{ANCHOR_CORE_LABEL}</span>
                     </div>
 
                     <div className="text-right">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { ANCHOR_VERSION_TAG } from "@/lib/version";
 import { Activity, ShieldCheck, AlertTriangle, Layers, ArrowRight, CheckCircle2, Lock, Terminal, Zap } from "lucide-react";
 
 export default function InstantDemoSandboxPage() {
@@ -204,7 +205,7 @@ export default function InstantDemoSandboxPage() {
       {/* Footer */}
       <footer className="px-8 py-4 border-t border-white/10 text-[10px] font-mono text-slate-500 flex justify-between items-center relative z-20 max-w-7xl mx-auto w-full">
         <div>DEMO ENVIRONMENT: 30-DAY FREE TRIAL</div>
-        <div>ANIMUSLAB ANCHOR V6.0</div>
+        <div>ANIMUSLAB ANCHOR {ANCHOR_VERSION_TAG}</div>
       </footer>
     </div>
   );

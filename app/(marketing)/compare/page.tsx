@@ -8,6 +8,7 @@ import {
   HelpCircle, ChevronDown, X
 } from "lucide-react";
 import { AnchorLogo } from "@/components/AnchorLogo";
+import { ANCHOR_VERSION_LABEL } from "@/lib/version";
 import { useTheme } from "@/lib/theme";
 
 /* ─────────────────────────────────────────────────────────
@@ -544,7 +545,7 @@ export default function ComparePage() {
                     <tr className="border-b-2 border-slate-300 dark:border-white/20 bg-slate-50/50 dark:bg-slate-900/50">
                       <th className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100 w-1/5">Category &amp; Feature</th>
                       <th className="py-3.5 px-4 font-extrabold text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30 border-x border-blue-200 dark:border-blue-900/50 w-1/4">
-                        Anchor Protocol (v6.0.4)
+                        {ANCHOR_VERSION_LABEL}
                       </th>
                       <th className="py-3.5 px-4 font-bold text-slate-800 dark:text-slate-200 w-1/5">LangSmith / Arize</th>
                       <th className="py-3.5 px-4 font-bold text-slate-800 dark:text-slate-200 w-1/6">Credo AI</th>

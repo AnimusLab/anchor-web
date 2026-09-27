@@ -1,3 +1,5 @@
+import { ANCHOR_VERSION_TAG } from "@/lib/version";
+
 export interface DocSubItem {
   id: string;
   title: string;
@@ -412,7 +414,7 @@ pub struct AuditVerdict {
                   filename: ".pre-commit-config.yaml",
                   code: `repos:
   - repo: https://github.com/animuslab/anchor-audit
-    rev: v6.0.2
+    rev: ${ANCHOR_VERSION_TAG}
     hooks:
       - id: anchor-ast-scan
         name: Anchor Static AST Gatekeeper
