@@ -58,10 +58,12 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/compare') ||
     pathname.startsWith('/benchmarks') ||
     pathname.startsWith('/case-studies') ||
+    pathname.startsWith('/architecture') ||
     pathname === '/pricing' ||
     pathname === '/compare' ||
     pathname === '/benchmarks' ||
     pathname === '/case-studies' ||
+    pathname === '/architecture' ||
     pathname === '/login' ||
     pathname === '/oversight/login' ||
     pathname === '/admin/login' ||

@@ -336,13 +336,13 @@ export default function PricingPage() {
             <span className="font-bold text-sm tracking-tight text-white whitespace-nowrap">anchor</span>
           </Link>
 
-          {/* Links */}
-          <div className="hidden md:flex items-center gap-6 lg:gap-7 text-xs font-medium text-slate-300 whitespace-nowrap">
+          <div className="hidden md:flex items-center gap-5 lg:gap-6 text-xs font-medium text-slate-300 whitespace-nowrap">
             <Link href="/#product" className="hover:text-white transition-colors" style={{ textDecoration: "none" }}>Product</Link>
             <Link href="/docs" className="hover:text-white transition-colors" style={{ textDecoration: "none" }}>Docs</Link>
             <Link href="/compare" className="hover:text-white transition-colors" style={{ textDecoration: "none" }}>Compare</Link>
             <Link href="/benchmarks" className="hover:text-white transition-colors" style={{ textDecoration: "none" }}>Benchmarks</Link>
             <Link href="/case-studies" className="hover:text-white transition-colors whitespace-nowrap" style={{ textDecoration: "none" }}>Case Studies</Link>
+            <Link href="/architecture" className="hover:text-white transition-colors" style={{ textDecoration: "none" }}>Architecture</Link>
             <Link href="/pricing" className="text-white font-semibold underline underline-offset-4" style={{ textDecoration: "none" }}>Pricing</Link>
           </div>
 
