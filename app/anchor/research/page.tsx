@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: 'Research Archive & Regulatory Submissions | AnimusLab Anchor',
   description: 'Academic preprints, regulatory consultation responses (FSB, RBI), and engineering notes for Anchor deterministic governance.',
   alternates: {
-    canonical: 'https://landing.animuslab.dev/anchor/research',
+    canonical: 'https://animuslab.dev/anchor/research',
   },
 };
 

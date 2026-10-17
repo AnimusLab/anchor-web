@@ -13,7 +13,7 @@ import {
 export const metadata: Metadata = {
   title: 'Whitepaper | AnimusLab',
   alternates: {
-    canonical: 'https://landing.animuslab.dev/anchor/whitepaper',
+    canonical: 'https://animuslab.dev/anchor/whitepaper',
   },
 };
 

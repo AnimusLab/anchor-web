@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     'Anchor is a federated runtime governance engine that mathematically enforces intent and provides cryptographic auditability for agentic AI systems, without ever exposing raw data.',
   alternates: {
-    canonical: 'https://landing.animuslab.dev/anchor',
+    canonical: 'https://animuslab.dev/anchor',
   },
 };
 
@@ -22,7 +22,7 @@ export default function Page() {
             "name": "Anchor",
             "applicationCategory": "DeveloperApplication",
             "operatingSystem": "All",
-            "url": "https://landing.animuslab.dev/anchor",
+            "url": "https://animuslab.dev/anchor",
             "description": "Deterministic runtime capability resolution, AST validation, and isolation boundaries for autonomous systems.",
             "creator": {
               "@type": "ResearchOrganization",
