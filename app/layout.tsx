@@ -4,6 +4,7 @@ import "./globals.css";
 import TopNavigationProgress from "@/components/ui/TopNavigationProgress";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://anchor.animuslab.dev"),
   title: "Anchor Governance Hub — Deterministic AI Governance",
   description: "Official web interface for Anchor. Providing deterministic, cryptographically auditable governance for agentic AI systems.",
   icons: {

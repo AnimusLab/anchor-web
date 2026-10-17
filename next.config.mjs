@@ -12,7 +12,7 @@ async function fetchAnchorVersion() {
     console.log(`[next.config] anchor-audit version from PyPI: ${v}`);
     return v;
   } catch (err) {
-    const fallback = "6.0.2";
+    const fallback = "6.0.4";
     console.warn(`[next.config] PyPI fetch failed, using fallback ${fallback}:`, err.message);
     return fallback;
   }
@@ -25,11 +25,10 @@ const nextConfig = {
   reactStrictMode: true,
   env: {
     // Embedded at build time — available in server and client components as
-    // process.env.NEXT_PUBLIC_ANCHOR_VERSION (e.g. "6.0.2")
+    // process.env.NEXT_PUBLIC_ANCHOR_VERSION (e.g. "6.0.4")
     // Automatically refreshed on every Vercel build triggered by a new Anchor tag.
     NEXT_PUBLIC_ANCHOR_VERSION: anchorVersion,
   },
 };
 
 export default nextConfig;
-
