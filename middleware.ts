@@ -59,6 +59,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/benchmarks') ||
     pathname.startsWith('/case-studies') ||
     pathname.startsWith('/architecture') ||
+    pathname.startsWith('/anchor') ||
     pathname === '/pricing' ||
     pathname === '/compare' ||
     pathname === '/benchmarks' ||
@@ -161,4 +162,3 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
-
