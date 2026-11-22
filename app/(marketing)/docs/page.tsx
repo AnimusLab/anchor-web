@@ -261,7 +261,7 @@ export default function DocsPage() {
                 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
               <Link href="/benchmarks" className="flex items-center justify-between hover:text-blue-600 transition-colors" style={{ textDecoration: "none" }}>
-                <span>Sub-0.4ms Benchmarks</span>
+                <span>Latency Benchmarks</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
               <a href="mailto:tan@animuslab.dev?subject=Anchor%20Engineering%20Discussion" className="flex items-center justify-between hover:text-blue-600 transition-colors" style={{ textDecoration: "none" }}>

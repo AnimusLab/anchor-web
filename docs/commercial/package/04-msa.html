@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anchor Master Subscription Agreement v2.1</title>
+<link rel="stylesheet" href="legal.css" />
+<style>
+  body { font-size: 11.5px; }
+  .msa p { margin: 6px 0; }
+  .msa h2 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin: 24px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .msa h3 { margin: 14px 0 4px; }
+  .clause { margin: 5px 0; }
+  .clause .n { font-weight: 700; color: var(--ink); margin-right: 4px; }
+  .msa ul { margin: 4px 0 6px 18px; }
+  .msa li { margin: 2px 0; }
+  .def { margin: 4px 0; }
+  .def strong { color: var(--ink); }
+</style>
+</head>
+<body>
+  <section class="page msa watermark">
+    <div class="doc-head">
+      <div class="brand">
+        <div class="mark">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="2.4"/><path d="M12 7.4V21"/><path d="M5 12H19"/><path d="M5 12c0 4 3 6.5 7 6.5s7-2.5 7-6.5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">ANIMUSLAB TECHNOLOGIES</div>
+          <div class="brand-sub">Master Subscription Agreement</div>
+        </div>
+      </div>
+      <div class="doc-id">
+        <div class="kind">Master Subscription Agreement</div>
+        <div class="ref">MSA v2.1</div>
+        <div class="ver">Incorporated into ANC-OF-2026-0104</div>
+      </div>
+    </div>
+
+    <div class="doc-title">
+      <h1>Master Subscription Agreement</h1>
+      <div class="sub">
+        Version 2.1. This MSA governs the Customer's use of the Anchor Platform and is incorporated
+        into each Order Form by reference. If this MSA conflicts with an Order Form on commercial terms,
+        the Order Form prevails as to those commercial terms.
+      </div>
+      <div class="status-strip">
+        <span class="tag warn">Draft for legal review</span>
+        <span class="tag">Not legal advice</span>
+        <span class="tag">Governing law: England &amp; Wales</span>
+      </div>
+    </div>
+
+    <div class="note draft" style="margin-top:16px">
+      TEMPLATE — This MSA is a structural draft. Items in [brackets] are placeholders or proposed
+      defaults. Have a qualified contracts lawyer review it before use with a real customer.
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">1</span><h2>Definitions</h2><span class="note">Interpretation</span></div>
+      <p class="def"><strong>"Anchor Platform"</strong> means the AnimusLab governance software and services described in the Order Form, comprising Static Codebase Governance and Runtime AI Governance.</p>
+      <p class="def"><strong>"Hub"</strong> means the isolated, dedicated deployment node provisioned for the Customer in the region stated in the Order Form.</p>
+      <p class="def"><strong>"Clearance"</strong> means a named-user entitlement at a stated tier (L1 Developer, L1 Standard Auditor, L2 Project Lead, L2 Cross-Hub Auditor, L3 Hub Manager).</p>
+      <p class="def"><strong>"Governed AI Model Slot"</strong> means a metered entitlement permitting one AI model or model endpoint to be placed under Runtime AI Governance.</p>
+      <p class="def"><strong>"Decision Audit Chain" or "DAC"</strong> means the append-only, cryptographically linked record of governance decisions produced by the Hub.</p>
+      <p class="def"><strong>"State Hash"</strong> means a fixed-length digest derived from runtime state, computed in the Customer's environment.</p>
+      <p class="def"><strong>"Compliance Digest"</strong> means a compact summary of governance outcomes that contains no raw prompts, model weights, source code or personal data.</p>
+      <p class="def"><strong>"Customer Data"</strong> means all data and content the Customer or its users submit to or process through the Anchor Platform, other than State Hashes and Compliance Digests.</p>
+      <p class="def"><strong>"Entitlement Manifest"</strong> means the signed record of purchased capacity issued on settlement.</p>
+      <p class="def"><strong>"Order Form", "Effective Date", "Term" and "Fees"</strong> have the meanings given in the Order Form.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">2</span><h2>Services and licence grant</h2><span class="note">Scope of rights</span></div>
+      <p class="clause"><span class="n">2.1</span> AnimusLab grants the Customer a non-exclusive, non-transferable, non-sublicensable right during the Term to access and use the Anchor Platform for its internal business purposes, within the quantities stated in the Order Form and the Entitlement Manifest.</p>
+      <p class="clause"><span class="n">2.2</span> Clearances are named-user. A Clearance may be reassigned to a different person not more than [once per 30 days] unless the original holder has left the Customer's organisation.</p>
+      <p class="clause"><span class="n">2.3</span> Static Codebase Governance is provided for [an unlimited number of repositories] within the Customer's organisation, subject to the Acceptable Use Policy and a fair-use limit of [X scans per month / Y GB of source analysed per month].</p>
+      <p class="clause"><span class="n">2.4</span> Runtime AI Governance is metered by Governed AI Model Slot. Use beyond purchased capacity requires an Order Form amendment (Section 5).</p>
+      <p class="clause"><span class="n">2.5</span> <strong>Restrictions.</strong> The Customer will not: reverse engineer or attempt to extract source from the Platform except where law permits; circumvent entitlement or signing controls; sublicense or resell the Platform; use it to build a competing product; or use it to process unlawful content.</p>
+      <p class="clause"><span class="n">2.6</span> <strong>Affiliates.</strong> Use by the Customer's affiliates is permitted only if named in the Order Form. The Customer is responsible for its affiliates' compliance.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">3</span><h2>Customer responsibilities</h2><span class="note">Division of duty</span></div>
+      <p class="clause"><span class="n">3.1</span> The Customer is responsible for the accuracy of the configuration it supplies (including policy rules and model endpoints), the security of its credentials, and the actions of its Clearance holders.</p>
+      <p class="clause"><span class="n">3.2</span> The Customer is responsible for deciding which AI systems to place under governance and for its own compliance with law. The Anchor Platform provides technical controls and evidence that support the Customer's compliance programme. It does not itself make the Customer compliant with any statute, standard or regulator's expectation.</p>
+      <p class="clause"><span class="n">3.3</span> The Customer will give reasonable cooperation, including a named technical contact, and will notify AnimusLab promptly of suspected unauthorised access.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">4</span><h2>Data architecture and confidentiality of Customer Data</h2><span class="note">Scoped commitment</span></div>
+      <p class="clause"><span class="n">4.1</span> <strong>Data minimisation by design.</strong> The Anchor Platform is designed so that raw prompts, model outputs, model weights, proprietary source code and Customer personal data remain within the Customer's environment. The Hub receives State Hashes and Compliance Digests.</p>
+      <p class="clause"><span class="n">4.2</span> <strong>Scope of the commitment.</strong> AnimusLab will not access, copy or store Customer Data outside the Customer's environment except (a) as the Customer expressly configures, (b) as strictly necessary to provide support at the Customer's written request, or (c) as required by law, in which case AnimusLab will give prior notice where lawful. This is a scoped commitment, not an unconditional representation that AnimusLab can never receive any data.</p>
+      <p class="clause"><span class="n">4.3</span> <strong>Ownership.</strong> As between the parties, the Customer owns Customer Data and all outputs generated from it. AnimusLab owns the Anchor Platform, its improvements and its documentation. Feedback may be used by AnimusLab without obligation, provided it does not disclose the Customer's confidential information.</p>
+      <p class="clause"><span class="n">4.4</span> <strong>Telemetry.</strong> Operational metrics that contain no Customer Data may be used to operate and improve the service. The Security Schedule lists the categories collected.</p>
+      <p class="clause"><span class="n">4.5</span> Personal data is governed by the DPA.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">5</span><h2>Capacity, upgrades and overage</h2><span class="note">Metered governance</span></div>
+      <p class="clause"><span class="n">5.1</span> Additional Clearances, Model Slots, AI Governance Capacity Packs or Hubs may be added by written Order Form amendment at the rates in the Order Form, pro-rated to the end of the then-current Term.</p>
+      <p class="clause"><span class="n">5.2</span> If measured use exceeds purchased capacity, AnimusLab will notify the Customer, and the Customer will either reduce use or purchase additional capacity within [30] days. AnimusLab will not suspend service for first-time overage while the parties are in good-faith discussion.</p>
+      <p class="clause"><span class="n">5.3</span> Capacity cannot be reduced during the Term unless the Order Form says so.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">6</span><h2>Fees, invoicing and tax</h2><span class="note">One billing model</span></div>
+      <p class="clause"><span class="n">6.1</span> Fees are as stated in the Order Form. Unless the Order Form states otherwise, the full Term is invoiced once in advance at the time stated in the Order Form. [This package uses full-term prepayment, invoiced on execution.]</p>
+      <p class="clause"><span class="n">6.2</span> Invoices are payable within [30] days of the invoice date by wire transfer to the account on the invoice. Late amounts accrue interest at [1% per month or the statutory rate], whichever is lower. Disputed amounts must be raised in writing within [15] days of the invoice date; the Customer pays the undisputed portion.</p>
+      <p class="clause"><span class="n">6.3</span> <strong>Tax.</strong> Fees exclude taxes. Where the Customer declares that a reverse-charge or similar mechanism applies, the Customer is responsible for accounting for the tax due. If any withholding is required by law, the Customer will gross up the payment or provide a valid tax certificate. [Confirm with an accountant: VAT/GST treatment, supplier tax IDs and export-of-services documentation, including the Indian LUT.]</p>
+      <p class="clause"><span class="n">6.4</span> <strong>Renewal pricing.</strong> Fees for any renewal term will not increase by more than [the lesser of 5% and the change in CPI] if the Customer gives renewal notice in accordance with Section 10.</p>
+      <p class="clause"><span class="n">6.5</span> <strong>Suspension.</strong> AnimusLab may suspend access for undisputed non-payment more than [30] days overdue, after [15] days' written notice, and will restore access promptly on payment.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">7</span><h2>Intellectual property</h2><span class="note">Ownership</span></div>
+      <p class="clause"><span class="n">7.1</span> Each party retains its pre-existing IP. No rights transfer except as expressly stated.</p>
+      <p class="clause"><span class="n">7.2</span> <strong>Customer-specific policy packs.</strong> Policy rules the Customer authors remain the Customer's. AnimusLab's standard rule libraries remain AnimusLab's, and the Customer receives a licence to use them during the Term.</p>
+      <p class="clause"><span class="n">7.3</span> The IP infringement indemnity is set out in Section 11.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">8</span><h2>Confidentiality</h2><span class="note">Mutual</span></div>
+      <p class="clause"><span class="n">8.1</span> Each party will protect the other's Confidential Information with at least reasonable care, use it only to perform or receive the services, and disclose it only to personnel and advisers bound by equivalent duties.</p>
+      <p class="clause"><span class="n">8.2</span> <strong>Exclusions:</strong> information that is public through no breach, already known, independently developed, or lawfully received from a third party. Compelled disclosure is permitted with prompt notice where lawful.</p>
+      <p class="clause"><span class="n">8.3</span> Obligations survive for [5] years after termination, and indefinitely for trade secrets and Customer Data.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">9</span><h2>Warranties and disclaimers</h2><span class="note">No compliance warranty</span></div>
+      <p class="clause"><span class="n">9.1</span> AnimusLab warrants that (a) it has authority to enter this agreement; (b) the Anchor Platform will perform materially in accordance with its documentation; (c) it will use industry-standard measures to avoid introducing malicious code; and (d) it will provide services with reasonable skill and care.</p>
+      <p class="clause"><span class="n">9.2</span> <strong>Remedy.</strong> For breach of 9.1(b), AnimusLab will correct the non-conformity or, if it cannot do so within [30] days, the Customer may terminate the affected service and receive a pro-rated refund of prepaid Fees.</p>
+      <p class="clause"><span class="n">9.3</span> <strong>Disclaimer.</strong> Except as stated, the Platform is provided without other warranties, and to the extent the law allows, all implied warranties are excluded. The parties acknowledge that governance tooling reduces but cannot eliminate AI risk. AnimusLab does not warrant that every unsafe model behaviour, vulnerability or policy violation will be detected.</p>
+      <p class="clause"><span class="n">9.4</span> <strong>Regulatory statements.</strong> References in marketing or documentation to the EU AI Act, DORA, UK FCA/PRA expectations or other statutes or standards describe how features are designed to support the Customer's obligations. They are not warranties of compliance. Statutory mappings are provided for information only and must be assessed by the Customer and its advisers.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">10</span><h2>Term, renewal and termination</h2><span class="note">Exit rights</span></div>
+      <p class="clause"><span class="n">10.1</span> The initial Term is stated in the Order Form. Renewal is not automatic. Either party may propose renewal by written notice at least [60] days before expiry, and the renewal takes effect only by signed Order Form.</p>
+      <p class="clause"><span class="n">10.2</span> <strong>Termination for cause.</strong> Either party may terminate on written notice if the other commits a material breach not cured within [30] days of notice, or becomes insolvent.</p>
+      <p class="clause"><span class="n">10.3</span> <strong>Termination for regulatory reasons.</strong> The Customer may terminate on notice if a competent regulator directs it to stop using the services or if continued use would breach law, with a pro-rated refund of prepaid Fees.</p>
+      <p class="clause"><span class="n">10.4</span> <strong>Effects.</strong> On expiry or termination: access ends, each party returns or deletes the other's Confidential Information, and the Customer pays all Fees due to the termination date. Unless termination is for AnimusLab's uncured breach, prepaid Fees are non-refundable except as this agreement provides.</p>
+      <p class="clause"><span class="n">10.5</span> <strong>Exit assistance.</strong> For [90] days after termination, on request and at AnimusLab's then-current professional-services rates, AnimusLab will help the Customer export its governance records and configuration in an open, documented format. This is intended to meet reasonable regulatory exit-plan expectations for financial customers.</p>
+      <p class="clause"><span class="n">10.6</span> <strong>Audit chain after termination.</strong> The Customer may export its DAC and verification keys so the chain stays verifiable. AnimusLab retains copies only as stated in the DPA and Section 12.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">11</span><h2>Indemnities</h2><span class="note">Third-party claims</span></div>
+      <p class="clause"><span class="n">11.1</span> <strong>By AnimusLab:</strong> against third-party claims that the Anchor Platform infringes IP rights, with customary exclusions (Customer modifications, combinations, use contrary to documentation) and remedies (procure rights, modify, or terminate and refund prepaid Fees for the unused period).</p>
+      <p class="clause"><span class="n">11.2</span> <strong>By the Customer:</strong> against third-party claims arising from Customer Data, from the Customer's use of the Platform in breach of this agreement, or from unlawful content processed through it.</p>
+      <p class="clause"><span class="n">11.3</span> <strong>Process:</strong> prompt notice, sole control of defence by the indemnifying party, reasonable cooperation, no settlement admitting liability without consent.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">12</span><h2>Records retention and immutability</h2><span class="note">5-year default</span></div>
+      <p class="clause"><span class="n">12.1</span> DAC entries are retained for the period in the Order Form. The default is [5] years, configurable up to [7] years for customers with longer regulatory requirements.</p>
+      <p class="clause"><span class="n">12.2</span> DAC entries are designed to contain hashes and non-personal digests. The parties agree not to place personal data in DAC entries. Because entries cannot be edited, the DPA sets out how erasure requests are handled.</p>
+      <p class="clause"><span class="n">12.3</span> Where law requires AnimusLab to retain records after termination (for example, to respond to a lawful order), AnimusLab will retain only what is required, for as long as required, and will notify the Customer where lawful.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">13</span><h2>Limitation of liability</h2><span class="note">Caps and carve-outs</span></div>
+      <p class="clause"><span class="n">13.1</span> Nothing limits liability for death or personal injury caused by negligence, fraud or fraudulent misrepresentation, or any liability that cannot lawfully be limited.</p>
+      <p class="clause"><span class="n">13.2</span> <strong>General cap.</strong> Subject to 13.1 and 13.4, each party's total aggregate liability arising from this agreement is limited to the Fees paid and payable for the [12 months] preceding the first event giving rise to liability. For a prepaid multi-year deal, the cap should be defined precisely (for example, "annual Fees").</p>
+      <p class="clause"><span class="n">13.3</span> <strong>Excluded losses.</strong> Neither party is liable for indirect or consequential loss, or loss of profit, revenue or goodwill, except as 13.4 states.</p>
+      <p class="clause"><span class="n">13.4</span> A super-cap of [2× the general cap] applies to: breach of confidentiality; breach of the DPA; and the indemnity in 11.1. [To be negotiated.]</p>
+      <p class="clause"><span class="n">13.5</span> The Customer's payment obligations are not limited by this section.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">14</span><h2>Insurance</h2><span class="note">To be obtained</span></div>
+      <p>AnimusLab will maintain, during the Term, [professional indemnity / technology E&amp;O insurance of at least USD X] and [cyber liability insurance of at least USD X], and will provide a certificate on request. [Confirm and obtain actual coverage before committing.]</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">15</span><h2>Force majeure</h2><span class="note">Relief</span></div>
+      <p>Neither party is liable for delay caused by events beyond its reasonable control, provided it notifies the other and mitigates. Payment obligations are not excused. If the event continues more than [60] days, either party may terminate the affected services with a pro-rated refund of prepaid Fees.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">16</span><h2>Regulatory and financial-sector provisions</h2><span class="note">FCA / PRA / DORA</span></div>
+      <p>Where the Customer is a regulated financial entity, AnimusLab will, on reasonable notice and subject to confidentiality, provide: (a) information and documentation reasonably needed for the Customer's outsourcing and third-party risk assessments; (b) access and audit rights for the Customer and its regulators over the services, limited to AnimusLab's relevant facilities, records and personnel, no more than [once per year] absent a regulatory demand or material incident; (c) notice of material sub-outsourcing; and (d) cooperation in the Customer's exit planning and resilience testing. [Counsel to map these to the specific regimes that apply to each customer, such as UK FCA/PRA outsourcing rules or EU DORA.]</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">17</span><h2>General</h2><span class="note">Boilerplate</span></div>
+      <ul>
+        <li><strong>Assignment:</strong> neither party may assign without consent, except to a successor of substantially all its business on notice.</li>
+        <li><strong>Change of control:</strong> AnimusLab will notify the Customer within [30] days; the Customer may terminate with a pro-rated refund if the acquirer is a direct competitor or sanctioned person.</li>
+        <li><strong>Subcontractors:</strong> permitted; AnimusLab remains responsible for them.</li>
+        <li><strong>Notices:</strong> in writing to the addresses in the Order Form; effective on delivery by courier or, for email, on confirmation of receipt.</li>
+        <li><strong>Publicity:</strong> none without prior written consent.</li>
+        <li><strong>Entire agreement, variation, severability, waiver, third-party rights:</strong> [standard wording].</li>
+        <li><strong>Anti-bribery and sanctions:</strong> each party complies with applicable anti-corruption and sanctions laws.</li>
+        <li><strong>Counterparts and e-signature:</strong> valid.</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">18</span><h2>Governing law and dispute resolution</h2><span class="note">London seat</span></div>
+      <p class="clause"><span class="n">18.1</span> This agreement and any non-contractual obligations arising from it are governed by the laws of England and Wales.</p>
+      <p class="clause"><span class="n">18.2</span> Disputes are referred first to senior executives for [20] days, then finally resolved by arbitration under the LCIA Rules. Seat: London. Language: English. Tribunal: [one / three] arbitrator(s). Either party may seek urgent injunctive relief from a court of competent jurisdiction.</p>
+    </div>
+
+    <div class="foot">
+      <span>Anchor Master Subscription Agreement v2.1 · Draft for legal review · Not legal advice</span>
+      <span class="pno">MSA</span>
+    </div>
+  </section>
+</body>
+</html>

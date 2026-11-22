@@ -73,7 +73,7 @@ export const DOCS_TAXONOMY: DocCategory[] = [
           { id: "threat-model", label: "Threat Model & Trust Boundaries" },
         ],
         content: {
-          summary: "Anchor is a sovereign, in-process runtime governance platform designed to prevent autonomous agent hallucinations, rogue API executions, and regulatory non-compliance before bytecode executes.",
+          summary: "Anchor is a sovereign, in-process runtime governance platform designed to prevent autonomous agent hallucinations, rogue API executions, and regulatory non-compliance before the guarded function body runs.",
           sections: [
             {
               id: "the-governance-gap",
@@ -111,16 +111,16 @@ export const DOCS_TAXONOMY: DocCategory[] = [
               paragraphs: [
                 "Many legacy systems attempt to evaluate compliance by calling a secondary LLM (e.g. GPT-4) to judge if an agent's response was safe. This approach fails in institutional finance and healthcare for three fatal reasons:",
                 "1. Non-Determinism: An LLM judge can evaluate the exact same payload differently across attempts, violating fundamental legal predictability standards.",
-                "2. Latency Penalty: Remote LLM evaluations add 400ms to 2,500ms of network latency per agent step, destroying high-frequency performance.",
+                "2. Latency Penalty: Remote LLM evaluations add a network round trip (often hundreds of milliseconds, depending on provider and model) per agent step.",
                 // anchor: ignore SEC-001 — documentation text explaining what jailbreaks are; not executable prompt injection
                 "3. Vulnerability to Jailbreaks: Secondary LLMs are susceptible to prompt injection and indirect goal manipulation.",
-                "Anchor compiles human laws (EU AI Act, RBI FREE-AI, SEC Reg SCI) into formal mathematical AST invariants and zero-copy Rust bytecode that executes deterministically in sub-millisecond time.",
+                "Anchor compiles human laws (EU AI Act, RBI FREE-AI, SEC Reg SCI) into compiled, deterministic pattern and AST rules that execute in-process.",
               ],
             },
             {
               id: "threat-model",
               heading: "Threat Model & Trust Boundaries",
-              lead: "The system provides mathematically proven guarantees against the following institutional threats:",
+              lead: "The system provides deterministic, rule-based mitigations (not formal proofs) against the following institutional threats. Layer 2 only protects functions wrapped with @guard, and keyword-style patterns can be rephrased around, so use Anchor as one layer of defense-in-depth:",
               tables: {
                 headers: ["Threat Vector", "Attack Mechanism", "Anchor Mitigation"],
                 rows: [
@@ -169,10 +169,9 @@ export const DOCS_TAXONOMY: DocCategory[] = [
                   language: "bash",
                   filename: "terminal",
                   code: `# Install Python SDK and CLI Gatekeeper
-pip install anchor-guard anchor-audit
+pip install anchor-audit
 
-# Alternatively, install Node.js / TypeScript SDK
-npm install @anchor/guard @anchor/audit-cli`,
+# TypeScript SDK: coming soon (not yet published)`,
                   description: "Installs the zero-copy in-process interceptor bindings and Tree-sitter AST parser binaries.",
                 },
               ],
@@ -251,7 +250,7 @@ anchor-audit scan ./src --frameworks EU_AI_ACT,RBI_FREE_AI --strict
             {
               id: "verify-dac",
               heading: "4. Verify Cryptographic Ledger (DAC)",
-              lead: "Verify the mathematical integrity of the append-only Decision Audit Chain:",
+              lead: "Verify the integrity of the append-only Decision Audit Chain:",
               codeSnippets: [
                 {
                   language: "bash",
@@ -264,7 +263,7 @@ anchor dac verify --local-ledger ~/.anchor/dac_local.db
 # [DAC] Hash 0001 (Genesis): 7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069
 # [DAC] Hash 0148 (Latest):  c4ca4238a0b923820dcc509a6f75849b82877a9415ac8fd6e22f256fa0d7a94e
 # [PASS] Merkle Root: 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8
-# [PASS] All 148 SHA-256 parent links & Ed25519 signatures mathematically intact (0 tampered).`,
+# [PASS] All 148 SHA-256 parent links & Ed25519 signatures intact (0 tampered).`,
                 },
               ],
             },
@@ -772,8 +771,8 @@ def transfer_funds(account_from: str, account_to: str, amount_inr: float) -> str
     items: [
       {
         id: "python-library-api",
-        title: "Python SDK (anchor-py) Reference",
-        badge: "anchor-py",
+        title: "Python API Reference (anchor-audit)",
+        badge: "anchor-audit",
         description: "Comprehensive class and method documentation for anchor.guard, SpokeTelemetryClient, and DialectCompiler.",
         readingTime: "10 min read",
         toc: [
@@ -834,8 +833,8 @@ def transfer_funds(account_from: str, account_to: str, amount_inr: float) -> str
       },
       {
         id: "typescript-sdk-api",
-        title: "TypeScript SDK (@anchor/guard)",
-        badge: "@anchor/guard",
+        title: "TypeScript SDK (@anchor/guard) — Coming soon",
+        badge: "Coming soon",
         description: "Typed interfaces and runtime guard wrappers for Node.js, Next.js, and TypeScript worker agents.",
         readingTime: "8 min read",
         toc: [
@@ -876,7 +875,7 @@ export const executeSettlement = anchorGuard(
       },
       {
         id: "cli-manual",
-        title: "CLI Reference (anchor-audit & anchor-node)",
+        title: "CLI Reference (anchor-audit)",
         badge: "CLI Tool",
         description: "Full command-line manual for scanning codebases, verifying DAC chains, and starting Hub nodes.",
         readingTime: "6 min read",
@@ -1031,7 +1030,7 @@ python -m anchor.tools.profile_agent ./src/trading_agent.py --iterations 10000`,
         id: "subpoena-readiness",
         title: "Statutory Audit Dossier Export",
         badge: "Compliance Runbook",
-        description: "One-click generation of mathematically sealed compliance packages for RBI, SEC, or EU AI Act regulators.",
+        description: "One-click generation of cryptographically signed compliance packages for RBI, SEC, or EU AI Act regulators.",
         readingTime: "5 min read",
         toc: [
           { id: "dossier-export-command", label: "Exporting Certified Audit Dossiers" },

@@ -7,7 +7,7 @@ import { useState, useCallback } from "react";
    Implements agreed discount policy exactly:
    • Flat unconditional 15% bundle discount on all configurations
    • Multi-year term: 3yr=12%, 4yr=15%, 5+yr=18% (no 2yr option)
-   • Additional Project Pack as whole unit ($23,500) — no per-slot line
+   • AI Governance Capacity Pack as whole unit ($23,500) — 1 model slot + team · unlimited projects
    • Governed AI Model Slot confirmed at $2,500/yr
    • Professional Services shown with full ranges, est. midpoint for calc
 ───────────────────────────────────────────────────────────── */
@@ -23,7 +23,7 @@ const SEATS = [
 ] as const;
 
 const ADDONS = [
-  { key: "proj_pack",  label: "Additional Project Pack",          sub: "1 PL + 10 Devs + 1 Auditor + 1 model slot",  rate: 23500 },
+  { key: "proj_pack",  label: "AI Governance Capacity Pack",      sub: "1 model slot + 1 PL + 10 Devs + 1 Auditor · Unlimited projects",  rate: 23500 },
   { key: "dev_pack",   label: "Developer Pack (10 seats)",        sub: "@anchor.guard + CLI + AST linting",           rate: 15000 },
   { key: "pl_pack",    label: "Project Lead Pack (3 seats)",      sub: "Key issuance, triage velocity",               rate: 10500 },
   { key: "aud_pack",   label: "Standard Auditor Pack (5 seats)",  sub: "DAC forensics, single-hub scope",             rate: 22500 },

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anchor Security Schedule</title>
+<link rel="stylesheet" href="legal.css" />
+<style>
+  body { font-size: 11.5px; }
+  h2 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin: 24px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  ul { margin: 4px 0 6px 18px; }
+  li { margin: 3px 0; }
+</style>
+</head>
+<body>
+  <section class="page watermark">
+    <div class="doc-head">
+      <div class="brand">
+        <div class="mark">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="2.4"/><path d="M12 7.4V21"/><path d="M5 12H19"/><path d="M5 12c0 4 3 6.5 7 6.5s7-2.5 7-6.5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">ANIMUSLAB TECHNOLOGIES</div>
+          <div class="brand-sub">Security Schedule</div>
+        </div>
+      </div>
+      <div class="doc-id">
+        <div class="kind">Security Schedule</div>
+        <div class="ref">Annex 2 to the DPA</div>
+        <div class="ver">Outline v0.9</div>
+      </div>
+    </div>
+
+    <div class="doc-title">
+      <h1>Security Schedule</h1>
+      <div class="sub">
+        Technical and organisational measures for the Anchor Platform. This is an outline: complete each
+        item with the engineering team before representing any control or certification to a customer.
+      </div>
+      <div class="status-strip">
+        <span class="tag warn">Outline — to be completed</span>
+        <span class="tag">No certifications claimed yet</span>
+      </div>
+    </div>
+
+    <div class="note draft" style="margin-top:16px">
+      Do not claim SOC 2, ISO 27001, pen-test results or insurance coverage until the reports or
+      certificates exist and are current.
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">1</span><h2>Data minimisation and architecture</h2><span class="note">By design</span></div>
+      <ul>
+        <li>Raw prompts, model outputs, model weights, proprietary source and Customer personal data remain in the Customer's environment by default.</li>
+        <li>The Hub receives State Hashes and Compliance Digests; the categories are listed in the DPA Annex 1.</li>
+        <li>DAC entries contain hashes and non-personal digests. The parties agree not to place personal data in DAC entries.</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">2</span><h2>Encryption</h2><span class="note">In transit and at rest</span></div>
+      <ul>
+        <li>All network traffic uses TLS [1.2 minimum, 1.3 preferred] with modern cipher suites.</li>
+        <li>Data at rest is encrypted with AES-256. Key management: [KMS/HSM details to be completed].</li>
+        <li>Entitlement manifests are signed with Ed25519; private keys are held in [HSM/KMS] and rotated [annually].</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">3</span><h2>Access control</h2><span class="note">Least privilege</span></div>
+      <ul>
+        <li>Named-user Clearances; no shared accounts. Multi-factor authentication is required for administrative access.</li>
+        <li>Role-based access control with the tiers defined in the MSA; production access is logged and reviewed [quarterly].</li>
+        <li>Joiner/mover/leaver process with [24-hour] revocation on termination.</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">4</span><h2>Logging, monitoring and incident response</h2><span class="note">Detect and respond</span></div>
+      <ul>
+        <li>Centralised, tamper-evident logging of administrative actions and authentication events.</li>
+        <li>24×7 monitoring for [S1] events, or [business-hours] monitoring until 24×7 staffing exists.</li>
+        <li>Documented incident response plan with roles, escalation and customer notification within [48] hours of a personal data breach.</li>
+        <li>Post-incident reviews for S1 incidents within [5] business days.</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">5</span><h2>Backup, resilience and recovery</h2><span class="note">RPO / RTO</span></div>
+      <ul>
+        <li>Encrypted backups in the same region as the Hub unless the Customer agrees otherwise.</li>
+        <li>RPO [≤ 1 hour] and RTO [≤ 4 hours] for audit chain data and the Hub.</li>
+        <li>Disaster recovery tested at least [annually]; summaries available on request.</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">6</span><h2>Vulnerability management</h2><span class="note">Assurance</span></div>
+      <ul>
+        <li>Dependency and container scanning in CI; critical vulnerabilities remediated within [7] days.</li>
+        <li>Independent penetration test at least [annually] and after material architecture changes.</li>
+        <li>Secure SDLC with code review and segregation of duties. [Tooling and evidence to be completed.]</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">7</span><h2>Certifications and reports</h2><span class="note">Evidence on request</span></div>
+      <ul>
+        <li>SOC 2 Type II: <span class="placeholder">[not yet obtained / report date]</span>.</li>
+        <li>ISO/IEC 27001: <span class="placeholder">[not yet obtained / certificate number]</span>.</li>
+        <li>Cyber insurance: <span class="placeholder">[insurer and limit]</span>.</li>
+      </ul>
+      <p style="margin-top:6px;font-size:10px;color:#64748b">Where a certification is not yet held, the DPA audit clause allows the Customer to request the current security questionnaire and any available third-party report instead.</p>
+    </div>
+
+    <div class="foot">
+      <span>Anchor Security Schedule · Outline v0.9 · To be completed before customer use</span>
+      <span class="pno">Security Schedule</span>
+    </div>
+  </section>
+</body>
+</html>

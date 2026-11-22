@@ -50,9 +50,9 @@ const DIMENSIONS: Dimension[] = [
         name: "Execution Boundary Hook",
         simpleExplanation: "Where in the execution pipeline does governance run? Before an unauthorized action happens (preventative), or after it has already occurred (logging)?",
         whyItMatters: "Prevents unauthorized database writes, fraudulent fund transfers, or unauthorized API calls before damage occurs. Once a database write finishes, observability logs cannot undo the damage.",
-        anchor: { value: "In-Process Deterministic Native Kernel (< 0.4ms)", badge: "Pre-Execution Gate", isPositive: true, note: "Interception happens inside the process memory before network/DB dispatch." },
+        anchor: { value: "In-Process Deterministic Native Kernel (sub-ms, self-measured)", badge: "Pre-Execution Gate", isPositive: true, note: "Interception happens inside the process memory before network/DB dispatch." },
         langsmith: { value: "Post-execution async log sink", badge: "Post-Facto Logger", isPositive: false, note: "Records traces asynchronously to cloud DB after execution finishes." },
-        credo: { value: "None (Manual questionnaire forms)", badge: "No Runtime Engine", isPositive: false, note: "Zero code execution; governance is handled via offline checklists." },
+        credo: { value: "Governance workflow platform", badge: "Not a runtime engine", isPositive: false, note: "Focused on governance workflows and documentation rather than in-process enforcement (based on public product descriptions, Oct 2026)." },
         guardrails: { value: "Async Python string wrapper", badge: "Wrapper Layer", isPositive: false, note: "Wraps text outputs in Python runtime, unable to guard underlying system APIs." },
       },
       {
@@ -60,8 +60,8 @@ const DIMENSIONS: Dimension[] = [
         name: "Inference Latency Overhead",
         simpleExplanation: "How much delay does the governance check add to each AI call?",
         whyItMatters: "High-frequency systems, live banking workflows, and conversational agents cannot tolerate multi-second secondary model evaluations for simple compliance rules.",
-        anchor: { value: "0.18ms p50 / 0.38ms p99 (Rust FFI)", badge: "< 0.4ms Hard Ceiling", isPositive: true, note: "Compiled native binary with zero network hops." },
-        langsmith: { value: "85ms – 250ms (Async HTTP API hop)", badge: "Network Overhead", isPositive: false, note: "Requires background network dispatch to cloud trace collector." },
+        anchor: { value: "Self-measured: 0.18ms p50 / 0.38ms p99 (Rust FFI)", badge: "Sub-ms (self-measured)", isPositive: true, note: "Compiled native binary with zero network hops." },
+        langsmith: { value: "Asynchronous (off the request path)", badge: "Async Logging", isPositive: false, note: "Requires background network dispatch to cloud trace collector." },
         credo: { value: "0ms runtime (Zero runtime code)", badge: "Static Questionnaire", isPositive: false, note: "No runtime latency because it does not inspect active traffic." },
         guardrails: { value: "80ms – 450ms (Secondary LLM call)", badge: "Model Delay Penalty", isPositive: false, note: "Calls secondary validation LLMs to evaluate primary LLM outputs." },
       },
@@ -110,7 +110,7 @@ const DIMENSIONS: Dimension[] = [
         simpleExplanation: "How do you guarantee that compliance rules haven't been secretly disabled or altered?",
         whyItMatters: "Prevents rogue developers or compromised dependencies from silently commenting out or disabling governance rules.",
         anchor: { value: "GOVERNANCE.lock (Ed25519 Signed)", badge: "Tamper-Proof Lockfile", isPositive: true, note: "Any modification without the root governance private key invalidates the runtime." },
-        langsmith: { value: "None (Mutable project settings)", badge: "Unsigned Config", isPositive: false, note: "Any workspace member with admin role can alter rules silently." },
+        langsmith: { value: "None (Mutable project settings)", badge: "Unsigned Config", isPositive: false, note: "Rule changes are not cryptographically signed." },
         credo: { value: "None (Cloud database records)", badge: "Unsigned Forms", isPositive: false, note: "Relies on cloud provider database permissions without cryptographic proofs." },
         guardrails: { value: "None (Plain text config files)", badge: "Unsigned Code", isPositive: false, note: "Plain Python / YAML files that any repo contributor can edit." },
       },
@@ -120,26 +120,26 @@ const DIMENSIONS: Dimension[] = [
     id: "evidence",
     number: "03",
     title: "Evidentiary Integrity & Cryptographic Proofs",
-    subtitle: "Court-Admissible Non-Repudiation",
-    summary: "External regulators, courts, and institutional auditors require tamper-evident proof that each AI decision was governed at the exact moment it occurred. Anchor's Decision Audit Chain (DAC) provides mathematical non-repudiation via SHA-256 Merkle-linked blocks.",
+    subtitle: "Tamper-Evident, Independently Verifiable Audit Records",
+    summary: "External regulators, courts, and institutional auditors require tamper-evident proof that each AI decision was governed at the exact moment it occurred. Anchor's Decision Audit Chain (DAC) provides tamper-evident integrity via SHA-256 Merkle-linked blocks.",
     features: [
       {
         id: "audit-chain",
         name: "Decision Audit Chain (DAC Ledger)",
         simpleExplanation: "Is the audit log immutable and cryptographically linked, or just mutable database rows?",
-        whyItMatters: "Provides mathematically indisputable audit logs that survive regulatory subpoenas and court scrutiny without reliance on vendor trust.",
+        whyItMatters: "Provides tamper-evident audit logs that can be verified without relying on the vendor. Legal admissibility depends on jurisdiction and process.",
         anchor: { value: "SHA-256 Merkle-linked immutable blocks", badge: "Cryptographic DAC", isPositive: true, note: "Every execution event is cryptographically sealed in a local tamper-evident chain." },
-        langsmith: { value: "Mutable PostgreSQL trace rows", badge: "Standard DB Rows", isPositive: false, note: "Logs can be updated, deleted, or truncated by database administrators." },
+        langsmith: { value: "Mutable PostgreSQL trace rows", badge: "Standard DB Rows", isPositive: false, note: "Standard database-backed logs can be modified by administrators; Anchor's chain makes modification detectable." },
         credo: { value: "Manual PDF export reports", badge: "Static Documents", isPositive: false, note: "Exported PDF summaries with no cryptographic timestamping or hashes." },
         guardrails: { value: "Console stderr / stdout logs", badge: "Ephemeral Output", isPositive: false, note: "Application console logs that disappear when server containers restart." },
       },
       {
         id: "privacy-sovereignty",
-        name: "Zero Data Exfiltration (Sovereign Spoke)",
+        name: "Data Stays On Your Infrastructure (Sovereign Spoke)",
         simpleExplanation: "Does your sensitive prompt and customer data leave your VPC to third-party cloud SaaS?",
         whyItMatters: "Highly regulated banks, defense contractors, and healthcare organizations are legally prohibited from leaking customer PII or proprietary prompts to external SaaS.",
-        anchor: { value: "100% In-VPC. Zero payload exfiltration", badge: "Air-Gapped Sovereign", isPositive: true, note: "Engine runs completely local inside your perimeter; no telemetry sent home." },
-        langsmith: { value: "Prompts sent to LangSmith SaaS Cloud", badge: "Cloud SaaS Dependency", isPositive: false, note: "Full user prompts and LLM outputs are streamed to external cloud." },
+        anchor: { value: "In-VPC. Raw code and payloads stay local", badge: "Local-first", isPositive: true, note: "Engine runs completely local inside your perimeter; telemetry is opt-in and documented field by field." },
+        langsmith: { value: "Prompts sent to LangSmith SaaS Cloud", badge: "Cloud SaaS Dependency", isPositive: false, note: "Traces, which can include prompts and outputs, are sent to the vendor cloud unless self-hosted." },
         credo: { value: "Metadata uploaded to Credo Cloud", badge: "Cloud SaaS Dependency", isPositive: false, note: "Governance models and metadata stored on multi-tenant cloud." },
         guardrails: { value: "Local Python execution (Self-hosted)", badge: "Self-Hosted", isPositive: true, note: "Runs within your local Python process." },
       },
@@ -159,14 +159,14 @@ const DIMENSIONS: Dimension[] = [
 
 // Full matrix comparison rows (9 features x 4 tools)
 const FULL_MATRIX_ROWS = [
-  { category: "Execution & Runtime", feature: "Interception Timing", anchor: "Pre-execution deterministic gate (< 0.4ms)", langsmith: "Post-execution trace logging", credo: "Offline manual review", guardrails: "Post-inference string wrapper" },
-  { category: "Execution & Runtime", feature: "Latency Overhead", anchor: "0.18ms p50 (Native Rust binary)", langsmith: "85ms - 250ms (HTTP cloud hop)", credo: "0ms (No runtime code)", guardrails: "80ms - 450ms (Secondary LLM call)" },
+  { category: "Execution & Runtime", feature: "Interception Timing", anchor: "Pre-execution deterministic gate (sub-ms, self-measured)", langsmith: "Post-execution trace logging", credo: "Offline manual review", guardrails: "Post-inference string wrapper" },
+  { category: "Execution & Runtime", feature: "Latency Overhead", anchor: "0.18ms p50 (Native Rust binary)", langsmith: "Asynchronous (off the request path)", credo: "0ms (No runtime code)", guardrails: "Varies by validator" },
   { category: "Execution & Runtime", feature: "Failure Handling", anchor: "Deterministic AST auto-reroute", langsmith: "Dashboard alert notification", credo: "Manual policy revision", guardrails: "Throws unhandled Python exception" },
   { category: "Statutory Law", feature: "Pre-compiled Dialects", anchor: "22 regulatory regimes (EU, RBI, SEC, FCA)", langsmith: "None (Generic tags)", credo: "Subjective checklists", guardrails: "None (Custom code required)" },
   { category: "Statutory Law", feature: "CI/CD Drift Gatekeeper", anchor: "AST Git-Hook & CI Gate (< 20ms)", langsmith: "None (Runtime only)", credo: "None (Annual survey)", guardrails: "None (Runtime only)" },
   { category: "Statutory Law", feature: "Rule Integrity", anchor: "Ed25519 Cryptographic Lockfile", langsmith: "Unsigned project settings", credo: "Cloud database record", guardrails: "Unsigned source code" },
   { category: "Evidence & Audit", feature: "Audit Log Structure", anchor: "SHA-256 Merkle Decision Audit Chain", langsmith: "Mutable PostgreSQL rows", credo: "Exported PDF summaries", guardrails: "Console stdout/stderr" },
-  { category: "Evidence & Audit", feature: "Data Sovereignty", anchor: "100% In-VPC (Zero payload exfiltration)", langsmith: "Full prompt cloud SaaS upload", credo: "Cloud SaaS upload", guardrails: "Local Python runtime" },
+  { category: "Evidence & Audit", feature: "Data Sovereignty", anchor: "In-VPC (payloads stay local)", langsmith: "Full prompt cloud SaaS upload", credo: "Cloud SaaS upload", guardrails: "Local Python runtime" },
   { category: "Evidence & Audit", feature: "Auditor Verification", anchor: "Ed25519 Dual-Key ZK verification", langsmith: "Workspace member invite (PII exposed)", credo: "Manual PDF delivery", guardrails: "None" },
 ];
 
@@ -287,7 +287,7 @@ export default function ComparePage() {
                 <span className="font-mono font-bold text-blue-600 dark:text-blue-400 text-xs">3. Proof of Compliance</span>
                 <p className="font-semibold text-slate-950 dark:text-white">Cryptographic Chain vs. SQL Rows</p>
                 <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                  Anchor generates a SHA-256 Merkle-linked Decision Audit Chain. Competitors store mutable database rows that can be silently edited.
+                  Anchor generates a SHA-256 Merkle-linked Decision Audit Chain. Anchor's records are hash-linked, so any later modification is detectable; typical database-backed logs rely on access controls instead.
                 </p>
               </div>
             </div>
@@ -467,7 +467,7 @@ export default function ComparePage() {
                   </div>
                   <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <XCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>Questionnaire forms only</span>
+                    <span>Governance workflow platform</span>
                   </div>
                 </div>
 

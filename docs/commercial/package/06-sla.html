@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anchor Service Level Agreement</title>
+<link rel="stylesheet" href="legal.css" />
+<style>
+  body { font-size: 11.5px; }
+  h2 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin: 24px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  h3 { margin: 14px 0 4px; }
+  .clause { margin: 5px 0; }
+  .clause .n { font-weight: 700; color: var(--ink); margin-right: 4px; }
+  ul { margin: 4px 0 6px 18px; }
+  li { margin: 2px 0; }
+  td.small { font-size: 10px; }
+</style>
+</head>
+<body>
+  <section class="page watermark">
+    <div class="doc-head">
+      <div class="brand">
+        <div class="mark">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="2.4"/><path d="M12 7.4V21"/><path d="M5 12H19"/><path d="M5 12c0 4 3 6.5 7 6.5s7-2.5 7-6.5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">ANIMUSLAB TECHNOLOGIES</div>
+          <div class="brand-sub">Service Level Agreement</div>
+        </div>
+      </div>
+      <div class="doc-id">
+        <div class="kind">Service Level Agreement</div>
+        <div class="ref">SLA v1.0</div>
+        <div class="ver">Incorporated into ANC-OF-2026-0104</div>
+      </div>
+    </div>
+
+    <div class="doc-title">
+      <h1>Service Level Agreement</h1>
+      <div class="sub">
+        Availability, support and service credits for the Anchor Platform. The SLA applies to the Hub and
+        the management plane, not to Customer-side agents or integrations running in the Customer's environment.
+      </div>
+      <div class="status-strip">
+        <span class="tag warn">Targets to confirm</span>
+        <span class="tag">99.9% target</span>
+        <span class="tag">Not legal advice</span>
+      </div>
+    </div>
+
+    <div class="note warn" style="margin-top:16px">
+      Do not publish support hours, response times, insurance or certifications until the team can
+      actually deliver them. Values in [brackets] are proposed defaults.
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">1</span><h2>Scope</h2><span class="note">Covered services</span></div>
+      <p>This SLA covers the Hub and the Anchor Platform services provided under the Order Form, excluding Customer-side agents and integrations running in the Customer's environment.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">2</span><h2>Availability commitment</h2><span class="note">Measurement</span></div>
+      <p class="clause"><span class="n">2.1</span> Monthly Uptime Percentage = (total minutes in the month − minutes of Downtime) ÷ total minutes in the month × 100.</p>
+      <p class="clause"><span class="n">2.2</span> Target: [99.9%] for the Hub management plane and audit chain ingestion, measured per calendar month.</p>
+      <p class="clause"><span class="n">2.3</span> <strong>Downtime</strong> means the Hub is unavailable to the Customer, as measured by AnimusLab's monitoring and verified against Customer-reported incidents. It excludes:</p>
+      <ul>
+        <li>scheduled maintenance announced at least [5] business days in advance, capped at [8] hours per month;</li>
+        <li>emergency security patching, capped at [4] hours per month, with notice as soon as practicable;</li>
+        <li>force majeure, Customer-caused failures, Customer-side network or configuration issues and third-party systems the Customer controls;</li>
+        <li>suspension under the MSA.</li>
+      </ul>
+      <p class="clause"><span class="n">2.4</span> <strong>Fail-closed behaviour.</strong> If the Customer configures runtime enforcement to fail closed when the Hub is unreachable, the resulting blocks of governed AI calls are a result of the Customer's configuration and are not a separate SLA breach, but Downtime is still measured. AnimusLab will document recommended fail-open and fail-closed configurations, and the Customer decides which to use.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">3</span><h2>Support</h2><span class="note">Severity levels</span></div>
+      <table>
+        <thead>
+          <tr><th style="width:88px">Severity</th><th>Definition</th><th style="width:100px">First response</th><th style="width:96px">Update cadence</th><th style="width:94px">Target restoration</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="code">S1 Critical</td><td>Hub down or audit chain not recording; no workaround.</td><td>[1 hour, 24×7]</td><td>[every 2 hours]</td><td>[4 hours]</td></tr>
+          <tr><td class="code">S2 High</td><td>Major function degraded; workaround exists.</td><td>[4 hours, business hours]</td><td>[daily]</td><td>[2 business days]</td></tr>
+          <tr><td class="code">S3 Medium</td><td>Minor function impaired.</td><td>[1 business day]</td><td>[every 3 business days]</td><td>[next release]</td></tr>
+          <tr><td class="code">S4 Low</td><td>Question or cosmetic issue.</td><td>[2 business days]</td><td>As needed</td><td>Planned</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:6px;font-size:10px;color:#64748b">Support channels: [email, portal, named contact]. Support hours: [defined business hours and time zone]. S1 24×7 coverage depends on AnimusLab staffing; do not promise it until it exists.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">4</span><h2>Service credits</h2><span class="note">Sole financial remedy</span></div>
+      <table>
+        <thead><tr><th>Monthly Uptime</th><th class="r" style="width:200px">Credit (% of monthly fee for affected service)</th></tr></thead>
+        <tbody>
+          <tr><td>&lt; 99.9% and ≥ 99.5%</td><td class="r">[5%]</td></tr>
+          <tr><td>&lt; 99.5% and ≥ 99.0%</td><td class="r">[10%]</td></tr>
+          <tr><td>&lt; 99.0%</td><td class="r">[20%]</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:6px">The Customer must claim a credit in writing within [30] days after the end of the month. Credits are applied to future invoices and are not paid in cash. Credits are the Customer's sole financial remedy for SLA failure, except for the termination right in Section 5.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">5</span><h2>Chronic failure</h2><span class="note">Termination right</span></div>
+      <p>If Monthly Uptime falls below the target in [two consecutive months or three months in any 12-month period], the Customer may terminate the affected services by written notice within [30] days and receive a pro-rated refund of prepaid Fees for the remainder of the Term.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">6</span><h2>Backup, recovery and resilience</h2><span class="note">RPO / RTO</span></div>
+      <ul>
+        <li>Recovery point objective (RPO): [≤ 1 hour] for audit chain data.</li>
+        <li>Recovery time objective (RTO): [≤ 4 hours] for the Hub.</li>
+        <li>Backups are encrypted and stored in the same region unless the Customer agrees otherwise.</li>
+        <li>Disaster recovery is tested at least [annually]; a summary is available to the Customer on request.</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">7</span><h2>Reporting and review</h2><span class="note">Post-incident</span></div>
+      <p>AnimusLab publishes monthly uptime and incident reports through the Hub and holds a service review [quarterly] on request. Post-incident reports for S1 incidents are delivered within [5] business days.</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="no">8</span><h2>Change management and deprecation</h2><span class="note">Notice</span></div>
+      <p>AnimusLab gives at least [90] days' notice before removing a material feature, and will maintain backward compatibility for the audit chain format and verification tooling for the Term.</p>
+    </div>
+
+    <div class="foot">
+      <span>Anchor Service Level Agreement v1.0 · Draft for legal review · Not legal advice</span>
+      <span class="pno">SLA</span>
+    </div>
+  </section>
+</body>
+</html>

@@ -98,7 +98,7 @@ const REAL_CASE_STUDIES = [
     incidentDate: "Historical Industry Reference",
     damage: "$440 Million USD",
     rootCause: "Deprecated algorithmic execution module reactivated during deployment without runtime kill switch.",
-    anchorSolution: "100% Deterministic Prevention. Anchor Layer 1 AST lockfile prevents deployment of deprecated routines, while Layer 2 runtime guard blocks execution in < 0.4ms.",
+    anchorSolution: "Simulation: if the routine were registered as decommissioned, Anchor's Layer 1 lockfile check would flag its deployment and the Layer 2 guard would block the call. The real incident was a deployment error; this illustrates the mechanism, not a guarantee.",
     tags: ["Financial Markets", "Algorithmic Execution", "Authority Overreach"],
   },
   {

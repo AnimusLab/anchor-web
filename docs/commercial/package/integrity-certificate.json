@@ -1,0 +1,60 @@
+{
+  "package": "ANC-PKG-2026-0104",
+  "generatedAt": "2026-11-22T17:57:23.817Z",
+  "documents": [
+    {
+      "file": "00-document-index.pdf",
+      "label": "Document Index",
+      "sha256": "65e8206684c0b3e6fe7101510eab0dc19d5e67e393aa3e58bfa23df3cf0a51b0",
+      "bytes": 155519
+    },
+    {
+      "file": "01-order-form.pdf",
+      "label": "Order Form",
+      "sha256": "390ec4432d7399900c99ea440723be3541aba19251784cff8aa145b9a39bf4cb",
+      "bytes": 242137
+    },
+    {
+      "file": "02-invoice.pdf",
+      "label": "Tax Invoice",
+      "sha256": "e932c2c23eb3ebb2a4b13a53f69e07c5f09cb7ac310bd9db858fb165c223dc22",
+      "bytes": 190123
+    },
+    {
+      "file": "03-receipt.pdf",
+      "label": "Receipt",
+      "sha256": "44a47c551a9695565be229d1f0649b9763f1a48a3f53a6f96c57f5cc91d22499",
+      "bytes": 192132
+    },
+    {
+      "file": "04-msa.pdf",
+      "label": "MSA v2.1",
+      "sha256": "6192c7d1dfe5eb128c48178871dcc24b661d0c97695a7f5345cf6d9c1818aebc",
+      "bytes": 183564
+    },
+    {
+      "file": "05-dpa.pdf",
+      "label": "DPA",
+      "sha256": "0bcfd8edb3a552f7989a4128aed01d4c4c7529c91d181bdf2529c1ecf64bd532",
+      "bytes": 143559
+    },
+    {
+      "file": "06-sla.pdf",
+      "label": "SLA",
+      "sha256": "f3eca18337bfe7be8b2eabfbd5740b0a7f8b37074c1c33075b3603696d9aa9c2",
+      "bytes": 135038
+    },
+    {
+      "file": "07-security-schedule.pdf",
+      "label": "Security Schedule",
+      "sha256": "43de1f664a366563198188271bc75b66259ffcd592a01bdf2d6fb70b442d5556",
+      "bytes": 144985
+    },
+    {
+      "file": "08-acceptable-use-policy.pdf",
+      "label": "Acceptable Use Policy",
+      "sha256": "13e05d76b33fc7b6aaf0f18b90a2c22bdc9321e203dcf267c2601ac6c40eb81f",
+      "bytes": 108906
+    }
+  ]
+}

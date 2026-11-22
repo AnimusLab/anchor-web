@@ -216,3 +216,64 @@ export async function sendOnboardingAdminNotification(details: {
     return { success: false, error: error.message };
   }
 }
+
+export interface SendOnboardingInvitationOptions {
+  to: string;
+  name: string;
+  orgName: string;
+  onboardingUrl: string;
+  expiresAt: Date;
+}
+
+/**
+ * Delivers a private, single-use onboarding invitation.
+ * The URL contains the only copy of the opaque token. Never log it.
+ */
+export async function sendOnboardingInvitationEmail(
+  options: SendOnboardingInvitationOptions
+) {
+  const { to, name, orgName, onboardingUrl, expiresAt } = options;
+  const resend = getResendClient();
+  if (!resend) return { success: false, message: "Resend API key missing" };
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL || "no-reply@updates.animuslab.dev";
+  const replyToEmail = process.env.RESEND_REPLY_TO || "tan@animuslab.dev";
+  const expiry = expiresAt.toISOString().replace("T", " ").slice(0, 16) + " UTC";
+
+  try {
+    const data = await resend.emails.send({
+      from: fromEmail,
+      replyTo: replyToEmail,
+      to: [to],
+      subject: `[AnimusLab] Your Anchor Hub onboarding invitation`,
+      html: `
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#f6f8fb;padding:32px 16px;">
+          <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;padding:32px;">
+            <p style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#2563eb;font-weight:800;margin:0 0 8px;">ANCHOR GOVERNANCE PLATFORM</p>
+            <h1 style="font-size:22px;color:#0b1220;margin:0 0 12px;">Hub onboarding invitation</h1>
+            <p style="font-size:14px;line-height:1.6;color:#334155;">Hello <strong>${name}</strong>,</p>
+            <p style="font-size:14px;line-height:1.6;color:#334155;">
+              Your organisation <strong>${orgName}</strong> has been provisioned on Anchor.
+              Use the single-use link below to activate your Hub Manager clearance and enrol your authenticator.
+            </p>
+            <a href="${onboardingUrl}" style="display:block;text-align:center;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:14px;border-radius:10px;margin:24px 0;">
+              Activate my Hub access
+            </a>
+            <p style="font-size:12px;color:#64748b;line-height:1.6;">
+              This invitation expires on <strong>${expiry}</strong> and can be used only once.
+              If it expires, ask your AnimusLab administrator to issue a new one.
+            </p>
+            <p style="font-size:11px;color:#94a3b8;line-height:1.6;margin-top:24px;border-top:1px solid #e2e8f0;padding-top:16px;">
+              Security notice: AnimusLab will never ask you to share this link or your authenticator secret.
+              If you were not expecting this email, contact tan@animuslab.dev.
+            </p>
+          </div>
+        </div>
+      `,
+    });
+    return { success: true, data };
+  } catch (error: any) {
+    console.error("Resend onboarding invitation error:", error?.message || error);
+    return { success: false, error: error?.message };
+  }
+}

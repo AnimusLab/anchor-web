@@ -15,18 +15,18 @@
  *      no manual edits required in anchor-web.
  *
  * Fallback: if PyPI was unreachable at the last build, this will return the
- * fallback value set in next.config.mjs ("6.0.2"). Update that fallback
+ * fallback value set in next.config.mjs ("6.0.3"). Update that fallback
  * manually only after repeated build failures.
  */
 
 export const ANCHOR_VERSION: string =
-  process.env.NEXT_PUBLIC_ANCHOR_VERSION ?? "6.0.2";
+  process.env.NEXT_PUBLIC_ANCHOR_VERSION ?? "6.0.3";
 
-/** e.g. "v6.0.2" */
+/** e.g. "v6.0.3" */
 export const ANCHOR_VERSION_TAG: string = `v${ANCHOR_VERSION}`;
 
-/** e.g. "Anchor Protocol (v6.0.2)" */
+/** e.g. "Anchor Protocol (v6.0.3)" */
 export const ANCHOR_VERSION_LABEL: string = `Anchor Protocol (${ANCHOR_VERSION_TAG})`;
 
-/** e.g. "Core Protocol v6.0.2" */
+/** e.g. "Core Protocol v6.0.3" */
 export const ANCHOR_CORE_LABEL: string = `Core Protocol ${ANCHOR_VERSION_TAG}`;

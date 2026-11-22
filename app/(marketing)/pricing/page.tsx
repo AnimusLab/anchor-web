@@ -110,7 +110,7 @@ const TIERS = [
       leadership: "1 Hub Manager · 1 Project Lead",
       devs: "5 Developers",
       auditors: "1 Standard Auditor",
-      capacity: "1 Project · 1 Governed AI Model",
+      capacity: "Unlimited Projects · 1 Governed AI Model",
       retention: "2 Years DAC Retention",
       deployment: "Hybrid Telemetry Isolation",
     },
@@ -118,7 +118,7 @@ const TIERS = [
       "1 Isolated Organization Hub Container ($3.5K setup)",
       "1 Hub Manager ($9K) · 1 Project Lead ($4.5K)",
       "5 Developers ($7.5K) · 1 Standard Auditor ($4.5K)",
-      "1 Project Slot & 1 Governed AI Model Slot",
+      "Unlimited Projects & 1 Governed AI Model Slot",
       "2 years Decision Audit Chain (DAC) SHA-256 retention",
       "Pre-commit CLI scanning & @anchor.guard runtime interceptor",
       "All jurisdictional dialects (EU AI Act, RBI, SEC, FCA)",
@@ -139,7 +139,7 @@ const TIERS = [
       leadership: "1 Hub Manager · 2 Project Leads",
       devs: "25 Developers",
       auditors: "2 Standard Auditors",
-      capacity: "2 Projects · 2 Governed AI Models",
+      capacity: "Unlimited Projects · 2 Governed AI Models",
       retention: "3 Years DAC Retention",
       deployment: "Hybrid Telemetry Isolation",
     },
@@ -147,7 +147,7 @@ const TIERS = [
       "1 Isolated Branch Hub ($7,000 base infrastructure)",
       "1 Hub Manager ($9K) · 2 Project Leads ($9K)",
       "25 Developers ($37.5K) · 2 Standard Auditors ($9K)",
-      "2 Project Slots & 2 Governed AI Model Slots included",
+      "Unlimited Projects & 2 Governed AI Model Slots included",
       "List $71,500 with 15% standard bundle discount = $60,775 (~$60K)",
       "3 years Decision Audit Chain immutable retention",
       "Dual-key cryptographic access requests & DAC explorer",
@@ -168,7 +168,7 @@ const TIERS = [
       leadership: "1 Hub Manager · 4 Project Leads",
       devs: "40 Developers",
       auditors: "4 Standard Auditors",
-      capacity: "4 Projects · 4 Governed AI Models",
+      capacity: "Unlimited Projects · 4 Governed AI Models",
       retention: "4 Years DAC Retention",
       deployment: "Hybrid Telemetry Isolation",
     },
@@ -176,10 +176,10 @@ const TIERS = [
       "1 Isolated Branch Hub ($7,000 base infrastructure)",
       "1 Hub Manager ($9K) · 4 Project Leads ($18K)",
       "40 Developers ($60K) · 4 Standard Auditors ($18K)",
-      "4 Project Slots & 4 Governed AI Model Slots included",
+      "Unlimited Projects & 4 Governed AI Model Slots included",
       "List $112,000 with 15% standard bundle discount = $95,200 (~$95K)",
       "4 years Decision Audit Chain immutable retention",
-      "High-throughput sub-0.4ms runtime interception",
+      "Low-latency in-process runtime interception",
     ],
     cta: "Deploy Professional Hub",
     ctaHref: "mailto:tan@animuslab.dev?subject=Anchor%20Professional%20Hub%20Inquiry%20($95K)",
@@ -243,7 +243,7 @@ const TIERS = [
 ];
 
 const ADD_ON_CATALOG = [
-  { item: "Additional Project Pack", price: "$23,500 / yr", desc: "1 Project Lead ($4.5K) + 10 Developers ($15K) + 1 Standard Auditor ($4.5K) + 1 AI Slot" },
+  { item: "AI Governance Capacity Pack", price: "$23,500 / yr", desc: "1 Governed AI Model Slot + 1 Project Lead ($4.5K) + 10 Developers ($15K) + 1 Standard Auditor ($4.5K) · Unlimited Projects" },
   { item: "Developer Pack (10 seats)", price: "$15,000 / yr", desc: "CLI/CI scans, AST linting, and @anchor.guard runtime instrumentation ($1,500/seat)" },
   { item: "Project Lead Pack (3 seats)", price: "$10,500 / yr", desc: "Key issuance, triage velocity & project telemetry stream (~12.5% pack discount)" },
   { item: "Standard Auditor Pack (5 seats)", price: "$22,500 / yr", desc: "Single-Hub DAC verification & formal EnforcementNotice issuance ($4,500/seat)" },
@@ -388,7 +388,7 @@ export default function PricingPage() {
           </h1>
 
           <p className="text-base sm:text-lg max-w-2xl mx-auto font-normal text-slate-600 dark:text-slate-300 leading-relaxed">
-            Predictable, clearance-level pricing anchored to access scope and operational responsibility. Open Core engine with enterprise annual contracts, zero data exfiltration, and sovereign on-prem deployments.
+            Predictable, clearance-level pricing anchored to access scope and operational responsibility. Open Core engine with enterprise annual contracts, raw code stays on your infrastructure (telemetry is opt-in), and sovereign on-prem deployments.
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4 text-left">
@@ -895,7 +895,7 @@ export default function PricingPage() {
             <p className="text-[11px] font-mono font-semibold tracking-widest text-blue-600 dark:text-blue-400 uppercase">07 // Engagement Protocol</p>
             <h2 className="text-3xl font-bold text-black dark:text-white">Next Steps for Prospects</h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-              Every step proves mathematical value before the next commitment. Move from zero risk to full production governance.
+              Every step proves measurable value before the next commitment. Move from zero risk to full production governance.
             </p>
           </div>
 

@@ -16,18 +16,14 @@ import { useTheme } from "@/lib/theme";
 ───────────────────────────────────────────────────────── */
 
 const LATENCY_METRICS = [
-  { metric: "p50 Runtime Intercept", value: "0.18 ms", sub: "180 microseconds (PyO3 Rust FFI)", highlight: false },
+  { metric: "p50 Runtime Intercept", value: "0.18 ms", sub: "180 microseconds (PyO3 Rust FFI, self-measured)", highlight: false },
   { metric: "p90 Runtime Intercept", value: "0.28 ms", sub: "280 microseconds", highlight: false },
   { metric: "p99 Runtime Intercept", value: "0.38 ms", sub: "380 microseconds (tail latency)", highlight: true },
-  { metric: "Layer 1 AST Full Scan", value: "18.4 ms", sub: "50,000 LOC / 120 AST rules", highlight: false },
+  { metric: "Layer 1 AST Full Scan", value: "18.4 ms", sub: "50,000 LOC (self-measured)", highlight: false },
 ];
 
 const BENCHMARK_COMPARISON = [
   { name: "Anchor Layer 2 (In-Process PyO3 Rust FFI)", latency: "0.35 ms", ms: 0.35, color: "#2563EB", highlight: true },
-  { name: "LangSmith Async Telemetry Sink", latency: "85.00 ms", ms: 85, color: "#64748B", highlight: false },
-  { name: "Guardrails AI (Python Regex & Wrapper)", latency: "180.00 ms", ms: 180, color: "#64748B", highlight: false },
-  { name: "NeMo Guardrails (Secondary LLM Judge)", latency: "240.00 ms", ms: 240, color: "#64748B", highlight: false },
-  { name: "Full Secondary LLM Review (e.g. GPT-4o-mini)", latency: "380.00 ms", ms: 380, color: "#64748B", highlight: false },
 ];
 
 const TESTBED_SPECS = [
@@ -101,11 +97,11 @@ export default function BenchmarksPage() {
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight text-slate-950 dark:text-white">
             Sub-Millisecond Guardrails. <br />
-            <span className="serif-em text-blue-600 dark:text-blue-400 font-bold">Zero Hot-Path Overhead.</span>
+            <span className="serif-em text-blue-600 dark:text-blue-400 font-bold">Low Hot-Path Overhead.</span>
           </h1>
 
           <p className="text-base sm:text-lg max-w-3xl mx-auto font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
-            Measured under rigorous high-frequency load on dedicated hardware testbeds: <strong className="text-slate-950 dark:text-white">100,000+ operations/sec</strong> per node with p99 runtime latency under <strong className="text-slate-950 dark:text-white">0.38 milliseconds</strong>.
+            Self-reported figures from AnimusLab's own testing (allowed-call path; methodology and script in the Anchor repo): <strong className="text-slate-950 dark:text-white">100,000+ operations/sec</strong> per node with p99 runtime latency under <strong className="text-slate-950 dark:text-white">0.38 milliseconds</strong>.
           </p>
         </div>
       </section>
@@ -142,7 +138,7 @@ export default function BenchmarksPage() {
               <span className="text-xs font-mono font-bold uppercase text-blue-700 dark:text-blue-400 tracking-wider">Benchmark Parameters &amp; Testbed Topography</span>
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 dark:text-white">Why Anchor Achieves &lt; 0.4ms Execution Latency</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 dark:text-white">Why Anchor's In-Process Overhead Is Low</h2>
             <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed max-w-4xl">
               Unlike LLM proxy wrappers that route payloads through external network hops or invoke secondary language models, Anchor executes <strong className="text-slate-950 dark:text-white">in-process via zero-copy PyO3 Rust FFI pointer passing</strong>. When decorated with <code className="font-mono text-blue-700 dark:text-blue-400 font-bold">@anchor.guard</code>, input arguments are evaluated directly against pre-compiled AST invariants in memory.
             </p>
@@ -162,13 +158,13 @@ export default function BenchmarksPage() {
           <div className="p-8 sm:p-12 lp-card-3d space-y-8">
             <div className="space-y-2">
               <span className="text-xs font-mono font-bold tracking-widest text-blue-700 dark:text-blue-400 uppercase">Execution Overhead Comparison</span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 dark:text-white">Inference Latency Impact (Lower is Better)</h2>
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Comparing Anchor in-process Rust FFI against network sidecars and secondary LLM judges.</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 dark:text-white">Anchor Layer 2 Overhead (Lower is Better)</h2>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Anchor's own measured overhead only. Other tools do different jobs (async logging, semantic judging), so we don't publish a head-to-head latency chart. Blocked-call latency and cold starts are higher and are not shown here.</p>
             </div>
 
             <div className="space-y-6 pt-4">
               {BENCHMARK_COMPARISON.map((b) => {
-                const pct = Math.max(1.5, (b.ms / 380) * 100);
+                const pct = Math.max(1.5, (b.ms / 1) * 100);
                 return (
                   <div key={b.name} className="space-y-2">
                     <div className="flex justify-between items-center text-xs sm:text-sm font-bold">

@@ -19,6 +19,70 @@ enum ContractTier {
   SOVEREIGN
 }
 
+enum PackageTier {
+  LAUNCH
+  STARTER
+  PROFESSIONAL
+  GROWTH
+  SOVEREIGN
+}
+
+enum EntitlementType {
+  ADDITIVE
+  REPLACEMENT
+  VALUE
+  BOOLEAN
+}
+
+enum EntitlementScope {
+  ORGANIZATION
+  HUB
+}
+
+enum QuoteStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  EXPIRED
+  SUPERSEDED
+}
+
+enum ContractStatus {
+  DRAFT
+  AWAITING_CUSTOMER_SIGNATURE
+  AWAITING_ANIMUSLAB_SIGNATURE
+  EXECUTED
+  AMENDED
+  TERMINATED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  NOT_DUE
+  INVOICED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  REFUNDED
+}
+
+enum EntitlementStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  REVOKED
+}
+
+enum ModelStatus {
+  PENDING
+  ACTIVE
+  QUARANTINED
+  ARCHIVED
+  REJECTED
+}
+
 enum Role {
   HUB_MANAGER
   PROJECT_LEAD
@@ -87,6 +151,10 @@ model Organization {
   users        User[]
   whitelists   Whitelist[]
   invites      OrgInvite[]
+  quotes       Quote[]
+  contracts    Contract[]
+  entitlements EntitlementGrant[]
+  onboardingInvitations OnboardingInvitation[]
 }
 
 model Hub {
@@ -114,19 +182,25 @@ model Hub {
   identities         GovernanceIdentity[]
   whitelists         Whitelist[]
   invites            OrgInvite[]
+  governedModels     GovernedAiModel[]
+  entitlements       EntitlementGrant[]
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  hubId       String
-  hub         Hub      @relation(fields: [hubId], references: [id], onDelete: Cascade)
-  name        String
-  slug        String
-  apiKeyHash  String   @unique
-  createdAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  hubId         String
+  hub           Hub      @relation(fields: [hubId], references: [id], onDelete: Cascade)
+  name          String
+  slug          String
+  apiKeyHash    String   @unique
+  createdAt     DateTime @default(now())
 
-  users       User[]
-  apiKeys     ApiKey[]
+  users         User[]
+  apiKeys       ApiKey[]
+  modelBindings ProjectModelBinding[]
+  scanEvents    ProjectScanEvent[]
+
+  @@unique([hubId, slug])
 }
 
 model ApiKey {
@@ -335,17 +409,243 @@ model GovernanceIdentity {
 }
 
 model TelemetryEvent {
-  id                  String   @id @default(cuid())
+  id                  String           @id @default(cuid())
   hubId               String
-  hub                 Hub      @relation(fields: [hubId], references: [id], onDelete: Cascade)
+  hub                 Hub              @relation(fields: [hubId], references: [id], onDelete: Cascade)
   projectName         String
-  entityDisplayName   String?  // e.g. "Forge Repository"
+  entityDisplayName   String?          // e.g. "Forge Repository"
   complianceVerdict   String
   riskScore           Float
   identityFingerprint String
   violationsJson      String
-  createdAt           DateTime @default(now())
+  createdAt           DateTime         @default(now())
+  modelId             String?
+  model               GovernedAiModel? @relation(fields: [modelId], references: [id], onDelete: SetNull)
 
   @@index([identityFingerprint])
   @@index([complianceVerdict])
+  @@index([modelId])
+}
+
+// ═══════════════════════════════════════════════════════
+// COMMERCIAL & CONTRACT RECORD (Revision 2.1)
+// ═══════════════════════════════════════════════════════
+
+model Quote {
+  id                   String          @id @default(cuid())
+  referenceNumber      String          @unique // e.g. "ANC-Q-2027-0001"
+  orgId                String?
+  organization         Organization?   @relation(fields: [orgId], references: [id])
+
+  companyLegalName     String
+  companyTradingName   String?
+  companyCountry       String
+  companyAddress       String?
+  companyRegNumber     String?
+  companyTaxId         String?         // GSTIN, VAT, EIN
+  billingAddress       String?
+
+  contactName          String
+  contactDesignation   String?
+  contactEmail         String
+  contactPhone         String?
+
+  signatoryName        String?
+  signatoryDesignation String?
+  signatoryEmail       String?
+  signatoryIsSameAsContact Boolean     @default(true)
+
+  packageTier          PackageTier
+  termYears            Int             @default(1)
+  currency             String          @default("USD")
+  annualListPrice      Decimal         @db.Decimal(12, 2)
+  bundleDiscount       Decimal         @db.Decimal(12, 2)
+  termDiscount         Decimal         @db.Decimal(12, 2)
+  netAnnualPrice       Decimal         @db.Decimal(12, 2)
+  servicesTotal        Decimal         @default(0) @db.Decimal(12, 2)
+  taxRate              Decimal         @default(0) @db.Decimal(5, 2)
+  taxAmount            Decimal         @default(0) @db.Decimal(12, 2)
+  totalContract        Decimal         @db.Decimal(12, 2)
+
+  status               QuoteStatus     @default(DRAFT)
+  submittedAt          DateTime?
+  expiresAt            DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  lineItems            QuoteLineItem[]
+  contracts            Contract[]
+}
+
+model QuoteLineItem {
+  id             String   @id @default(cuid())
+  quoteId        String
+  quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  itemCode       String   // "AI_GOV_CAPACITY_PACK", "DEV_SEATS", "MODEL_SLOT"
+  description    String
+  quantity       Int
+  unitPrice      Decimal  @db.Decimal(12, 2)
+  discountAmount Decimal  @default(0) @db.Decimal(12, 2)
+  lineTotal      Decimal  @db.Decimal(12, 2)
+}
+
+model Contract {
+  id                 String              @id @default(cuid())
+  referenceNumber    String              @unique // e.g. "ANC-CON-2027-0001"
+  quoteId            String
+  quote              Quote               @relation(fields: [quoteId], references: [id])
+  orgId              String
+  organization       Organization        @relation(fields: [orgId], references: [id])
+  parentContractId   String?
+  parentContract     Contract?           @relation("ContractAmendments", fields: [parentContractId], references: [id])
+  amendments         Contract[]          @relation("ContractAmendments")
+
+  version            Int                 @default(1)
+  documentHash       String?             // SHA-256 of executed agreement
+  documentUrl        String?
+  signingProviderRef String?
+
+  commencementDate   DateTime?
+  expiryDate         DateTime?
+  autoRenew          Boolean             @default(false)
+
+  contractStatus     ContractStatus      @default(DRAFT)
+  paymentStatus      PaymentStatus       @default(NOT_DUE)
+
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  signatures         ContractSignature[]
+  entitlements       EntitlementGrant[]
+  invoices           Invoice[]
+  onboardingInvitations OnboardingInvitation[]
+}
+
+model ContractSignature {
+  id                  String    @id @default(cuid())
+  contractId          String
+  contract            Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  signerName          String
+  signerEmail         String
+  signerRole          String    // "CUSTOMER_SIGNATORY" | "ANIMUSLAB_OFFICER"
+  providerSignatureId String?
+  signedAt            DateTime?
+  ipAddress           String?
+  status              String    @default("PENDING")
+
+  @@unique([contractId, signerRole])
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  referenceNumber String        @unique // e.g. "ANC-INV-2027-0001"
+  contractId      String
+  contract        Contract      @relation(fields: [contractId], references: [id])
+  amount          Decimal       @db.Decimal(12, 2)
+  currency        String        @default("USD")
+  taxAmount       Decimal       @default(0) @db.Decimal(12, 2)
+  totalAmount     Decimal       @db.Decimal(12, 2)
+  dueDate         DateTime
+  paidAt          DateTime?
+  status          PaymentStatus @default(INVOICED)
+  createdAt       DateTime      @default(now())
+}
+
+model EntitlementGrant {
+  id                 String            @id @default(cuid())
+  orgId              String
+  organization       Organization      @relation(fields: [orgId], references: [id])
+  hubId              String?           // Null = applies to all Hubs in Org
+  hub                Hub?              @relation(fields: [hubId], references: [id])
+  contractId         String
+  contract           Contract          @relation(fields: [contractId], references: [id])
+
+  featureCode        String            // e.g. "GOVERNED_AI_MODEL_SLOTS"
+  aggregationType    EntitlementType   @default(ADDITIVE)
+  scope              EntitlementScope  @default(ORGANIZATION)
+  limitValue         Int               // -1 = unlimited
+  effectiveFrom      DateTime
+  effectiveUntil     DateTime
+  status             EntitlementStatus @default(PENDING)
+
+  licenseId          String?           @unique // e.g. "ANC-LIC-2027-0001"
+  canonicalManifest  String?
+  manifestSignature  String?
+  signatureAlgorithm String?           @default("ed25519")
+  keyId              String?
+  issuedAt           DateTime?
+  revokedAt          DateTime?
+
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([orgId, featureCode, status])
+  @@index([contractId])
+}
+
+model GovernedAiModel {
+  id              String            @id @default(cuid())
+  hubId           String
+  hub             Hub               @relation(fields: [hubId], references: [id], onDelete: Cascade)
+  name            String            // e.g. "Credit-Scoring-Agent"
+  slug            String            // e.g. "credit-scoring-agent"
+  modelClass      String            // "PROPRIETARY" | "OSS_FINE_TUNE" | "HOSTED_API"
+  riskCategory    String            // "HIGH_RISK" | "GPAI_SYSTEMIC" | "MINIMAL"
+  status          ModelStatus       @default(ACTIVE)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  modelBindings   ProjectModelBinding[]
+  telemetryEvents TelemetryEvent[]
+
+  @@unique([hubId, slug])
+}
+
+model ProjectModelBinding {
+  projectId       String
+  project         Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  modelId         String
+  model           GovernedAiModel   @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  boundAt         DateTime          @default(now())
+
+  @@id([projectId, modelId])
+}
+
+model ProjectScanEvent {
+  id              String            @id @default(cuid())
+  projectId       String
+  project         Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scanHash        String            // SHA-256 of AST findings
+  rulesEvaluated  Int
+  violationsFound Int
+  riskScore       Float
+  sanitizedSummary Json
+  createdAt       DateTime          @default(now())
+}
+
+model OnboardingInvitation {
+  id              String       @id @default(cuid())
+  orgId           String
+  organization    Organization @relation(fields: [orgId], references: [id])
+  contractId      String
+  contract        Contract     @relation(fields: [contractId], references: [id])
+
+  recipientEmail  String
+  recipientName   String?
+  role            String
+
+  tokenHash       String       @unique
+  expiresAt       DateTime
+  consumedAt      DateTime?
+  revokedAt       DateTime?
+  revokedBy       String?
+
+  deliveryStatus  String       @default("PENDING")
+  deliveredAt     DateTime?
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([orgId, contractId])
+  @@index([tokenHash])
 }

@@ -38,7 +38,7 @@ const FAQS = [
   },
   {
     q: "What latency overhead does Anchor add?",
-    a: "Anchor's native Rust kernel evaluates enforcement paths in-process, adding under 0.4ms per inference call. For most regulated workloads this is unmeasurable against network and model latency.",
+    a: "Anchor's native Rust kernel evaluates enforcement paths in-process, adding well under a millisecond per guarded call in our own measurements (script published in the Anchor repo). For most regulated workloads that is small next to network and model latency.",
   },
   {
     q: "Which regulatory frameworks does Anchor cover?",
@@ -224,7 +224,7 @@ export default function LandingPage() {
                 Anchor hooks into your AI agent's execution boundary — before a response is formed, before a database is queried, before a transaction is placed. If it violates your policy, it never happens.
               </p>
               <p className="text-base sm:text-lg leading-relaxed font-normal" style={{ color: "var(--lp-sub)" }}>
-                Anchor's native Rust kernel compiles statutory invariant paths. No separate sidecar. Sub-0.4ms hard ceiling per call.
+                Anchor's native Rust kernel compiles statutory invariant paths. No separate sidecar. Sub-millisecond typical overhead per call (self-measured).
               </p>
               <Link
                 href="/login"
@@ -312,13 +312,13 @@ export default function LandingPage() {
               <p className="lp-section-label">Act 02 · Audit</p>
               <h2 className="text-3xl sm:text-4xl font-bold leading-tight" style={{ color: "var(--lp-text)" }}>
                 Cryptographically sealed. <br />
-                <span className="serif-em">Mathematically unforgeable.</span>
+                <span className="serif-em">Cryptographically verifiable.</span>
               </h2>
               <p className="text-base sm:text-lg leading-relaxed font-normal" style={{ color: "var(--lp-sub)" }}>
                 Every check-in, execution permit, and policy block is recorded to an append-only, SHA-256 chain-hashed audit ledger.
               </p>
               <p className="text-base sm:text-lg leading-relaxed font-normal" style={{ color: "var(--lp-sub)" }}>
-                When external regulators demand evidence, hand them mathematically verified telemetry proofs — not exported spreadsheets.
+                When external regulators demand evidence, hand them signed, tamper-evident audit records — not exported spreadsheets.
               </p>
               <Link
                 href="/login"
@@ -605,7 +605,7 @@ export default function LandingPage() {
                     "4 Standard Auditors included",
                     "List $112K - 15% discount = ~$95K",
                     "4 years Decision Audit Chain",
-                    "Sub-0.4ms runtime interception",
+                    "Low-latency in-process interception",
                   ].map((f) => (
                     <li key={f} className="flex items-start gap-2.5">
                       <span className="text-[#5B5CF6] font-bold text-sm shrink-0 mt-0.5">✓</span>
@@ -727,7 +727,7 @@ export default function LandingPage() {
             <span className="serif-em">Anchor governs.</span>
           </h2>
           <p className="text-lg sm:text-xl max-w-xl mx-auto font-normal" style={{ color: "var(--lp-sub)" }}>
-            Deterministic runtime enforcement. Immutable SHA-256 audit ledger. Zero external data exfiltration.
+            Deterministic runtime enforcement. Tamper-evident SHA-256 audit ledger. Raw code stays on your infrastructure; telemetry is opt-in.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-2">
             <Link
@@ -811,8 +811,8 @@ export default function LandingPage() {
           <div className="pt-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-medium">
             <span>© 2026 Anchor · AnimusLab. All rights reserved.</span>
             <div className="flex items-center gap-6">
-              <Link href="#" className="hover:text-white transition-colors">Terms</Link>
-              <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
               <Link href="mailto:tan@animuslab.dev" className="hover:text-white transition-colors">Contact</Link>
             </div>
             <span>Founder: Tanishq Dasari · <a href="mailto:tan@animuslab.dev" className="hover:text-white underline">tan@animuslab.dev</a></span>

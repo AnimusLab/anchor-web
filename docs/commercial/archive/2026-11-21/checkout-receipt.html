@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anchor — Checkout Receipt ANC-RCT-2027-0104</title>
+<style>
+  :root {
+    --ink: #0B1220;
+    --ink-soft: #334155;
+    --muted: #64748B;
+    --line: #E2E8F0;
+    --line-soft: #F1F5F9;
+    --brand: #2563EB;
+    --brand-soft: #EFF6FF;
+    --good: #059669;
+    --good-soft: #ECFDF5;
+    --paper: #FFFFFF;
+    --canvas: #EEF2F7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--canvas);
+    color: var(--ink);
+    padding: 40px 16px;
+    line-height: 1.5;
+  }
+  .sheet {
+    width: 820px;
+    max-width: 100%;
+    margin: 0 auto;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 24px 60px -24px rgba(15, 23, 42, 0.35);
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  .head {
+    padding: 28px 40px 24px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .mark {
+    width: 42px; height: 42px; border-radius: 10px;
+    background: linear-gradient(145deg, #1D4ED8, #2563EB 55%, #3B82F6);
+    display: grid; place-items: center;
+    box-shadow: 0 6px 14px -6px rgba(37, 99, 235, 0.7);
+  }
+  .brand-name { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
+  .brand-sub { font-size: 10.5px; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 2px; }
+  .doc-meta { text-align: right; }
+  .doc-meta h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+  .doc-meta .ref { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+  .doc-meta .date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .paid-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px 40px;
+    background: linear-gradient(90deg, var(--good-soft), #F7FEFB);
+    border-bottom: 1px solid #D1FAE5;
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #FFFFFF; border: 1px solid #A7F3D0;
+    color: var(--good); font-size: 11.5px; font-weight: 800;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 6px 12px; border-radius: 999px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 4px rgba(5,150,105,0.12); }
+  .paid-amount { font-size: 13px; color: #065F46; font-weight: 700; }
+  .paid-amount span { font-weight: 500; color: #047857; }
+
+  /* ── Body ── */
+  .body { padding: 30px 40px 8px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .label { font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 7px; }
+  .party-name { font-size: 14px; font-weight: 700; }
+  .party-line { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .party-line .k { color: var(--muted); }
+  .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+
+  .section-head {
+    display: flex; align-items: center; gap: 10px;
+    margin: 30px 0 12px;
+  }
+  .section-head .num {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 10px; font-weight: 700; color: var(--brand);
+    background: var(--brand-soft); border: 1px solid #DBEAFE;
+    padding: 2px 7px; border-radius: 5px;
+  }
+  .section-head h2 { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); }
+  .section-head .rule { flex: 1; height: 1px; background: var(--line); }
+
+  table.items { width: 100%; border-collapse: collapse; }
+  table.items thead th {
+    font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; text-align: left;
+    padding: 0 0 9px; border-bottom: 1px solid var(--line);
+  }
+  table.items thead th.r, table.items td.r { text-align: right; }
+  table.items thead th.c, table.items td.c { text-align: center; }
+  table.items tbody td {
+    padding: 12px 0; border-bottom: 1px solid var(--line-soft);
+    font-size: 12.5px; vertical-align: top;
+  }
+  table.items tbody tr:last-child td { border-bottom: 1px solid var(--line); }
+  .item-name { font-weight: 650; color: var(--ink); }
+  .item-code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .item-desc { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .qty { color: var(--ink-soft); }
+  .included { color: var(--good); font-weight: 700; font-size: 11.5px; }
+
+  /* ── Totals ── */
+  .totals { margin-left: auto; width: 400px; margin-top: 18px; }
+  .trow { display: flex; justify-content: space-between; padding: 6px 0; font-size: 12.5px; color: var(--ink-soft); }
+  .trow .v { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); }
+  .trow.disc .v { color: var(--good); }
+  .trow.sub { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 10px; font-weight: 700; color: var(--ink); }
+  .trow.grand {
+    margin-top: 10px; padding: 14px 0 0; border-top: 2px solid var(--ink);
+    font-size: 16px; font-weight: 800; color: var(--ink);
+  }
+  .trow.grand .v { font-size: 20px; letter-spacing: -0.02em; }
+  .trow.savings { font-size: 11px; color: var(--good); padding-top: 4px; }
+
+  /* ── Payment + activation ── */
+  .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 28px; }
+  .panel { border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; background: #FCFDFF; }
+  .panel h3 { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 800; margin-bottom: 12px; }
+  .kv { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 11.5px; }
+  .kv .k { color: var(--muted); }
+  .kv .v { color: var(--ink); font-weight: 600; text-align: right; }
+  .kv .v.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 500; font-size: 10.5px; }
+
+  .timeline { list-style: none; }
+  .timeline li { display: flex; gap: 10px; padding: 6px 0; font-size: 11.5px; }
+  .tl-dot { flex: none; width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font-size: 9px; font-weight: 800; margin-top: 1px; }
+  .tl-done { background: var(--good); color: #fff; }
+  .tl-now { background: var(--brand); color: #fff; }
+  .tl-next { background: #fff; color: var(--muted); border: 1px solid var(--line); }
+  .tl-text strong { color: var(--ink); font-weight: 700; }
+  .tl-text span { color: var(--muted); }
+
+  /* ── Next steps ── */
+  .next {
+    margin-top: 22px; padding: 16px 18px;
+    background: var(--brand-soft); border: 1px solid #DBEAFE; border-radius: 10px;
+  }
+  .next h3 { font-size: 11px; font-weight: 800; color: #1E40AF; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .next p { font-size: 11.5px; color: #334155; line-height: 1.6; }
+  .next code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 10.5px; background: #fff; border: 1px solid #DBEAFE; padding: 1px 5px; border-radius: 4px; }
+
+  /* ── Footer ── */
+  .foot {
+    margin-top: 28px; padding: 18px 40px 22px;
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; gap: 20px; align-items: flex-start;
+  }
+  .foot .fine { font-size: 9.5px; color: var(--muted); line-height: 1.6; max-width: 460px; }
+  .foot .hash { text-align: right; font-size: 9px; color: var(--muted); }
+  .foot .hash .mono { font-size: 8.5px; color: var(--ink-soft); word-break: break-all; max-width: 210px; display: inline-block; }
+
+  .watermark {
+    position: relative;
+  }
+  .watermark::after {
+    content: "PAID";
+    position: absolute; right: 22px; top: 50%;
+    transform: translateY(-50%) rotate(-14deg);
+    font-size: 74px; font-weight: 900; letter-spacing: 0.1em;
+    color: rgba(5, 150, 105, 0.06);
+    pointer-events: none; user-select: none;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .sheet { box-shadow: none; border: none; border-radius: 0; width: 100%; }
+    @page { size: A4; }
+    .panels, .next, .totals, .foot { break-inside: avoid; }
+    table.items thead { display: table-header-group; }
+    table.items tr { break-inside: avoid; }
+    .section-head { break-after: avoid; }
+    .watermark::after { display: none; }
+    .head { padding: 20px 40px 16px; }
+    .paid-bar { padding: 10px 40px; }
+    .body { padding: 18px 40px 8px; }
+    table.items tbody td { padding: 7px 0; font-size: 11px; }
+    .item-desc { font-size: 10px; }
+    .item-code { font-size: 9px; }
+    .trow { padding: 3px 0; font-size: 11.5px; }
+    .trow.grand { padding-top: 9px; }
+    .totals { margin-top: 12px; }
+    .grid-2 { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+  <div class="sheet watermark">
+
+    <!-- Header -->
+    <div class="head">
+      <div class="brand">
+        <div class="mark">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="2.4"/>
+            <path d="M12 7.4V21"/>
+            <path d="M5 12H19"/>
+            <path d="M5 12c0 4 3 6.5 7 6.5s7-2.5 7-6.5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">ANIMUSLAB</div>
+          <div class="brand-sub">Anchor Governance Platform</div>
+        </div>
+      </div>
+      <div class="doc-meta">
+        <h1>Checkout Receipt</h1>
+        <div class="ref">ANC-RCT-2027-0104</div>
+        <div class="date">Issued 21 November 2026 · 14:32 UTC</div>
+      </div>
+    </div>
+
+    <!-- Paid bar -->
+    <div class="paid-bar">
+      <span class="pill"><span class="dot"></span>Payment Received</span>
+      <div class="paid-amount">USD $219,436.00 <span>· settled in full</span></div>
+    </div>
+
+    <div class="body">
+
+      <!-- Parties -->
+      <div class="grid-2">
+        <div>
+          <div class="label">Billed To</div>
+          <div class="party-name">Acme Financial Technologies Ltd.</div>
+          <div class="party-line"><span class="k">Reg No.</span> 09482014</div>
+          <div class="party-line"><span class="k">VAT</span> GB 928 4102 88</div>
+          <div class="party-line">25 Bank Street, London E14 5JP, UK</div>
+          <div class="party-line"><span class="k">Attn:</span> Marcus Vance, VP of AI Platforms</div>
+        </div>
+        <div>
+          <div class="label">Payment Summary</div>
+          <div class="party-line"><span class="k">Method</span> SWIFT / Wire transfer</div>
+          <div class="party-line"><span class="k">Transaction</span> <span class="mono">TXN-8841-2290-7716</span></div>
+          <div class="party-line"><span class="k">Cleared</span> 21 Nov 2026, 14:29 UTC</div>
+          <div class="party-line"><span class="k">Order Form</span> <span class="mono">ANC-OF-2027-0104</span></div>
+          <div class="party-line"><span class="k">Contract</span> <span class="mono">ANC-CON-2027-0104</span></div>
+        </div>
+      </div>
+
+      <!-- Line items -->
+      <div class="section-head"><span class="num">01</span><h2>Bespoke Capacity — Itemized</h2><span class="rule"></span></div>
+      <table class="items">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="c" style="width:56px">Qty</th>
+            <th class="r" style="width:120px">Unit Rate</th>
+            <th class="r" style="width:130px">Annual List</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="item-name">Isolated Branch Infrastructure Container</div><div class="item-code">HUB_CONTAINER</div><div class="item-desc">Dedicated Hub node · EU-West region</div></td>
+            <td class="c qty">1</td>
+            <td class="r">$7,000.00</td>
+            <td class="r">$7,000.00</td>
+          </tr>
+          <tr>
+            <td><div class="item-name">Hub Manager Clearance</div><div class="item-code">HUB_MGR_SEAT · L3 Sovereignty</div></td>
+            <td class="c qty">1</td>
+            <td class="r">$9,000.00</td>
+            <td class="r">$9,000.00</td>
+          </tr>
+          <tr>
+            <td><div class="item-name">Project Lead Clearances</div><div class="item-code">PROJ_LEAD_SEAT · L2 Management</div></td>
+            <td class="c qty">3</td>
+            <td class="r">$4,500.00</td>
+            <td class="r">$13,500.00</td>
+          </tr>
+          <tr>
+            <td><div class="item-name">Developer Clearances</div><div class="item-code">DEV_SEAT · L1 Runtime / AST</div></td>
+            <td class="c qty">35</td>
+            <td class="r">$1,500.00</td>
+            <td class="r">$52,500.00</td>
+          </tr>
+          <tr>
+            <td><div class="item-name">Standard Auditor Clearance</div><div class="item-code">STD_AUD_SEAT · L1 Forensics</div></td>
+            <td class="c qty">1</td>
+            <td class="r">$4,500.00</td>
+            <td class="r">$4,500.00</td>
+          </tr>
+          <tr>
+            <td><div class="item-name">Governed AI Model Slots</div><div class="item-code">MODEL_SLOT · Runtime engine</div></td>
+            <td class="c qty">3</td>
+            <td class="r">$2,500.00</td>
+            <td class="r">$7,500.00</td>
+          </tr>
+          <tr>
+            <td><div class="item-name">Static Repository Registration &amp; AST Scans</div><div class="item-code">CODEBASE_SCAN</div><div class="item-desc">Unlimited codebases · unrestricted</div></td>
+            <td class="c qty">UNL</td>
+            <td class="r">$0.00</td>
+            <td class="r"><span class="included">Included</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Totals -->
+      <div class="totals">
+        <div class="trow"><span>Annual list subtotal</span><span class="v">$94,000.00</span></div>
+        <div class="trow disc"><span>Standing bundle discount (15%)</span><span class="v">− $14,100.00</span></div>
+        <div class="trow sub"><span>Net discounted annual rate</span><span class="v">$79,900.00</span></div>
+        <div class="trow disc"><span>3-year term prepayment discount (12%)</span><span class="v">− $9,588.00</span></div>
+        <div class="trow sub"><span>Effective annual rate</span><span class="v">$70,312.00</span></div>
+        <div class="trow"><span>3-year base contract value</span><span class="v">$210,936.00</span></div>
+        <div class="trow"><span>One-time professional services</span><span class="v">$8,500.00</span></div>
+        <div class="trow"><span>Tax — UK reverse-charge B2B export (0%)</span><span class="v">$0.00</span></div>
+        <div class="trow grand"><span>Total paid</span><span class="v">$219,436.00</span></div>
+        <div class="trow savings"><span></span><span>Total savings vs. list: $71,064.00</span></div>
+      </div>
+
+      <!-- Payment + activation -->
+      <div class="panels">
+        <div class="panel">
+          <h3>Settlement Details</h3>
+          <div class="kv"><span class="k">Invoice</span><span class="v mono">ANC-INV-2027-0104</span></div>
+          <div class="kv"><span class="k">Invoice date</span><span class="v">21 Nov 2026</span></div>
+          <div class="kv"><span class="k">Payment terms</span><span class="v">Net 30 · prepaid</span></div>
+          <div class="kv"><span class="k">Beneficiary</span><span class="v">AnimusLab Technologies</span></div>
+          <div class="kv"><span class="k">SWIFT</span><span class="v mono">ANIMUSGB2X</span></div>
+          <div class="kv"><span class="k">Remittance ref</span><span class="v mono">ANC-CON-2027-0104</span></div>
+        </div>
+        <div class="panel">
+          <h3>Provisioning Status</h3>
+          <ul class="timeline">
+            <li><span class="tl-dot tl-done">✓</span><div class="tl-text"><strong>Contract executed</strong><br><span>21 Nov 2026 · mutually signed</span></div></li>
+            <li><span class="tl-dot tl-done">✓</span><div class="tl-text"><strong>Payment received</strong><br><span>21 Nov 2026 · $219,436.00</span></div></li>
+            <li><span class="tl-dot tl-done">✓</span><div class="tl-text"><strong>Entitlements activated</strong><br><span>Grants sealed &amp; effective</span></div></li>
+            <li><span class="tl-dot tl-now">●</span><div class="tl-text"><strong>Hub provisioning</strong><br><span>Organization + Hub creation</span></div></li>
+            <li><span class="tl-dot tl-next">→</span><div class="tl-text"><strong>Onboarding invitation</strong><br><span>Single-use token to signatory</span></div></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Next steps -->
+      <div class="next">
+        <h3>Next Step — Secure Onboarding</h3>
+        <p>
+          Once the Hub is provisioned, AnimusLab issues a private, single-use onboarding invitation to
+          <strong>Elena Rostova (CTO)</strong> at the verified address on file. The invitation link uses the form
+          <code>https://hub.animuslab.dev/onboard?token=&lt;ONE_TIME_INVITATION_TOKEN&gt;</code>.
+          The token is stored only as a SHA-256 hash, expires within 7 days, and is consumed atomically on first use.
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="foot">
+      <div class="fine">
+        This receipt confirms settlement of Order Form ANC-OF-2027-0104 under the Anchor Master Subscription Agreement v2.1.
+        Amounts are stated in USD and inclusive of the standing bundle and multi-year prepayment discounts. Tax treatment
+        reflects the customer's reverse-charge declaration. This document is not a tax invoice where local law requires a
+        separate compliant instrument.
+      </div>
+      <div class="hash">
+        DOCUMENT SHA-256<br>
+        <span class="mono">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

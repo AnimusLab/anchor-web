@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anchor — Commercial Order Form ANC-OF-2027-0104</title>
+<style>
+  :root {
+    --ink: #0B1220;
+    --ink-soft: #334155;
+    --muted: #64748B;
+    --line: #DDE3EA;
+    --line-soft: #EEF2F6;
+    --brand: #1E40AF;
+    --brand-2: #2563EB;
+    --paper: #FFFFFF;
+    --canvas: #EDF0F4;
+    --gold: #8A6D1F;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--canvas);
+    color: var(--ink);
+    padding: 40px 16px;
+    line-height: 1.55;
+  }
+  .page {
+    width: 860px; max-width: 100%;
+    min-height: 1120px;
+    margin: 0 auto 34px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: 0 26px 64px -28px rgba(15,23,42,0.4);
+    padding: 48px 56px 40px;
+    position: relative;
+  }
+
+  /* ── Document chrome ── */
+  .topline { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 20px; border-bottom: 2px solid var(--ink); }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .mark { width: 40px; height: 40px; border-radius: 9px; background: linear-gradient(145deg,#1D4ED8,#2563EB 55%,#3B82F6); display: grid; place-items: center; }
+  .brand-name { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+  .brand-sub { font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-top: 1px; }
+  .doc-id { text-align: right; }
+  .doc-id .kind { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .doc-id .ref { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; font-weight: 600; margin-top: 3px; }
+  .doc-id .ver { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+
+  .doc-title { margin: 30px 0 6px; }
+  .doc-title h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; }
+  .doc-title .sub { font-size: 12.5px; color: var(--muted); margin-top: 6px; max-width: 620px; }
+
+  .status-strip { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .tag { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-soft); background: #F8FAFC; }
+  .tag.ok { color: #047857; background: #ECFDF5; border-color: #A7F3D0; }
+  .tag.brand { color: #1E40AF; background: #EFF6FF; border-color: #DBEAFE; }
+
+  /* ── Sections ── */
+  .sec { margin-top: 30px; }
+  .sec-head { display: flex; align-items: baseline; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+  .sec-head .no { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; font-weight: 700; color: var(--brand-2); }
+  .sec-head h2 { font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+  .sec-head .note { margin-left: auto; font-size: 9.5px; color: var(--muted); letter-spacing: 0.04em; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; }
+  .party .role { font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+  .party h3 { font-size: 14px; font-weight: 750; }
+  .party .ln { font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; }
+  .party .ln .k { color: var(--muted); }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+  .term-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .term-cell { padding: 11px 14px; border-bottom: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft); font-size: 11.5px; }
+  .term-cell:nth-child(2n) { border-right: none; }
+  .term-cell .k { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 3px; }
+  .term-cell .v { color: var(--ink); font-weight: 600; }
+
+  /* ── Schedule table ── */
+  table.sched { width: 100%; border-collapse: collapse; }
+  table.sched thead th { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 700; text-align: left; padding: 0 8px 8px; border-bottom: 1px solid var(--ink); }
+  table.sched thead th.r { text-align: right; }
+  table.sched thead th.c { text-align: center; }
+  table.sched tbody td { padding: 9px 8px; border-bottom: 1px solid var(--line-soft); font-size: 11px; vertical-align: top; }
+  table.sched tbody tr:last-child td { border-bottom: 1px solid var(--line); }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 9.5px; color: var(--brand); font-weight: 600; }
+  .desc { font-weight: 600; }
+  .subdesc { color: var(--muted); font-size: 10px; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .totals { margin-left: auto; width: 420px; margin-top: 14px; }
+  .tr { display: flex; justify-content: space-between; padding: 5px 8px; font-size: 11.5px; color: var(--ink-soft); }
+  .tr .v { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .tr.disc .v { color: #047857; }
+  .tr.sub { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 8px; font-weight: 700; color: var(--ink); }
+  .tr.grand { border-top: 2px solid var(--ink); margin-top: 8px; padding-top: 10px; font-size: 14px; font-weight: 800; color: var(--ink); }
+  .tr.grand .v { font-size: 16px; }
+
+  /* ── Manifest ── */
+  .manifest { background: #0B1220; color: #E2E8F0; border-radius: 8px; padding: 16px 18px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 10.5px; line-height: 1.75; overflow-x: auto; }
+  .manifest .k { color: #93C5FD; }
+  .manifest .s { color: #86EFAC; }
+  .manifest .n { color: #FCA5A5; }
+  .manifest .c { color: #64748B; }
+
+  /* ── Clause table ── */
+  table.clauses { width: 100%; border-collapse: collapse; }
+  table.clauses td { padding: 8px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: top; font-size: 10.5px; }
+  table.clauses td:first-child { width: 34px; color: var(--brand-2); font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; }
+  table.clauses td:nth-child(2) { width: 176px; font-weight: 700; color: var(--ink); }
+  table.clauses td:last-child { color: var(--ink-soft); }
+
+  /* ── Signatures ── */
+  .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; margin-top: 6px; }
+  .sig-block .role { font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 42px; }
+  .sig-line { border-bottom: 1px solid var(--ink); height: 30px; }
+  .sig-name { font-size: 12px; font-weight: 700; margin-top: 7px; }
+  .sig-meta { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .sig-date { margin-top: 18px; display: flex; gap: 10px; align-items: baseline; font-size: 10px; color: var(--muted); }
+  .sig-date .line { flex: 1; border-bottom: 1px dotted var(--muted); height: 12px; }
+  .sig-caption { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brand); font-weight: 800; }
+
+  .seal {
+    margin-top: 26px; padding: 12px 16px; border: 1px dashed var(--line);
+    border-radius: 6px; display: flex; gap: 14px; align-items: center; background: #FAFBFC;
+  }
+  .seal .lock { width: 30px; height: 30px; border-radius: 8px; background: #EFF6FF; display: grid; place-items: center; flex: none; }
+  .seal p { font-size: 9.5px; color: var(--muted); line-height: 1.55; }
+  .seal strong { color: var(--ink-soft); }
+
+  .foot { position: absolute; left: 56px; right: 56px; bottom: 26px; display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--line); font-size: 8.5px; color: var(--muted); letter-spacing: 0.04em; }
+  .foot .page-no { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 600; color: var(--ink-soft); }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    @page { size: A4; }
+    .page {
+      box-shadow: none; border: none; border-radius: 0;
+      margin: 0; width: 100%; min-height: 0;
+      page-break-after: auto; padding: 0;
+    }
+    .page + .page { margin-top: 26px; }
+    .page + .page .topline { display: none; }
+    .foot { display: none; }
+    .sec { margin-top: 22px; }
+    .sec-head { break-after: avoid; }
+    .party, .term-grid, .totals, .sig-grid, .seal { break-inside: avoid; }
+    .sec-manifest { break-inside: avoid; page-break-inside: avoid; }
+    .manifest { break-inside: avoid; page-break-inside: avoid; }
+    table.sched thead { display: table-header-group; }
+    table.sched tr, table.clauses tr { break-inside: avoid; }
+    table.clauses td { padding: 6px 10px; }
+    .sig-block .role { margin-bottom: 30px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ═══════════════ PAGE 1 — ORDER FORM ═══════════════ -->
+  <section class="page">
+    <div class="topline">
+      <div class="brand">
+        <div class="mark">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="2.4"/><path d="M12 7.4V21"/><path d="M5 12H19"/><path d="M5 12c0 4 3 6.5 7 6.5s7-2.5 7-6.5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">ANIMUSLAB TECHNOLOGIES</div>
+          <div class="brand-sub">Deterministic AI Governance Infrastructure</div>
+        </div>
+      </div>
+      <div class="doc-id">
+        <div class="kind">Commercial Order Form</div>
+        <div class="ref">ANC-OF-2027-0104</div>
+        <div class="ver">Contract ref. ANC-CON-2027-0104 · v2.1</div>
+      </div>
+    </div>
+
+    <div class="doc-title">
+      <h1>Commercial Order Form</h1>
+      <div class="sub">
+        This Order Form sets out the bespoke capacity, commercial terms, and deployment parameters agreed between
+        AnimusLab Technologies and the Customer. It incorporates the Anchor Master Subscription Agreement (MSA v2.1)
+        by reference and is effective upon mutual execution.
+      </div>
+      <div class="status-strip">
+        <span class="tag brand">Bespoke Configuration</span>
+        <span class="tag">Term: 3 Years</span>
+        <span class="tag ok">Status: Executed</span>
+        <span class="tag">Currency: USD</span>
+      </div>
+    </div>
+
+    <!-- 1. Parties -->
+    <div class="sec">
+      <div class="sec-head"><span class="no">01</span><h2>Parties &amp; Contracting Details</h2><span class="note">Legal entities of record</span></div>
+      <div class="cols">
+        <div class="party">
+          <div class="role">Provider</div>
+          <h3>AnimusLab Technologies</h3>
+          <div class="ln"><span class="k">Legal entity:</span> Tanishq Dasari / AnimusLab</div>
+          <div class="ln"><span class="k">Contact:</span> tan@animuslab.dev</div>
+          <div class="ln"><span class="k">Jurisdiction:</span> Global software export</div>
+          <div class="ln"><span class="k">Notice address:</span> legal@animuslab.dev</div>
+        </div>
+        <div class="party">
+          <div class="role">Customer (Licensee)</div>
+          <h3>Acme Financial Technologies Ltd.</h3>
+          <div class="ln"><span class="k">Reg No.:</span> 09482014</div>
+          <div class="ln"><span class="k">VAT / Tax ID:</span> GB 928 4102 88</div>
+          <div class="ln"><span class="k">Billing entity:</span> Acme UK Holdings Ltd.</div>
+          <div class="ln"><span class="k">Registered address:</span> 25 Bank Street, London E14 5JP, UK</div>
+        </div>
+      </div>
+
+      <div class="cols" style="margin-top:20px">
+        <div class="party">
+          <div class="role">Primary Operational Contact</div>
+          <div class="ln" style="margin-top:4px"><strong>Marcus Vance</strong>, VP of AI Platforms</div>
+          <div class="ln">m.vance@acmefinancial.com · +44 20 7946 0912</div>
+        </div>
+        <div class="party">
+          <div class="role">Authorised Signatory</div>
+          <div class="ln" style="margin-top:4px"><strong>Elena Rostova</strong>, Chief Technology Officer</div>
+          <div class="ln">e.rostova@acmefinancial.com · Managing Director / CTO</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Term -->
+    <div class="sec">
+      <div class="sec-head"><span class="no">02</span><h2>Contract Period &amp; Deployment Parameters</h2><span class="note">Operational scope</span></div>
+      <div class="term-grid">
+        <div class="term-cell"><div class="k">Effective date</div><div class="v">1 January 2027</div></div>
+        <div class="term-cell"><div class="k">Expiration date</div><div class="v">31 December 2029</div></div>
+        <div class="term-cell"><div class="k">Initial term</div><div class="v">3 years · annual upfront prepayment</div></div>
+        <div class="term-cell"><div class="k">Deployment topology</div><div class="v">1 Sovereign Branch Container (EU-West)</div></div>
+        <div class="term-cell"><div class="k">Static codebase scans</div><div class="v">Unrestricted</div></div>
+        <div class="term-cell"><div class="k">DAC retention</div><div class="v">3 years cryptographic immutability</div></div>
+        <div class="term-cell"><div class="k">Renewal notice</div><div class="v">60 days · auto-renew disabled</div></div>
+        <div class="term-cell"><div class="k">Governing law</div><div class="v">England &amp; Wales · LCIA arbitration</div></div>
+      </div>
+    </div>
+
+    <!-- 3. Schedule -->
+    <div class="sec">
+      <div class="sec-head"><span class="no">03</span><h2>Bespoke Capacity Specification</h2><span class="note">Per-annum list rates</span></div>
+      <table class="sched">
+        <thead>
+          <tr>
+            <th style="width:130px">Item Code</th>
+            <th>Description</th>
+            <th class="c" style="width:44px">Qty</th>
+            <th class="r" style="width:96px">Unit Rate</th>
+            <th class="r" style="width:104px">Annual List</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="code">HUB_CONTAINER</td><td><div class="desc">Isolated Branch Infrastructure Container</div><div class="subdesc">Dedicated Hub node · EU-West</div></td><td class="num" style="text-align:center">1</td><td class="num">$7,000.00</td><td class="num">$7,000.00</td></tr>
+          <tr><td class="code">HUB_MGR_SEAT</td><td><div class="desc">Hub Manager Clearance (L3 Sovereignty)</div></td><td class="num" style="text-align:center">1</td><td class="num">$9,000.00</td><td class="num">$9,000.00</td></tr>
+          <tr><td class="code">PROJ_LEAD_SEAT</td><td><div class="desc">Project Lead Clearances (L2 Management)</div></td><td class="num" style="text-align:center">3</td><td class="num">$4,500.00</td><td class="num">$13,500.00</td></tr>
+          <tr><td class="code">DEV_SEAT</td><td><div class="desc">Developer Clearances (L1 Runtime / AST)</div></td><td class="num" style="text-align:center">35</td><td class="num">$1,500.00</td><td class="num">$52,500.00</td></tr>
+          <tr><td class="code">STD_AUD_SEAT</td><td><div class="desc">Standard Auditor Clearance (L1 Forensics)</div></td><td class="num" style="text-align:center">1</td><td class="num">$4,500.00</td><td class="num">$4,500.00</td></tr>
+          <tr><td class="code">MODEL_SLOT</td><td><div class="desc">Governed AI Model Slots (Runtime Engine)</div></td><td class="num" style="text-align:center">3</td><td class="num">$2,500.00</td><td class="num">$7,500.00</td></tr>
+          <tr><td class="code">CODEBASE_SCAN</td><td><div class="desc">Static Repository Registration &amp; AST Scans</div><div class="subdesc">Unlimited codebases · unrestricted</div></td><td class="num" style="text-align:center">UNL</td><td class="num">$0.00</td><td class="num">Included</td></tr>
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div class="tr"><span>Annual list subtotal</span><span class="v">$94,000.00</span></div>
+        <div class="tr disc"><span>Standing bundle discount (15%)</span><span class="v">− $14,100.00</span></div>
+        <div class="tr sub"><span>Net discounted annual rate</span><span class="v">$79,900.00</span></div>
+        <div class="tr disc"><span>3-year term discount (12%)</span><span class="v">− $9,588.00</span></div>
+        <div class="tr sub"><span>Effective annual rate</span><span class="v">$70,312.00</span></div>
+        <div class="tr"><span>3-year base contract value</span><span class="v">$210,936.00</span></div>
+        <div class="tr"><span>One-time professional services</span><span class="v">$8,500.00</span></div>
+        <div class="tr"><span>Tax — UK reverse-charge (0%)</span><span class="v">$0.00</span></div>
+        <div class="tr grand"><span>Total contract commitment</span><span class="v">$219,436.00</span></div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>Anchor Commercial Order Form · ANC-OF-2027-0104 · Confidential</span>
+      <span class="page-no">Page 1 of 2</span>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PAGE 2 — TERMS & EXECUTION ═══════════════ -->
+  <section class="page">
+    <div class="topline">
+      <div class="brand">
+        <div class="mark">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="2.4"/><path d="M12 7.4V21"/><path d="M5 12H19"/><path d="M5 12c0 4 3 6.5 7 6.5s7-2.5 7-6.5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">ANIMUSLAB TECHNOLOGIES</div>
+          <div class="brand-sub">Master Subscription Agreement · Incorporated Terms</div>
+        </div>
+      </div>
+      <div class="doc-id">
+        <div class="kind">Order Form · Continued</div>
+        <div class="ref">ANC-OF-2027-0104</div>
+        <div class="ver">MSA v2.1</div>
+      </div>
+    </div>
+
+    <!-- 4. Manifest -->
+    <div class="sec sec-manifest">
+      <div class="sec-head"><span class="no">04</span><h2>Cryptographic Entitlement Manifest</h2><span class="note">Sealed on execution &amp; settlement</span></div>
+      <div class="manifest">
+<span class="c">// Sealed by AnimusLab root key · Ed25519</span>
+{<br>
+&nbsp;&nbsp;<span class="k">"license_id"</span>: <span class="s">"ANC-LIC-2027-0104"</span>,<br>
+&nbsp;&nbsp;<span class="k">"contract_ref"</span>: <span class="s">"ANC-CON-2027-0104"</span>,<br>
+&nbsp;&nbsp;<span class="k">"organization"</span>: <span class="s">"Acme Financial Technologies Ltd."</span>,<br>
+&nbsp;&nbsp;<span class="k">"entitlements"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">"GOVERNED_AI_MODEL_SLOTS"</span>: <span class="n">3</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">"DEVELOPER_SEATS"</span>: <span class="n">35</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">"PROJECT_LEAD_SEATS"</span>: <span class="n">3</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">"HUB_MANAGER_SEATS"</span>: <span class="n">1</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">"STANDARD_AUDITOR_SEATS"</span>: <span class="n">1</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">"HUB_COUNT"</span>: <span class="n">1</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">"DAC_RETENTION_YEARS"</span>: <span class="n">3</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">"PROJECT_REGISTRATION"</span>: <span class="s">"UNRESTRICTED"</span><br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;<span class="k">"signing_key_id"</span>: <span class="s">"animuslab-ed25519-root-2026"</span>,<br>
+&nbsp;&nbsp;<span class="k">"document_sha256"</span>: <span class="s">"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"</span><br>
+}
+      </div>
+    </div>
+
+    <!-- 5. MSA summary -->
+    <div class="sec">
+      <div class="sec-head"><span class="no">05</span><h2>Master Subscription Agreement — Key Terms</h2><span class="note">Summarised for execution</span></div>
+      <table class="clauses">
+        <tr><td>1</td><td>Definitions &amp; Dual Architecture</td><td>Separates <strong>Static Codebase Governance</strong> (unrestricted repository scanning) from <strong>Runtime AI Governance</strong> (metered Governed AI Model Slots).</td></tr>
+        <tr><td>2</td><td>License Grant &amp; Clearances</td><td>Non-exclusive, non-transferable annual licence. Clearance tiers: L1 Developer, L1 Standard Auditor, L2 Project Lead, L2 Cross-Hub Auditor, L3 Hub Manager.</td></tr>
+        <tr><td>3</td><td>Zero Data Exfiltration Invariant</td><td>AnimusLab never receives raw prompts, model weights, proprietary AST, or internal PII. The Hub processes 32-byte SHA-256 state hashes and compact compliance digests only.</td></tr>
+        <tr><td>4</td><td>Statutory Polyglottism &amp; Audit Chains</td><td>Decision Audit Chain entries are sealed with local Ed25519 signatures, satisfying EU AI Act Art. 12, SEC Reg SCI, and RBI FREE-AI standards.</td></tr>
+        <tr><td>5</td><td>Capacity &amp; Upgrades</td><td>Additional capacity (AI Governance Capacity Packs or Model Slots) may be added by Order Form amendment without invalidating the base agreement.</td></tr>
+        <tr><td>6</td><td>Payment &amp; Tax</td><td>Net 30, annual upfront billing. Wire/SWIFT. Customer reverse-charge and tax declarations apply where indicated.</td></tr>
+        <tr><td>7</td><td>Term &amp; Termination</td><td>Annual term, 60-day renewal notice. Post-termination data retention for subpoena readiness as required by law.</td></tr>
+        <tr><td>8</td><td>Governing Law &amp; Liability</td><td>England &amp; Wales law, LCIA arbitration. Liability capped at 12 months' fees paid, save for excluded categories.</td></tr>
+      </table>
+    </div>
+
+    <!-- 6. Execution -->
+    <div class="sec">
+      <div class="sec-head"><span class="no">06</span><h2>Mutual Execution</h2><span class="note">Binding upon signature</span></div>
+      <p style="font-size:11px;color:var(--ink-soft);max-width:660px;margin-bottom:22px">
+        By signing below, the parties agree to be bound by the terms of this Order Form and the incorporated
+        Anchor Master Subscription Agreement (MSA v2.1). Entitlements are activated only upon invoice settlement
+        or approved credit terms, at which point the cryptographic manifest in Section 04 is sealed.
+      </p>
+
+      <div class="sig-grid">
+        <div class="sig-block">
+          <div class="role">For the Customer</div>
+          <div class="sig-caption">Acme Financial Technologies Ltd.</div>
+          <div class="sig-line"></div>
+          <div class="sig-name">Elena Rostova</div>
+          <div class="sig-meta">Chief Technology Officer</div>
+          <div class="sig-date"><span>Date</span><span class="line"></span></div>
+        </div>
+        <div class="sig-block">
+          <div class="role">For AnimusLab Technologies</div>
+          <div class="sig-caption">AnimusLab Technologies</div>
+          <div class="sig-line"></div>
+          <div class="sig-name">Tanishq Dasari</div>
+          <div class="sig-meta">Founder, AnimusLab</div>
+          <div class="sig-date"><span>Date</span><span class="line"></span></div>
+        </div>
+      </div>
+
+      <div class="seal">
+        <div class="lock">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+          </svg>
+        </div>
+        <p>
+          <strong>Execution integrity.</strong> This Order Form is digitally signed and bound to document hash
+          <span class="mono">e3b0c4…b855</span>. The onboarding invitation issued after settlement is a separate,
+          single-use credential stored only as a SHA-256 hash — it is <em>not</em> the licence key and carries an
+          independent security lifecycle.
+        </p>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>Anchor Commercial Order Form · ANC-OF-2027-0104 · Confidential</span>
+      <span class="page-no">Page 2 of 2</span>
+    </div>
+  </section>
+
+</body>
+</html>
